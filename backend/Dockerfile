@@ -12,6 +12,7 @@ RUN npm ci --legacy-peer-deps
 
 # Copy source and build
 COPY . .
+RUN mkdir -p /app/public
 RUN npm run build
 
 # ----------------------------------------------------
@@ -30,10 +31,10 @@ RUN npm ci --only=production --legacy-peer-deps
 
 # Copy built application from builder stage
 COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/public ./public 2>/dev/null || true
+COPY --from=builder /app/public ./public
 
 # Ensure uploads directory exists
-RUN mkdir -p uploads/gallery uploads/books uploads/audios uploads/documents uploads/trees
+RUN mkdir -p uploads/gallery uploads/books uploads/audios uploads/documents uploads/trees private_uploads/trees
 
 # Expose backend port 5000
 EXPOSE 5000
