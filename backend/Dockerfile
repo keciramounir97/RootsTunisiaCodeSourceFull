@@ -36,6 +36,7 @@ COPY --from=builder /app/src/db ./src/db
 COPY --from=builder /app/knexfile.js ./knexfile.js
 COPY --from=builder /app/server.js ./server.js
 COPY --from=builder /app/.env.production ./.env.production
+COPY --from=builder /app/uploads ./uploads
 
 # Ensure uploads directory exists
 RUN mkdir -p uploads/gallery uploads/books uploads/audios uploads/documents uploads/trees private_uploads/trees
