@@ -1,4 +1,7 @@
-export async function up(knex) {
+/**
+ * Subscriptions, Tasks, and Notes Tables Migration
+ */
+exports.up = async function (knex) {
     // 1. Subscription Tiers
     if (!(await knex.schema.hasTable('subscription_tiers'))) {
         await knex.schema.createTable('subscription_tiers', (table) => {
@@ -12,31 +15,43 @@ export async function up(knex) {
             table.timestamp('created_at').defaultTo(knex.fn.now());
             table.timestamp('updated_at').defaultTo(knex.fn.now());
         });
+    }
 
-        // Seed default subscription tiers
-        await knex('subscription_tiers').insert([
-            {
-                name: 'Basic',
-                price: 0,
-                interval: 'monthly',
-                features: '["Build up to 3 family trees","Basic tree visualization","Add up to 50 people per tree","Community access","Email support"]',
-                sort_order: 1,
-            },
-            {
-                name: 'Premium',
-                price: 9.99,
-                interval: 'monthly',
-                features: '["Unlimited family trees","Advanced tree visualization","Unlimited people per tree","Archive document uploads","GEDCOM import/export","Priority email support","Advanced search & filters"]',
-                sort_order: 2,
-            },
-            {
-                name: 'Family Historian',
-                price: 19.99,
-                interval: 'monthly',
-                features: '["Everything in Premium","AI-powered tree suggestions","AI note summarization","Task management & reminders","WhatsApp priority support","Early access to new features","Contribute to archive database"]',
-                sort_order: 3,
-            },
-        ]);
+    // Ensure default subscription tiers exist
+    const existingTiers = await knex('subscription_tiers').select('id');
+    const existingTierIds = new Set(existingTiers.map((t) => t.id));
+
+    const defaultTiers = [
+        {
+            id: 1,
+            name: 'Basic',
+            price: 0,
+            interval: 'monthly',
+            features: '["Build up to 3 family trees","Basic tree visualization","Add up to 50 people per tree","Community access","Email support"]',
+            sort_order: 1,
+        },
+        {
+            id: 2,
+            name: 'Premium',
+            price: 9.99,
+            interval: 'monthly',
+            features: '["Unlimited family trees","Advanced tree visualization","Unlimited people per tree","Archive document uploads","GEDCOM import/export","Priority email support","Advanced search & filters"]',
+            sort_order: 2,
+        },
+        {
+            id: 3,
+            name: 'Family Historian',
+            price: 19.99,
+            interval: 'monthly',
+            features: '["Everything in Premium","AI-powered tree suggestions","AI note summarization","Task management & reminders","WhatsApp priority support","Early access to new features","Contribute to archive database"]',
+            sort_order: 3,
+        },
+    ];
+
+    for (const tier of defaultTiers) {
+        if (!existingTierIds.has(tier.id)) {
+            await knex('subscription_tiers').insert(tier);
+        }
     }
 
     // 2. User Subscriptions
@@ -147,9 +162,9 @@ export async function up(knex) {
             table.index(['user_id', 'reminder_date']);
         });
     }
-}
+};
 
-export async function down(knex) {
+exports.down = async function (knex) {
     await knex.schema.dropTableIfExists('reminders');
     await knex.schema.dropTableIfExists('notes');
     await knex.schema.dropTableIfExists('task_comments');
@@ -157,4 +172,4 @@ export async function down(knex) {
     await knex.schema.dropTableIfExists('subscription_page_access');
     await knex.schema.dropTableIfExists('user_subscriptions');
     await knex.schema.dropTableIfExists('subscription_tiers');
-}
+};

@@ -295,6 +295,19 @@ async function ensureCriticalSchema(knex: Knex) {
             console.log('🟡 Schema patch: created subscription_tiers table');
         }
 
+        const existingTiers = await knex('subscription_tiers').select('id');
+        const existingTierIds = new Set(existingTiers.map((t: any) => t.id));
+        const defaultTiers = [
+            { id: 1, name: 'Basic', price: 0, interval: 'month' },
+            { id: 2, name: 'Premium', price: 9.99, interval: 'month' },
+            { id: 3, name: 'Family Historian', price: 19.99, interval: 'month' },
+        ];
+        for (const tier of defaultTiers) {
+            if (!existingTierIds.has(tier.id)) {
+                await knex('subscription_tiers').insert(tier);
+            }
+        }
+
         if (!(await knex.schema.hasTable('user_subscriptions'))) {
             await knex.schema.createTable('user_subscriptions', (t) => {
                 t.increments('id');
