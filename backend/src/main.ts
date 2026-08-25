@@ -101,11 +101,14 @@ async function ensureCriticalSchema(knex: Knex) {
             await knex.schema.createTable('users', (t) => {
                 t.increments('id');
                 t.string('full_name', 255).notNullable();
+                t.string('phone_number', 80).nullable();
                 t.string('email', 255).notNullable().unique();
                 t.string('password', 255).notNullable();
                 t.integer('role_id').unsigned().references('id').inTable('roles').onDelete('RESTRICT');
                 t.string('status', 50).notNullable().defaultTo('active');
                 t.text('admin_privileges').nullable();
+                t.string('session_token', 255).nullable();
+                t.dateTime('last_login').nullable();
                 t.timestamp('created_at').defaultTo(knex.fn.now());
                 t.timestamp('updated_at').defaultTo(knex.fn.now());
             });
@@ -199,7 +202,129 @@ async function ensureCriticalSchema(knex: Knex) {
             console.log('🟡 Schema patch: created gallery table');
         }
 
-        // 7) contact_messages table
+        // 7) audios table
+        if (!(await knex.schema.hasTable('audios'))) {
+            await knex.schema.createTable('audios', (t) => {
+                t.increments('id');
+                t.string('title', 255).notNullable();
+                t.text('description').nullable();
+                t.string('category', 100).nullable();
+                t.string('audio_path', 500).notNullable();
+                t.specificType('audio_data', 'LONGBLOB').nullable();
+                t.string('audio_mime_type', 120).nullable();
+                t.integer('uploaded_by').unsigned().references('id').inTable('users').onDelete('SET NULL');
+                t.boolean('is_public').defaultTo(true);
+                t.string('duration', 50).nullable();
+                t.string('speaker', 255).nullable();
+                t.string('recorded_year', 50).nullable();
+                t.timestamp('created_at').defaultTo(knex.fn.now());
+                t.timestamp('updated_at').defaultTo(knex.fn.now());
+            });
+            console.log('🟡 Schema patch: created audios table');
+        }
+
+        // 8) documents table
+        if (!(await knex.schema.hasTable('documents'))) {
+            await knex.schema.createTable('documents', (t) => {
+                t.increments('id');
+                t.string('title', 255).notNullable();
+                t.text('description').nullable();
+                t.string('category', 100).nullable();
+                t.string('file_path', 500).notNullable();
+                t.specificType('file_data', 'LONGBLOB').nullable();
+                t.string('file_mime_type', 120).nullable();
+                t.integer('uploaded_by').unsigned().references('id').inTable('users').onDelete('SET NULL');
+                t.boolean('is_public').defaultTo(true);
+                t.string('archive_source', 255).nullable();
+                t.string('document_code', 100).nullable();
+                t.string('document_date', 50).nullable();
+                t.timestamp('created_at').defaultTo(knex.fn.now());
+                t.timestamp('updated_at').defaultTo(knex.fn.now());
+            });
+            console.log('🟡 Schema patch: created documents table');
+        }
+
+        // 9) articles table
+        if (!(await knex.schema.hasTable('articles'))) {
+            await knex.schema.createTable('articles', (t) => {
+                t.increments('id');
+                t.string('title', 255).notNullable();
+                t.text('content').notNullable();
+                t.string('author', 255).nullable();
+                t.string('category', 100).nullable();
+                t.string('image_path', 500).nullable();
+                t.integer('author_id').unsigned().references('id').inTable('users').onDelete('SET NULL');
+                t.boolean('is_published').defaultTo(true);
+                t.integer('likes_count').defaultTo(0);
+                t.timestamp('created_at').defaultTo(knex.fn.now());
+                t.timestamp('updated_at').defaultTo(knex.fn.now());
+            });
+            console.log('🟡 Schema patch: created articles table');
+        }
+
+        // 10) individuals table
+        if (!(await knex.schema.hasTable('individuals'))) {
+            await knex.schema.createTable('individuals', (t) => {
+                t.increments('id');
+                t.integer('tree_id').unsigned().references('id').inTable('family_trees').onDelete('CASCADE');
+                t.string('gedcom_id', 100).nullable();
+                t.string('first_name', 255).nullable();
+                t.string('last_name', 255).nullable();
+                t.string('gender', 20).nullable();
+                t.string('birth_date', 100).nullable();
+                t.string('birth_place', 255).nullable();
+                t.string('death_date', 100).nullable();
+                t.string('death_place', 255).nullable();
+                t.text('gedcom_text', 'longtext').nullable();
+                t.timestamp('created_at').defaultTo(knex.fn.now());
+                t.timestamp('updated_at').defaultTo(knex.fn.now());
+            });
+            console.log('🟡 Schema patch: created individuals table');
+        }
+
+        // 11) subscriptions & subscription_tiers tables
+        if (!(await knex.schema.hasTable('subscription_tiers'))) {
+            await knex.schema.createTable('subscription_tiers', (t) => {
+                t.increments('id');
+                t.string('name', 100).notNullable();
+                t.decimal('price', 10, 2).notNullable().defaultTo(0);
+                t.string('interval', 50).notNullable().defaultTo('month');
+                t.text('features').nullable();
+                t.timestamp('created_at').defaultTo(knex.fn.now());
+            });
+            console.log('🟡 Schema patch: created subscription_tiers table');
+        }
+
+        if (!(await knex.schema.hasTable('user_subscriptions'))) {
+            await knex.schema.createTable('user_subscriptions', (t) => {
+                t.increments('id');
+                t.integer('user_id').unsigned().notNullable().references('id').inTable('users').onDelete('CASCADE');
+                t.integer('tier_id').unsigned().references('id').inTable('subscription_tiers').onDelete('SET NULL');
+                t.string('status', 50).notNullable().defaultTo('active');
+                t.dateTime('current_period_start').nullable();
+                t.dateTime('current_period_end').nullable();
+                t.timestamp('created_at').defaultTo(knex.fn.now());
+                t.timestamp('updated_at').defaultTo(knex.fn.now());
+            });
+            console.log('🟡 Schema patch: created user_subscriptions table');
+        }
+
+        // 12) download_requests table
+        if (!(await knex.schema.hasTable('download_requests'))) {
+            await knex.schema.createTable('download_requests', (t) => {
+                t.increments('id');
+                t.integer('user_id').unsigned().notNullable().references('id').inTable('users').onDelete('CASCADE');
+                t.string('resource_type', 80).notNullable();
+                t.integer('resource_id').unsigned().notNullable();
+                t.string('status', 50).notNullable().defaultTo('pending');
+                t.text('reason').nullable();
+                t.timestamp('created_at').defaultTo(knex.fn.now());
+                t.timestamp('updated_at').defaultTo(knex.fn.now());
+            });
+            console.log('🟡 Schema patch: created download_requests table');
+        }
+
+        // 13) contact_messages table
         if (!(await knex.schema.hasTable('contact_messages'))) {
             await knex.schema.createTable('contact_messages', (t) => {
                 t.increments('id');
@@ -211,7 +336,7 @@ async function ensureCriticalSchema(knex: Knex) {
             console.log('🟡 Schema patch: created contact_messages table');
         }
 
-        // 8) newsletter_subscribers table
+        // 14) newsletter_subscribers table
         if (!(await knex.schema.hasTable('newsletter_subscribers'))) {
             await knex.schema.createTable('newsletter_subscribers', (t) => {
                 t.increments('id');
@@ -221,7 +346,7 @@ async function ensureCriticalSchema(knex: Knex) {
             console.log('🟡 Schema patch: created newsletter_subscribers table');
         }
 
-        // 9) app_settings table
+        // 15) app_settings table
         if (!(await knex.schema.hasTable('app_settings'))) {
             await knex.schema.createTable('app_settings', (t) => {
                 t.string('key', 100).primary();
@@ -231,7 +356,7 @@ async function ensureCriticalSchema(knex: Knex) {
             console.log('🟡 Schema patch: created app_settings table');
         }
 
-        // 10) password_resets table
+        // 16) password_resets table
         if (!(await knex.schema.hasTable('password_resets'))) {
             await knex.schema.createTable('password_resets', (t) => {
                 t.string('email', 255).primary();
@@ -242,20 +367,41 @@ async function ensureCriticalSchema(knex: Knex) {
             console.log('🟡 Schema patch: created password_resets table');
         }
 
+        // 17) suggestions table
+        if (!(await knex.schema.hasTable('suggestions'))) {
+            await knex.schema.createTable('suggestions', (t) => {
+                t.increments('id');
+                t.string('type', 80).notNullable().defaultTo('content');
+                t.string('category', 255).nullable();
+                t.string('content_title', 255).nullable();
+                t.integer('user_id').unsigned().nullable();
+                t.string('user_name', 255).nullable();
+                t.string('user_email', 255).nullable();
+                t.string('user_phone', 80).nullable();
+                t.text('message').nullable();
+                t.string('status', 20).notNullable().defaultTo('pending');
+                t.integer('processed_by').unsigned().nullable();
+                t.dateTime('processed_at').nullable();
+                t.timestamp('created_at').defaultTo(knex.fn.now());
+                t.timestamp('updated_at').defaultTo(knex.fn.now());
+            });
+            console.log('🟡 Schema patch: created suggestions table');
+        }
+
         console.log('🟢 Schema verification complete');
     } catch (err: any) {
         console.warn('⚠️ ensureCriticalSchema warning:', err?.message || err);
     }
 }
 
-/** Auto-seed default admins on database connection */
+/** Auto-seed default admins as SUPER ADMINS (role_id: 3) with full privileges */
 async function seedInitialData(knex: Knex) {
     try {
         if (!knex || !(await knex.schema.hasTable('users'))) {
             return;
         }
 
-        // 1) Seed default roles
+        // 1) Seed default roles (admin=1, user=2, super_admin=3)
         if (await knex.schema.hasTable('roles')) {
             const existingRoles = await knex('roles').select('id');
             const existingIds = new Set(existingRoles.map((r: any) => r.id));
@@ -272,39 +418,60 @@ async function seedInitialData(knex: Knex) {
             }
         }
 
-        // 2) Seed admin accounts
+        // 2) Seed admin accounts — ALL as Super Admins (role_id: 3)
+        const superPrivileges = JSON.stringify({
+            superAdmin: true,
+            all: true,
+            users: true,
+            trees: true,
+            gallery: true,
+            books: true,
+            audios: true,
+            documents: true,
+            articles: true,
+            settings: true,
+            approvals: true,
+            subscriptions: true,
+        });
+
         const adminDefaults = [
             {
+                prefix: 'SEED_ADMIN',
                 email: 'karimadmin@rootstunisia.com',
                 password: 'admin2025$',
                 fullName: 'Karim Admin',
-                roleId: 1,
+                roleId: 3,
             },
             {
+                prefix: 'SEED_ADMIN2',
                 email: 'kameladmin@rootstunisia.com',
                 password: 'vivreplusfort18041972SS',
                 fullName: 'Kamel Admin',
-                roleId: 1,
+                roleId: 3,
             },
             {
+                prefix: 'SEED_ADMIN3',
                 email: 'devteam@rootstunisia.com',
                 password: 'admin2025$',
                 fullName: 'Dev Team Admin',
-                roleId: 1,
+                roleId: 3,
             },
             {
+                prefix: 'SEED_ADMIN4',
                 email: 'marcousorilious@gmail.com',
                 password: 'admin2025$',
                 fullName: 'Marcous Orilious Admin',
-                roleId: 1,
+                roleId: 3,
             },
             {
+                prefix: 'SEED_ADMIN5',
                 email: 'admin@rootstunisia.com',
                 password: 'admin2025$',
                 fullName: 'Administrator',
-                roleId: 1,
+                roleId: 3,
             },
             {
+                prefix: 'SEED_ADMIN6',
                 email: 'superadmin@rootstunisia.com',
                 password: 'admin2025$',
                 fullName: 'Super Administrator',
@@ -313,18 +480,34 @@ async function seedInitialData(knex: Knex) {
         ];
 
         for (const admin of adminDefaults) {
-            const normalizedEmail = admin.email.toLowerCase().trim();
+            const rawEmail = process.env[`${admin.prefix}_EMAIL`] || admin.email;
+            const normalizedEmail = rawEmail.toLowerCase().trim();
+            const password = process.env[`${admin.prefix}_PASSWORD`] || admin.password;
+            const fullName = process.env[`${admin.prefix}_FULL_NAME`] || admin.fullName;
+            const roleId = Number(process.env[`${admin.prefix}_ROLE_ID`] || 3);
+
             const existing = await knex('users').where({ email: normalizedEmail }).first();
+            const hash = await bcrypt.hash(password, 10);
+
             if (!existing) {
-                const hash = await bcrypt.hash(admin.password, 10);
                 await knex('users').insert({
-                    full_name: admin.fullName,
+                    full_name: fullName,
                     email: normalizedEmail,
                     password: hash,
-                    role_id: admin.roleId,
+                    role_id: roleId,
                     status: 'active',
+                    admin_privileges: superPrivileges,
                 });
-                console.log(`✅ Seed Admin Created: ${normalizedEmail} (${admin.fullName})`);
+                console.log(`✅ Super Admin Injected: ${normalizedEmail} (${fullName}) [role_id: ${roleId}]`);
+            } else {
+                // Ensure existing user has super_admin role and updated password hash
+                await knex('users').where({ email: normalizedEmail }).update({
+                    role_id: roleId,
+                    status: 'active',
+                    admin_privileges: superPrivileges,
+                    password: hash,
+                });
+                console.log(`✅ Super Admin Synchronized: ${normalizedEmail} [role_id: ${roleId}]`);
             }
         }
     } catch (err: any) {
@@ -333,16 +516,17 @@ async function seedInitialData(knex: Knex) {
 }
 
 async function ensureSchemaReady(knex: Knex) {
-    console.log('INFO checking migrations...');
+    console.log('INFO checking schema & migrations...');
+    await ensureCriticalSchema(knex);
+
     try {
         const migrationsDir = path.join(process.cwd(), 'src', 'db', 'migrations');
         await knex.migrate.latest({ directory: migrationsDir });
         console.log('INFO migrations up to date');
     } catch (migErr: any) {
-        console.warn('🟠 Migration runner warning (critical schema patch will handle tables):', migErr?.message);
+        console.warn('🟠 Migration runner warning (critical schema patch ensures full table availability):', migErr?.message);
     }
 
-    await ensureCriticalSchema(knex);
     await seedInitialData(knex);
 }
 
