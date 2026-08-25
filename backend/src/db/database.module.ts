@@ -14,11 +14,11 @@ import * as Knex from 'knex';
                 const knexConfig = {
                     client: 'mysql2',
                     connection: {
-                        host: configService.get<string>('DB_HOST'),
-                        port: configService.get<number>('DB_PORT') || 3306,
-                        user: configService.get<string>('DB_USER'),
-                        password: configService.get<string>('DB_PASSWORD'),
-                        database: configService.get<string>('DB_NAME'),
+                        host: configService.get<string>('DB_HOST') || '127.0.0.1',
+                        port: Number(configService.get<number>('DB_PORT')) || 3306,
+                        user: configService.get<string>('DB_USER') || 'karim',
+                        password: configService.get<string>('DB_PASSWORD') || '636363',
+                        database: configService.get<string>('DB_NAME') || configService.get<string>('DB_DATABASE') || 'rootstunisiadb',
                         charset: 'utf8mb4',
                     },
                     pool: {
