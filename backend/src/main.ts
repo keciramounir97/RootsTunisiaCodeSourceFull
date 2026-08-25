@@ -554,15 +554,31 @@ async function seedInitialData(knex: Knex) {
             ];
 
             const uploadsDir = path.join(process.cwd(), 'uploads');
+            const defaultsDir = path.join(process.cwd(), 'public', 'defaults');
+            if (!fs.existsSync(uploadsDir)) {
+                fs.mkdirSync(uploadsDir, { recursive: true });
+            }
+
             for (const item of galleryItems) {
                 const existing = await knex('gallery').where({ title: item.title }).first();
                 if (!existing) {
-                    const filePath = path.join(uploadsDir, item.filename);
+                    const uploadFilePath = path.join(uploadsDir, item.filename);
+                    const defaultFilePath = path.join(defaultsDir, item.filename);
                     let imageData: Buffer | null = null;
                     const mimeType = item.filename.endsWith('.png') ? 'image/png' : 'image/jpeg';
-                    if (fs.existsSync(filePath)) {
+
+                    if (fs.existsSync(defaultFilePath) && !fs.existsSync(uploadFilePath)) {
                         try {
-                            imageData = fs.readFileSync(filePath);
+                            fs.copyFileSync(defaultFilePath, uploadFilePath);
+                        } catch {
+                            // ignore
+                        }
+                    }
+
+                    const targetFile = fs.existsSync(uploadFilePath) ? uploadFilePath : defaultFilePath;
+                    if (fs.existsSync(targetFile)) {
+                        try {
+                            imageData = fs.readFileSync(targetFile);
                         } catch {
                             // ignore
                         }
