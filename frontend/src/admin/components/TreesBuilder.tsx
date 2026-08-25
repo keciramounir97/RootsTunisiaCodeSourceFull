@@ -1,0 +1,5460 @@
+/* eslint-disable react-hooks/set-state-in-effect */
+// @ts-nocheck
+const SOURCE_HOST_LABELS: Array<[string, string]> = [
+  ["gallica.bnf.fr", "Gallica (BnF)"],
+  ["familysearch.org", "FamilySearch"],
+  ["geneanet.org", "Geneanet"],
+  ["ancestry.", "Ancestry"],
+  ["archives.gov", "National Archives (US)"],
+  ["archive.org", "Internet Archive"],
+  ["nationalarchives.gov.uk", "National Archives (UK)"],
+  ["archives.gov.ma", "National Archives of Tunisia"],
+];
+
+export function isDomainOrHostString(str: string): boolean {
+  if (!str) return true;
+  const s = String(str).trim().toLowerCase();
+  if (
+    s.includes("api.roots") ||
+    s.includes("RootsTunisia") ||
+    s === "localhost" ||
+    s.startsWith("localhost:") ||
+    s.startsWith("http://") ||
+    s.startsWith("https://")
+  ) {
+    return true;
+  }
+  if (/\.(pdf|docx?|txt|png|jpe?g|gif|webp|mp3|wav|ogg|m4a|ged|gedx|json|xml)$/i.test(s)) {
+    return false;
+  }
+  if (/^([a-z0-9-]+\.)+[a-z]{2,}(:\d+)?$/i.test(s)) {
+    return true;
+  }
+  return false;
+}
+
+export function sanitizeLinkLabel(
+  titleHint: string | undefined,
+  urlStr: string | undefined,
+  kind: string = "document"
+): string {
+  const cleanTitle = (titleHint || "").trim();
+  if (cleanTitle && !isDomainOrHostString(cleanTitle)) {
+    return cleanTitle;
+  }
+
+  if (urlStr) {
+    let cleanUrl = String(urlStr).trim().split("?")[0].split("#")[0].replace(/\/+$/, "");
+    try {
+      cleanUrl = decodeURIComponent(cleanUrl);
+    } catch {}
+
+    if (/^https?:\/\//i.test(cleanUrl)) {
+      try {
+        const host = new URL(cleanUrl).hostname.replace(/^www\./, "").toLowerCase();
+        const known = SOURCE_HOST_LABELS.find(([h]) => host.includes(h));
+        if (known) return known[1];
+      } catch {}
+    }
+
+    const lastSegment = cleanUrl.split("/").pop() || "";
+    if (lastSegment && !isDomainOrHostString(lastSegment) && /\.[a-z0-9]+$/i.test(lastSegment)) {
+      return lastSegment;
+    }
+  }
+
+  if (kind === "image" || kind === "photo" || kind === "gallery") return "Photo";
+  if (kind === "audio") return "Audio";
+  if (kind === "document") return "Document";
+  return "External Link";
+}
+
+
+/* eslint-disable react-hooks/set-state-in-effect */
+// @ts-nocheck
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, memo } from "react";
+import { createPortal } from "react-dom";
+
+import * as d3 from "d3";
+
+import {
+  Archive,
+  BookOpen,
+  FileText,
+  Image as ImageIcon,
+  Download,
+  Link2,
+  ExternalLink,
+  LocateFixed,
+  Music,
+  Plus,
+  Pencil,
+  Search,
+  Trash2,
+  Upload,
+  UserRound,
+  FileCode2,
+  Network,
+  ChevronDown,
+  X,
+} from "lucide-react";
+
+import { useThemeStore } from "../../store/theme";
+
+import { useLanguage } from "../../i18n";
+
+import { getApiRoot } from "../../api/helpers";
+import { api } from "../../api/client";
+import { requestWithFallback, shouldFallbackRoute } from "../../api/helpers";
+import RequestDownloadButton from "../../components/RequestDownloadButton";
+
+const CARD_W = 220;
+
+const CARD_H = 120;
+
+// Sentinel used as the "no custom color chosen" default when a person is created/edited.
+// Persisted records almost universally carry this value, so it must NOT be treated as an
+// intentional theme override at render time (see resolveCardFill/getContrastTextColor below).
+const DEFAULT_CARD_COLOR = "#f5f1e8";
+
+function resolveCardFill(color, isDark) {
+  const hasCustomColor = Boolean(color) && color !== DEFAULT_CARD_COLOR;
+  if (hasCustomColor) return color;
+  return isDark ? "#0d1b2a" : "#f5f1e8";
+}
+
+// Picks readable text based on the actual resolved background's luminance, rather than
+// trusting the theme flag alone — a custom-colored card can be light even in dark mode.
+function getContrastTextColor(bgHex) {
+  const hex = String(bgHex || "").replace("#", "");
+  if (hex.length !== 6) return "#0d1b2a";
+  const r = parseInt(hex.slice(0, 2), 16);
+  const g = parseInt(hex.slice(2, 4), 16);
+  const b = parseInt(hex.slice(4, 6), 16);
+  if ([r, g, b].some((channel) => Number.isNaN(channel))) return "#0d1b2a";
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return luminance > 0.55 ? "#0d1b2a" : "#f5f1e8";
+}
+
+const MAX_GEDCOM_BYTES = 50 * 1024 * 1024;
+
+const GEDCOM_EXTENSIONS = new Set(["ged", "gedcom"]);
+
+/** GEDCOM X: import/export XML, JSON, and .gedx */
+const GEDCOM_X_EXTENSIONS = new Set(["xml", "json", "gedx"]);
+const GEDCOM_X_COUPLE = "http://gedcomx.org/Couple";
+const GEDCOM_X_PARENT_CHILD = "http://gedcomx.org/ParentChild";
+const GEDCOM_X_BIRTH = "http://gedcomx.org/Birth";
+const GEDCOM_X_DEATH = "http://gedcomx.org/Death";
+const GEDCOM_X_MALE = "http://gedcomx.org/Male";
+const GEDCOM_X_FEMALE = "http://gedcomx.org/Female";
+const GEDCOM_X_GIVEN = "http://gedcomx.org/Given";
+const GEDCOM_X_SURNAME = "http://gedcomx.org/Surname";
+
+const uid = () => String(Date.now() + Math.floor(Math.random() * 10000));
+
+const normalizeSpaces = (value) =>
+  String(value || "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+const normalizeSourceLinks = (links) => {
+  const seen = new Set();
+  const cleaned = [];
+  for (const link of Array.isArray(links) ? links : []) {
+    const trimmed = normalizeSpaces(link);
+    const key = trimmed.toLowerCase();
+    if (!trimmed || seen.has(key)) continue;
+    seen.add(key);
+    cleaned.push(trimmed);
+  }
+  return cleaned;
+};
+
+const getFileExtension = (name) => {
+  const parts = String(name || "")
+    .toLowerCase()
+    .split(".");
+  return parts.length > 1 ? parts.pop() : "";
+};
+
+const hasGedcomIndividuals = (text) =>
+  /(^|\r?\n)\s*0\s+@?[^\r\n]*\bINDI\b/i.test(String(text || ""));
+
+const URL_IN_TEXT_RE = /https?:\/\/[^\s"'<>()\[\]]+/gi;
+
+const LOCAL_DOC_RE = /^\.?\/?(?:private_)?uploads\//i;
+const LOCAL_DOC_IN_TEXT_RE =
+  /(?:^|[\s("'=:])(\.?\/?(?:private_)?uploads\/[^\s"'<>()\[\]]+)/gi;
+const MEDIA_RESPONSE_KEYS = ["documents", "images", "audios", "books", "items", "data", "rows", "records", "files", "results", "media", "uploads"];
+
+// Friendly labels for well-known trusted archives; anything else shows its hostname.
+
+
+const collectUrlsFromText = (value) => {
+  const text = String(value || "");
+  return text.match(URL_IN_TEXT_RE) || [];
+};
+
+const addUniqueSourceLink = (links, raw) => {
+  const value = String(raw || "").trim();
+  if (!value) return;
+  const urls = collectUrlsFromText(value);
+  const candidates = urls.length ? urls : [value];
+  for (const candidate of candidates) {
+    const link = String(candidate || "").trim().replace(/[).,;]+$/, "");
+    if (!link || (!/^https?:\/\//i.test(link) && !LOCAL_DOC_RE.test(link))) continue;
+    if (!links.some((existing) => String(existing).toLowerCase() === link.toLowerCase())) {
+      links.push(link);
+    }
+  }
+};
+
+/**
+ * Collect every source/document link attached to a person: explicit link tags
+ * (OBJE/FILE, WWW, _URL, _LINK) plus URLs or local upload paths embedded in the
+ * archive source, document code, or notes text. Local `uploads/...` paths are
+ * resolved against the API root so they open the hosted document.
+ */
+export function extractPersonLinks(person) {
+  if (!person) return [];
+  const links = [];
+  const seen = new Set();
+  const apiBase = String(getApiRoot() || "").replace(/\/+$/, "").replace(/\/api$/, "");
+
+  const addExternal = (urlStr, titleStr = "") => {
+    let url = String(urlStr || "").trim().replace(/[).,;]+$/, "");
+    if (!url) return;
+
+    if (!/^https?:\/\//i.test(url)) {
+      const pathname = url.startsWith("/") ? url : `/${url}`;
+      url = `${apiBase}${pathname}`;
+    }
+
+    const key = url.toLowerCase();
+    const popName = url.split("/").pop() || "";
+    const label = titleStr.trim() || (!isDomainOrHostString(popName) ? popName : "Link");
+    // Seen key combines URL and label to support linking with as many resources as the user wants, even with the same base URL.
+    const seenKey = `${key}::${label.toLowerCase()}`;
+    if (seen.has(seenKey)) return;
+    seen.add(seenKey);
+
+    let kind = "external";
+    const lower = url.toLowerCase();
+    if (/\.(pdf|docx?|txt)(?:[?#].*)?$/i.test(lower) || lower.includes("/uploads/documents/")) {
+      kind = "document";
+    } else if (/\.(mp3|wav|ogg|m4a)(?:[?#].*)?$/i.test(lower) || lower.includes("/uploads/audios/")) {
+      kind = "audio";
+    } else if (/\.(png|jpe?g|gif|webp)(?:[?#].*)?$/i.test(lower) || lower.includes("/uploads/gallery/")) {
+      kind = "image";
+    }
+
+    const path = lower.replace(apiBase.toLowerCase(), "");
+    if (/^\/(?:private_)?uploads\//i.test(path)) {
+      kind = "local";
+    }
+
+    const finalLabel = sanitizeLinkLabel(titleStr, url, kind);
+
+    links.push({
+      url,
+      label: finalLabel,
+      kind,
+      raw: titleStr ? `${titleStr} | ${urlStr}` : urlStr,
+    });
+  };
+
+  const processField = (rawText) => {
+    const text = String(rawText || "").trim();
+    if (!text) return;
+
+    if (text.includes(" | ")) {
+      const parts = text.split(" | ");
+      const title = parts[0].trim();
+      const target = parts.slice(1).join(" | ").trim();
+      addExternal(target, title);
+      return;
+    }
+
+    const mdMatch = text.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
+    if (mdMatch) {
+      addExternal(mdMatch[2].trim(), mdMatch[1].trim());
+      return;
+    }
+
+    // Extract all HTTP URLs
+    const urls = text.match(URL_IN_TEXT_RE);
+    let foundAny = false;
+    if (urls && urls.length) {
+      for (const u of urls) {
+        addExternal(u);
+        foundAny = true;
+      }
+    }
+
+    // Extract all local paths like /uploads/...
+    const localMatches = [...text.matchAll(LOCAL_DOC_IN_TEXT_RE)];
+    if (localMatches.length) {
+      for (const m of localMatches) {
+        if (m[1]) {
+          addExternal(m[1].trim());
+          foundAny = true;
+        }
+      }
+    }
+
+    if (!foundAny && (text.startsWith("/") || text.startsWith("uploads/") || text.startsWith("private_uploads/") || /^https?:\/\//i.test(text))) {
+      addExternal(text);
+    }
+  };
+
+  const fields = [];
+  if (Array.isArray(person.sourceLinks)) {
+    fields.push(...person.sourceLinks);
+  }
+  if (!person.sourceLinksManaged) {
+    for (const f of [person.archiveSource, person.documentCode, person.details]) {
+      if (f && !fields.includes(f)) fields.push(f);
+    }
+  }
+
+  for (const f of fields) {
+    processField(f);
+  }
+
+  return links;
+}
+
+export function updateEditableSourceLinks(person, sourceLinks) {
+  const seen = new Set();
+  const links = [];
+
+  for (const link of Array.isArray(sourceLinks) ? sourceLinks : []) {
+    const trimmed = String(link || "").trim();
+    const key = trimmed.toLowerCase();
+    if (!trimmed || seen.has(key)) continue;
+    seen.add(key);
+    links.push(trimmed);
+  }
+
+  return {
+    ...(person || {}),
+    sourceLinks: links,
+    sourceLinksManaged: true,
+  };
+}
+
+export function hydrateEditableSourceLinks(person) {
+  if (!person) return person;
+  if (person.sourceLinksManaged) {
+    return updateEditableSourceLinks(person, person.sourceLinks);
+  }
+
+  return updateEditableSourceLinks(
+    person,
+    extractPersonLinks(person).map((link) => {
+      if (link.kind !== "local") return link.url;
+      try {
+        return new URL(link.url).pathname;
+      } catch {
+        return link.url;
+      }
+    })
+  );
+}
+
+/**
+ * Every media kind on the site a person can be linked with. Each entry knows
+ * the API endpoints to try (admin → my → public), the uploads folder used to
+ * resolve bare file names, the fields that may hold the file path, and the
+ * response keys that may wrap the list.
+ */
+export const MEDIA_LINK_TYPES = {
+  document: {
+    endpoints: ["/admin/documents", "/my/documents", "/documents"],
+    folder: "documents",
+    pathFields: ["file_path", "filePath", "path", "url", "href"],
+    listKeys: ["documents", "items", "data"],
+  },
+  image: {
+    endpoints: ["/admin/gallery", "/my/gallery", "/gallery"],
+    folder: "gallery",
+    pathFields: ["imagePath", "image_path", "file_path", "filePath", "path", "url", "href"],
+    listKeys: ["images", "items", "data"],
+  },
+  audio: {
+    endpoints: ["/admin/audios", "/my/audios", "/audios"],
+    folder: "audios",
+    pathFields: ["audioPath", "audio_path", "file_path", "filePath", "path", "url", "href"],
+    listKeys: ["audios", "items", "data"],
+  },
+
+};
+
+export const DEFAULT_FALLBACK_MEDIA: Record<string, any[]> = {
+  document: [],
+  image: [],
+  audio: [],
+};
+
+export function getMediaSourceLink(item, mediaType = "document", apiRoot = getApiRoot()) {
+  const config = MEDIA_LINK_TYPES[mediaType] || MEDIA_LINK_TYPES.document;
+  const apiBase = String(apiRoot || "").replace(/\/+$/, "").replace(/\/api$/, "");
+  if (typeof item === "string") {
+    const value = String(item || "").trim();
+    if (!value) return "";
+    if (/^https?:\/\//i.test(value)) return value;
+    const pathname = value.startsWith("/") ? value : `/${value}`;
+    return `${apiBase}${pathname}`;
+  }
+  let raw = "";
+  for (const field of ["sourceUrl", "source_url", "download_url", "downloadUrl", "url", "href", "src", ...config.pathFields]) {
+    const candidate = item?.[field];
+    if (candidate !== undefined && candidate !== null && String(candidate).trim()) {
+      raw = candidate;
+      break;
+    }
+  }
+  const value = String(raw || "").trim();
+  if (!value) return "";
+  if (/^https?:\/\//i.test(value)) return value;
+  let pathname = value.startsWith("/") ? value : `/${value}`;
+  if (!pathname.startsWith("/uploads/")) {
+    pathname = `/uploads/${config.folder}/${value.replace(/^\/+/, "")}`;
+  }
+  return `${apiBase}${pathname}`;
+}
+
+export function getDocumentSourceLink(document, apiRoot = getApiRoot()) {
+  return getMediaSourceLink(document, "document", apiRoot);
+}
+
+export function normalizeExistingMediaResponse(
+  data,
+  mediaType = "document",
+  apiRoot = getApiRoot()
+) {
+  const config = MEDIA_LINK_TYPES[mediaType] || MEDIA_LINK_TYPES.document;
+  let list = Array.isArray(data) ? data : null;
+  if (!list) {
+    if (data?.success && Array.isArray(data?.data)) list = data.data;
+  }
+  if (!list) {
+    const collected = [];
+    const uniqueKeys = Array.from(new Set([...config.listKeys, ...MEDIA_RESPONSE_KEYS]));
+    for (const key of uniqueKeys) {
+      const value = data?.[key];
+      if (Array.isArray(value)) collected.push(...value);
+    }
+    if (collected.length) list = collected;
+  }
+  if (!list) list = [];
+
+  return list
+    .map((item) => {
+      const url = getMediaSourceLink(item, mediaType, apiRoot);
+      if (!url) return null;
+      const title =
+        item?.title ||
+        item?.name ||
+        item?.filename ||
+        item?.file_name ||
+        item?.original_name ||
+        item?.documentCode ||
+        item?.document_code ||
+        item?.label ||
+        (() => {
+      const popName = url.split("/").pop() || "";
+      return !isDomainOrHostString(popName) ? popName : (mediaType === "image" ? "Photo" : mediaType === "audio" ? "Audio" : "Document");
+    })() || "Document";
+      return {
+        ...item,
+        id: item?.id ?? url,
+        title,
+        sourceUrl: url,
+      };
+    })
+    .filter(Boolean);
+}
+
+export function normalizeExistingDocumentsResponse(data, apiRoot = getApiRoot()) {
+  return normalizeExistingMediaResponse(data, "document", apiRoot);
+}
+
+const createEmptyForm = () => ({
+  id: null,
+  name: "",
+  gender: "",
+  birthYear: "",
+  birthPlace: "",
+  deathDate: "",
+  deathPlace: "",
+  father: "",
+  mother: "",
+  spouse: "",
+  children: [],
+  details: "",
+  profession: "",
+  archiveSource: "",
+  documentCode: "",
+  sourceLinks: [],
+  sourceLinksManaged: false,
+  reliability: "",
+  color: "#f5f1e8",
+});
+
+/**
+ * Memoized PersonListItem - Prevents re-renders when list updates
+ * Only re-renders when its own props change (item, active, onClick, inputText)
+ */
+const PersonListItem = memo(function PersonListItem({
+  item,
+  active,
+  onClick,
+  inputText,
+}: any) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={!!active}
+      className={`w-full text-left p-3 rounded-xl border transition-all duration-200 group focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 ${
+        active
+          ? "border-transparent text-white shadow-md scale-[1.02] focus-visible:outline-white"
+          : `bg-white dark:bg-[#0d1b2a]/30 border-transparent hover:border-[#0d9488]/50 hover:bg-[#0c4a6e]/5 dark:hover:bg-[#0d9488]/10 focus-visible:outline-[#0c4a6e] dark:focus-visible:outline-[#5eead4] ${inputText}`
+      }`}
+      style={
+        active
+          ? { background: "linear-gradient(145deg, #1f7aa8, #0a3550)" }
+          : undefined
+      }
+    >
+      <div className="flex justify-between items-center">
+        <div className="flex items-center gap-3">
+          <div
+            className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border ${active
+                ? "bg-white/20 border-white/40 text-white"
+                : "bg-[#0c4a6e]/10 border-[#0c4a6e]/20 text-[#0c4a6e] dark:text-[#0d9488] dark:border-[#0d9488]/20"
+              }`}
+          >
+            {item.name.charAt(0).toUpperCase()}
+          </div>
+          <span className="font-serif font-medium text-base">{item.name}</span>
+        </div>
+        <span className={`text-xs font-medium ${active ? "opacity-90" : "opacity-80"}`}>
+          {item.person.birthYear || "-"}
+        </span>
+      </div>
+    </button>
+  );
+});
+
+/**
+ * Dropdown menu rendered through a portal into document.body with
+ * fixed positioning computed from the trigger element. The person
+ * details modal scrolls its own content (`overflow-y-auto`), and an
+ * `absolute`-positioned menu anchored inside it would get clipped by
+ * that ancestor once the panel scrolls — this escapes that stacking
+ * context entirely. Closes on outside click, Escape, scroll, or resize.
+ */
+const AnchoredMenu = ({ open, anchorRef, onClose, align = "start", children }: any) => {
+  const menuRef = useRef(null);
+  const [position, setPosition] = useState({ top: 0, left: 0, width: 0 });
+
+  useLayoutEffect(() => {
+    if (!open) return undefined;
+
+    const place = () => {
+      const anchor = anchorRef.current;
+      if (!anchor) return;
+      const rect = anchor.getBoundingClientRect();
+      const menuWidth = menuRef.current?.offsetWidth || rect.width;
+      let left = align === "end" ? rect.right - menuWidth : rect.left;
+      left = Math.min(Math.max(8, left), window.innerWidth - menuWidth - 8);
+      setPosition({ top: rect.bottom + 8, left, width: rect.width });
+    };
+
+    place();
+    window.addEventListener("resize", place);
+    window.addEventListener("scroll", place, true);
+    return () => {
+      window.removeEventListener("resize", place);
+      window.removeEventListener("scroll", place, true);
+    };
+  }, [open, anchorRef, align]);
+
+  useEffect(() => {
+    if (!open) return undefined;
+    const handlePointer = (event) => {
+      if (anchorRef.current?.contains(event.target)) return;
+      if (menuRef.current?.contains(event.target)) return;
+      onClose();
+    };
+    const handleKey = (event) => {
+      if (event.key === "Escape") onClose();
+    };
+    document.addEventListener("mousedown", handlePointer);
+    document.addEventListener("keydown", handleKey);
+    return () => {
+      document.removeEventListener("mousedown", handlePointer);
+      document.removeEventListener("keydown", handleKey);
+    };
+  }, [open, anchorRef, onClose]);
+
+  if (!open || typeof document === "undefined") return null;
+
+  return createPortal(
+    <div
+      ref={menuRef}
+      role="menu"
+      className="neu-menu fixed z-[2100] min-w-[220px] overflow-hidden py-1.5"
+      style={{ top: position.top, left: position.left }}
+    >
+      {children}
+    </div>,
+    document.body
+  );
+};
+
+const normalizeGenderValue = (value) => {
+  const normalized = String(value || "")
+    .trim()
+    .toLowerCase();
+  if (!normalized) return "";
+  if (normalized.startsWith("m")) return "M";
+  if (normalized.startsWith("f")) return "F";
+  return "";
+};
+
+const splitName = (raw) => {
+  const cleaned = normalizeSpaces(raw);
+
+  if (!cleaned) return { full: "", given: "", surname: "" };
+
+  const slashMatch = cleaned.match(/^(.*?)\/([^/]+)\/?(.*)$/);
+
+  if (slashMatch) {
+    const given = normalizeSpaces(slashMatch[1]);
+
+    const surname = normalizeSpaces(slashMatch[2]);
+
+    const suffix = normalizeSpaces(slashMatch[3]);
+
+    const full = normalizeSpaces(
+      [given, surname, suffix].filter(Boolean).join(" ")
+    );
+
+    return { full: full || cleaned.replace(/\//g, " "), given, surname };
+  }
+
+  if (cleaned.includes(",")) {
+    const [surnameRaw, givenRaw] = cleaned.split(",", 2);
+
+    const surname = normalizeSpaces(surnameRaw);
+
+    const given = normalizeSpaces(givenRaw);
+
+    const full = normalizeSpaces([given, surname].filter(Boolean).join(" "));
+
+    return { full: full || cleaned, given, surname };
+  }
+
+  const parts = cleaned.split(" ").filter(Boolean);
+
+  if (parts.length > 1) {
+    const surname = parts[parts.length - 1];
+
+    const given = parts.slice(0, -1).join(" ");
+
+    return { full: cleaned, given, surname };
+  }
+
+  return { full: cleaned, given: cleaned, surname: "" };
+};
+
+/** ===== GEDCOM PARSE / BUILD (kept, just supports details + children) ===== */
+
+// eslint-disable-next-line react-refresh/only-export-components
+export const parseGedcom = (raw) => {
+  const text = String(raw || "").replace(/^\uFEFF/, "");
+
+  const persons = new Map();
+
+  const families = new Map();
+
+  let currentType = null;
+
+  let currentId = null;
+
+  let inBirth = false;
+
+  let inDeath = false;
+
+  let inObje = false;
+
+  let noteTarget = null;
+
+  const ensurePerson = (id) => {
+    const key = String(id || "");
+
+    if (!key) return null;
+
+    if (!persons.has(key)) {
+      persons.set(key, {
+        id: key,
+
+        names: {},
+
+        gender: "",
+
+        birthYear: "",
+
+        birthPlace: "",
+
+        deathDate: "",
+
+        deathPlace: "",
+
+        profession: "",
+
+        archiveSource: "",
+
+        documentCode: "",
+
+        reliability: "",
+
+        sourceLinks: [],
+        sourceLinksManaged: false,
+
+        details: "",
+
+        color: "",
+
+        famc: null,
+
+        fams: [],
+
+        father: null,
+
+        mother: null,
+
+        spouse: null,
+
+        children: [],
+
+        given: "",
+
+        surname: "",
+      });
+    }
+
+    return persons.get(key);
+  };
+
+  const ensureFamily = (id) => {
+    const key = String(id || "");
+
+    if (!key) return null;
+
+    if (!families.has(key)) {
+      families.set(key, { id: key, husb: null, wife: null, chil: [] });
+    }
+
+    return families.get(key);
+  };
+
+  const mergeField = (current, incoming) => {
+    const next = normalizeSpaces(incoming);
+    if (!next) return current || "";
+    if (!current) return next;
+    if (String(current).includes(next)) return current;
+    return `${current}; ${next}`;
+  };
+
+  const finalizeNote = () => {
+    if (!noteTarget) return;
+
+    const p = ensurePerson(noteTarget.id);
+
+    if (p) {
+      const note = String(noteTarget.text || "").trim();
+
+      if (note) p.details = note;
+    }
+
+    noteTarget = null;
+  };
+
+  const lines = text.split(/\r\n|\n|\r/);
+
+  for (const rawLine of lines) {
+    const line = String(rawLine || "").trim();
+
+    if (!line) continue;
+
+    const parts = line.split(/\s+/);
+
+    const level = Number(parts[0]);
+
+    if (noteTarget && !Number.isNaN(level) && level <= noteTarget.level) {
+      finalizeNote();
+    }
+
+    if (parts[0] === "0") {
+      finalizeNote();
+
+      inBirth = false;
+
+      inDeath = false;
+
+      inObje = false;
+
+      const hasPointer = String(parts[1] || "").startsWith("@");
+
+      const pointer = hasPointer ? parts[1] : null;
+
+      const tag = hasPointer ? parts[2] : parts[1];
+
+      if (tag === "INDI" && pointer) {
+        currentType = "INDI";
+
+        currentId = pointer;
+
+        ensurePerson(pointer);
+
+        continue;
+      }
+
+      if (tag === "FAM" && pointer) {
+        currentType = "FAM";
+
+        currentId = pointer;
+
+        ensureFamily(pointer);
+
+        continue;
+      }
+
+      currentType = null;
+
+      currentId = null;
+
+      continue;
+    }
+
+    if (!currentType || !currentId) continue;
+
+    if (currentType === "INDI") {
+      const p = ensurePerson(currentId);
+
+      const tag = parts[1];
+
+      const value = parts.slice(2).join(" ").trim();
+
+      if (inObje && level <= 1 && tag !== "OBJE") inObje = false;
+
+      if (noteTarget && (tag === "CONT" || tag === "CONC")) {
+        noteTarget.text += tag === "CONT" ? `\n${value}` : value;
+
+        continue;
+      }
+
+      if (tag === "NAME") {
+        const rawName = value;
+
+        if (rawName) {
+          const parsed = splitName(rawName);
+
+          if (parsed.full) p.names.en = parsed.full;
+
+          if (parsed.given) p.given = parsed.given;
+
+          if (parsed.surname) p.surname = parsed.surname;
+        }
+
+        continue;
+      }
+
+      if (tag === "GIVN") {
+        p.given = value;
+
+        continue;
+      }
+
+      if (tag === "SURN") {
+        p.surname = value;
+
+        continue;
+      }
+
+      if (tag === "SEX") {
+        p.gender = value;
+
+        continue;
+      }
+
+      if (tag === "BIRT") {
+        inBirth = true;
+
+        if (value) {
+          const cleaned = normalizeSpaces(value);
+
+          p.birthYear = cleaned || p.birthYear;
+
+          inBirth = false;
+        }
+
+        continue;
+      }
+
+      if (inBirth && tag === "DATE") {
+        const cleaned = normalizeSpaces(value);
+
+        p.birthYear = cleaned || p.birthYear;
+
+        inBirth = false;
+
+        continue;
+      }
+
+      if (inBirth && tag === "PLAC") {
+        p.birthPlace = normalizeSpaces(value);
+
+        continue;
+      }
+
+      if (tag === "DEAT") {
+        inDeath = true;
+
+        if (value) {
+          const cleaned = normalizeSpaces(value);
+
+          if (cleaned && cleaned !== "Y") p.deathDate = cleaned;
+
+          inDeath = false;
+        }
+
+        continue;
+      }
+
+      if (inDeath && tag === "DATE") {
+        const cleaned = normalizeSpaces(value);
+
+        if (cleaned && cleaned !== "Y") p.deathDate = cleaned;
+
+        inDeath = false;
+
+        continue;
+      }
+
+      if (inDeath && tag === "PLAC") {
+        p.deathPlace = normalizeSpaces(value);
+
+        continue;
+      }
+
+      if (tag === "NOTE") {
+        noteTarget = { id: currentId, level, text: value };
+
+        continue;
+      }
+
+      if (tag === "OCCU") {
+        p.profession = value;
+
+        continue;
+      }
+
+      if (tag === "SOUR") {
+        p.archiveSource = mergeField(p.archiveSource, value);
+
+        continue;
+      }
+
+      if (tag === "OBJE") {
+        inObje = true;
+
+        continue;
+      }
+
+      if (inObje && tag === "FILE") {
+        if (value && !p.sourceLinks.includes(value)) p.sourceLinks.push(value);
+
+        continue;
+      }
+
+      if (tag === "WWW" || tag === "URL" || tag === "_URL" || tag === "_LINK") {
+        if (value && !p.sourceLinks.includes(value)) p.sourceLinks.push(value);
+
+        continue;
+      }
+
+      if (tag === "REFN" || tag === "_DOC") {
+        p.documentCode = mergeField(p.documentCode, value);
+
+        continue;
+      }
+
+      if (tag === "_SOURCELINK" || tag === "_LINK") {
+        if (value && !p.sourceLinks.includes(value)) p.sourceLinks.push(value);
+
+        continue;
+      }
+
+      if (tag === "_RELI" || tag === "RELI") {
+        p.reliability = value;
+
+        continue;
+      }
+
+      if (tag === "_COLOR" || tag === "COLOR") {
+        p.color = value;
+
+        continue;
+      }
+
+      if (tag === "_SLINK_MANAGED") {
+        p.sourceLinksManaged = /^(Y|TRUE|1)$/i.test(value);
+
+        continue;
+      }
+
+      if (tag === "FAMC") {
+        p.famc = value;
+
+        continue;
+      }
+
+      if (tag === "FAMS") {
+        if (value) p.fams.push(value);
+      }
+    }
+
+    if (currentType === "FAM") {
+      const f = ensureFamily(currentId);
+
+      const tag = parts[1];
+
+      if (tag === "HUSB") f.husb = String(parts[2] || "").trim();
+
+      if (tag === "WIFE") f.wife = String(parts[2] || "").trim();
+
+      if (tag === "CHIL") {
+        const childId = String(parts[2] || "").trim();
+
+        if (childId) f.chil.push(childId);
+      }
+    }
+  }
+
+  finalizeNote();
+
+  for (const p of persons.values()) {
+    const given = normalizeSpaces(p.given);
+
+    const surname = normalizeSpaces(p.surname);
+
+    if (given || surname) {
+      const combined = normalizeSpaces(
+        [given, surname].filter(Boolean).join(" ")
+      );
+
+      if (combined) p.names.en = combined;
+    } else if (p.names?.en) {
+      const parsed = splitName(p.names.en);
+
+      if (parsed.given) p.given = parsed.given;
+
+      if (parsed.surname) p.surname = parsed.surname;
+    }
+  }
+
+  // Set father/mother from famc
+
+  for (const p of persons.values()) {
+    const fam = p.famc ? families.get(p.famc) : null;
+
+    if (fam) {
+      p.father = fam.husb || null;
+
+      p.mother = fam.wife || null;
+    }
+  }
+
+  // Set spouse from fams
+
+  for (const f of families.values()) {
+    if (f.husb && f.wife) {
+      const a = persons.get(f.husb);
+
+      const b = persons.get(f.wife);
+
+      if (a && !a.spouse) a.spouse = f.wife;
+
+      if (b && !b.spouse) b.spouse = f.husb;
+    }
+
+    // Set children arrays on parents
+
+    for (const child of f.chil || []) {
+      if (f.husb && persons.get(f.husb)) {
+        const dad = persons.get(f.husb);
+
+        if (!dad.children.includes(child)) dad.children.push(child);
+      }
+
+      if (f.wife && persons.get(f.wife)) {
+        const mom = persons.get(f.wife);
+
+        if (!mom.children.includes(child)) mom.children.push(child);
+      }
+    }
+  }
+
+  return Array.from(persons.values());
+};
+
+// gedcomVersion: '5.5.1' | '7.0' for HEAD VERS line
+// eslint-disable-next-line react-refresh/only-export-components
+export const buildGedcom = (people, locale, t, gedcomVersion = "5.5.1") => {
+  const safeName = (p) => {
+    const names = p?.names || {};
+
+    const raw =
+      names?.[locale] ||
+      names?.en ||
+      names?.fr ||
+      names?.ar ||
+      names?.es ||
+      t("legacy.unknown", "Unknown");
+
+    return normalizeSpaces(String(raw).replace(/\r?\n/g, " "));
+  };
+
+  const namePartsFor = (p) => {
+    const raw = safeName(p);
+
+    const given = normalizeSpaces(p?.given);
+
+    const surname = normalizeSpaces(p?.surname);
+
+    if (given || surname) {
+      const full = normalizeSpaces([given, surname].filter(Boolean).join(" "));
+
+      return { full: full || raw, given, surname };
+    }
+
+    return splitName(raw);
+  };
+
+  const byId = new Map();
+
+  for (const p of people) byId.set(String(p.id), p);
+
+  const idMap = new Map();
+
+  let indiIndex = 1;
+
+  for (const p of people) idMap.set(String(p.id), `@I${indiIndex++}@`);
+
+  const families = new Map(); // key -> { id, husbId, wifeId, children: [] }
+
+  const pairIndex = new Map();
+
+  let famIndex = 1;
+
+  const ensureFamily = (key) => {
+    const k = String(key || "");
+
+    if (!families.has(k)) {
+      families.set(k, {
+        id: `@F${famIndex++}@`,
+
+        husbId: "",
+
+        wifeId: "",
+
+        children: [],
+      });
+    }
+
+    return families.get(k);
+  };
+
+  const pairKey = (a, b) => {
+    const aId = String(a || "").trim();
+
+    const bId = String(b || "").trim();
+
+    if (!aId || !bId) return null;
+
+    return [aId, bId].sort().join("|");
+  };
+
+  const ensurePairFamily = (aId, bId, fallbackKey) => {
+    const pair = pairKey(aId, bId);
+
+    if (pair && pairIndex.has(pair)) {
+      return families.get(pairIndex.get(pair));
+    }
+
+    const fam = ensureFamily(fallbackKey);
+
+    if (pair) pairIndex.set(pair, fallbackKey);
+
+    return fam;
+  };
+
+  const setFamilyParents = (fam, husbId, wifeId) => {
+    if (husbId && !fam.husbId) fam.husbId = husbId;
+
+    if (wifeId && !fam.wifeId) fam.wifeId = wifeId;
+  };
+
+  const parentKey = (fatherId, motherId) =>
+    `P:${String(fatherId || "")}|${String(motherId || "")}`;
+
+  const spouseKey = (a, b) => `S:${[String(a), String(b)].sort().join("|")}`;
+
+  const famcByPerson = new Map(); // personId -> famId
+
+  const famsByPerson = new Map(); // personId -> Set(famId)
+
+  const addFams = (personId, famId) => {
+    const pid = String(personId || "");
+
+    const fid = String(famId || "");
+
+    if (!pid || !fid) return;
+
+    if (!famsByPerson.has(pid)) famsByPerson.set(pid, new Set());
+
+    famsByPerson.get(pid).add(fid);
+  };
+
+  const resolveSpouseRoles = (aId, bId) => {
+    const pa = byId.get(aId);
+
+    const pb = byId.get(bId);
+
+    const ag = String(pa?.gender || "").toUpperCase();
+
+    const bg = String(pb?.gender || "").toUpperCase();
+
+    if (ag.startsWith("F") && bg.startsWith("M")) {
+      return { husbId: bId, wifeId: aId };
+    }
+
+    if (ag.startsWith("M") && bg.startsWith("F")) {
+      return { husbId: aId, wifeId: bId };
+    }
+
+    const sorted = [aId, bId].sort();
+
+    return { husbId: sorted[0], wifeId: sorted[1] };
+  };
+
+  // Parent links (from father/mother)
+
+  for (const p of people) {
+    if (!p.father && !p.mother) continue;
+
+    const fatherId = p.father ? String(p.father) : "";
+
+    const motherId = p.mother ? String(p.mother) : "";
+
+    const fam = ensurePairFamily(
+      fatherId,
+
+      motherId,
+
+      parentKey(fatherId, motherId)
+    );
+
+    if (fatherId && idMap.has(fatherId)) setFamilyParents(fam, fatherId, "");
+
+    if (motherId && idMap.has(motherId)) setFamilyParents(fam, "", motherId);
+
+    const childId = String(p.id);
+
+    if (idMap.has(childId) && !fam.children.includes(childId))
+      fam.children.push(childId);
+
+    famcByPerson.set(childId, fam.id);
+
+    if (fatherId) addFams(fatherId, fam.id);
+
+    if (motherId) addFams(motherId, fam.id);
+  }
+
+  // Also include children arrays (if used)
+
+  for (const p of people) {
+    const pid = String(p.id);
+
+    const ch = Array.isArray(p.children) ? p.children : [];
+
+    for (const childIdRaw of ch) {
+      const childId = String(childIdRaw || "");
+
+      if (!childId || !idMap.has(childId)) continue;
+
+      // try to build family with spouse if exists, else single parent family
+
+      const spouseId = p.spouse ? String(p.spouse) : "";
+
+      let husbId = "";
+
+      let wifeId = "";
+
+      if (spouseId) {
+        const roles = resolveSpouseRoles(pid, spouseId);
+
+        husbId = roles.husbId;
+
+        wifeId = roles.wifeId;
+      } else {
+        const g = String(p.gender || "").toUpperCase();
+
+        if (g.startsWith("F")) {
+          wifeId = pid;
+        } else {
+          husbId = pid;
+        }
+      }
+
+      const fam = ensurePairFamily(
+        husbId,
+
+        wifeId,
+
+        parentKey(husbId || pid, wifeId || spouseId)
+      );
+
+      if (idMap.has(husbId)) setFamilyParents(fam, husbId, "");
+
+      if (idMap.has(wifeId)) setFamilyParents(fam, "", wifeId);
+
+      if (!fam.children.includes(childId)) fam.children.push(childId);
+
+      famcByPerson.set(childId, fam.id);
+
+      if (husbId) addFams(husbId, fam.id);
+
+      if (wifeId) addFams(wifeId, fam.id);
+    }
+  }
+
+  // Spouse links
+
+  for (const p of people) {
+    if (!p.spouse) continue;
+
+    const a = String(p.id);
+
+    const b = String(p.spouse);
+
+    if (!idMap.has(a) || !idMap.has(b)) continue;
+
+    const roles = resolveSpouseRoles(a, b);
+
+    const fam = ensurePairFamily(roles.husbId, roles.wifeId, spouseKey(a, b));
+
+    if (!fam.husbId && !fam.wifeId) {
+      fam.husbId = roles.husbId;
+
+      fam.wifeId = roles.wifeId;
+    }
+
+    addFams(a, fam.id);
+
+    addFams(b, fam.id);
+  }
+
+  const lines = [];
+
+  lines.push("0 HEAD");
+
+  lines.push("1 SOUR RootsTunisia");
+
+  lines.push("1 GEDC");
+
+  lines.push(`2 VERS ${gedcomVersion}`);
+
+  lines.push("2 FORM LINEAGE-LINKED");
+
+  lines.push("1 CHAR UTF-8");
+
+  for (const p of people) {
+    const pid = String(p.id);
+
+    const indiId = idMap.get(pid);
+
+    lines.push(`0 ${indiId} INDI`);
+
+    const nameParts = namePartsFor(p);
+
+    const nameLine = nameParts.surname
+      ? `${nameParts.given} /${nameParts.surname}/`.trim()
+      : nameParts.full;
+
+    lines.push(`1 NAME ${nameLine || t("legacy.unknown", "Unknown")}`);
+
+    if (nameParts.given) lines.push(`1 GIVN ${nameParts.given}`);
+
+    if (nameParts.surname) lines.push(`1 SURN ${nameParts.surname}`);
+
+    if (p.gender) lines.push(`1 SEX ${String(p.gender).slice(0, 1)}`);
+
+    if (p.birthYear || p.birthPlace) {
+      lines.push("1 BIRT");
+
+      if (p.birthYear) lines.push(`2 DATE ${String(p.birthYear)}`);
+      if (p.birthPlace) lines.push(`2 PLAC ${String(p.birthPlace)}`);
+    }
+
+    if (p.deathDate || p.deathPlace) {
+      const death = String(p.deathDate || "").trim();
+
+      lines.push("1 DEAT");
+
+      if (death) lines.push(`2 DATE ${death}`);
+      if (p.deathPlace) lines.push(`2 PLAC ${String(p.deathPlace)}`);
+    }
+
+    if (p.details) {
+      const noteLines = String(p.details || "")
+        .split(/\r?\n/)
+
+        .map((l) => l.trim())
+
+        .filter(Boolean);
+
+      if (noteLines.length) {
+        lines.push(`1 NOTE ${noteLines[0]}`);
+
+        for (const extra of noteLines.slice(1)) {
+          lines.push(`2 CONT ${extra}`);
+        }
+      }
+    }
+
+    if (p.profession) {
+      lines.push(`1 OCCU ${String(p.profession).trim()}`);
+    }
+
+    if (p.archiveSource) {
+      lines.push(`1 SOUR ${String(p.archiveSource).trim()}`);
+    }
+
+    if (p.documentCode) {
+      lines.push(`1 REFN ${String(p.documentCode).trim()}`);
+    }
+
+    if (Array.isArray(p.sourceLinks) && p.sourceLinks.length) {
+      for (const link of p.sourceLinks) {
+        const trimmed = String(link || "").trim();
+        if (!trimmed) continue;
+        lines.push(`1 _SOURCELINK ${trimmed}`);
+      }
+    }
+
+    if (p.reliability) {
+      lines.push(`1 _RELI ${String(p.reliability).trim()}`);
+    }
+
+    if (Array.isArray(p.sourceLinks)) {
+      for (const link of p.sourceLinks) {
+        const trimmed = String(link || "").trim();
+        if (!trimmed) continue;
+        lines.push("1 OBJE");
+        lines.push(`2 FILE ${trimmed}`);
+      }
+    }
+
+    if (p.sourceLinksManaged) {
+      lines.push("1 _SLINK_MANAGED Y");
+    }
+
+    if (p.color) lines.push(`1 _COLOR ${String(p.color).trim()}`);
+
+    const famc = famcByPerson.get(pid);
+
+    if (famc) lines.push(`1 FAMC ${famc}`);
+
+    const fams = famsByPerson.get(pid);
+
+    if (fams && fams.size) {
+      for (const famId of Array.from(fams).sort())
+        lines.push(`1 FAMS ${famId}`);
+    }
+  }
+
+  for (const fam of families.values()) {
+    lines.push(`0 ${fam.id} FAM`);
+
+    if (fam.husbId && idMap.has(fam.husbId))
+      lines.push(`1 HUSB ${idMap.get(fam.husbId)}`);
+
+    if (fam.wifeId && idMap.has(fam.wifeId))
+      lines.push(`1 WIFE ${idMap.get(fam.wifeId)}`);
+
+    for (const childId of fam.children) {
+      if (!idMap.has(childId)) continue;
+
+      lines.push(`1 CHIL ${idMap.get(childId)}`);
+    }
+  }
+
+  lines.push("0 TRLR");
+
+  return `${lines.join("\r\n")}\r\n`;
+};
+
+/** Build GEDCOM 7.0 (same structure as 5.5.1, HEAD VERS 7.0). */
+export const buildGedcom7 = (people, locale, t) => buildGedcom(people, locale, t, "7.0");
+
+/** Parse GEDCOM X content (JSON or XML); returns same people shape as parseGedcom. */
+export function parseGedcomX(text) {
+  const trimmed = String(text || "").trim();
+  if (!trimmed) return [];
+  const isJson = trimmed.startsWith("{") && trimmed.trimEnd().endsWith("}");
+  if (isJson) {
+    try {
+      const data = JSON.parse(trimmed);
+      return parseGedcomXFromJson(data);
+    } catch {
+      return [];
+    }
+  }
+  return parseGedcomXFromXml(trimmed);
+}
+
+/** ===== GEDCOM X: parse (exported for load in Trees.tsx). Accepts top-level persons/relationships or wrapped in gedcomx. ===== */
+export function parseGedcomXFromJson(data) {
+  const root = data?.gedcomx ?? data;
+  const persons = new Map();
+  const list = Array.isArray(root?.persons) ? root.persons : [];
+  for (const per of list) {
+    const id = per.id != null ? String(per.id) : uid();
+    let fullText = "";
+    const names = per.names;
+    if (Array.isArray(names) && names.length > 0) {
+      const n = names[0];
+      const forms = n?.nameForms;
+      if (Array.isArray(forms) && forms[0]) {
+        fullText = normalizeSpaces(forms[0].fullText || "");
+        if (!fullText && Array.isArray(forms[0].parts)) {
+          const given = forms[0].parts.find((x) => x?.type === GEDCOM_X_GIVEN)?.value || "";
+          const surname = forms[0].parts.find((x) => x?.type === GEDCOM_X_SURNAME)?.value || "";
+          fullText = normalizeSpaces([given, surname].filter(Boolean).join(" "));
+        }
+      }
+      if (!fullText && n?.value) fullText = normalizeSpaces(n.value);
+    }
+    const genderType = per.gender?.type || "";
+    let gender = "";
+    if (typeof genderType === "string") {
+      if (genderType.includes("Male") || genderType.endsWith("/M")) gender = "M";
+      else if (genderType.includes("Female") || genderType.endsWith("/F")) gender = "F";
+    }
+    let birthYear = "";
+    let birthPlace = "";
+    let deathDate = "";
+    let deathPlace = "";
+    const facts = Array.isArray(per.facts) ? per.facts : [];
+    for (const f of facts) {
+      const type = (f.type || "").toLowerCase();
+      const dateOrig = f.date?.original != null ? String(f.date.original).trim() : "";
+      const placeOrig = f.place?.original != null ? String(f.place.original).trim() : (f.place?.description != null ? String(f.place.description) : "");
+      if (type.includes("birth")) {
+        birthYear = dateOrig || birthYear;
+        birthPlace = placeOrig || birthPlace;
+      } else if (type.includes("death")) {
+        deathDate = dateOrig || deathDate;
+        deathPlace = placeOrig || deathPlace;
+      }
+    }
+    const sourceLinks = [];
+    const collectSourceValue = (value) => addUniqueSourceLink(sourceLinks, value);
+    const sourceRefs = Array.isArray(per.sources) ? per.sources : [];
+    for (const source of sourceRefs) {
+      if (typeof source === "string") {
+        collectSourceValue(source);
+        continue;
+      }
+      collectSourceValue(source?.descriptionRef);
+      collectSourceValue(source?.resource);
+      collectSourceValue(source?.href);
+      collectSourceValue(source?.url);
+      collectSourceValue(source?.citation?.value);
+    }
+    if (Array.isArray(per.identifiers)) {
+      for (const identifier of per.identifiers) {
+        if (typeof identifier === "string") collectSourceValue(identifier);
+        else collectSourceValue(identifier?.value);
+      }
+    }
+    const parsed = splitName(fullText || "Unknown");
+    persons.set(id, {
+      id,
+      names: fullText ? { en: fullText } : {},
+      gender,
+      birthYear,
+      birthPlace,
+      deathDate,
+      deathPlace,
+      profession: "",
+      archiveSource: "",
+      documentCode: "",
+      reliability: "",
+      details: "",
+      color: "",
+      sourceLinks,
+      sourceLinksManaged: false,
+      father: null,
+      mother: null,
+      spouse: null,
+      children: [],
+      given: parsed.given,
+      surname: parsed.surname,
+    });
+  }
+  const resolveId = (ref) => {
+    if (!ref) return "";
+    const r = ref.resource != null ? ref.resource : ref;
+    const s = String(r);
+    return s.startsWith("#") ? s.slice(1) : s;
+  };
+  const rels = Array.isArray(root?.relationships) ? root.relationships : [];
+  for (const rel of rels) {
+    const type = (rel.type || "").toString();
+    const p1 = resolveId(rel.person1);
+    const p2 = resolveId(rel.person2);
+    if (!p1 || !p2 || !persons.has(p1) || !persons.has(p2)) continue;
+    if (type === GEDCOM_X_PARENT_CHILD || type.includes("ParentChild")) {
+      const parent = p1;
+      const child = p2;
+      const childRec = persons.get(child);
+      const parentRec = persons.get(parent);
+      if (childRec && parentRec) {
+        const g = String(parentRec.gender || "").toUpperCase();
+        if (g.startsWith("M")) childRec.father = parent;
+        else if (g.startsWith("F")) childRec.mother = parent;
+        else {
+          if (!childRec.father) childRec.father = parent;
+          else if (!childRec.mother) childRec.mother = parent;
+        }
+        if (!parentRec.children.includes(child)) parentRec.children.push(child);
+      }
+    } else if (type === GEDCOM_X_COUPLE || type.includes("Couple")) {
+      const a = persons.get(p1);
+      const b = persons.get(p2);
+      if (a && !a.spouse) a.spouse = p2;
+      if (b && !b.spouse) b.spouse = p1;
+    }
+  }
+  return Array.from(persons.values());
+}
+
+export function parseGedcomXFromXml(text) {
+  const str = String(text || "").trim();
+  if (!str) return [];
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(str, "text/xml");
+  const parseError = doc.querySelector("parsererror");
+  if (parseError) return [];
+  const ns = "http://gedcomx.org/v1/";
+  const persons = new Map();
+  const personEls = doc.getElementsByTagNameNS(ns, "person").length
+    ? Array.from(doc.getElementsByTagNameNS(ns, "person"))
+    : Array.from(doc.getElementsByTagName("person"));
+  for (const el of personEls) {
+    const id = el.getAttribute("id") || el.getAttributeNS(null, "id") || uid();
+    let fullText = "";
+    const nameEls = el.getElementsByTagNameNS(ns, "name").length
+      ? Array.from(el.getElementsByTagNameNS(ns, "name"))
+      : Array.from(el.getElementsByTagName("name"));
+    if (nameEls.length) {
+      const nameEl = nameEls[0];
+      const formEls = nameEl.getElementsByTagNameNS(ns, "nameForm").length
+        ? Array.from(nameEl.getElementsByTagNameNS(ns, "nameForm"))
+        : Array.from(nameEl.getElementsByTagName("nameForm"));
+      if (formEls.length) {
+        const form = formEls[0];
+        const fullEl = form.getElementsByTagNameNS(ns, "fullText").length
+          ? form.getElementsByTagNameNS(ns, "fullText")[0]
+          : form.getElementsByTagName("fullText")[0];
+        if (fullEl) fullText = normalizeSpaces(fullEl.textContent || "");
+        if (!fullText) {
+          const parts = form.getElementsByTagNameNS(ns, "part").length
+            ? Array.from(form.getElementsByTagNameNS(ns, "part"))
+            : Array.from(form.getElementsByTagName("part"));
+          const given = parts.find((p) => (p.getAttribute("type") || p.getAttributeNS(null, "type") || "").includes("Given"));
+          const surname = parts.find((p) => (p.getAttribute("type") || p.getAttributeNS(null, "type") || "").includes("Surname"));
+          const g = given ? normalizeSpaces(given.textContent || "") : "";
+          const s = surname ? normalizeSpaces(surname.textContent || "") : "";
+          fullText = normalizeSpaces([g, s].filter(Boolean).join(" "));
+        }
+      }
+    }
+    let gender = "";
+    const genderEl = el.getElementsByTagNameNS(ns, "gender")[0] || el.getElementsByTagName("gender")[0];
+    if (genderEl) {
+      const t = (genderEl.getAttribute("type") || genderEl.getAttributeNS(null, "type") || "").toLowerCase();
+      if (t.includes("male")) gender = "M";
+      else if (t.includes("female")) gender = "F";
+    }
+    let birthYear = "";
+    let birthPlace = "";
+    let deathDate = "";
+    let deathPlace = "";
+    const factEls = el.getElementsByTagNameNS(ns, "fact").length
+      ? Array.from(el.getElementsByTagNameNS(ns, "fact"))
+      : Array.from(el.getElementsByTagName("fact"));
+    for (const fact of factEls) {
+      const type = (fact.getAttribute("type") || fact.getAttributeNS(null, "type") || "").toLowerCase();
+      const dateEl = fact.getElementsByTagNameNS(ns, "date")[0] || fact.getElementsByTagName("date")[0];
+      const placeEl = fact.getElementsByTagNameNS(ns, "place")[0] || fact.getElementsByTagName("place")[0];
+      const dateOrig = dateEl ? (dateEl.getAttribute("original") || dateEl.getAttributeNS(null, "original") || dateEl.textContent || "").trim() : "";
+      const placeOrig = placeEl ? (placeEl.getAttribute("original") || placeEl.getAttributeNS(null, "original") || placeEl.textContent || "").trim() : "";
+      if (type.includes("birth")) {
+        birthYear = dateOrig || birthYear;
+        birthPlace = placeOrig || birthPlace;
+      } else if (type.includes("death")) {
+        deathDate = dateOrig || deathDate;
+        deathPlace = placeOrig || deathPlace;
+      }
+    }
+    const sourceLinks = [];
+    const collectSourceValue = (value) => addUniqueSourceLink(sourceLinks, value);
+    const sourceEls = el.getElementsByTagNameNS(ns, "source").length
+      ? Array.from(el.getElementsByTagNameNS(ns, "source"))
+      : Array.from(el.getElementsByTagName("source"));
+    for (const source of sourceEls) {
+      collectSourceValue(source.getAttribute("descriptionRef"));
+      collectSourceValue(source.getAttribute("resource"));
+      collectSourceValue(source.getAttribute("href"));
+      collectSourceValue(source.getAttributeNS("http://www.w3.org/1999/xlink", "href"));
+      collectSourceValue(source.textContent || "");
+    }
+    const identifierEls = el.getElementsByTagNameNS(ns, "identifier").length
+      ? Array.from(el.getElementsByTagNameNS(ns, "identifier"))
+      : Array.from(el.getElementsByTagName("identifier"));
+    for (const identifier of identifierEls) {
+      collectSourceValue(identifier.getAttribute("value"));
+      collectSourceValue(identifier.textContent || "");
+    }
+    const parsed = splitName(fullText || "Unknown");
+    persons.set(id, {
+      id,
+      names: fullText ? { en: fullText } : {},
+      gender,
+      birthYear,
+      birthPlace,
+      deathDate,
+      deathPlace,
+      profession: "",
+      archiveSource: "",
+      documentCode: "",
+      reliability: "",
+      details: "",
+      color: "",
+      sourceLinks,
+      sourceLinksManaged: false,
+      father: null,
+      mother: null,
+      spouse: null,
+      children: [],
+      given: parsed.given,
+      surname: parsed.surname,
+    });
+  }
+  const resolveRes = (refEl) => {
+    if (!refEl) return "";
+    const r = refEl.getAttribute("resource") || refEl.getAttributeNS(null, "resource") || "";
+    const s = String(r).trim();
+    return s.startsWith("#") ? s.slice(1) : s;
+  };
+  const relEls = doc.getElementsByTagNameNS(ns, "relationship").length
+    ? Array.from(doc.getElementsByTagNameNS(ns, "relationship"))
+    : Array.from(doc.getElementsByTagName("relationship"));
+  for (const rel of relEls) {
+    const type = (rel.getAttribute("type") || rel.getAttributeNS(null, "type") || "").toString();
+    const p1El = rel.getElementsByTagNameNS(ns, "person1")[0] || rel.getElementsByTagName("person1")[0];
+    const p2El = rel.getElementsByTagNameNS(ns, "person2")[0] || rel.getElementsByTagName("person2")[0];
+    const p1 = resolveRes(p1El);
+    const p2 = resolveRes(p2El);
+    if (!p1 || !p2 || !persons.has(p1) || !persons.has(p2)) continue;
+    if (type === GEDCOM_X_PARENT_CHILD || type.includes("ParentChild")) {
+      const parent = p1;
+      const child = p2;
+      const childRec = persons.get(child);
+      const parentRec = persons.get(parent);
+      if (childRec && parentRec) {
+        const g = String(parentRec.gender || "").toUpperCase();
+        if (g.startsWith("M")) childRec.father = parent;
+        else if (g.startsWith("F")) childRec.mother = parent;
+        else {
+          if (!childRec.father) childRec.father = parent;
+          else if (!childRec.mother) childRec.mother = parent;
+        }
+        if (!parentRec.children.includes(child)) parentRec.children.push(child);
+      }
+    } else if (type === GEDCOM_X_COUPLE || type.includes("Couple")) {
+      const a = persons.get(p1);
+      const b = persons.get(p2);
+      if (a && !a.spouse) a.spouse = p2;
+      if (b && !b.spouse) b.spouse = p1;
+    }
+  }
+  return Array.from(persons.values());
+}
+
+/** ===== GEDCOM X: build (exported for save in Trees.tsx) ===== */
+export function buildGedcomXJson(people, locale, t) {
+  const safeName = (p) => {
+    const names = p?.names || {};
+    const raw = names?.[locale] || names?.en || names?.fr || names?.ar || names?.es || t?.("legacy.unknown", "Unknown") || "Unknown";
+    return normalizeSpaces(String(raw).replace(/\r?\n/g, " "));
+  };
+  const byId = new Map();
+  for (const p of people) byId.set(String(p.id), p);
+  const persons = [];
+  const relationships = [];
+  for (const p of people) {
+    const id = String(p.id);
+    const full = safeName(p);
+    const parts = [];
+    const given = normalizeSpaces(p?.given);
+    const surname = normalizeSpaces(p?.surname);
+    const sourceLinks = Array.isArray(p.sourceLinks)
+      ? p.sourceLinks.map((link) => String(link || "").trim()).filter(Boolean)
+      : [];
+    if (given) parts.push({ type: GEDCOM_X_GIVEN, value: given });
+    if (surname) parts.push({ type: GEDCOM_X_SURNAME, value: surname });
+    persons.push({
+      id,
+      names: [{
+        nameForms: [{
+          fullText: full || [given, surname].filter(Boolean).join(" "),
+          parts: parts.length ? parts : undefined,
+        }].filter(Boolean),
+      }],
+      gender: p.gender ? { type: String(p.gender).toUpperCase().startsWith("M") ? GEDCOM_X_MALE : GEDCOM_X_FEMALE } : undefined,
+      facts: [
+        (p.birthYear || p.birthPlace) && { type: GEDCOM_X_BIRTH, date: p.birthYear ? { original: p.birthYear } : undefined, place: p.birthPlace ? { original: p.birthPlace } : undefined },
+        (p.deathDate || p.deathPlace) && { type: GEDCOM_X_DEATH, date: p.deathDate ? { original: p.deathDate } : undefined, place: p.deathPlace ? { original: p.deathPlace } : undefined },
+      ].filter(Boolean),
+      sources: sourceLinks.map((link) => ({ descriptionRef: link })),
+    });
+    if (p.father && byId.has(String(p.father))) {
+      relationships.push({ type: GEDCOM_X_PARENT_CHILD, person1: { resource: `#${String(p.father)}` }, person2: { resource: `#${id}` } });
+    }
+    if (p.mother && byId.has(String(p.mother))) {
+      relationships.push({ type: GEDCOM_X_PARENT_CHILD, person1: { resource: `#${String(p.mother)}` }, person2: { resource: `#${id}` } });
+    }
+    if (p.spouse && byId.has(String(p.spouse))) {
+      const sId = String(p.spouse);
+      if (id < sId) relationships.push({ type: GEDCOM_X_COUPLE, person1: { resource: `#${id}` }, person2: { resource: `#${sId}` } });
+    }
+  }
+  return JSON.stringify({ persons, relationships }, null, 2);
+}
+
+export function buildGedcomXXml(people, locale, t) {
+  const esc = (s) => {
+    const x = String(s ?? "");
+    return x.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  };
+  const safeName = (p) => {
+    const names = p?.names || {};
+    const raw = names?.[locale] || names?.en || names?.fr || names?.ar || names?.es || t?.("legacy.unknown", "Unknown") || "Unknown";
+    return normalizeSpaces(String(raw).replace(/\r?\n/g, " "));
+  };
+  const byId = new Map();
+  for (const p of people) byId.set(String(p.id), p);
+  const ns = "http://gedcomx.org/v1/";
+  let out = '<?xml version="1.0" encoding="UTF-8"?>\n<gedx:Gedcomx xmlns:gedx="' + ns + '">\n';
+  for (const p of people) {
+    const id = String(p.id);
+    const full = safeName(p);
+    const given = normalizeSpaces(p?.given);
+    const surname = normalizeSpaces(p?.surname);
+    const sourceLinks = Array.isArray(p.sourceLinks)
+      ? p.sourceLinks.map((link) => String(link || "").trim()).filter(Boolean)
+      : [];
+    out += `  <gedx:person id="${esc(id)}">\n`;
+    out += "    <gedx:names>\n      <gedx:name>\n        <gedx:nameForm>\n";
+    out += `          <gedx:fullText>${esc(full || [given, surname].filter(Boolean).join(" "))}</gedx:fullText>\n`;
+    if (given || surname) {
+      out += "          <gedx:parts>\n";
+      if (given) out += `            <gedx:part type="${esc(GEDCOM_X_GIVEN)}">${esc(given)}</gedx:part>\n`;
+      if (surname) out += `            <gedx:part type="${esc(GEDCOM_X_SURNAME)}">${esc(surname)}</gedx:part>\n`;
+      out += "          </gedx:parts>\n";
+    }
+    out += "        </gedx:nameForm>\n      </gedx:name>\n    </gedx:names>\n";
+    if (p.gender) {
+      const gType = String(p.gender).toUpperCase().startsWith("M") ? GEDCOM_X_MALE : GEDCOM_X_FEMALE;
+      out += `    <gedx:gender type="${esc(gType)}"/>\n`;
+    }
+    for (const link of sourceLinks) {
+      out += `    <gedx:source descriptionRef="${esc(link)}"/>\n`;
+    }
+    const hasBirth = p.birthYear || p.birthPlace;
+    const hasDeath = p.deathDate || p.deathPlace;
+    if (hasBirth || hasDeath) {
+      out += "    <gedx:facts>\n";
+      if (hasBirth) {
+        out += "      <gedx:fact type=\"" + esc(GEDCOM_X_BIRTH) + "\">\n";
+        if (p.birthYear) out += `        <gedx:date original="${esc(p.birthYear)}"/>\n`;
+        if (p.birthPlace) out += `        <gedx:place original="${esc(p.birthPlace)}"/>\n`;
+        out += "      </gedx:fact>\n";
+      }
+      if (hasDeath) {
+        out += "      <gedx:fact type=\"" + esc(GEDCOM_X_DEATH) + "\">\n";
+        if (p.deathDate) out += `        <gedx:date original="${esc(p.deathDate)}"/>\n`;
+        if (p.deathPlace) out += `        <gedx:place original="${esc(p.deathPlace)}"/>\n`;
+        out += "      </gedx:fact>\n";
+      }
+      out += "    </gedx:facts>\n";
+    }
+    out += "  </gedx:person>\n";
+  }
+  const coupleDone = new Set();
+  for (const p of people) {
+    const id = String(p.id);
+    if (p.father && byId.has(String(p.father))) {
+      out += `  <gedx:relationship type="${esc(GEDCOM_X_PARENT_CHILD)}">\n    <gedx:person1 resource="#${esc(String(p.father))}"/>\n    <gedx:person2 resource="#${esc(id)}"/>\n  </gedx:relationship>\n`;
+    }
+    if (p.mother && byId.has(String(p.mother))) {
+      out += `  <gedx:relationship type="${esc(GEDCOM_X_PARENT_CHILD)}">\n    <gedx:person1 resource="#${esc(String(p.mother))}"/>\n    <gedx:person2 resource="#${esc(id)}"/>\n  </gedx:relationship>\n`;
+    }
+    if (p.spouse && byId.has(String(p.spouse))) {
+      const pair = [id, String(p.spouse)].sort().join("|");
+      if (!coupleDone.has(pair)) {
+        coupleDone.add(pair);
+        out += `  <gedx:relationship type="${esc(GEDCOM_X_COUPLE)}">\n    <gedx:person1 resource="#${esc(id)}"/>\n    <gedx:person2 resource="#${esc(String(p.spouse))}"/>\n  </gedx:relationship>\n`;
+      }
+    }
+  }
+  out += "</gedx:Gedcomx>";
+  return out;
+}
+
+/** ===== MAIN COMPONENT ===== */
+
+export default function TreesBuilder({
+  people: rawPeople = [],
+  setPeople,
+  readOnly = false,
+  onAutoSave,
+  onPersonClick,
+  dataFormat = "gedcom", // "gedcom" | "gedcom7" | "gedcomx" – affects display label and format-specific display
+  treeId,
+  canDownloadDirectly = false,
+}: any) {
+  const { theme } = useThemeStore();
+
+  const { language: locale, dir, t } = useLanguage();
+
+  const people = useMemo(
+    () => (Array.isArray(rawPeople) ? rawPeople : []),
+    [rawPeople]
+  );
+
+  const canMutatePeople = typeof setPeople === "function";
+
+  const isDark = theme === "dark";
+
+  const svgRef = useRef(null);
+
+  const wrapRef = useRef(null);
+
+  const zoomRef = useRef(null);
+
+  const nodesRef = useRef([]);
+
+  const detailPointerRef = useRef({ x: 0, y: 0, active: false });
+
+  const importGedcomRef = useRef(null);
+  const importGedcomFormatRef = useRef("5.5.1"); // "5.5.1" | "7.0" for dropdown choice
+  const importGedcomXRef = useRef(null);
+  const gedcomXImportFormatRef = useRef("xml");
+  const gedcomImportDropdownRef = useRef(null);
+  const gedcomExportDropdownRef = useRef(null);
+  const gedcomXImportDropdownRef = useRef(null);
+  const gedcomXExportDropdownRef = useRef(null);
+  const [gedcomImportOpen, setGedcomImportOpen] = useState(false);
+  const [gedcomExportOpen, setGedcomExportOpen] = useState(false);
+  const [gedcomXExportOpen, setGedcomXExportOpen] = useState(false);
+  const [gedcomXImportOpen, setGedcomXImportOpen] = useState(false);
+  useEffect(() => {
+    const close = (e) => {
+      if (
+        gedcomImportDropdownRef.current?.contains(e.target) ||
+        gedcomExportDropdownRef.current?.contains(e.target) ||
+        gedcomXImportDropdownRef.current?.contains(e.target) ||
+        gedcomXExportDropdownRef.current?.contains(e.target)
+      )
+        return;
+      setGedcomImportOpen(false);
+      setGedcomExportOpen(false);
+      setGedcomXImportOpen(false);
+      setGedcomXExportOpen(false);
+    };
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, []);
+
+  const [selectedPerson, setSelectedPerson] = useState<any>(null);
+
+  const [sourceLinkDraft, setSourceLinkDraft] = useState("");
+  const [sourceLinkTitleDraft, setSourceLinkTitleDraft] = useState("");
+
+  const [sourceLinkEditIndex, setSourceLinkEditIndex] = useState(null);
+
+  const [sourceLinkPanelOpen, setSourceLinkPanelOpen] = useState(false);
+
+  const [mediaPanelOpen, setMediaPanelOpen] = useState(false);
+  const [previewSource, setPreviewSource] = useState<{ url: string; label: string; kind: string } | null>(null);
+
+  const [mediaLinkType, setMediaLinkType] = useState("document");
+
+  const [linkMenuOpen, setLinkMenuOpen] = useState(false);
+
+  const linkMenuRef = useRef(null);
+
+  const [existingMedia, setExistingMedia] = useState([]);
+
+  const [mediaLoading, setMediaLoading] = useState(false);
+
+  const [selectedMediaLink, setSelectedMediaLink] = useState("");
+  const sourceLinkAutoSaveTimerRef = useRef<any>(null);
+
+  useEffect(() => {
+    if (!linkMenuOpen) return undefined;
+    const close = (e) => {
+      if (linkMenuRef.current?.contains(e.target)) return;
+      setLinkMenuOpen(false);
+    };
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, [linkMenuOpen]);
+
+  const [personStatus, setPersonStatus] = useState({
+    message: "",
+    type: "success",
+  });
+
+  const [panelTab, setPanelTab] = useState(readOnly ? "selected" : "add");
+
+  const [peopleQuery, setPeopleQuery] = useState("");
+
+  const [addForm, setAddForm] = useState(() => createEmptyForm());
+
+  const applyPeopleUpdate = (updater) => {
+    if (!canMutatePeople || readOnly) {
+      setPersonStatus({
+        message: t("legacy.tree_builder_read_only", "Tree builder is read-only."),
+        type: "error",
+      });
+      return;
+    }
+
+    setPeople((prev) => {
+      const next = typeof updater === "function" ? updater(prev) : updater;
+
+      if (!readOnly && onAutoSave) {
+        setTimeout(() => onAutoSave(next), 0);
+      }
+
+      return next;
+    });
+  };
+
+  const notifyPerson = (message, type = "success") => {
+    setPersonStatus({ message, type });
+  };
+
+  const notifyError = (message) => {
+    setPersonStatus({ message, type: "error" });
+  };
+
+  useEffect(() => {
+    if (readOnly) setPanelTab("selected");
+  }, [readOnly]);
+
+  useEffect(() => {
+    if (!canMutatePeople) return;
+
+    if (
+      people.some((p) => String(p?.id || "").startsWith("mock")) &&
+      people.every((p) =>
+        ["mock1", "mock2", "mock3"].includes(String(p?.id || "")),
+      )
+    ) {
+      setPeople([]);
+    }
+  }, [canMutatePeople, people, setPeople]);
+
+  useEffect(() => {
+    if (!personStatus.message) return undefined;
+
+    const timer = setTimeout(
+      () => setPersonStatus((prev) => ({ ...prev, message: "" })),
+
+      3000
+    );
+
+    return () => clearTimeout(timer);
+  }, [personStatus.message]);
+
+  const nameOf = useCallback(
+    (p) => {
+      if (!p) return t("legacy.unknown", "Unknown");
+      const fromNames =
+        p.names?.[locale] ||
+        p.names?.en ||
+        p.names?.fr ||
+        p.names?.ar ||
+        p.names?.es;
+      if (fromNames && String(fromNames).trim()) return String(fromNames).trim();
+      const givenSurname = [p.given, p.surname].filter(Boolean).map((s) => String(s).trim()).join(" ").trim();
+      return givenSurname || t("legacy.unknown", "Unknown");
+    },
+    [locale, t]
+  );
+  const peopleById = useMemo(() => {
+    const map = new Map();
+
+    for (const p of people) map.set(String(p.id), p);
+
+    return map;
+  }, [people]);
+
+  const relationName = useCallback(
+    (id) => {
+      if (!id) return "-";
+
+      const found = peopleById.get(String(id));
+
+      return found ? nameOf(found) : "-";
+    },
+    [peopleById, nameOf]
+  );
+
+  const displayGender = useCallback(
+    (value) => {
+      const normalized = normalizeGenderValue(value);
+      if (normalized === "M") return t("legacy.male", "Male");
+      if (normalized === "F") return t("legacy.female", "Female");
+      const raw = String(value || "").trim();
+      return raw || "-";
+    },
+    [t]
+  );
+
+  const peopleList = useMemo(() => {
+    const query = peopleQuery.trim().toLowerCase();
+
+    const list = people.map((p) => ({
+      id: String(p.id),
+
+      person: p,
+
+      name: String(nameOf(p)),
+    }));
+
+    list.sort((a, b) => a.name.localeCompare(b.name));
+
+    if (!query) return list;
+
+    return list.filter((item) => item.name.toLowerCase().includes(query));
+  }, [people, peopleQuery, nameOf]);
+
+  const resetAddForm = useCallback(() => {
+    setAddForm(createEmptyForm());
+  }, []);
+
+  const startEdit = useCallback(
+    (person) => {
+      if (readOnly || !person) return;
+      setPanelTab("editor");
+      setAddForm({
+        id: person.id,
+        name: nameOf(person),
+        gender: normalizeGenderValue(person.gender),
+        birthYear: person.birthYear || "",
+        birthPlace: person.birthPlace || "",
+        deathDate: person.deathDate || "",
+        deathPlace: person.deathPlace || "",
+        details: person.details || "",
+        profession: person.profession || "",
+        archiveSource: person.archiveSource || "",
+        documentCode: person.documentCode || "",
+        sourceLinks: Array.isArray(person.sourceLinks) ? [...person.sourceLinks] : [],
+        sourceLinksManaged: Boolean(person.sourceLinksManaged),
+        reliability: person.reliability || "",
+        father: person.father || "",
+        mother: person.mother || "",
+        spouse: person.spouse || "",
+        children: Array.isArray(person.children) ? person.children : [],
+        color: person.color || "#f5f1e8",
+      });
+    },
+    [nameOf, readOnly]
+  );
+
+  useEffect(() => {
+    if (!selectedPerson) return;
+
+    const found =
+      people.find((p) => String(p.id) === String(selectedPerson.id)) || null;
+
+    setSelectedPerson(found);
+  }, [selectedPerson, people]);
+
+  const links = useMemo(() => {
+    const out = [];
+
+    const couplePairs = new Set();
+
+    const childPairs = new Set();
+
+    const byId = new Map(people.map((p) => [String(p.id), p]));
+
+    const hasId = (id) => byId.has(String(id));
+
+    const addCouple = (aId, bId) => {
+      const a = String(aId || "");
+
+      const b = String(bId || "");
+
+      if (!a || !b || !hasId(a) || !hasId(b)) return;
+
+      const key = [a, b].sort().join("|");
+
+      if (couplePairs.has(key)) return;
+
+      couplePairs.add(key);
+
+      out.push({ source: a, target: b, type: "couple" });
+    };
+
+    for (const child of people) {
+      const childId = String(child.id);
+
+      const fatherId = child.father ? String(child.father) : "";
+
+      const motherId = child.mother ? String(child.mother) : "";
+
+      if (fatherId && motherId && hasId(fatherId) && hasId(motherId)) {
+        addCouple(fatherId, motherId);
+
+        const key = `C:${[fatherId, motherId, childId].join("|")}`;
+
+        if (!childPairs.has(key)) {
+          childPairs.add(key);
+
+          out.push({
+            source: fatherId,
+
+            target: childId,
+
+            mate: motherId,
+
+            type: "child",
+          });
+        }
+
+        continue;
+      }
+
+      if (fatherId && hasId(fatherId)) {
+        const key = `C:${fatherId}>${childId}`;
+
+        if (!childPairs.has(key)) {
+          childPairs.add(key);
+
+          out.push({ source: fatherId, target: childId, type: "child" });
+        }
+      }
+
+      if (motherId && hasId(motherId)) {
+        const key = `C:${motherId}>${childId}`;
+
+        if (!childPairs.has(key)) {
+          childPairs.add(key);
+
+          out.push({ source: motherId, target: childId, type: "child" });
+        }
+      }
+    }
+
+    for (const parent of people) {
+      const parentId = String(parent.id);
+
+      const children = Array.isArray(parent.children) ? parent.children : [];
+
+      for (const childIdRaw of children) {
+        const childId = String(childIdRaw || "");
+
+        if (!childId || !hasId(childId)) continue;
+
+        const child = byId.get(childId);
+
+        const fatherId = child?.father ? String(child.father) : "";
+
+        const motherId = child?.mother ? String(child.mother) : "";
+
+        if (fatherId || motherId) {
+          if (fatherId === parentId || motherId === parentId) continue;
+
+          continue;
+        }
+
+        const key = `C:${parentId}>${childId}`;
+
+        if (childPairs.has(key)) continue;
+
+        childPairs.add(key);
+
+        out.push({ source: parentId, target: childId, type: "child" });
+      }
+    }
+
+    for (const p of people) {
+      if (!p.spouse) continue;
+
+      addCouple(p.id, p.spouse);
+    }
+
+    return out;
+  }, [people]);
+
+  const computeGenerations = (nodes, allLinks) => {
+    const gen = new Map();
+
+    nodes.forEach((n) => gen.set(String(n.id), 0));
+
+    let changed = true;
+
+    let iterations = 0;
+
+    while (changed && iterations < 50) {
+      changed = false;
+
+      iterations++;
+
+      for (const l of allLinks) {
+        const sId = String(l.source);
+
+        const tId = String(l.target);
+
+        const sGen = gen.get(sId);
+
+        const tGen = gen.get(tId);
+
+        if (sGen === undefined || tGen === undefined) continue;
+
+        if (l.type === "child") {
+          if (tGen < sGen + 1) {
+            gen.set(tId, sGen + 1);
+
+            changed = true;
+          }
+        } else if (l.type === "couple") {
+          const maxG = Math.max(sGen, tGen);
+
+          if (sGen !== maxG) {
+            gen.set(sId, maxG);
+
+            changed = true;
+          }
+
+          if (tGen !== maxG) {
+            gen.set(tId, maxG);
+
+            changed = true;
+          }
+        }
+      }
+    }
+
+    return gen;
+  };
+
+  useEffect(() => {
+    if (!svgRef.current || !wrapRef.current) return;
+
+    const svg = d3.select(svgRef.current);
+
+    let ro = null;
+
+    let cleanupSim = null;
+
+    const draw = () => {
+      try {
+        const width = Math.max(320, wrapRef.current?.clientWidth || 0);
+
+        const height = Math.max(520, wrapRef.current?.clientHeight || 680);
+
+        d3.selectAll(".d3-tooltip").remove();
+
+        svg.attr("width", width).attr("height", height);
+
+        svg.selectAll("*").remove();
+
+        const defs = svg.append("defs");
+
+        defs
+
+          .append("filter")
+
+          .attr("id", "shadow")
+
+          .append("feDropShadow")
+
+          .attr("dx", 0)
+
+          .attr("dy", 6)
+
+          .attr("stdDeviation", 8)
+
+          .attr("flood-opacity", 0.22);
+
+        const zoomRect = svg
+
+          .append("rect")
+
+          .attr("width", width)
+
+          .attr("height", height)
+
+          .attr("fill", "transparent");
+
+        const g = svg.append("g");
+
+        const zoom = d3
+
+          .zoom()
+
+          .scaleExtent([0.2, 2.8])
+
+          .on("zoom", (e) => g.attr("transform", e.transform));
+
+        zoomRef.current = zoom;
+
+        svg.call(zoom);
+
+        const gens = computeGenerations(people, links);
+
+        const nodes = people.map((p) => ({
+          ...p,
+
+          gen: gens.get(String(p.id)) || 0,
+
+          x: Number.isFinite(p.x)
+            ? p.x
+            : width / 2 + (Math.random() - 0.5) * 50,
+
+          y: Number.isFinite(p.y)
+            ? p.y
+            : height / 2 + (Math.random() - 0.5) * 50,
+        }));
+
+        nodesRef.current = nodes;
+
+        const byId = new Map(nodes.map((n) => [String(n.id), n]));
+
+        const simLinks = links
+
+          .map((l) => ({
+            ...l,
+
+            source: byId.get(String(l.source)) || String(l.source),
+
+            target: byId.get(String(l.target)) || String(l.target),
+
+            mate: l.mate ? byId.get(String(l.mate)) : null,
+          }))
+
+          .filter(
+            (l) => typeof l.source !== "string" && typeof l.target !== "string"
+          );
+
+        const coupleColor = isDark ? "#0d9488" : "#0c4a6e"; // Gold/Brown for parents
+        const coupleInnerColor = isDark ? "#0d1b2a" : "#f5f1e8"; // Gap between double lines
+        const childColor = isDark ? "#1565c0" : "#1565c0"; // Distinct blue for parent-child
+
+        const coupleLinks = simLinks.filter((l) => l.type === "couple");
+        const childLinksOnly = simLinks.filter((l) => l.type !== "couple");
+
+        const linkLayer = g.append("g").attr("class", "links");
+
+        // Double Line: Two thick lines with gap (parents/couples)
+        const coupleOuter = linkLayer
+          .selectAll("path.couple-outer")
+          .data(coupleLinks)
+          .enter()
+          .append("path")
+          .attr("class", "couple-outer")
+          .attr("fill", "none")
+          .attr("stroke", coupleColor)
+          .attr("stroke-width", 14) // Outer: creates two thick bands
+          .attr("stroke-linecap", "round")
+          .attr("stroke-linejoin", "round")
+          .attr("opacity", 1)
+          .on("mouseover", function (e, d) {
+            const sourceName = nameOf(d.source);
+            const targetName = nameOf(d.target);
+            tooltip
+              .style("visibility", "visible")
+              .html(`<div class="text-sm font-bold">${t("legacy.parent_relationship", "Parent Relationship")}</div><div class="text-xs mt-1">${sourceName} ↔ ${targetName}</div><div class="text-xs opacity-70 mt-1">${t("legacy.parents_connected", "Parents connected")}</div>`)
+              .style("top", `${e.pageY + 15}px`)
+              .style("left", `${e.pageX + 15}px`);
+          })
+          .on("mousemove", (e) => {
+            tooltip
+              .style("top", `${e.pageY + 15}px`)
+              .style("left", `${e.pageX + 15}px`);
+          })
+          .on("mouseout", () => {
+            tooltip.style("visibility", "hidden");
+          });
+
+        // Double Line: Inner gap (creates spaced double thick lines for parents)
+        const coupleInner = linkLayer
+          .selectAll("path.couple-inner")
+          .data(coupleLinks)
+          .enter()
+          .append("path")
+          .attr("class", "couple-inner")
+          .attr("fill", "none")
+          .attr("stroke", coupleInnerColor)
+          .attr("stroke-width", 6) // Gap between the 2 thick lines
+          .attr("stroke-linecap", "round")
+          .attr("stroke-linejoin", "round")
+          .attr("opacity", 1)
+          .style("pointer-events", "none"); // Don't capture mouse events on inner line
+
+        // Child Links: One thick line, distinct color (parent to child)
+        const childLinks = linkLayer
+          .selectAll("path.child-link")
+          .data(childLinksOnly)
+          .enter()
+          .append("path")
+          .attr("class", "child-link")
+          .attr("fill", "none")
+          .attr("stroke", childColor)
+          .attr("stroke-width", 4) // Thick, distinct from parent lines
+          .attr("stroke-linecap", "round")
+          .attr("stroke-linejoin", "round")
+          .attr("opacity", 0.9)
+          .on("mouseover", function (e, d) {
+            const sourceName = nameOf(d.source);
+            const targetName = nameOf(d.target);
+            // Determine relationship type
+            const isParentChild = d.source.gen < d.target.gen;
+            const relationshipType = isParentChild
+              ? t("legacy.parent_to_child", "Parent to Child")
+              : t("legacy.descendant_relationship", "Descendant Relationship");
+            tooltip
+              .style("visibility", "visible")
+              .html(`<div class="text-sm font-bold">${relationshipType}</div><div class="text-xs mt-1">${sourceName} → ${targetName}</div><div class="text-xs opacity-70 mt-1">${isParentChild ? t("legacy.parent_children", "Parent-Child") : t("legacy.parent_descendant", "Parent-Descendant")}</div>`)
+              .style("top", `${e.pageY + 15}px`)
+              .style("left", `${e.pageX + 15}px`);
+          })
+          .on("mousemove", (e) => {
+            tooltip
+              .style("top", `${e.pageY + 15}px`)
+              .style("left", `${e.pageX + 15}px`);
+          })
+          .on("mouseout", () => {
+            tooltip.style("visibility", "hidden");
+          });
+
+        let tooltip = d3.select("body").select(".d3-tooltip");
+
+        if (tooltip.empty()) {
+          tooltip = d3
+
+            .select("body")
+
+            .append("div")
+
+            .attr("class", "d3-tooltip")
+
+            .style("position", "absolute")
+
+            .style("visibility", "hidden")
+
+            .style("background", isDark ? "#0d1b2a" : "#f8f5ef")
+
+            .style("color", isDark ? "#f8f5ef" : "#0d1b2a")
+
+            .style("border", isDark ? "1px solid #0d1b2a" : "1px solid #e8dfca")
+            .style("padding", "8px 12px")
+            .style("border-radius", "4px")
+            .style("font-size", "12px")
+            .style("font-family", "Manrope")
+            .style("box-shadow", "0 6px 16px rgba(0,0,0,0.18)")
+            .style("pointer-events", "none")
+
+            .style("z-index", "9999");
+        }
+
+        const sim = d3
+
+          .forceSimulation(nodes)
+
+          .force("charge", d3.forceManyBody().strength(-1500))
+
+          .force("center", d3.forceCenter(width / 2, height / 2))
+
+          .force("collision", d3.forceCollide().radius(CARD_W * 0.6))
+
+          .force("y", d3.forceY((d) => d.gen * 200).strength(1.2))
+
+          .force("x", d3.forceX().strength(0.05))
+
+          .force(
+            "link",
+
+            d3
+
+              .forceLink(simLinks)
+
+              .id((d) => String(d.id))
+
+              .distance((d) => (d.type === "couple" ? 150 : 240))
+
+              .strength((d) => (d.type === "couple" ? 0.6 : 0.85))
+          );
+
+        const openPersonDetails = (event, d) => {
+          event?.stopPropagation?.();
+          const targetData = d?.person || d;
+          const found = people.find((p) => String(p.id) === String(targetData?.id)) || targetData;
+          if (found) {
+            setSelectedPerson(found);
+            if (typeof onPersonClick === "function") {
+              onPersonClick(found);
+            }
+          }
+        };
+
+        const rememberDetailPointer = (event) => {
+          event?.stopPropagation?.();
+          detailPointerRef.current = {
+            x: Number(event?.clientX) || 0,
+            y: Number(event?.clientY) || 0,
+            active: true,
+          };
+        };
+
+        const openDetailFromPointer = (event, d) => {
+          event?.stopPropagation?.();
+          const start = detailPointerRef.current;
+          detailPointerRef.current = { x: 0, y: 0, active: false };
+          const dx = (Number(event?.clientX) || 0) - start.x;
+          const dy = (Number(event?.clientY) || 0) - start.y;
+          if (start.active && Math.hypot(dx, dy) > 15) return;
+          openPersonDetails(event, d);
+        };
+
+        const node = g
+
+          .selectAll("g.node")
+
+          .data(nodes, (d) => String(d.id))
+
+          .enter()
+
+          .append("g")
+
+          .attr("class", "node")
+
+          .style("cursor", "grab")
+
+          .call(
+            d3
+
+              .drag()
+
+              .on("start", (event, d) => {
+                if (!event.active) sim.alphaTarget(0.3).restart();
+
+                d.fx = d.x;
+
+                d.fy = d.y;
+              })
+
+              .on("drag", (event, d) => {
+                d.fx = event.x;
+
+                d.fy = event.y;
+              })
+
+              .on("end", (event, d) => {
+                if (!event.active) sim.alphaTarget(0);
+
+                d.fx = null;
+
+                d.fy = null;
+              })
+          )
+
+          .on("pointerdown.detail", rememberDetailPointer)
+          .on("pointerup.detail", openDetailFromPointer)
+          .on("click.detail", openPersonDetails);
+
+        zoomRect.on("click", () => {
+          tooltip.style("visibility", "hidden");
+        });
+
+        node
+
+          .append("rect")
+
+          .attr("class", "node-card")
+
+          .attr("x", -CARD_W / 2)
+
+          .attr("y", -CARD_H / 2)
+
+          .attr("width", CARD_W)
+
+          .attr("height", CARD_H)
+
+          .attr("rx", 14)
+
+          .attr("filter", "url(#shadow)")
+
+          .attr("fill", (d) => resolveCardFill(d.color, isDark))
+
+          .attr("stroke", isDark ? "#1b3a52" : "#e8dfca")
+
+          .attr("stroke-width", 1.4);
+
+        // NAME
+        node
+          .append("text")
+          .attr("y", -32)
+          .attr("text-anchor", "middle")
+          .style("font-weight", 700)
+          .style("font-size", "14px")
+          .style("fill", (d) => getContrastTextColor(resolveCardFill(d.color, isDark)))
+          .style("font-family", "Cinzel, serif")
+          .text((d) => {
+            const n = String(nameOf(d));
+            return n.length > 22 ? n.substring(0, 20) + "..." : n;
+          });
+
+        // GENDER ICON
+        node
+          .append("text")
+          .attr("y", -14)
+          .attr("text-anchor", "middle")
+          .style("font-size", "12px")
+          .style("fill", (d) => {
+            const genderCode = normalizeGenderValue(d.gender);
+            if (genderCode === "M") return "#3498db";
+            if (genderCode === "F") return "#e74c3c";
+            return "#999";
+          })
+          .text((d) => {
+            const genderCode = normalizeGenderValue(d.gender);
+            if (genderCode === "M") return "M";
+            if (genderCode === "F") return "F";
+            return "";
+          });
+
+        // BIRTH DATE
+        node
+          .append("text")
+          .attr("y", 2)
+          .attr("text-anchor", "middle")
+          .style("font-size", "10px")
+          .style("fill", isDark ? "#0d9488" : "#0c4a6e")
+          .style("font-family", "Manrope")
+          .text((d) => {
+            const b = d.birthDate || d.birthYear || "";
+            return b ? `b. ${b}` : "";
+          });
+
+        // DEATH DATE
+        node
+          .append("text")
+          .attr("y", 14)
+          .attr("text-anchor", "middle")
+          .style("font-size", "10px")
+          .style("fill", isDark ? "#aaa" : "#777")
+          .style("font-family", "Manrope")
+          .text((d) => {
+            const dead = d.deathDate || d.deathYear || "";
+            return dead ? `d. ${dead}` : "";
+          });
+
+        // PLACE
+        node
+          .append("text")
+          .attr("y", 28)
+          .attr("text-anchor", "middle")
+          .style("font-size", "9px")
+          .style("font-style", "italic")
+          .style("fill", (d) => `${getContrastTextColor(resolveCardFill(d.color, isDark))}99`)
+          .style("font-family", "Manrope")
+          .text((d) => {
+            const loc = d.birthPlace || d.deathPlace || "";
+            return loc.length > 25 ? loc.substring(0, 23) + "..." : loc;
+          });
+
+        node
+          .append("rect")
+          .attr("class", "node-click-hitbox")
+          .attr("x", -CARD_W / 2)
+          .attr("y", -CARD_H / 2)
+          .attr("width", CARD_W)
+          .attr("height", CARD_H)
+          .attr("rx", 14)
+          .attr("fill", "transparent")
+          .style("pointer-events", "all")
+          .style("cursor", "pointer")
+          .on("pointerdown.detail", rememberDetailPointer)
+          .on("pointerup.detail", openDetailFromPointer)
+          .on("click.detail", openPersonDetails)
+          .on("mouseover.highlight", function () {
+            d3.select(this.parentNode)
+              .select("rect.node-card")
+              .attr("stroke", isDark ? "#0d9488" : "#0c4a6e")
+              .attr("stroke-width", 2.4);
+          })
+          .on("mouseout.highlight", function () {
+            d3.select(this.parentNode)
+              .select("rect.node-card")
+              .attr("stroke", isDark ? "#1b3a52" : "#e8dfca")
+              .attr("stroke-width", 1.4);
+          });
+
+        // The label is translated, so size the pill to fit the current language.
+        const detailLabel = t("legacy.open_details", "Open details");
+        const detailBtnWidth = Math.min(
+          CARD_W - 24,
+          Math.max(104, detailLabel.length * 6.4 + 30)
+        );
+
+        const detailButton = node
+          .append("g")
+          .attr("class", "node-open-details-button")
+          .style("cursor", "pointer")
+          .on("pointerdown.detail", rememberDetailPointer)
+          .on("pointerup.detail", openDetailFromPointer)
+          .on("click.detail", openPersonDetails);
+
+        detailButton
+          .append("rect")
+          .attr("x", -detailBtnWidth / 2)
+          .attr("y", 34)
+          .attr("width", detailBtnWidth)
+          .attr("height", 22)
+          .attr("rx", 11)
+          .attr("fill", isDark ? "#0d9488" : "#0c4a6e")
+          .attr("stroke", isDark ? "#9de8dd" : "#e8dfca")
+          .attr("stroke-width", 0.6)
+          .attr("opacity", 0.96)
+          .on("mouseover.button", function () {
+            d3.select(this).attr("opacity", 1).attr("stroke-width", 1.2);
+          })
+          .on("mouseout.button", function () {
+            d3.select(this).attr("opacity", 0.96).attr("stroke-width", 0.6);
+          });
+
+        detailButton
+          .append("text")
+          .attr("y", 49)
+          .attr("text-anchor", "middle")
+          .style("font-size", "10px")
+          .style("font-weight", 700)
+          .style("letter-spacing", "0.04em")
+          .style("fill", "#ffffff")
+          .style("font-family", "Manrope")
+          .style("pointer-events", "none")
+          .text(detailLabel);
+
+        const couplePath = (d) => {
+          const direction = d.source.x <= d.target.x ? 1 : -1;
+
+          const startX = d.source.x + direction * (CARD_W / 2);
+
+          const endX = d.target.x - direction * (CARD_W / 2);
+
+          return `M${startX},${d.source.y}L${endX},${d.target.y}`;
+        };
+
+        const childPath = (d) => {
+          const mate = d.mate;
+
+          const startX = mate ? (d.source.x + mate.x) / 2 : d.source.x;
+
+          const startY =
+            (mate ? Math.max(d.source.y, mate.y) : d.source.y) + CARD_H / 2;
+
+          const endX = d.target.x;
+
+          const endY = d.target.y - CARD_H / 2;
+
+          const midY = startY + (endY - startY) * 0.55;
+
+          return `M${startX},${startY}V${midY}H${endX}V${endY}`;
+        };
+
+        sim.on("tick", () => {
+          coupleOuter.attr("d", couplePath);
+          coupleInner.attr("d", couplePath);
+          childLinks.attr("d", childPath);
+
+          node.attr("transform", (d) => `translate(${d.x},${d.y})`);
+
+          nodesRef.current = nodes;
+        });
+
+        cleanupSim = () => {
+          sim.stop();
+
+          tooltip.remove();
+        };
+      } catch (err) {
+        notifyError(
+          err?.message || t("legacy.tree_render_failed", "Failed to render tree")
+        );
+      }
+    };
+
+    let resizeCleanup = null;
+    let drawTicking = false;
+    const scheduleDraw = () => {
+      if (drawTicking) return;
+      drawTicking = true;
+      requestAnimationFrame(() => {
+        drawTicking = false;
+        draw();
+      });
+    };
+
+    if (typeof ResizeObserver !== "undefined") {
+      ro = new ResizeObserver(scheduleDraw);
+      ro.observe(wrapRef.current);
+    } else if (typeof window !== "undefined") {
+      const onResize = scheduleDraw;
+      window.addEventListener("resize", onResize);
+      resizeCleanup = () => window.removeEventListener("resize", onResize);
+    }
+
+    draw();
+
+    return () => {
+      if (cleanupSim) cleanupSim();
+
+      if (ro) ro.disconnect();
+
+      if (resizeCleanup) resizeCleanup();
+    };
+  }, [people, links, locale, isDark, t, nameOf, relationName, displayGender]);
+
+  const ensureSpouseBidirectional = (arr, aId, bId) => {
+    if (!aId || !bId) return arr;
+
+    const a = arr.find((p) => String(p.id) === String(aId));
+
+    const b = arr.find((p) => String(p.id) === String(bId));
+
+    if (!a || !b) return arr;
+
+    const next = arr.map((p) => ({ ...p }));
+
+    for (const p of next) {
+      if (String(p.id) === String(aId)) p.spouse = String(bId);
+
+      if (String(p.id) === String(bId)) p.spouse = String(aId);
+    }
+
+    return next;
+  };
+
+  const addChildToParent = (arr, parentId, childId) => {
+    if (!parentId || !childId) return arr;
+
+    const next = arr.map((p) => ({
+      ...p,
+
+      children: Array.isArray(p.children) ? [...p.children] : [],
+    }));
+
+    const parent = next.find((p) => String(p.id) === String(parentId));
+
+    if (!parent) return arr;
+
+    if (!parent.children.includes(String(childId)))
+      parent.children.push(String(childId));
+
+    return next;
+  };
+
+  const removeChildFromParent = (arr, parentId, childId) => {
+    if (!parentId || !childId) return arr;
+
+    const next = arr.map((p) => ({
+      ...p,
+
+      children: Array.isArray(p.children) ? [...p.children] : [],
+    }));
+
+    const parent = next.find((p) => String(p.id) === String(parentId));
+
+    if (!parent) return arr;
+
+    parent.children = parent.children.filter(
+      (cid) => String(cid) !== String(childId)
+    );
+
+    return next;
+  };
+
+  const removeParentFromChild = (arr, parentId, childId) => {
+    if (!parentId || !childId) return arr;
+
+    return arr.map((p) => {
+      if (String(p.id) !== String(childId)) return p;
+
+      const next = { ...p };
+
+      if (String(next.father) === String(parentId)) next.father = null;
+
+      if (String(next.mother) === String(parentId)) next.mother = null;
+
+      return next;
+    });
+  };
+
+  const setParentOnChild = (arr, parentId, childId, gender) => {
+    if (!parentId || !childId) return arr;
+    const g = String(gender || "").toLowerCase();
+    const isMale = g.startsWith("m");
+    const isFemale = g.startsWith("f");
+    return arr.map((p) => {
+      if (String(p.id) !== String(childId)) return p;
+      const next = { ...p };
+      if (isMale && !next.father) next.father = String(parentId);
+      if (isFemale && !next.mother) next.mother = String(parentId);
+      if (!isMale && !isFemale) {
+        if (!next.father) next.father = String(parentId);
+        else if (!next.mother) next.mother = String(parentId);
+      }
+      return next;
+    });
+  };
+
+  const importGedcom = async (file) => {
+    if (!file) return;
+
+    try {
+      const ext = getFileExtension(file.name);
+      if (!GEDCOM_EXTENSIONS.has(ext)) {
+        notifyError(
+          t("legacy.invalid_gedcom_type",
+            "Unsupported file type. Use .ged or .gedcom."
+          )
+        );
+        return;
+      }
+
+      if (file.size > MAX_GEDCOM_BYTES) {
+        notifyError(t("legacy.file_too_large", "File is too large (max 50MB)."));
+        return;
+      }
+
+      let text = "";
+      if (typeof file.text === "function") {
+        text = await file.text();
+      } else {
+        text = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result || "");
+          reader.onerror = () =>
+            reject(reader.error || new Error("Failed to read GEDCOM file."));
+          reader.readAsText(file);
+        });
+      }
+      const trimmed = String(text || "").trim();
+      if (!trimmed) {
+        notifyError(t("legacy.gedcom_empty", "GEDCOM file is empty."));
+        return;
+      }
+
+      if (!hasGedcomIndividuals(text)) {
+        notifyError(t("legacy.gedcom_no_people", "No individuals found in GEDCOM."));
+        return;
+      }
+
+      const parsed = parseGedcom(text);
+      if (!Array.isArray(parsed) || parsed.length === 0) {
+        notifyError(t("legacy.gedcom_no_people", "No individuals found in GEDCOM."));
+        return;
+      }
+
+      applyPeopleUpdate(parsed);
+      const is70 = importGedcomFormatRef.current === "7.0";
+      notifyPerson(is70 ? t("legacy.gedcom7_imported", "GEDCOM 7.0 imported.") : t("legacy.gedcom_imported", "GEDCOM imported."));
+    } catch (err) {
+      notifyError(
+        err?.message || t("legacy.import_gedcom_failed", "Failed to import GEDCOM")
+      );
+    }
+  };
+
+  const importGedcomX = async (file) => {
+    if (!file) return;
+    try {
+      const ext = getFileExtension(file.name).toLowerCase();
+      if (!GEDCOM_X_EXTENSIONS.has(ext)) {
+        notifyError(
+          t("legacy.invalid_gedcomx_type",
+            "Unsupported file type. Use .gedx, .xml, or .json."
+          )
+        );
+        return;
+      }
+      if (file.size > MAX_GEDCOM_BYTES) {
+        notifyError(t("legacy.file_too_large", "File is too large (max 50MB)."));
+        return;
+      }
+      let text = "";
+      if (typeof file.text === "function") {
+        text = await file.text();
+      } else {
+        text = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result || "");
+          reader.onerror = () =>
+            reject(reader.error || new Error("Failed to read file."));
+          reader.readAsText(file);
+        });
+      }
+      const trimmed = String(text || "").trim();
+      if (!trimmed) {
+        notifyError(t("legacy.gedcom_empty", "GEDCOM X file is empty."));
+        return;
+      }
+      const chosenFormat = gedcomXImportFormatRef.current || "xml";
+      const useJson =
+        chosenFormat === "json" ||
+        ext === "json" ||
+        (trimmed.startsWith("{") && trimmed.trimEnd().endsWith("}"));
+      let parsed;
+      if (useJson) {
+        let data;
+        try {
+          data = JSON.parse(trimmed);
+        } catch {
+          notifyError(t("legacy.gedcomx_invalid_json", "Invalid GEDCOM X JSON."));
+          return;
+        }
+        parsed = parseGedcomXFromJson(data);
+      } else {
+        parsed = parseGedcomXFromXml(trimmed);
+      }
+      if (!Array.isArray(parsed) || parsed.length === 0) {
+        notifyError(t("legacy.gedcom_no_people", "No individuals found in GEDCOM X."));
+        return;
+      }
+      applyPeopleUpdate(parsed);
+      notifyPerson(t("legacy.gedcomx_imported", "GEDCOM X imported."));
+    } catch (err) {
+      notifyError(
+        err?.message ||
+          t("legacy.import_gedcomx_failed", "Failed to import GEDCOM X.")
+      );
+    }
+  };
+
+  const exportGedcomXFile = (format) => {
+    setGedcomXExportOpen(false);
+    let content = "";
+    let mime = "application/octet-stream";
+    let ext = "xml";
+    try {
+      if (format === "json") {
+        content = buildGedcomXJson(people, locale, t);
+        mime = "application/json;charset=utf-8";
+        ext = "json";
+      } else {
+        content = buildGedcomXXml(people, locale, t);
+        mime = "application/xml;charset=utf-8";
+        ext = format === "gedx" ? "gedx" : "xml";
+      }
+    } catch (err) {
+      notifyError(
+        err?.message || t("legacy.gedcomx_build_failed", "Failed to build GEDCOM X.")
+      );
+      return;
+    }
+    const blob = new Blob([content], { type: mime });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `tree-${Date.now()}.${ext}`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+  };
+
+  const addPerson = (e) => {
+    e.preventDefault();
+
+    const name = addForm.name.trim();
+
+    if (!name) {
+      notifyError(t("legacy.name_required", "Name is required"));
+
+      return;
+    }
+
+    const nextFatherRaw = addForm.father ? String(addForm.father) : "";
+
+    const nextMotherRaw = addForm.mother ? String(addForm.mother) : "";
+
+    const nextSpouseRaw = addForm.spouse ? String(addForm.spouse) : "";
+
+    if (nextFatherRaw && nextMotherRaw && nextFatherRaw === nextMotherRaw) {
+      notifyError(
+        t("legacy.parents_conflict", "Father and mother cannot be the same person.")
+      );
+
+      return;
+    }
+
+    if (addForm.id) {
+      const editId = String(addForm.id);
+
+      if (
+        nextFatherRaw === editId ||
+        nextMotherRaw === editId ||
+        nextSpouseRaw === editId
+      ) {
+        notifyError(
+          t("legacy.invalid_relation_self",
+
+            "A person cannot be their own parent, spouse, or child."
+          )
+        );
+
+        return;
+      }
+
+      const existing = people.find((p) => String(p.id) === editId);
+
+      if (!existing) {
+        notifyError(t("legacy.person_not_found", "Person not found."));
+
+        return;
+      }
+
+      const nextChildren = Array.from(
+        new Set(
+          (addForm.children || [])
+
+            .map(String)
+
+            .filter((id) => id && id !== editId)
+        )
+      );
+
+      applyPeopleUpdate((prev) => {
+        let next = prev.map((p) => ({
+          ...p,
+
+          children: Array.isArray(p.children) ? [...p.children] : [],
+        }));
+
+        const prevPerson = next.find((p) => String(p.id) === editId);
+
+        if (!prevPerson) return prev;
+
+        const prevSpouseId = prevPerson.spouse ? String(prevPerson.spouse) : "";
+
+        const prevFatherId = prevPerson.father ? String(prevPerson.father) : "";
+
+        const prevMotherId = prevPerson.mother ? String(prevPerson.mother) : "";
+
+        const prevChildren = Array.isArray(prevPerson.children)
+          ? prevPerson.children.map(String)
+          : [];
+
+        const nameParts = splitName(name);
+
+        const nextNames = { ...(prevPerson.names || {}) };
+
+        nextNames[locale] = nameParts.full || name;
+
+        const updated = {
+          ...prevPerson,
+
+          names: nextNames,
+
+          given: nameParts.given,
+
+          surname: nameParts.surname,
+
+          gender: addForm.gender.trim(),
+
+          birthYear: String(addForm.birthYear || "").trim(),
+
+          birthPlace: String(addForm.birthPlace || "").trim(),
+
+          deathDate: String(addForm.deathDate || "").trim(),
+
+          deathPlace: String(addForm.deathPlace || "").trim(),
+
+          details: String(addForm.details || "").trim(),
+
+          profession: String(addForm.profession || "").trim(),
+
+          archiveSource: String(addForm.archiveSource || "").trim(),
+
+          documentCode: String(addForm.documentCode || "").trim(),
+
+          sourceLinks: Array.isArray(addForm.sourceLinks)
+            ? addForm.sourceLinks.map((link) => String(link || "").trim()).filter(Boolean)
+            : Array.isArray(prevPerson.sourceLinks)
+              ? [...prevPerson.sourceLinks]
+              : [],
+
+          sourceLinksManaged: Boolean(addForm.sourceLinksManaged || prevPerson.sourceLinksManaged),
+
+          reliability: String(addForm.reliability || "").trim(),
+
+          father: nextFatherRaw ? nextFatherRaw : null,
+
+          mother: nextMotherRaw ? nextMotherRaw : null,
+
+          spouse: nextSpouseRaw ? nextSpouseRaw : null,
+
+          children: nextChildren,
+
+          color: addForm.color || "#f5f1e8",
+        };
+
+        next = next.map((p) => (String(p.id) === editId ? updated : p));
+
+        const nextSpouseId = updated.spouse ? String(updated.spouse) : "";
+
+        if (prevSpouseId && prevSpouseId !== nextSpouseId) {
+          next = next.map((p) => {
+            if (String(p.id) !== prevSpouseId) return p;
+
+            if (String(p.spouse) === editId) return { ...p, spouse: null };
+
+            return p;
+          });
+        }
+
+        if (nextSpouseId) {
+          next = next.map((p) => {
+            if (String(p.id) === nextSpouseId) return { ...p, spouse: editId };
+
+            if (String(p.spouse) === nextSpouseId && String(p.id) !== editId) {
+              return { ...p, spouse: null };
+            }
+
+            return p;
+          });
+        }
+
+        const nextFatherId = updated.father ? String(updated.father) : "";
+
+        const nextMotherId = updated.mother ? String(updated.mother) : "";
+
+        if (prevFatherId && prevFatherId !== nextFatherId) {
+          next = removeChildFromParent(next, prevFatherId, editId);
+        }
+
+        if (prevMotherId && prevMotherId !== nextMotherId) {
+          next = removeChildFromParent(next, prevMotherId, editId);
+        }
+
+        if (nextFatherId) next = addChildToParent(next, nextFatherId, editId);
+
+        if (nextMotherId) next = addChildToParent(next, nextMotherId, editId);
+
+        const nextChildrenSet = new Set(nextChildren.map(String));
+
+        for (const childId of prevChildren) {
+          if (!nextChildrenSet.has(String(childId))) {
+            next = removeParentFromChild(next, editId, childId);
+          }
+        }
+
+        for (const childId of nextChildrenSet) {
+          next = setParentOnChild(next, editId, childId, updated.gender);
+        }
+
+        const genderKey = String(updated.gender || "").toLowerCase();
+
+        const isMale = genderKey.startsWith("m");
+
+        const isFemale = genderKey.startsWith("f");
+
+        if (isMale || isFemale) {
+          next = next.map((p) => {
+            const pid = String(p.id);
+
+            if (pid === editId) return p;
+
+            const nextChild = { ...p };
+
+            if (isMale) {
+              if (String(nextChild.mother) === editId) nextChild.mother = null;
+
+              if (String(nextChild.father) === editId) return nextChild;
+
+              if (nextChildrenSet.has(pid) && !nextChild.father) {
+                nextChild.father = editId;
+              }
+            }
+
+            if (isFemale) {
+              if (String(nextChild.father) === editId) nextChild.father = null;
+
+              if (String(nextChild.mother) === editId) return nextChild;
+
+              if (nextChildrenSet.has(pid) && !nextChild.mother) {
+                nextChild.mother = editId;
+              }
+            }
+
+            return nextChild;
+          });
+        }
+
+        return next;
+      });
+
+      resetAddForm();
+
+      setSelectedPerson(null);
+
+      notifyPerson(t("legacy.person_updated", "Person updated."));
+
+      return;
+    }
+
+    const newId = uid();
+
+    const nameParts = splitName(name);
+
+    const newChildren = Array.from(
+      new Set((addForm.children || []).map(String).filter(Boolean))
+    );
+
+    const newPerson = {
+      id: newId,
+
+      names: { [locale]: nameParts.full || name },
+
+      given: nameParts.given,
+
+      surname: nameParts.surname,
+
+      gender: addForm.gender.trim(),
+
+      birthYear: String(addForm.birthYear || "").trim(),
+
+      birthPlace: String(addForm.birthPlace || "").trim(),
+
+      deathDate: String(addForm.deathDate || "").trim(),
+
+      deathPlace: String(addForm.deathPlace || "").trim(),
+
+      details: String(addForm.details || "").trim(),
+
+      profession: String(addForm.profession || "").trim(),
+
+      archiveSource: String(addForm.archiveSource || "").trim(),
+
+      documentCode: String(addForm.documentCode || "").trim(),
+
+      sourceLinks: Array.isArray(addForm.sourceLinks)
+        ? addForm.sourceLinks.map((link) => String(link || "").trim()).filter(Boolean)
+        : [],
+
+      sourceLinksManaged: Boolean(addForm.sourceLinksManaged),
+
+      reliability: String(addForm.reliability || "").trim(),
+
+      father: nextFatherRaw ? nextFatherRaw : null,
+
+      mother: nextMotherRaw ? nextMotherRaw : null,
+
+      spouse: nextSpouseRaw ? nextSpouseRaw : null,
+
+      children: newChildren,
+
+      color: addForm.color || "#f5f1e8",
+    };
+
+    applyPeopleUpdate((prev) => {
+      let next = [...prev, newPerson];
+
+      if (newPerson.spouse) {
+        next = next.map((p) => {
+          if (String(p.spouse) === String(newPerson.spouse))
+            return { ...p, spouse: null };
+
+          return p;
+        });
+
+        next = ensureSpouseBidirectional(next, newPerson.id, newPerson.spouse);
+      }
+
+      for (const c of newPerson.children || []) {
+        next = addChildToParent(next, newPerson.id, c);
+
+        next = setParentOnChild(next, newPerson.id, c, newPerson.gender);
+      }
+
+      if (newPerson.father)
+        next = addChildToParent(next, newPerson.father, newPerson.id);
+
+      if (newPerson.mother)
+        next = addChildToParent(next, newPerson.mother, newPerson.id);
+
+      return next;
+    });
+
+    resetAddForm();
+
+    notifyPerson(t("legacy.person_added", "Person added."));
+  };
+
+  const deletePerson = (id) => {
+    if (!id) return;
+
+    if (
+      !window.confirm(
+        t("legacy.delete_person_confirm",
+
+          "Are you sure you want to delete this person?"
+        )
+      )
+    )
+      return;
+
+    const targetId = String(id);
+
+    applyPeopleUpdate((prev) => {
+      const filtered = prev.filter((p) => String(p.id) !== targetId);
+
+      return filtered.map((p) => {
+        const next = {
+          ...p,
+
+          children: Array.isArray(p.children) ? [...p.children] : [],
+        };
+
+        if (String(next.father) === targetId) next.father = null;
+
+        if (String(next.mother) === targetId) next.mother = null;
+
+        if (String(next.spouse) === targetId) next.spouse = null;
+
+        next.children = next.children.filter((cid) => String(cid) !== targetId);
+
+        return next;
+      });
+    });
+
+    if (selectedPerson?.id === id) {
+      setSelectedPerson(null);
+    }
+
+    notifyPerson(t("legacy.person_deleted", "Person deleted."));
+  };
+
+  /** ===== EXPORTS ===== */
+
+  const exportGedcomFile = () => {
+    let gedcom = "";
+    try {
+      gedcom = buildGedcom(people, locale, t);
+    } catch (err) {
+      notifyError(
+        err?.message || t("legacy.gedcom_build_failed", "Failed to build GEDCOM")
+      );
+      return;
+    }
+
+    const blob = new Blob([gedcom], { type: "text/plain;charset=utf-8" });
+
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+
+    a.href = url;
+
+    a.download = `tree-${Date.now()}.ged`;
+
+    document.body.appendChild(a);
+
+    a.click();
+
+    a.remove();
+
+    window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+  };
+
+  const exportGedcom7File = () => {
+    let gedcom = "";
+    try {
+      gedcom = buildGedcom7(people, locale, t);
+    } catch (err) {
+      notifyError(
+        err?.message || t("legacy.gedcom7_build_failed", "Failed to build GEDCOM 7.0.")
+      );
+      return;
+    }
+    const blob = new Blob([gedcom], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `tree-${Date.now()}.ged`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+  };
+
+  /** ===== UI STYLES ===== */
+
+  const border = isDark ? "border-white/10" : "border-[#e8dfca]";
+
+  const card = isDark ? "bg-[#0d1b2a]" : "bg-white";
+
+  const subtle = isDark ? "bg-[#0d1b2a]/60" : "bg-[#f8f5ef]";
+
+  const inputBg = isDark ? "bg-[#0d1b2a]" : "bg-[#f5f1e8]";
+
+  const inputText = isDark ? "text-white" : "text-[#6c5249]";
+
+  const selectedChildren = useMemo(() => {
+    if (!selectedPerson) return [];
+
+    const ids = new Set();
+
+    // by children array
+
+    for (const c of selectedPerson.children || []) ids.add(String(c));
+
+    // also derived from father/mother of others
+
+    for (const p of people) {
+      if (String(p.father) === String(selectedPerson.id)) ids.add(String(p.id));
+
+      if (String(p.mother) === String(selectedPerson.id)) ids.add(String(p.id));
+    }
+
+    const out = [];
+
+    for (const id of ids) {
+      const child = people.find((p) => String(p.id) === id);
+
+      if (child) out.push(child);
+    }
+
+    return out;
+  }, [selectedPerson, people]);
+
+  const selectedPersonLinks = useMemo(
+    () => (selectedPerson ? extractPersonLinks(selectedPerson) : []),
+    [selectedPerson]
+  );
+
+  const closeSelectedPersonCard = useCallback(() => {
+    setSelectedPerson(null);
+    setSourceLinkDraft("");
+    setSourceLinkEditIndex(null);
+    setSourceLinkPanelOpen(false);
+    setMediaPanelOpen(false);
+    setLinkMenuOpen(false);
+    setSelectedMediaLink("");
+  }, []);
+
+  // Lock page scroll and allow Escape to close while the person modal is open.
+  useEffect(() => {
+    if (!selectedPerson) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") closeSelectedPersonCard();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [selectedPerson, closeSelectedPersonCard]);
+
+  const selectPersonFromList = useCallback((person) => {
+    setSelectedPerson(person);
+    setSourceLinkDraft("");
+    setSourceLinkTitleDraft("");
+    setSourceLinkEditIndex(null);
+    setSourceLinkPanelOpen(false);
+    setMediaPanelOpen(false);
+    setLinkMenuOpen(false);
+    setSelectedMediaLink("");
+  }, []);
+
+  const editableSourceLinkValues = useMemo(
+    () => selectedPersonLinks.map((link) => link.url),
+    [selectedPersonLinks]
+  );
+
+  const persistSelectedSourceLinks = useCallback(
+    (sourceLinks) => {
+      if (!selectedPerson || readOnly || !canMutatePeople) return;
+      const selectedId = String(selectedPerson.id);
+      let updatedSelected = null;
+
+      applyPeopleUpdate((prev) =>
+        prev.map((person) => {
+          if (String(person.id) !== selectedId) return person;
+          updatedSelected = updateEditableSourceLinks(
+            hydrateEditableSourceLinks(person),
+            sourceLinks
+          );
+          return updatedSelected;
+        })
+      );
+
+      if (updatedSelected) setSelectedPerson(updatedSelected);
+    },
+    [applyPeopleUpdate, canMutatePeople, readOnly, selectedPerson]
+  );
+
+  const openSourceLinkAdd = useCallback(() => {
+    if (!selectedPerson || readOnly) return;
+    const hydrated = hydrateEditableSourceLinks(selectedPerson);
+    persistSelectedSourceLinks(hydrated.sourceLinks);
+    setSourceLinkDraft("");
+    setSourceLinkTitleDraft("");
+    setSourceLinkEditIndex(null);
+    setSourceLinkPanelOpen(true);
+    setMediaPanelOpen(false);
+    setLinkMenuOpen(false);
+  }, [persistSelectedSourceLinks, readOnly, selectedPerson]);
+
+  const openSourceLinkEdit = useCallback((index, value) => {
+    if (!selectedPerson || readOnly) return;
+    const hydrated = hydrateEditableSourceLinks(selectedPerson);
+    persistSelectedSourceLinks(hydrated.sourceLinks);
+    if (value && String(value).includes(" | ")) {
+      const parts = String(value).split(" | ");
+      setSourceLinkTitleDraft(parts[0].trim());
+      setSourceLinkDraft(parts.slice(1).join(" | ").trim());
+    } else {
+      setSourceLinkTitleDraft("");
+      setSourceLinkDraft(value || "");
+    }
+    setSourceLinkEditIndex(index);
+    setSourceLinkPanelOpen(true);
+    setMediaPanelOpen(false);
+    setLinkMenuOpen(false);
+  }, [persistSelectedSourceLinks, readOnly, selectedPerson]);
+
+  const saveSourceLinkDraft = useCallback(() => {
+    const urlTrimmed = sourceLinkDraft.trim();
+    const titleTrimmed = sourceLinkTitleDraft.trim();
+    if (!urlTrimmed) {
+      notifyError(t("legacy.source_link_required", "Add a document or source link first."));
+      return;
+    }
+    const finalLink = titleTrimmed ? `${titleTrimmed} | ${urlTrimmed}` : urlTrimmed;
+
+    const currentLinks = Array.isArray(selectedPerson?.sourceLinks) ? selectedPerson.sourceLinks : [];
+    const nextLinks = [...currentLinks];
+    if (sourceLinkEditIndex === null || sourceLinkEditIndex === undefined) {
+      nextLinks.push(finalLink);
+    } else {
+      nextLinks[sourceLinkEditIndex] = finalLink;
+    }
+
+    persistSelectedSourceLinks(normalizeSourceLinks(nextLinks));
+    setSourceLinkDraft("");
+    setSourceLinkTitleDraft("");
+    setSourceLinkEditIndex(null);
+    setSourceLinkPanelOpen(false);
+    notifyPerson(t("legacy.source_link_saved", "Source link saved."));
+  }, [
+    selectedPerson,
+    notifyError,
+    notifyPerson,
+    persistSelectedSourceLinks,
+    sourceLinkDraft,
+    sourceLinkTitleDraft,
+    sourceLinkEditIndex,
+    t,
+  ]);
+
+  // Auto-save on typing was disabled to prevent the modal panel from closing prematurely.
+
+  const deleteSourceLinkAt = useCallback(
+    (index) => {
+      const currentLinks = selectedPerson?.sourceLinksManaged && Array.isArray(selectedPerson?.sourceLinks)
+        ? selectedPerson.sourceLinks
+        : extractPersonLinks(selectedPerson).map((link) => {
+            if (link.kind !== "local") return link.url;
+            try {
+              return new URL(link.url).pathname;
+            } catch {
+              return link.url;
+            }
+          });
+      const nextLinks = currentLinks.filter((_, i) => i !== index);
+      persistSelectedSourceLinks(nextLinks);
+      setSourceLinkDraft("");
+      setSourceLinkEditIndex(null);
+      notifyPerson(t("legacy.source_link_deleted", "Source link deleted."));
+    },
+    [selectedPerson, notifyPerson, persistSelectedSourceLinks, t]
+  );
+
+  const mediaTypeLabel = useCallback(
+    (type) => {
+      switch (type) {
+        case "image":
+          return t("legacy.media_type_image", "Image");
+        case "audio":
+          return t("legacy.media_type_audio", "Audio");
+
+        case "document":
+        default:
+          return t("legacy.media_type_document", "Document");
+      }
+    },
+    [t]
+  );
+
+  const loadExistingMedia = useCallback(async (type = "document") => {
+    const config = MEDIA_LINK_TYPES[type] || MEDIA_LINK_TYPES.document;
+    setMediaLoading(true);
+    try {
+      const shouldFallbackMediaRead = (err: any) =>
+        shouldFallbackRoute(err) ||
+        err?.response?.status === 401 ||
+        err?.response?.status === 403 ||
+        err?.response?.status === 500 ||
+        err?.code === "ERR_NETWORK" ||
+        !err?.response ||
+        err?.code === "AUTH_MISSING";
+      const { data } = await requestWithFallback(
+        config.endpoints.map((endpoint) => () => api.get(endpoint)),
+        shouldFallbackMediaRead
+      );
+      const rawItems = normalizeExistingMediaResponse(data, type);
+      setExistingMedia(rawItems);
+      setSelectedMediaLink(rawItems[0]?.sourceUrl || "");
+    } catch (err) {
+      console.error("Failed to load existing media:", err);
+      setExistingMedia([]);
+      setSelectedMediaLink("");
+    } finally {
+      setMediaLoading(false);
+    }
+  }, []);
+
+  const openMediaLinkPanel = useCallback(
+    (type = "document") => {
+      if (!selectedPerson || readOnly) return;
+      const hydrated = hydrateEditableSourceLinks(selectedPerson);
+      persistSelectedSourceLinks(hydrated.sourceLinks);
+      setSourceLinkPanelOpen(false);
+      setLinkMenuOpen(false);
+      setMediaLinkType(type);
+      setMediaPanelOpen(true);
+      setExistingMedia([]);
+      setSelectedMediaLink("");
+      void loadExistingMedia(type);
+    },
+    [loadExistingMedia, persistSelectedSourceLinks, readOnly, selectedPerson]
+  );
+
+  const linkSelectedMediaToPerson = useCallback((forcedLink?: any) => {
+    const forcedString = typeof forcedLink === "string" ? forcedLink : null;
+    const link = String(forcedString != null ? forcedString : selectedMediaLink || "").trim();
+    if (!link) {
+      notifyError(t("legacy.select_media_first", "Select an item first."));
+      return;
+    }
+    const hydrated = hydrateEditableSourceLinks(selectedPerson);
+    const currentLinks = Array.isArray(hydrated?.sourceLinks) ? hydrated.sourceLinks : [];
+    persistSelectedSourceLinks(
+      normalizeSourceLinks([...currentLinks, link])
+    );
+    setSelectedMediaLink("");
+    notifyPerson(t("legacy.media_linked", "Source linked to person."));
+  }, [
+    selectedPerson,
+    notifyError,
+    notifyPerson,
+    persistSelectedSourceLinks,
+    selectedMediaLink,
+    t,
+  ]);
+
+  const centerTree = () => {
+    const zoom = zoomRef.current;
+
+    const wrapEl = wrapRef.current;
+
+    const svgEl = svgRef.current;
+
+    const nodes = nodesRef.current || [];
+
+    if (!zoom || !wrapEl || !svgEl || nodes.length === 0) return;
+
+    const width = Math.max(320, wrapEl.clientWidth || 0);
+
+    const height = Math.max(520, wrapEl.clientHeight || 0);
+
+    const xs = nodes.map((n) => n.x).filter((v) => Number.isFinite(v));
+
+    const ys = nodes.map((n) => n.y).filter((v) => Number.isFinite(v));
+
+    if (!xs.length || !ys.length) return;
+
+    const minX = Math.min(...xs) - CARD_W / 2;
+
+    const maxX = Math.max(...xs) + CARD_W / 2;
+
+    const minY = Math.min(...ys) - CARD_H / 2;
+
+    const maxY = Math.max(...ys) + CARD_H / 2;
+
+    const boundsWidth = Math.max(maxX - minX, CARD_W);
+
+    const boundsHeight = Math.max(maxY - minY, CARD_H);
+
+    const scale = Math.min(width / boundsWidth, height / boundsHeight);
+
+    const clamped = Math.max(0.2, Math.min(scale * 0.9, 2.8));
+
+    const midX = (minX + maxX) / 2;
+
+    const midY = (minY + maxY) / 2;
+
+    const transform = d3.zoomIdentity
+
+      .translate(width / 2, height / 2)
+
+      .scale(clamped)
+
+      .translate(-midX, -midY);
+
+    d3.select(svgEl).transition().duration(500).call(zoom.transform, transform);
+  };
+
+  // Which GEDCOM standard this tree's data is stored in — surfaced on the
+  // person details modal so researchers know the provenance format.
+  const gedcomVersionLabel =
+    dataFormat === "gedcomx"
+      ? "GEDCOM X"
+      : dataFormat === "gedcom7"
+        ? "GEDCOM 7.0"
+        : "GEDCOM 5.5.1";
+
+  return (
+    <div dir={dir} className="relative">
+      {personStatus.message ? (
+        <div
+          className={`fixed top-24 z-[60] rtl:left-6 rtl:right-auto ltr:right-6 rounded-lg border px-4 py-3 shadow-xl ${
+            personStatus.type === "error"
+              ? "border-red-500/40 bg-red-600/90 text-white"
+              : "border-emerald-500/40 bg-emerald-600/90 text-white"
+          }`}
+          role="status"
+          aria-live="polite"
+        >
+          <div className="text-sm font-semibold">{personStatus.message}</div>
+        </div>
+      ) : null}
+
+      <input
+        ref={importGedcomRef}
+        type="file"
+        accept=".ged,.gedcom"
+        hidden
+        onChange={(e) => {
+          const f = e.target.files?.[0] || null;
+          if (f) void importGedcom(f);
+          e.target.value = "";
+        }}
+      />
+      <input
+        ref={importGedcomXRef}
+        type="file"
+        accept=".gedx,.xml,.json"
+        hidden
+        onChange={(e) => {
+          const f = e.target.files?.[0] || null;
+          if (f) void importGedcomX(f);
+          e.target.value = "";
+        }}
+      />
+
+      {/* LAYOUT: Flex Column */}
+      <div className="flex flex-col h-full bg-inherit">
+        {/* TOOLBAR */}
+        <div
+          className={`flex flex-wrap items-center justify-between gap-3 px-5 py-4 border-b ${border} 
+          ${isDark ? "bg-[#0d1b2a]/50" : "bg-[#f8f5ef]/50"} z-20 rounded-t-xl`}
+        >
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => {
+                if (zoomRef.current && svgRef.current)
+                  d3.select(svgRef.current)
+                    .transition()
+                    .call(zoomRef.current.scaleBy, 1.3);
+              }}
+              className="interactive-btn btn-neu-icon !h-10 !w-10"
+              title={t("legacy.zoom_in", "Zoom In")}
+              aria-label={t("legacy.zoom_in", "Zoom In")}
+            >
+              <Plus className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => {
+                if (zoomRef.current && svgRef.current)
+                  d3.select(svgRef.current)
+                    .transition()
+                    .call(zoomRef.current.scaleBy, 0.7);
+              }}
+              className="interactive-btn btn-neu-icon !h-10 !w-10 flex items-center justify-center"
+              title={t("legacy.zoom_out", "Zoom Out")}
+              aria-label={t("legacy.zoom_out", "Zoom Out")}
+            >
+              <div className="w-4 h-0.5 bg-current" />
+            </button>
+            <button
+              type="button"
+              className="interactive-btn btn-neu ml-2 inline-flex items-center gap-2 !px-4 !py-2 !text-xs"
+              onClick={centerTree}
+            >
+              <LocateFixed className="w-4 h-4" />
+              {t("legacy.center", "Center")}
+            </button>
+            {dataFormat === "gedcomx" ? (
+              <span
+                className="neu-chip ml-2 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wide"
+                title={t("legacy.tree_saved_gedcomx",
+                  "This tree is saved in GEDCOM X format.",
+                )}
+              >
+                GEDCOM X
+              </span>
+            ) : null}
+            {dataFormat === "gedcom7" ? (
+              <span
+                className="neu-chip ml-2 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wide"
+                title={t("legacy.tree_saved_gedcom7",
+                  "This tree is saved in GEDCOM 7.0 format.",
+                )}
+              >
+                GEDCOM 7.0
+              </span>
+            ) : null}
+          </div>
+
+          {!readOnly ? (
+          <div className="grid grid-cols-4 gap-2 max-w-3xl">
+            <div className="relative min-w-0" ref={gedcomImportDropdownRef}>
+              <button
+                onClick={() => {
+                  setGedcomImportOpen((o) => !o);
+                  setGedcomExportOpen(false);
+                  setGedcomXImportOpen(false);
+                  setGedcomXExportOpen(false);
+                }}
+                aria-haspopup="menu"
+                aria-expanded={gedcomImportOpen}
+                className="interactive-btn btn-neu w-full min-w-0 !flex items-center justify-center gap-2 !px-3 !py-2.5 !text-xs"
+              >
+                <Upload className="w-4 h-4 shrink-0" />
+                <span className="truncate">
+                  {t("legacy.import_gedcom", "Import GEDCOM")}
+                </span>
+                <ChevronDown className="w-4 h-4 shrink-0" />
+              </button>
+              {gedcomImportOpen ? (
+                <div
+                  className="neu-menu absolute left-0 right-0 top-full mt-2 py-1.5 z-30 min-w-[180px]"
+                  role="menu"
+                >
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={() => {
+                      importGedcomFormatRef.current = "5.5.1";
+                      setGedcomImportOpen(false);
+                      importGedcomRef.current?.click();
+                    }}
+                    className="neu-menu-item w-full text-left px-3.5 py-2.5 text-sm"
+                  >
+                    {t("legacy.gedcom_format_551", "GEDCOM 5.5.1")}
+                  </button>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={() => {
+                      importGedcomFormatRef.current = "7.0";
+                      setGedcomImportOpen(false);
+                      importGedcomRef.current?.click();
+                    }}
+                    className="neu-menu-item w-full text-left px-3.5 py-2.5 text-sm"
+                  >
+                    {t("legacy.format_gedcom7", "GEDCOM 7.0")}
+                  </button>
+                </div>
+              ) : null}
+            </div>
+            <div className="relative min-w-0" ref={gedcomExportDropdownRef}>
+              <button
+                onClick={() => {
+                  setGedcomExportOpen((o) => !o);
+                  setGedcomImportOpen(false);
+                  setGedcomXImportOpen(false);
+                  setGedcomXExportOpen(false);
+                }}
+                aria-haspopup="menu"
+                aria-expanded={gedcomExportOpen}
+                className="interactive-btn btn-neu btn-neu--primary w-full min-w-0 !flex items-center justify-center gap-2 !px-3 !py-2.5 !text-xs"
+              >
+                <FileCode2 className="w-4 h-4 shrink-0" />
+                <span className="truncate">
+                  {t("legacy.export_gedcom", "Export GEDCOM")}
+                </span>
+                <ChevronDown className="w-4 h-4 shrink-0" />
+              </button>
+              {gedcomExportOpen ? (
+                <div
+                  className="neu-menu absolute left-0 right-0 top-full mt-2 py-1.5 z-30 min-w-[180px]"
+                  role="menu"
+                >
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={() => {
+                      setGedcomExportOpen(false);
+                      exportGedcomFile();
+                    }}
+                    className="neu-menu-item w-full text-left px-3.5 py-2.5 text-sm"
+                  >
+                    {t("legacy.gedcom_format_551", "GEDCOM 5.5.1")}
+                  </button>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={() => {
+                      setGedcomExportOpen(false);
+                      exportGedcom7File();
+                    }}
+                    className="neu-menu-item w-full text-left px-3.5 py-2.5 text-sm"
+                  >
+                    {t("legacy.format_gedcom7", "GEDCOM 7.0")}
+                  </button>
+                </div>
+              ) : null}
+            </div>
+            <div className="relative min-w-0" ref={gedcomXImportDropdownRef}>
+              <button
+                onClick={() => {
+                  setGedcomXImportOpen((o) => !o);
+                  setGedcomXExportOpen(false);
+                }}
+                aria-haspopup="menu"
+                aria-expanded={gedcomXImportOpen}
+                className="interactive-btn btn-neu w-full min-w-0 !flex items-center justify-center gap-2 !px-3 !py-2.5 !text-xs"
+              >
+                <Upload className="w-4 h-4 shrink-0" />
+                <span className="truncate">
+                  {t("legacy.import_gedcomx", "Import GEDCOM X")}
+                </span>
+                <ChevronDown className="w-4 h-4 shrink-0" />
+              </button>
+              {gedcomXImportOpen ? (
+                <div
+                  className="neu-menu absolute left-0 right-0 top-full mt-2 py-1.5 z-30 min-w-[180px]"
+                  role="menu"
+                >
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={() => {
+                      gedcomXImportFormatRef.current = "xml";
+                      setGedcomXImportOpen(false);
+                      importGedcomXRef.current?.click();
+                    }}
+                    className="neu-menu-item w-full text-left px-3.5 py-2.5 text-sm"
+                  >
+                    {t("legacy.gedcomx_format_xml", "XML format")}
+                  </button>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={() => {
+                      gedcomXImportFormatRef.current = "json";
+                      setGedcomXImportOpen(false);
+                      importGedcomXRef.current?.click();
+                    }}
+                    className="neu-menu-item w-full text-left px-3.5 py-2.5 text-sm"
+                  >
+                    {t("legacy.gedcomx_format_json", "JSON format")}
+                  </button>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={() => {
+                      gedcomXImportFormatRef.current = "gedx";
+                      setGedcomXImportOpen(false);
+                      importGedcomXRef.current?.click();
+                    }}
+                    className="neu-menu-item w-full text-left px-3.5 py-2.5 text-sm"
+                  >
+                    {t("legacy.gedcomx_format_gedx", ".gedx file")}
+                  </button>
+                </div>
+              ) : null}
+            </div>
+            <div className="relative min-w-0" ref={gedcomXExportDropdownRef}>
+              <button
+                onClick={() => {
+                  setGedcomXExportOpen((o) => !o);
+                  setGedcomXImportOpen(false);
+                }}
+                aria-haspopup="menu"
+                aria-expanded={gedcomXExportOpen}
+                className="interactive-btn btn-neu btn-neu--primary w-full min-w-0 !flex items-center justify-center gap-2 !px-3 !py-2.5 !text-xs"
+              >
+                <FileCode2 className="w-4 h-4 shrink-0" />
+                <span className="truncate">
+                  {t("legacy.export_gedcomx", "Export GEDCOM X")}
+                </span>
+                <ChevronDown className="w-4 h-4 shrink-0" />
+              </button>
+              {gedcomXExportOpen ? (
+                <div
+                  className="neu-menu absolute left-0 right-0 top-full mt-2 py-1.5 z-30 min-w-[180px]"
+                  role="menu"
+                >
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={() => exportGedcomXFile("xml")}
+                    className="neu-menu-item w-full text-left px-3.5 py-2.5 text-sm"
+                  >
+                    {t("legacy.gedcomx_format_xml", "XML format")}
+                  </button>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={() => exportGedcomXFile("json")}
+                    className="neu-menu-item w-full text-left px-3.5 py-2.5 text-sm"
+                  >
+                    {t("legacy.gedcomx_format_json", "JSON format")}
+                  </button>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={() => exportGedcomXFile("gedx")}
+                    className="neu-menu-item w-full text-left px-3.5 py-2.5 text-sm"
+                  >
+                    {t("legacy.gedcomx_format_gedx", ".gedx file")}
+                  </button>
+                </div>
+              ) : null}
+            </div>
+          </div>
+          ) : treeId != null ? (
+            <RequestDownloadButton
+              contentType="tree"
+              contentId={treeId}
+              downloadHref={`${getApiRoot()}/api/trees/${treeId}/download`}
+              fileName={`tree-${treeId}.ged`}
+              canDownloadDirectly={canDownloadDirectly}
+            />
+          ) : null}
+        </div>
+
+        {/* MAIN AREA – fixed canvas height to prevent ResizeObserver → draw() → height change → loop */}
+        <div className="flex-1 flex flex-col min-h-0 relative">
+          <div
+            ref={wrapRef}
+            data-format={dataFormat}
+            className={`relative h-[70vh] min-h-[400px] w-full border-b ${border} overflow-hidden shrink-0
+            ${isDark ? "bg-[#0d1b2a]/30" : "bg-[#f8f5ef]/30"}
+            ${dataFormat === "gedcomx" || dataFormat === "gedcom7" ? "ring-1 ring-inset ring-[#0c4a6e]/30 dark:ring-[#0d9488]/30" : ""}`}
+          >
+            {/* SVG will be here */}
+            <svg
+              ref={svgRef}
+              className="w-full h-full block cursor-grab active:cursor-grabbing outline-none"
+            />
+
+            {!people.length ? (
+              <div className="absolute inset-0 flex items-center justify-center text-center px-6 pointer-events-none">
+                <div className="neu-panel max-w-md p-7 pointer-events-auto">
+                  <div className="neu-avatar mx-auto flex h-14 w-14 items-center justify-center rounded-full">
+                    <Network
+                      className="h-6 w-6"
+                      style={{ color: isDark ? "#5eead4" : "#0c4a6e" }}
+                      aria-hidden="true"
+                    />
+                  </div>
+                  <div className="mt-4 text-lg font-semibold font-serif">
+                    {readOnly
+                      ? t("legacy.tree_empty", "No people to display yet.")
+                      : t("legacy.tree_empty_prompt",
+                          "Start building your family tree.",
+                        )}
+                  </div>
+                  <p className="neu-label mt-2 text-sm">
+                    {readOnly
+                      ? t("legacy.tree_empty_readonly_hint",
+                          "There is no GEDCOM data for this tree yet.",
+                        )
+                      : t("legacy.tree_empty_hint",
+                          "Add a person manually or import a GEDCOM file.",
+                        )}
+                  </p>
+                  {!readOnly ? (
+                    <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
+                      <button
+                        type="button"
+                        className="interactive-btn btn-neu btn-neu--primary !px-5 !py-2.5 !text-xs"
+                        onClick={() => {
+                          resetAddForm();
+                          setPanelTab("add");
+                        }}
+                      >
+                        {t("legacy.add_person", "Add Person")}
+                      </button>
+                      <button
+                        type="button"
+                        className="interactive-btn btn-neu !px-5 !py-2.5 !text-xs"
+                        onClick={() => importGedcomRef.current?.click()}
+                      >
+                        {t("legacy.import_gedcom", "Import GEDCOM")}
+                      </button>
+                      <button
+                        type="button"
+                        className="interactive-btn btn-neu !px-5 !py-2.5 !text-xs"
+                        onClick={() => {
+                          gedcomXImportFormatRef.current = "xml";
+                          importGedcomXRef.current?.click();
+                        }}
+                      >
+                        {t("legacy.import_gedcomx", "Import GEDCOM X")}
+                      </button>
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+            ) : null}
+
+            {selectedPerson ? createPortal(
+              <div
+                className={`fixed inset-0 z-[2000] flex items-center justify-center p-4 ${
+                  isDark ? "bg-black/75" : "bg-[#0d1b2a]/45"
+                } backdrop-blur-sm`}
+                role="dialog"
+                aria-modal="true"
+                aria-label={t("legacy.person_card", "Person card")}
+                onClick={closeSelectedPersonCard}
+              >
+                <div
+                  className={`person-card-modal flex max-h-[80vh] w-full max-w-[960px] flex-col overflow-hidden rounded-2xl border ${border} ${card} shadow-2xl`}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                <div className={`flex shrink-0 items-start justify-between gap-4 border-b ${border} px-5 py-4 sm:px-7 sm:py-5 ${isDark ? "bg-[#071827]/60" : "bg-[#f8f5ef]"}`}>
+                  <div className="flex min-w-0 items-center gap-4">
+                    <div
+                      className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full text-xl font-bold font-cinzel"
+                      style={{
+                        background: isDark ? "#0f2742" : "#e7f0ee",
+                        color: isDark ? "#5eead4" : "#0c4a6e",
+                      }}
+                      aria-hidden="true"
+                    >
+                      {String(nameOf(selectedPerson)).charAt(0).toUpperCase()}
+                    </div>
+                    <div className="min-w-0">
+                      <div className="truncate text-2xl font-semibold font-cinzel">
+                        {nameOf(selectedPerson)}
+                      </div>
+                      <div className="mt-1 flex flex-wrap items-center gap-2">
+                        <span className="neu-label text-[11px] uppercase tracking-widest">
+                          {t("legacy.person_card", "Person card")}
+                        </span>
+                        <span
+                          className="inline-flex items-center gap-1.5 rounded-full bg-[#0c4a6e]/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-[#0c4a6e] dark:bg-[#5eead4]/10 dark:text-[#5eead4]"
+                          title={`${t("legacy.gedcom_version", "GEDCOM version")}: ${gedcomVersionLabel}`}
+                        >
+                          <FileCode2 className="h-3 w-3" aria-hidden="true" />
+                          {t("legacy.gedcom_version", "GEDCOM version")}: {gedcomVersionLabel}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={closeSelectedPersonCard}
+                    className={`shrink-0 rounded-lg p-2 transition ${isDark ? "hover:bg-white/10" : "hover:bg-black/5"}`}
+                    title={t("legacy.close", "Close")}
+                    aria-label={t("legacy.close", "Close")}
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+
+                <div className="flex-1 overflow-y-auto custom-scrollbar px-5 py-5 sm:px-7">
+                {!readOnly ? (
+                  <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-stone-600 dark:text-stone-300">
+                    <span className="mr-1">{t("legacy.link_with", "Link with:")}</span>
+                    <button
+                      type="button"
+                      onClick={() => openMediaLinkPanel("audio")}
+                      className="interactive-btn btn-neu inline-flex items-center gap-1.5 !px-3 !py-1.5 !text-xs font-semibold"
+                    >
+                      <Music className="h-3.5 w-3.5 text-[#0d9488]" />
+                      {mediaTypeLabel("audio")}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => openMediaLinkPanel("image")}
+                      className="interactive-btn btn-neu inline-flex items-center gap-1.5 !px-3 !py-1.5 !text-xs font-semibold"
+                    >
+                      <ImageIcon className="h-3.5 w-3.5 text-[#0d9488]" />
+                      {mediaTypeLabel("image")}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => openMediaLinkPanel("document")}
+                      className="interactive-btn btn-neu inline-flex items-center gap-1.5 !px-3 !py-1.5 !text-xs font-semibold"
+                    >
+                      <FileText className="h-3.5 w-3.5 text-[#0d9488]" />
+                      {mediaTypeLabel("document")}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={openSourceLinkAdd}
+                      className="interactive-btn btn-neu btn-neu--primary inline-flex items-center gap-1.5 !px-3 !py-1.5 !text-xs font-semibold"
+                    >
+                      <Link2 className="h-3.5 w-3.5" />
+                      {t("legacy.media_type_external", "External link (URL)")}
+                    </button>
+                  </div>
+                ) : null}
+
+                <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {[
+                    {
+                      label: t("legacy.birth_year", "Birth Year"),
+                      value: selectedPerson.birthYear,
+                    },
+                    {
+                      label: t("legacy.birth_place", "Birth Place"),
+                      value: selectedPerson.birthPlace,
+                    },
+                    {
+                      label: t("legacy.death_date", "Death Date"),
+                      value: selectedPerson.deathDate,
+                    },
+                    {
+                      label: t("legacy.death_place", "Death Place"),
+                      value: selectedPerson.deathPlace,
+                    },
+                    {
+                      label: t("legacy.gender", "Gender"),
+                      value: displayGender(selectedPerson.gender),
+                    },
+                    {
+                      label: t("legacy.profession", "Profession"),
+                      value: selectedPerson.profession,
+                    },
+                    {
+                      label: t("legacy.father", "Father"),
+                      value: relationName(selectedPerson.father),
+                    },
+                    {
+                      label: t("legacy.mother", "Mother"),
+                      value: relationName(selectedPerson.mother),
+                    },
+                    {
+                      label: t("legacy.spouse", "Spouse"),
+                      value: relationName(selectedPerson.spouse),
+                    },
+                    {
+                      label: t("legacy.children", "Children"),
+                      value: selectedChildren.length
+                        ? selectedChildren.map((c) => nameOf(c)).join(", ")
+                        : "",
+                      wide: true,
+                    },
+                  ].map(({ label, value, wide }) => (
+                    <div
+                      key={label}
+                      className={`neu-inset px-3.5 py-2.5 ${wide ? "sm:col-span-2 lg:col-span-3" : ""}`}
+                    >
+                      <div className="neu-label text-[10px] font-bold uppercase tracking-widest">
+                        {label}
+                      </div>
+                      <div className="mt-0.5 text-sm font-medium">
+                        {value || "-"}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {selectedPerson.archiveSource ||
+                selectedPerson.documentCode ||
+                selectedPerson.reliability ? (
+                  <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    {selectedPerson.archiveSource ? (
+                      <div className="neu-inset px-3.5 py-2.5 sm:col-span-2 lg:col-span-3">
+                        <div className="neu-label text-[10px] font-bold uppercase tracking-widest">
+                          {t("legacy.archive_source", "Archive Source")}
+                        </div>
+                        <div className="mt-0.5 break-words text-sm font-medium">
+                          {Array.isArray(selectedPerson.archiveSource)
+                            ? selectedPerson.archiveSource.filter(Boolean).join(", ")
+                            : selectedPerson.archiveSource}
+                        </div>
+                      </div>
+                    ) : null}
+                    {selectedPerson.documentCode ? (
+                      <div className="neu-inset px-3.5 py-2.5">
+                        <div className="neu-label text-[10px] font-bold uppercase tracking-widest">
+                          {t("legacy.document_code", "Document Code")}
+                        </div>
+                        <div className="mt-0.5 break-words text-sm font-medium">
+                          {Array.isArray(selectedPerson.documentCode)
+                            ? selectedPerson.documentCode.filter(Boolean).join(", ")
+                            : selectedPerson.documentCode}
+                        </div>
+                      </div>
+                    ) : null}
+                    {selectedPerson.reliability ? (
+                      <div className="neu-inset px-3.5 py-2.5">
+                        <div className="neu-label text-[10px] font-bold uppercase tracking-widest">
+                          {t("legacy.reliability", "Reliability")}
+                        </div>
+                        <div className="mt-0.5 text-sm font-medium">
+                          {selectedPerson.reliability}
+                        </div>
+                      </div>
+                    ) : null}
+                  </div>
+                ) : null}
+
+                {selectedPerson.details ? (
+                  <div className="neu-inset mt-4 px-3.5 py-3">
+                    <div className="neu-label text-[10px] font-bold uppercase tracking-widest">
+                      {t("legacy.details", "Details / Biography")}
+                    </div>
+                    <div className="mt-1 whitespace-pre-line text-sm leading-relaxed">
+                      {selectedPerson.details}
+                    </div>
+                  </div>
+                ) : null}
+
+                <div className="mt-5 border-t border-current/10 pt-4">
+                  <div className="mb-2 flex items-center justify-between gap-2">
+                    <div className="neu-label flex items-center gap-2 text-xs font-bold uppercase tracking-widest">
+                      <Archive className="h-3.5 w-3.5" aria-hidden="true" />
+                      {t("legacy.sources_documents", "Sources & Documents")}
+                    </div>
+                    {!readOnly ? (
+                      <button
+                        type="button"
+                        onClick={openSourceLinkAdd}
+                        className="interactive-btn btn-neu !px-3 !py-1.5 !text-[11px]"
+                      >
+                        + {t("legacy.add", "Add")}
+                      </button>
+                    ) : null}
+                  </div>
+                  {selectedPersonLinks.length ? (
+                    <div className="grid gap-2.5 sm:grid-cols-2">
+                      {selectedPersonLinks.map((l, index) => {
+                        const isAudio = l.kind === "audio" || /\.(mp3|wav|ogg|m4a)$/i.test(l.url);
+                        const isImg = l.kind === "image" || /\.(png|jpe?g|gif|webp)$/i.test(l.url);
+                        const isDoc = l.kind === "document" || /\.(pdf|docx?|txt)$/i.test(l.url);
+
+                        const badgeColor = isImg
+                          ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30"
+                          : isAudio
+                          ? "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30"
+                          : isDoc
+                          ? "bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/30"
+                          : "bg-teal-500/15 text-teal-600 dark:text-teal-400 border-teal-500/30";
+
+                        const badgeLabel = isImg
+                          ? "IMAGE"
+                          : isAudio
+                          ? "AUDIO"
+                          : isDoc
+                          ? "DOCUMENT"
+                          : "EXTERNAL LINK";
+
+                        return (
+                          <div
+                            key={`${l.url}-${index}`}
+                            className="neu-card flex flex-col gap-2 p-3 rounded-xl border border-[#0d9488]/20 text-xs shadow-sm"
+                          >
+                            <div className="flex items-center justify-between gap-2">
+                              <span className={`px-2 py-0.5 text-[9px] font-extrabold tracking-widest rounded-md border ${badgeColor}`}>
+                                {badgeLabel}
+                              </span>
+                              <div className="flex items-center gap-1.5 shrink-0">
+                                <button
+                                  type="button"
+                                  onClick={() => setPreviewSource({ url: l.url, label: l.label, kind: l.kind })}
+                                  className="inline-flex items-center gap-1 rounded-lg bg-[#0d9488]/15 px-2.5 py-1 text-xs font-semibold text-[#0d9488] dark:text-[#5eead4] hover:bg-[#0d9488]/25 transition"
+                                >
+                                  <ExternalLink className="h-3 w-3" />
+                                  {t("legacy.open", "Open")}
+                                </button>
+                                {!readOnly ? (
+                                  <button
+                                    type="button"
+                                    onClick={() => deleteSourceLinkAt(index)}
+                                    className="rounded-lg p-1 text-red-500 hover:bg-red-500/15 transition"
+                                    title={t("legacy.delete", "Delete")}
+                                    aria-label={t("legacy.delete", "Delete")}
+                                  >
+                                    <Trash2 className="h-3.5 w-3.5" />
+                                  </button>
+                                ) : null}
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-2 min-w-0">
+                              {isImg ? (
+                                <FileText className="h-4 w-4 shrink-0 text-emerald-500" />
+                              ) : isAudio ? (
+                                <FileText className="h-4 w-4 shrink-0 text-amber-500" />
+                              ) : (
+                                <Link2 className="h-4 w-4 shrink-0 text-[#0d9488]" />
+                              )}
+                              <span className="font-semibold truncate text-[#162238] dark:text-white" title={l.label}>
+                                {l.label}
+                              </span>
+                            </div>
+
+                            {isAudio && (
+                              <audio controls className="w-full h-8 mt-1 rounded-md bg-stone-100 dark:bg-stone-800">
+                                <source src={l.url} />
+                                Your browser does not support audio.
+                              </audio>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="neu-inset px-3.5 py-3 text-xs italic">
+                      <span className="neu-label">
+                        {t("legacy.no_sources_yet",
+                          "No sources linked yet. Use \"Link with...\" or add a source link.",
+                        )}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                {!readOnly && sourceLinkPanelOpen ? (
+                  <div className="neu-inset mt-3 min-h-[170px] px-3.5 py-3 space-y-2">
+                    <label className="neu-label block text-[10px] font-bold uppercase tracking-widest">
+                      {sourceLinkEditIndex === null || sourceLinkEditIndex === undefined
+                        ? t("legacy.add_source_link", "Add external link")
+                        : t("legacy.edit_source_link", "Edit external link")}
+                    </label>
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      <div>
+                        <label className="neu-label mb-1 block text-[10px] font-semibold text-[#0c4a6e] dark:text-[#0d9488]">
+                          {t("legacy.page_name_title", "Page Name / Title")}
+                        </label>
+                        <input
+                          value={sourceLinkTitleDraft}
+                          onChange={(event) => setSourceLinkTitleDraft(event.target.value)}
+                          placeholder={t("legacy.page_name_placeholder", "e.g. Birth Archive Entry")}
+                          className="neu-field w-full px-3 py-2 text-xs"
+                        />
+                      </div>
+                      <div>
+                        <label className="neu-label mb-1 block text-[10px] font-semibold text-[#0c4a6e] dark:text-[#0d9488]">
+                          {t("legacy.external_url", "External Link (URL)")}
+                        </label>
+                        <input
+                          value={sourceLinkDraft}
+                          onChange={(event) => setSourceLinkDraft(event.target.value)}
+                          placeholder={t("legacy.source_link_placeholder", "https://... or /uploads/documents/file.pdf")}
+                          className="neu-field w-full px-3 py-2 text-xs"
+                        />
+                      </div>
+                    </div>
+                    <div className="flex justify-end gap-2 pt-1">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSourceLinkPanelOpen(false);
+                          setSourceLinkDraft("");
+                          setSourceLinkTitleDraft("");
+                          setSourceLinkEditIndex(null);
+                        }}
+                        className="interactive-btn btn-neu !px-3 !py-1.5 !text-xs"
+                      >
+                        {t("legacy.cancel", "Cancel")}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={saveSourceLinkDraft}
+                        className="interactive-btn btn-neu btn-neu--primary !px-4 !py-1.5 !text-xs"
+                      >
+                        {t("save_link_with_this_person", "Save link with this person")}
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
+
+                {!readOnly && mediaPanelOpen ? (
+                <div className="neu-inset mt-3 min-h-[170px] px-3.5 py-3">
+                    <div className="mb-1.5 flex items-center justify-between gap-2">
+                      <label className="neu-label block text-[10px] font-bold uppercase tracking-widest">
+                        {t("legacy.link_media", "Link with...")}: {mediaTypeLabel(mediaLinkType)}
+                      </label>
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => loadExistingMedia(mediaLinkType)}
+                          className="text-[11px] font-semibold text-[#0d9488] hover:underline disabled:opacity-50"
+                          disabled={mediaLoading}
+                        >
+                          {mediaLoading
+                            ? t("legacy.loading", "Loading...")
+                            : t("legacy.refresh", "Refresh")}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setMediaPanelOpen(false)}
+                          className="text-[11px] font-semibold text-red-500 hover:underline"
+                        >
+                          {t("legacy.close", "Close")}
+                        </button>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <select
+                        value={selectedMediaLink}
+                        onChange={(event) => {
+                          const next = event.target.value;
+                          setSelectedMediaLink(next);
+                        }}
+                        disabled={mediaLoading || !existingMedia.length}
+                        className="neu-field min-w-0 flex-1 px-3 py-2.5 text-xs disabled:opacity-50"
+                      >
+                        {existingMedia.length ? (
+                          existingMedia.map((item) => (
+                            <option key={`${item.id}-${item.sourceUrl}`} value={item.sourceUrl}>
+                              {item.title}
+                              {item.documentCode || item.document_code
+                                ? ` - ${item.documentCode || item.document_code}`
+                                : ""}
+                            </option>
+                          ))
+                        ) : (
+                          <option value="">
+                            {mediaLoading
+                              ? t("legacy.loading", "Loading...")
+                              : t("legacy.no_media_found", "No items found for this type.")}
+                          </option>
+                        )}
+                      </select>
+                      <button
+                        type="button"
+                        onClick={() => linkSelectedMediaToPerson()}
+                        disabled={mediaLoading || !selectedMediaLink}
+                        className="interactive-btn btn-neu btn-neu--primary !px-4 !py-2 !text-xs disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        {t("save_link_with_this_person", "Save link with this person")}
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
+                </div>
+                </div>
+              </div>,
+              document.body,
+            ) : null}
+
+            {previewSource ? createPortal(
+              <div
+                className={`fixed inset-0 z-[2500] flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-200`}
+                role="dialog"
+                aria-modal="true"
+                onClick={() => setPreviewSource(null)}
+              >
+                <div
+                  className={`flex max-h-[85vh] w-full max-w-[800px] flex-col overflow-hidden rounded-2xl border ${border} ${card} shadow-2xl animate-in zoom-in-95 duration-200`}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {/* Header */}
+                  <div
+                    className={`flex shrink-0 items-center justify-between gap-4 border-b ${border} px-5 py-4 ${theme === "dark" ? "bg-[#071827]/60" : "bg-[#f8f5ef]"}`}
+                  >
+                    <div className="min-w-0 flex-1">
+                      <h3 className={`font-cinzel font-bold text-lg truncate text-[#0c4a6e] dark:text-[#0d9488]`}>
+                        {previewSource.label}
+                      </h3>
+                      <p className="text-[10px] text-stone-500 dark:text-stone-400 truncate mt-1">
+                        {previewSource.url}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setPreviewSource(null)}
+                      className="p-1.5 rounded-lg text-stone-400 hover:bg-stone-500/10 hover:text-red-500 transition-colors"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                  </div>
+
+                  {/* Body Content */}
+                  <div className="flex-1 overflow-y-auto min-h-0 flex flex-col items-center justify-center p-6 bg-white dark:bg-[#0d1b2a]/20">
+                    {previewSource.kind === "image" || /\.(png|jpe?g|gif|webp)$/i.test(previewSource.url) ? (
+                      <img
+                        src={previewSource.url}
+                        alt={previewSource.label}
+                        className="max-w-full max-h-[50vh] object-contain rounded-lg shadow-md bg-stone-50 dark:bg-[#071827]/50"
+                      />
+                    ) : previewSource.kind === "audio" || /\.(mp3|wav|ogg|m4a)$/i.test(previewSource.url) ? (
+                      <div className="text-center p-6 bg-stone-50 dark:bg-[#071827]/50 rounded-xl border border-[#24766f]/15 w-full max-w-md">
+                        <Music className="w-16 h-16 text-[#24766f] mx-auto mb-4 animate-pulse" />
+                        <audio controls src={previewSource.url} className="w-full" autoPlay />
+                      </div>
+                    ) : previewSource.url.toLowerCase().endsWith(".pdf") || previewSource.kind === "document" || previewSource.kind === "book" ? (
+                      <div className="w-full h-full min-h-[45vh] flex flex-col">
+                        <iframe
+                          src={previewSource.url}
+                          title={previewSource.label}
+                          className="w-full flex-1 min-h-[40vh] border border-[#24766f]/15 rounded-lg bg-white"
+                        />
+                      </div>
+                    ) : (
+                      <div className="text-center p-8 bg-stone-50 dark:bg-[#071827]/50 rounded-xl border border-[#24766f]/15 max-w-md">
+                        <FileText className="w-16 h-16 text-[#24766f] mx-auto mb-4" />
+                        <p className="text-sm font-semibold mb-2">Lien externe ou document</p>
+                        <p className="text-xs text-stone-500 dark:text-stone-400 mb-4">
+                          Ce type de fichier ou lien ne peut pas être prévisualisé directement.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Footer */}
+                  <div
+                    className={`flex shrink-0 items-center justify-end gap-3 border-t ${border} px-5 py-3.5 ${theme === "dark" ? "bg-[#071827]/40" : "bg-[#f8f5ef]/50"}`}
+                  >
+                    <a
+                      href={previewSource.url}
+                      download
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="interactive-btn btn-neu btn-neu--primary px-4 py-2 text-xs flex items-center gap-1.5"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                      Télécharger / Ouvrir
+                    </a>
+                    <button
+                      type="button"
+                      onClick={() => setPreviewSource(null)}
+                      className="interactive-btn btn-neu px-4 py-2 text-xs text-stone-600 dark:text-stone-300"
+                    >
+                      Fermer
+                    </button>
+                  </div>
+                </div>
+              </div>,
+              document.body
+            ) : null}
+          </div>
+
+          <div className={`w-full p-4 ${inputText}`}>
+            {/* Sidebar/Editor Content - theme-aware colors */}
+            <div className="neu-panel flex flex-col gap-6 p-5 md:flex-row h-[calc(600px+2.5rem)] md:h-[min(78vh,780px)]">
+              {/* Search / List Column */}
+              <div
+                className={`w-full md:w-1/3 flex flex-col gap-4 border-r pr-4 ${isDark ? "border-[#0d9488]/20" : "border-[#0d9488]/30"}`}
+              >
+                <div
+                  className={`flex items-center justify-between pb-2 border-b ${isDark ? "border-[#0d9488]/20" : "border-[#0d9488]/30"}`}
+                >
+                  <span
+                    className={`font-cinzel font-bold text-lg ${isDark ? "text-[#0d9488]" : "text-[#0c4a6e]"}`}
+                  >
+                    {t("legacy.people_list", "People List")}
+                  </span>
+                  <div className="neu-label text-xs font-serif italic">
+                    {people.length} {t("legacy.records", "records")}
+                  </div>
+                </div>
+
+                <div className="relative">
+                  <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 opacity-70 text-[#0c4a6e] dark:text-[#0d9488]" />
+                  <input
+                    value={peopleQuery}
+                    onChange={(e) => setPeopleQuery(e.target.value)}
+                    placeholder={t("legacy.search_people", "Search people...")}
+                    className="neu-field w-full pl-9 pr-3 py-2.5 text-sm"
+                  />
+                </div>
+
+                <div className="flex-1 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
+                  {peopleList.length ? (
+                    peopleList.map((item) => (
+                      <PersonListItem
+                        key={item.id}
+                        item={item}
+                        active={
+                          selectedPerson &&
+                          String(selectedPerson.id) === String(item.id)
+                        }
+                        onClick={() => selectPersonFromList(item.person)}
+                        inputText={inputText}
+                      />
+                    ))
+                  ) : (
+                    <div className="neu-label text-center py-8 italic font-serif">
+                      {t("legacy.no_results", "No results found")}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Editor Column */}
+              <div className="w-full md:w-2/3 flex flex-col">
+                {!readOnly ? (
+                  <div className="h-full flex flex-col">
+                    <div className="neu-tabs inline-flex items-center gap-1 mb-4 self-start">
+                      <button
+                        onClick={() => {
+                          resetAddForm();
+                          setPanelTab("add");
+                        }}
+                        className={`neu-tab px-4 py-2 text-sm font-bold uppercase tracking-wider ${
+                          panelTab === "add" ? "neu-tab--active" : ""
+                        }`}
+                      >
+                        {t("legacy.add_person", "Add Person")}
+                      </button>
+                      <button
+                        onClick={() => startEdit(selectedPerson)}
+                        disabled={!selectedPerson}
+                        className={`neu-tab px-4 py-2 text-sm font-bold uppercase tracking-wider ${
+                          panelTab === "editor" ? "neu-tab--active" : ""
+                        }`}
+                      >
+                        {t("legacy.edit_person", "Edit Person")}
+                      </button>
+                    </div>
+
+                    {/* SCROLLABLE FORM AREA */}
+                    <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
+                      <form onSubmit={addPerson} className="space-y-6">
+                        {/* SECTION: PERSONAL INFO */}
+                        <div className="space-y-4">
+                          <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[#0c4a6e] dark:text-[#0d9488] border-b border-[#0d9488]/30 pb-1">
+                            <UserRound className="w-4 h-4" />
+                            {t("legacy.personal_info", "Personal Info")}
+                          </label>
+
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="col-span-2">
+                              <label className="text-xs font-bold text-[#0c4a6e] dark:text-[#0d9488] mb-1 block">
+                                {t("legacy.full_name", "Full Name")}
+                              </label>
+                              <input
+                                value={addForm.name}
+                                onChange={(e) =>
+                                  setAddForm((s) => ({
+                                    ...s,
+                                    name: e.target.value,
+                                  }))
+                                }
+                                placeholder={t("legacy.name_placeholder",
+                                  "e.g. Ahmed Ben Mohamed",
+                                )}
+                                className={`w-full px-4 py-2.5 rounded-lg border ${border} ${inputBg} ${inputText} focus:ring-2 focus:ring-[#0d9488]/40`}
+                              />
+                            </div>
+
+                            <div>
+                              <label className="text-xs font-bold text-[#0c4a6e] dark:text-[#0d9488] mb-1 block">
+                                {t("legacy.gender", "Gender")}
+                              </label>
+                              <select
+                                value={addForm.gender}
+                                onChange={(e) =>
+                                  setAddForm((s) => ({
+                                    ...s,
+                                    gender: e.target.value,
+                                  }))
+                                }
+                                className={`w-full px-4 py-2.5 rounded-lg border ${border} ${inputBg} ${inputText} appearance-none cursor-pointer`}
+                              >
+                                <option value="">
+                                  {t("legacy.select_gender", "Select...")}
+                                </option>
+                                <option value="M">{t("legacy.male", "Male")}</option>
+                                <option value="F">
+                                  {t("legacy.female", "Female")}
+                                </option>
+                              </select>
+                            </div>
+
+                            <div className="col-span-2">
+                              <label className="text-xs font-bold text-[#0c4a6e] dark:text-[#0d9488] mb-2 block">
+                                {t("legacy.select_color", "Select a Color:")}
+                              </label>
+                              <div
+                                className={`flex gap-3 items-center p-3 rounded-lg border ${border} ${isDark ? "bg-white/5" : "bg-[#0c4a6e]/5"}`}
+                              >
+                                <input
+                                  type="color"
+                                  value={addForm.color || "#f5f1e8"}
+                                  onChange={(e) =>
+                                    setAddForm((s) => ({
+                                      ...s,
+                                      color: e.target.value,
+                                    }))
+                                  }
+                                  className="w-12 h-12 p-0.5 rounded-lg border-2 border-[#0d9488]/40 cursor-pointer shadow-md hover:scale-105 transition-transform"
+                                />
+                                <div className="flex-1">
+                                  <div
+                                    className={`text-xs font-semibold ${inputText}`}
+                                  >
+                                    {addForm.color || "#f5f1e8"}
+                                  </div>
+                                  <div
+                                    className={`text-[10px] opacity-60 mt-0.5 ${inputText}`}
+                                  >
+                                    {t("legacy.color_on_tree_hint",
+                                      "This color will appear on the family tree card",
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="col-span-2">
+                              <label className="text-xs font-bold text-[#0c4a6e] dark:text-[#0d9488] mb-1 block">
+                                {t("legacy.details", "Details / Biography")}
+                              </label>
+                              <textarea
+                                value={addForm.details}
+                                onChange={(e) =>
+                                  setAddForm((s) => ({
+                                    ...s,
+                                    details: e.target.value,
+                                  }))
+                                }
+                                placeholder={t("legacy.details_placeholder",
+                                  "Additional notes...",
+                                )}
+                                rows={3}
+                                className={`w-full px-4 py-2.5 rounded-lg border ${border} ${inputBg} ${inputText} focus:ring-2 focus:ring-[#0d9488]/40`}
+                              />
+                            </div>
+
+                            <div className="col-span-2">
+                              <label className="text-xs font-bold text-[#0c4a6e] dark:text-[#0d9488] mb-1 block">
+                                {t("legacy.profession", "Profession")}
+                              </label>
+                              <input
+                                value={addForm.profession}
+                                onChange={(e) =>
+                                  setAddForm((s) => ({
+                                    ...s,
+                                    profession: e.target.value,
+                                  }))
+                                }
+                                placeholder={t("legacy.profession_placeholder",
+                                  "e.g. Doctor, Teacher, Engineer...",
+                                )}
+                                className={`w-full px-4 py-2.5 rounded-lg border ${border} ${inputBg} ${inputText} focus:ring-2 focus:ring-[#0d9488]/40`}
+                              />
+                            </div>
+
+                            <div className="col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div className="space-y-1">
+                                <label className="text-xs font-bold text-[#0c4a6e] dark:text-[#0d9488] block">
+                                  {t("legacy.archive_source", "Archive Source")}
+                                </label>
+                                <div className="flex items-center gap-2">
+                                  <Archive className="w-4 h-4 text-[#0d9488]" />
+                                  <input
+                                    value={addForm.archiveSource}
+                                    onChange={(e) =>
+                                      setAddForm((s) => ({
+                                        ...s,
+                                        archiveSource: e.target.value,
+                                      }))
+                                    }
+                                    placeholder={t("legacy.archive_source_placeholder",
+                                      "e.g. National Archives",
+                                    )}
+                                    className={`w-full px-3 py-2 rounded-lg border ${border} ${inputBg} ${inputText}`}
+                                  />
+                                </div>
+                              </div>
+
+                              <div className="space-y-1">
+                                <label className="text-xs font-bold text-[#0c4a6e] dark:text-[#0d9488] block">
+                                  {t("legacy.document_code", "Document Code")}
+                                </label>
+                                <div className="flex items-center gap-2">
+                                  <FileText className="w-4 h-4 text-[#0d9488]" />
+                                  <input
+                                    value={addForm.documentCode}
+                                    onChange={(e) =>
+                                      setAddForm((s) => ({
+                                        ...s,
+                                        documentCode: e.target.value,
+                                      }))
+                                    }
+                                    placeholder={t("legacy.document_code_placeholder",
+                                      "e.g. ALG-1920-042",
+                                    )}
+                                    className={`w-full px-3 py-2 rounded-lg border ${border} ${inputBg} ${inputText} font-mono`}
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* SECTION: DATES & PLACES */}
+                        <div className="space-y-4">
+                          <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[#0c4a6e] dark:text-[#0d9488] border-b border-[#0d9488]/30 pb-1">
+                            <span className="w-4 h-4 text-center font-serif italic">
+                              i
+                            </span>
+                            {t("legacy.dates_places", "Dates & Places")}
+                          </label>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            <div className="space-y-1">
+                              <label className="text-xs font-bold text-[#0c4a6e] dark:text-[#0d9488] block">
+                                {t("legacy.year_of_birth", "Year of Birth")}
+                              </label>
+                              <input
+                                value={addForm.birthYear}
+                                onChange={(e) =>
+                                  setAddForm((s) => ({
+                                    ...s,
+                                    birthYear: e.target.value,
+                                  }))
+                                }
+                                placeholder="YYYY"
+                                className={`w-full px-3 py-2 rounded-lg border ${border} ${inputBg} ${inputText}`}
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <label className="text-xs font-bold text-[#0c4a6e] dark:text-[#0d9488] block">
+                                {t("legacy.city_country",
+                                  "City or Country (Optional)",
+                                )}
+                              </label>
+                              <input
+                                value={addForm.birthPlace}
+                                onChange={(e) =>
+                                  setAddForm((s) => ({
+                                    ...s,
+                                    birthPlace: e.target.value,
+                                  }))
+                                }
+                                placeholder={t("legacy.example_location",
+                                  "e.g. Tunis, Sfax or Tunis",
+                                )}
+                                className={`w-full px-3 py-2 rounded-lg border ${border} ${inputBg} ${inputText}`}
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <label className="text-xs font-bold text-[#0c4a6e] dark:text-[#0d9488] block">
+                                {t("legacy.year_of_death", "Year of Death (Optional)")}
+                              </label>
+                              <input
+                                value={addForm.deathDate}
+                                onChange={(e) =>
+                                  setAddForm((s) => ({
+                                    ...s,
+                                    deathDate: e.target.value,
+                                  }))
+                                }
+                                placeholder="YYYY"
+                                className={`w-full px-3 py-2 rounded-lg border ${border} ${inputBg} ${inputText}`}
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* SECTION: FAMILY RELATIONS */}
+                        <div className="space-y-4">
+                          <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[#0c4a6e] dark:text-[#0d9488] border-b border-[#0d9488]/30 pb-1">
+                            <Network className="w-4 h-4" />
+                            {t("legacy.relations", "Family Relations")}
+                          </label>
+
+                          <div className="grid grid-cols-1 gap-4">
+                            {/* PARENTS & SPOUSE */}
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                              <div className="space-y-1">
+                                <label className="text-xs font-bold text-[#0c4a6e] dark:text-[#0d9488] block">
+                                  {t("legacy.father", "Father")}
+                                </label>
+                                <select
+                                  value={addForm.father || ""}
+                                  onChange={(e) =>
+                                    setAddForm((s) => ({
+                                      ...s,
+                                      father: e.target.value,
+                                    }))
+                                  }
+                                  className={`w-full px-3 py-2 rounded-lg border ${border} ${inputBg} ${inputText} text-sm`}
+                                >
+                                  <option value="">{t("legacy.none", "None")}</option>
+                                  {people
+                                    .filter(
+                                      (p) =>
+                                        String(p.id) !== String(addForm.id),
+                                    )
+                                    .map((p) => (
+                                      <option key={p.id} value={p.id}>
+                                        {nameOf(p)}
+                                      </option>
+                                    ))}
+                                </select>
+                              </div>
+                              <div className="space-y-1">
+                                <label className="text-xs font-bold text-[#0c4a6e] dark:text-[#0d9488] block">
+                                  {t("legacy.mother", "Mother")}
+                                </label>
+                                <select
+                                  value={addForm.mother || ""}
+                                  onChange={(e) =>
+                                    setAddForm((s) => ({
+                                      ...s,
+                                      mother: e.target.value,
+                                    }))
+                                  }
+                                  className={`w-full px-3 py-2 rounded-lg border ${border} ${inputBg} ${inputText} text-sm`}
+                                >
+                                  <option value="">{t("legacy.none", "None")}</option>
+                                  {people
+                                    .filter(
+                                      (p) =>
+                                        String(p.id) !== String(addForm.id),
+                                    )
+                                    .map((p) => (
+                                      <option key={p.id} value={p.id}>
+                                        {nameOf(p)}
+                                      </option>
+                                    ))}
+                                </select>
+                              </div>
+                              <div className="space-y-1">
+                                <label className="text-xs font-bold text-[#0c4a6e] dark:text-[#0d9488] block">
+                                  {t("legacy.spouse", "Spouse")}
+                                </label>
+                                <select
+                                  value={addForm.spouse || ""}
+                                  onChange={(e) =>
+                                    setAddForm((s) => ({
+                                      ...s,
+                                      spouse: e.target.value,
+                                    }))
+                                  }
+                                  className={`w-full px-3 py-2 rounded-lg border ${border} ${inputBg} ${inputText} text-sm`}
+                                >
+                                  <option value="">{t("legacy.none", "None")}</option>
+                                  {people
+                                    .filter(
+                                      (p) =>
+                                        String(p.id) !== String(addForm.id),
+                                    )
+                                    .map((p) => (
+                                      <option key={p.id} value={p.id}>
+                                        {nameOf(p)}
+                                      </option>
+                                    ))}
+                                </select>
+                              </div>
+                            </div>
+
+                            {/* CHILDREN SELECT */}
+                            <div className="space-y-2">
+                              <label className="text-xs font-bold text-[#0c4a6e] dark:text-[#0d9488] block">
+                                {t("legacy.children", "Children")}
+                                <span className="text-[10px] opacity-70 font-normal ml-2 lowercase normal-case">
+                                  ({t("legacy.children_select_hint",
+                                    "Click to select only one. Ctrl+Click/Cmd+Click to toggle multiple.",
+                                  )})
+                                </span>
+                              </label>
+                              <div
+                                className={`border ${border} rounded-lg h-48 overflow-y-auto p-2 bg-white/50 dark:bg-black/20 custom-scrollbar`}
+                              >
+                                {people.filter(
+                                  (p) => String(p.id) !== String(addForm.id),
+                                ).length === 0 && (
+                                  <div className="text-xs opacity-50 italic text-center py-4">
+                                    {t("legacy.no_other_people_available",
+                                      "No other people available",
+                                    )}
+                                  </div>
+                                )}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                  {people
+                                    .filter(
+                                      (p) =>
+                                        String(p.id) !== String(addForm.id),
+                                    )
+                                    .sort((a, b) =>
+                                      nameOf(a).localeCompare(nameOf(b)),
+                                    )
+                                    .map((p) => {
+                                      const isSelected = (
+                                        addForm.children || []
+                                      ).some((c) => String(c) === String(p.id));
+                                      return (
+                                        <button
+                                          key={p.id}
+                                          type="button"
+                                          onClick={(e) => {
+                                            e.preventDefault();
+                                            const pid = String(p.id);
+                                            setAddForm((s) => {
+                                              const current = new Set(
+                                                (s.children || []).map(String),
+                                              );
+                                              const isMulti =
+                                                e.ctrlKey || e.metaKey;
+
+                                              if (isMulti) {
+                                                if (current.has(pid))
+                                                  current.delete(pid);
+                                                else current.add(pid);
+                                              } else {
+                                                // Standard behavior: Click selects ONLY this one
+                                                if (
+                                                  current.has(pid) &&
+                                                  current.size === 1
+                                                ) {
+                                                  // Optionally allow deselect if clicking same? Standard list usually doesn't, but let's allow "deselect all" if clicking empty, but here we click item.
+                                                  // Let's stick to strict Select One logic.
+                                                  current.clear();
+                                                  current.add(pid);
+                                                } else {
+                                                  current.clear();
+                                                  current.add(pid);
+                                                }
+                                              }
+                                              return {
+                                                ...s,
+                                                children: Array.from(current),
+                                              };
+                                            });
+                                          }}
+                                          className={`text-left text-sm px-3 py-2 rounded-md transition-all flex items-center gap-2 ${
+                                            isSelected
+                                              ? "bg-[#0c4a6e] text-white shadow-sm"
+                                              : "hover:bg-[#0c4a6e]/10 text-[#0c4a6e] dark:text-[#0d9488]"
+                                          }`}
+                                        >
+                                          <div
+                                            className={`w-3 h-3 rounded-full border border-current flex items-center justify-center`}
+                                          >
+                                            {isSelected && (
+                                              <div className="w-1.5 h-1.5 rounded-full bg-current" />
+                                            )}
+                                          </div>
+                                          <span className="truncate">
+                                            {nameOf(p)}
+                                          </span>
+                                          <span className="text-xs opacity-60 ml-auto">
+                                            {p.birthYear}
+                                          </span>
+                                        </button>
+                                      );
+                                    })}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex justify-end pt-4 border-t border-[#0d9488]/20">
+                          {panelTab === "editor" && (
+                            <button
+                              type="button"
+                              onClick={() => deletePerson(addForm.id)}
+                              className="mr-auto rounded-lg px-4 py-2 text-sm font-bold uppercase tracking-wider text-red-600 transition hover:bg-red-500/10 dark:text-red-400"
+                            >
+                              {t("legacy.delete", "Delete")}
+                            </button>
+                          )}
+                          <button
+                            type="submit"
+                            className="interactive-btn btn-neu btn-neu--primary !px-8 !py-3 !text-sm"
+                          >
+                            {panelTab === "add"
+                              ? t("legacy.add_person", "Add Person")
+                              : t("legacy.update_person", "Update Person")}
+                          </button>
+                        </div>
+                      </form>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="h-full flex flex-col items-center justify-center opacity-50 space-y-4">
+                    <div className="w-16 h-16 rounded-full bg-[#0c4a6e]/10 flex items-center justify-center">
+                      <UserRound className="w-8 h-8 text-[#0c4a6e]" />
+                    </div>
+                    <div className="text-lg font-serif italic">
+                      {t("legacy.read_only_mode", "View Only Mode - Sign in to Edit")}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

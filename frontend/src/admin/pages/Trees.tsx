@@ -1,0 +1,1714 @@
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+
+import {
+  Archive,
+  Download,
+  Eye,
+  FileText,
+  Network,
+  RefreshCcw,
+  Save,
+  Search,
+  Trash2,
+  Users,
+  X,
+} from "lucide-react";
+
+import { useThemeStore } from "../../store/theme";
+
+import { api } from "../../api/client";
+import {
+  getApiErrorMessage,
+  getGedcomLoadErrorMessage,
+  normalizeTree,
+  requestWithFallback,
+  shouldFallbackRoute,
+} from "../../api/helpers";
+
+import { useLanguage } from "../../i18n";
+
+import Toast from "../../components/Toast";
+import ErrorBoundary from "../../components/ErrorBoundary";
+
+import TreesBuilder, {
+  buildGedcom,
+  buildGedcom7,
+  parseGedcom,
+  parseGedcomX,
+  buildGedcomXJson,
+  buildGedcomXXml,
+} from "../components/TreesBuilder";
+
+import { useAuth } from "../components/AuthContext";
+
+const MAX_GEDCOM_BYTES = 50 * 1024 * 1024;
+
+const buildMockTrees = () => [
+  {
+    id: "smoke-tree-5links-Tunisia",
+    title: "Arbre Généalogique Smoke Test Tunisia (5 Sources)",
+    description: "Arbre de démonstration Smoke Test incluant 5 sources multimédias (1 Image, 1 Audio, 1 Document, 2 Liens Externes) sur l'ancêtre principal.",
+    owner: "RootsTunisia Admin",
+    isPublic: true,
+    hasGedcom: true,
+    createdAt: new Date().toISOString(),
+  },
+  ...Array.from({ length: 9 }).map((_, i) => ({
+    id: `mock-tree-${i + 1}`,
+    title: `RootsTunisia Sample Family ${i + 1}`,
+    description: `A sample Tunisian family tree for testing the genealogy panel.`,
+    owner: "RootsTunisia Admin",
+    isPublic: i % 2 === 0,
+    hasGedcom: true,
+    createdAt: new Date().toISOString(),
+  })),
+];
+
+export default function Trees() {
+  const { theme } = useThemeStore();
+
+  const { language: locale, t } = useLanguage();
+
+  const { user } = useAuth();
+
+  const isDark = theme === "dark";
+
+  const isAdmin = user?.role === 1 || user?.role === 3;
+
+  const pageBg = isDark ? "bg-[#071827]" : "bg-[#f5f1e8]";
+  const text = isDark ? "text-white" : "text-[#162238]";
+  const card = isDark ? "bg-[#0f1f33]" : "bg-white";
+  const border = isDark ? "border-[#1a3048]" : "border-[#e8e4dc]";
+  const metaPanel = isDark
+    ? "bg-[#1a3048]/50 border-[#1a3048]"
+    : "bg-[#24766f]/5 border-[#e8e4dc]";
+
+  const hoverRow = isDark ? "hover:bg-white/5" : "hover:bg-black/[0.02]";
+
+  const inputBg = isDark ? "bg-[#0f1f33]" : "bg-white";
+  const inputText = isDark ? "text-[#f8f5ef]" : "text-[#162238]";
+
+  const [tab, setTab] = useState("my"); // my | public
+
+  const [q, setQ] = useState("");
+
+  const [myTrees, setMyTrees] = useState<any[]>([]);
+
+  const [publicTrees, setPublicTrees] = useState<any[]>([]);
+
+  const [loadingTrees, setLoadingTrees] = useState(true);
+
+  const [treesError, setTreesError] = useState("");
+
+  const [selectedTree, setSelectedTree] = useState<any>(null);
+
+  const [selectedScope, setSelectedScope] = useState<any>(null); // "my" | "public" | null
+
+  const [loadingGedcom, setLoadingGedcom] = useState(false);
+
+  const [gedcomError, setGedcomError] = useState("");
+
+  const [people, setPeople] = useState<any[]>([]);
+
+  const [saveFormat, setSaveFormat] = useState("gedcom"); // 'gedcom' | 'gedcomx_json' | 'gedcomx_xml' | 'gedcomx_gedx'
+  const [treeForm, setTreeForm] = useState({
+    title: "",
+
+    description: "",
+
+    category: "",
+
+    archiveSource: "",
+
+    documentCode: "",
+
+    isPublic: isAdmin,
+
+    saveToDb: false,
+  });
+
+  const [saving, setSaving] = useState(false);
+
+  const [saveError, setSaveError] = useState("");
+
+  const [saveSuccess, setSaveSuccess] = useState("");
+
+  const [autoSaveNotice, setAutoSaveNotice] = useState("");
+
+  const [autoSaving, setAutoSaving] = useState(false);
+
+  const [deletingTree, setDeletingTree] = useState(false);
+
+  const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const autoSavePeopleRef = useRef<any[] | null>(null);
+
+  const autoSaveInFlightRef = useRef(false);
+
+  const peopleDirtyRef = useRef(false);
+
+  const refreshLists = useCallback(async ({ notify = false } = {}) => {
+    setLoadingTrees(true);
+
+    setTreesError("");
+    setSaveError("");
+
+    const isMock =
+      import.meta.env.DEV &&
+      localStorage.getItem("mockupDataActive") === "true";
+
+    const mockTrees = isMock ? buildMockTrees() : [];
+
+    const mergeById = (list: any[]) => {
+      const map = new Map();
+
+      list.forEach((t: any) => {
+        if (!t) return;
+
+        map.set(String(t.id), t);
+      });
+
+      return Array.from(map.values());
+    };
+
+    let loadError = "";
+
+    try {
+      const shouldFallbackAdminRead = (err: any) =>
+        shouldFallbackRoute(err) ||
+        err?.response?.status === 401 ||
+        err?.response?.status === 403 ||
+        err?.response?.status === 500;
+
+      const myRequest = isAdmin
+        ? () =>
+            requestWithFallback(
+              [() => api.get("/admin/trees"), () => api.get("/my/trees")],
+              shouldFallbackAdminRead
+            )
+        : () => api.get("/my/trees");
+
+      const [mineRes, pubRes] = await Promise.allSettled([
+        myRequest(),
+        api.get("/trees"),
+      ]);
+
+      if (mineRes.status === "fulfilled") {
+        const mine = mineRes.value?.data;
+        const liveMine = Array.isArray(mine)
+          ? mine.map((t) =>
+              normalizeTree(t, {
+                isPublic: !!t?.is_public || !!t?.isPublic,
+              }),
+            )
+          : [];
+
+        const myList = mergeById([...liveMine, ...mockTrees]);
+
+        setMyTrees(myList);
+      } else if (isMock) {
+        setMyTrees((prev) =>
+          Array.isArray(prev) && prev.length ? prev : mockTrees
+        );
+      }
+
+      if (pubRes.status === "fulfilled") {
+        const pub = pubRes.value?.data;
+        const livePublic = Array.isArray(pub)
+          ? pub.map((t) => normalizeTree(t, { isPublic: true }))
+          : [];
+
+        const publicList = mergeById([
+          ...livePublic,
+          ...mockTrees.filter((t) => t.isPublic),
+        ]);
+
+        setPublicTrees(publicList);
+      } else if (isMock) {
+        setPublicTrees((prev) =>
+          Array.isArray(prev) && prev.length
+            ? prev
+            : mockTrees.filter((t) => t.isPublic)
+        );
+      }
+
+      const err =
+        mineRes.status === "rejected"
+          ? mineRes.reason
+          : pubRes.status === "rejected"
+          ? pubRes.reason
+          : null;
+
+      if (err) {
+        loadError = getApiErrorMessage(err, "Failed to load trees");
+        setTreesError(loadError);
+        setSaveError(loadError);
+      } else if (notify) {
+        setSaveSuccess(t("legacy.trees_loaded", "Trees loaded."));
+      }
+    } finally {
+      setLoadingTrees(false);
+    }
+  }, [isAdmin, t]);
+
+  useEffect(() => {
+    void refreshLists({ notify: true });
+  }, [refreshLists]);
+
+  useEffect(() => {
+    if (!saveSuccess) return;
+
+    const timer = setTimeout(() => setSaveSuccess(""), 3500);
+
+    return () => clearTimeout(timer);
+  }, [saveSuccess]);
+
+  useEffect(() => {
+    if (!saveError) return;
+
+    const timer = setTimeout(() => setSaveError(""), 5000);
+
+    return () => clearTimeout(timer);
+  }, [saveError]);
+
+  useEffect(() => {
+    if (!autoSaveNotice) return;
+
+    const timer = setTimeout(() => setAutoSaveNotice(""), 2500);
+
+    return () => clearTimeout(timer);
+  }, [autoSaveNotice]);
+
+  useEffect(() => {
+    return () => {
+      if (autoSaveTimerRef.current) {
+        clearTimeout(autoSaveTimerRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!selectedTree) {
+      setTreeForm({
+        title: "",
+        description: "",
+        category: "",
+        archiveSource: "",
+        documentCode: "",
+        isPublic: isAdmin,
+        saveToDb: false,
+      });
+
+      setSelectedScope(null);
+
+      return;
+    }
+
+    setTreeForm({
+      title: selectedTree.title || "",
+
+      description: selectedTree.description || "",
+
+      category: selectedTree.category || "",
+
+      archiveSource: selectedTree.archiveSource || "",
+
+      documentCode: selectedTree.documentCode || "",
+
+      isPublic: !!selectedTree.isPublic,
+
+      // Existing trees are already persisted, so the consent box starts checked.
+      saveToDb: true,
+    });
+  }, [selectedTree, isAdmin]);
+
+  useEffect(() => {
+    autoSavePeopleRef.current = null;
+
+    if (autoSaveTimerRef.current) {
+      clearTimeout(autoSaveTimerRef.current);
+
+      autoSaveTimerRef.current = null;
+    }
+
+    peopleDirtyRef.current = false;
+  }, [selectedTree?.id, tab]);
+
+  const trees = tab === "public" ? publicTrees : myTrees;
+
+  const canUpdateSelected =
+    selectedTree &&
+    !String(selectedTree.id).startsWith("mock-") &&
+    (selectedScope === "my" || isAdmin);
+
+  const builderReadOnly = !!selectedTree && !canUpdateSelected;
+
+  const filteredTrees = useMemo(() => {
+    const query = q.trim().toLowerCase();
+
+    if (!query) return trees;
+
+    return trees.filter((tree) => {
+      const title = String(tree.title || "").toLowerCase();
+
+      const ownerRaw = tree.owner ?? tree.owner_name ?? "";
+
+      const ownerValue =
+        ownerRaw && typeof ownerRaw === "object"
+          ? ownerRaw.fullName || ownerRaw.email || ""
+          : ownerRaw || "";
+
+      const owner = String(ownerValue).toLowerCase();
+
+      return title.includes(query) || owner.includes(query);
+    });
+  }, [trees, q]);
+
+  const upsertTree = (list: any[], patch: any) => {
+    const id = String(patch?.id);
+
+    const existing = list.find((t: any) => String(t?.id) === id) || null;
+
+    const merged = existing ? { ...existing, ...patch } : patch;
+
+    return [merged, ...list.filter((t: any) => String(t?.id) !== id)];
+  };
+
+  const applyTreeUpdate = ({
+    id,
+    title,
+    description,
+    category,
+    isPublic,
+    hasGedcom,
+    archiveSource,
+    documentCode,
+    data_format,
+  }: any) => {
+    const patch: any = {
+      id,
+      title,
+      description: description ?? "",
+      category: category ?? "",
+      archiveSource: archiveSource ?? "",
+      documentCode: documentCode ?? "",
+      isPublic: !!isPublic,
+      updatedAt: new Date().toISOString(),
+    };
+    if (hasGedcom !== undefined) patch.hasGedcom = !!hasGedcom;
+    if (data_format !== undefined) patch.data_format = data_format;
+
+    setMyTrees((prev: any[]) => upsertTree(prev, patch));
+
+    setPublicTrees((prev: any[]) => {
+      const without = prev.filter((t: any) => String(t.id) !== String(id));
+
+      if (!isPublic) return without;
+
+      const existing = prev.find((t: any) => String(t.id) === String(id)) || {};
+
+      return upsertTree(without, { ...existing, ...patch });
+    });
+
+    setSelectedTree((prev: any) => {
+      if (!prev) return prev;
+
+      if (String(prev.id) !== String(id)) return prev;
+
+      return { ...prev, ...patch };
+    });
+  };
+
+  const openTree = async (tree: any) => {
+    setSelectedScope(tab);
+
+    setSelectedTree(tree);
+
+    peopleDirtyRef.current = false;
+
+    setGedcomError("");
+
+    setLoadingGedcom(true);
+
+    try {
+    if (!tree?.hasGedcom) {
+      setPeople([]);
+
+      peopleDirtyRef.current = false;
+
+      setSaveSuccess(t("legacy.tree_loaded", "Tree loaded."));
+
+      return;
+    }
+
+      if (String(tree.id).startsWith("mock-")) {
+        // Generate sample Tunisian family members for local mock mode.
+
+        const familyName = tree.title.split(" ").pop() || "El-Masry";
+
+        const mockPeople = [
+          // Grandfather (Gen 0)
+
+          {
+            id: "m1",
+            names: { en: `Mohamed ${familyName}`, ar: `محمد ${familyName}` },
+            gender: "Male",
+            birthYear: "1920",
+            details: "The patriarch.",
+            color: "#f8f5ef",
+            children: ["m3", "m4"],
+            spouse: "m2",
+          },
+
+          {
+            id: "m2",
+            names: { en: `Amina ${familyName}`, ar: `أمينة ${familyName}` },
+            gender: "Female",
+            birthYear: "1925",
+            details: "Matriarch.",
+            color: "#f8f5ef",
+            children: ["m3", "m4"],
+            spouse: "m1",
+          },
+
+          // Children (Gen 1)
+
+          {
+            id: "m3",
+            names: { en: `Ahmed ${familyName}`, ar: `أحمد ${familyName}` },
+            gender: "Male",
+            birthYear: "1950",
+            details: "Eldest son.",
+            color: "#f8f5ef",
+            father: "m1",
+            mother: "m2",
+            children: ["m5", "m6"],
+            spouse: "s1",
+          },
+
+          {
+            id: "m4",
+            names: { en: `Fatima ${familyName}`, ar: `فاطمة ${familyName}` },
+            gender: "Female",
+            birthYear: "1955",
+            details: "Daughter.",
+            color: "#f8f5ef",
+            father: "m1",
+            mother: "m2",
+            children: ["m7"],
+            spouse: "s2",
+          },
+
+          // Spouses (Gen 1)
+
+          {
+            id: "s1",
+            names: { en: "Nadia Hassan", ar: "نادية حسن" },
+            gender: "Female",
+            birthYear: "1952",
+            details: "Spouse of Eli.",
+            color: "#f8f5ef",
+            spouse: "m3",
+            children: ["m5", "m6"],
+          },
+
+          {
+            id: "s2",
+            names: { en: "Youssef Mansour", ar: "يوسف منصور" },
+            gender: "Male",
+            birthYear: "1950",
+            details: "Spouse of Rachel.",
+            color: "#f8f5ef",
+            spouse: "m4",
+            children: ["m7"],
+          },
+
+          // Grandchildren (Gen 2)
+
+          {
+            id: "m5",
+            names: { en: `Omar ${familyName}`, ar: `عمر ${familyName}` },
+            gender: "Male",
+            birthYear: "1980",
+            details: "Grandson.",
+            color: "#f8f5ef",
+            father: "m3",
+            mother: "s1",
+          },
+
+          {
+            id: "m6",
+            names: { en: `Salma ${familyName}`, ar: `سلمى ${familyName}` },
+            gender: "Female",
+            birthYear: "1985",
+            details: "Granddaughter.",
+            color: "#f8f5ef",
+            father: "m3",
+            mother: "s1",
+          },
+
+          {
+            id: "m7",
+            names: { en: "Karim Mansour", ar: "كريم منصور" },
+            gender: "Male",
+            birthYear: "1982",
+            details: "Grandson.",
+            color: "#f8f5ef",
+            father: "s2",
+            mother: "m4",
+          },
+        ];
+
+        setPeople(mockPeople);
+
+        peopleDirtyRef.current = false;
+
+        setSaveSuccess(t("legacy.tree_loaded", "Tree loaded."));
+
+        setLoadingGedcom(false);
+
+        return;
+      }
+
+      const endpoint =
+        isAdmin
+          ? `/admin/trees/${tree.id}/gedcom`
+          : tab === "public"
+            ? `/trees/${tree.id}/gedcom`
+            : `/my/trees/${tree.id}/gedcom`;
+      const res = await api.get(endpoint, { responseType: "text" });
+
+      const raw = typeof res?.data === "string" ? res.data : (res?.data && (res.data as any).data != null ? String((res.data as any).data) : "");
+      const isGedcomX = tree.data_format === "gedcomx" || /^\s*(\{|\<\?xml)/.test(raw);
+      setPeople(isGedcomX ? parseGedcomX(raw) : parseGedcom(raw));
+
+      peopleDirtyRef.current = false;
+
+      setSaveSuccess(t("legacy.tree_loaded", "Tree loaded."));
+    } catch (err: any) {
+      setPeople([]);
+
+      const gedcomMessage = getGedcomLoadErrorMessage(
+        err?.response?.status,
+        typeof err?.response?.data === "string"
+          ? err.response.data
+          : err?.response?.data?.message || err?.message,
+        getApiErrorMessage(err, "Failed to load tree file"),
+      );
+
+      setGedcomError(gedcomMessage);
+
+      peopleDirtyRef.current = false;
+      setSaveError(gedcomMessage);
+    } finally {
+      setLoadingGedcom(false);
+    }
+  };
+
+  const shouldFallbackTreeWrite = (err: any) =>
+    shouldFallbackRoute(err) ||
+    err?.response?.status === 403 ||
+    err?.response?.status === 500;
+
+  const submitTree = async ({
+    treeId,
+
+    title,
+
+    description,
+
+    category,
+
+    archiveSource,
+
+    documentCode,
+
+    isPublic,
+
+    people = [],
+
+    includeFile = true,
+  }: any) => {
+    const safeTitle = String(title || "").trim();
+
+    if (!safeTitle) throw new Error("Title is required");
+
+    const fd = new FormData();
+
+    fd.append("title", safeTitle);
+
+    fd.append("description", String(description || ""));
+
+    const categoryValue = String(category || "").trim();
+    fd.append("category", categoryValue);
+
+    const archiveValue = String(archiveSource || "").trim();
+    if (archiveValue) fd.append("archiveSource", archiveValue);
+
+    const documentValue = String(documentCode || "").trim();
+    if (documentValue) fd.append("documentCode", documentValue);
+
+    fd.append("isPublic", String(!!isPublic));
+
+    if (includeFile) {
+      const safePeople = Array.isArray(people) ? people : [];
+      let content = "";
+      let mime = "text/plain";
+      let ext = "ged";
+      try {
+        if (saveFormat === "gedcom") {
+          content = buildGedcom(safePeople, locale, t);
+          mime = "text/plain";
+          ext = "ged";
+        } else if (saveFormat === "gedcom7") {
+          content = buildGedcom7(safePeople, locale, t);
+          mime = "text/plain";
+          ext = "ged";
+        } else {
+          if (saveFormat === "gedcomx_json") {
+            content = buildGedcomXJson(safePeople, locale, t);
+            mime = "application/json";
+            ext = "json";
+          } else {
+            content = buildGedcomXXml(safePeople, locale, t);
+            mime = saveFormat === "gedcomx_gedx" ? "application/xml" : "application/xml";
+            ext = saveFormat === "gedcomx_gedx" ? "gedx" : "xml";
+          }
+        }
+      } catch (err: any) {
+        throw new Error(
+          err?.message ||
+            (saveFormat === "gedcom7"
+              ? t("legacy.gedcom7_build_failed", "Failed to build GEDCOM 7.0")
+              : saveFormat === "gedcom"
+                ? t("legacy.gedcom_build_failed", "Failed to build GEDCOM")
+                : t("legacy.gedcomx_build_failed", "Failed to build GEDCOM X"))
+        );
+      }
+      const blob = new Blob([content], { type: mime });
+      if (blob.size > MAX_GEDCOM_BYTES) {
+        throw new Error(t("legacy.file_too_large", "File is too large (max 50MB)."));
+      }
+      const fileName = `${safeTitle}.${ext}`;
+      if (typeof File === "function") {
+        const file = new File([blob], fileName, { type: mime });
+        fd.append("file", file);
+      } else {
+        fd.append("file", blob, fileName);
+      }
+      if (saveFormat === "gedcom7") fd.append("dataFormat", "gedcom7");
+      else if (saveFormat === "gedcom") fd.append("dataFormat", "gedcom");
+      else if (saveFormat.startsWith("gedcomx")) fd.append("dataFormat", "gedcomx");
+    }
+
+    if (treeId) {
+      await requestWithFallback(
+        isAdmin
+          ? [
+              () => api.put(`/admin/trees/${treeId}`, fd),
+              () => api.post(`/admin/trees/${treeId}/save`, fd),
+              () => api.put(`/my/trees/${treeId}`, fd),
+              () => api.post(`/my/trees/${treeId}/save`, fd),
+            ]
+          : [
+              () => api.put(`/my/trees/${treeId}`, fd),
+              () => api.post(`/my/trees/${treeId}/save`, fd),
+            ],
+        shouldFallbackTreeWrite
+      );
+      return treeId;
+    }
+
+    const { data } = await requestWithFallback(
+      isAdmin
+        ? [() => api.post("/admin/trees", fd), () => api.post("/my/trees", fd)]
+        : [() => api.post("/my/trees", fd)],
+      shouldFallbackTreeWrite
+    );
+
+    return data?.id;
+  };
+
+  const downloadTreeFile = async (tree: any, scope?: string) => {
+    if (!tree?.id) return;
+    const endpoint =
+      isAdmin
+        ? `/admin/trees/${tree.id}/gedcom`
+        : scope === "public"
+        ? `/trees/${tree.id}/gedcom`
+        : `/my/trees/${tree.id}/gedcom`;
+
+    try {
+      const res = await api.get(endpoint, { responseType: "blob" });
+      const blob = new Blob([res.data], { type: "text/plain" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      let fileName = String(tree.title || "tree").trim() || "tree";
+      fileName = fileName.replace(/[^\w.-]+/g, "_");
+      const disp = res.headers?.["content-disposition"];
+      if (disp && /filename[*]?=(?:UTF-8'')?"?([^";\n]+)"?/i.test(disp)) {
+        const match = disp.match(/filename[*]?=(?:UTF-8'')?"?([^";\n]+)"?/i);
+        if (match && match[1]) fileName = match[1].trim();
+      } else {
+        const ext = tree.data_format === "gedcomx" ? "gedx" : "ged";
+        fileName = `${fileName}.${ext}`;
+      }
+      link.href = url;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setSaveError(
+        getApiErrorMessage(err, t("legacy.download_failed", "Download failed"))
+      );
+    }
+  };
+
+  const runAutoSave = async () => {
+    if (!canUpdateSelected) return;
+
+    const pending = autoSavePeopleRef.current;
+
+    if (!Array.isArray(pending)) return;
+
+    if (autoSaveInFlightRef.current || saving) return;
+
+    const tree = selectedTree;
+
+    if (!tree) return;
+
+    const nextTitle = String(treeForm.title || tree.title || "").trim();
+
+    if (!nextTitle) return;
+
+    const nextDescription =
+      treeForm.description !== undefined && treeForm.description !== null
+        ? String(treeForm.description)
+        : String(tree.description || "");
+
+    const nextIsPublic =
+      treeForm.isPublic !== undefined && treeForm.isPublic !== null
+        ? !!treeForm.isPublic
+        : !!tree.isPublic;
+
+    autoSaveInFlightRef.current = true;
+
+    setAutoSaving(true);
+
+    setSaveError("");
+
+    try {
+      const nextDataFormat =
+        saveFormat === "gedcom"
+          ? "gedcom"
+          : saveFormat === "gedcom7"
+          ? "gedcom7"
+          : "gedcomx";
+
+      const treeId = await submitTree({
+        treeId: tree.id,
+
+        title: nextTitle,
+
+        description: nextDescription,
+
+        category: treeForm.category || "",
+
+        archiveSource: treeForm.archiveSource || "",
+
+        documentCode: treeForm.documentCode || "",
+
+        isPublic: nextIsPublic,
+
+        people: pending,
+
+        includeFile: true,
+      });
+
+      if (treeId) {
+        applyTreeUpdate({
+          id: treeId,
+          title: nextTitle,
+          description: nextDescription,
+          category: treeForm.category || "",
+          archiveSource: treeForm.archiveSource || "",
+          documentCode: treeForm.documentCode || "",
+          isPublic: nextIsPublic,
+          hasGedcom: true,
+          data_format: nextDataFormat,
+        });
+
+        setAutoSaveNotice(t("legacy.auto_saved", "Auto-saved."));
+
+        peopleDirtyRef.current = false;
+
+        autoSavePeopleRef.current = null;
+
+        refreshLists();
+      }
+    } catch (err) {
+      setSaveError(getApiErrorMessage(err, "Auto-save failed"));
+    } finally {
+      autoSaveInFlightRef.current = false;
+
+      setAutoSaving(false);
+    }
+  };
+
+  const scheduleAutoSave = (nextPeople: any[]) => {
+    if (!canUpdateSelected) return;
+
+    peopleDirtyRef.current = true;
+
+    autoSavePeopleRef.current = nextPeople;
+
+    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+
+    autoSaveTimerRef.current = setTimeout(() => {
+      void runAutoSave();
+    }, 800);
+  };
+
+  const clearCanvas = () => {
+    setSelectedTree(null);
+
+    setSelectedScope(null);
+
+    setPeople([]);
+
+    setGedcomError("");
+
+    peopleDirtyRef.current = false;
+  };
+
+  const saveCurrentAsTree = async () => {
+    setSaveError("");
+
+    setSaveSuccess("");
+
+    const isUpdateMode = Boolean(canUpdateSelected && selectedTree?.id);
+
+    const hasPeople = people.length > 0;
+
+    const title = String(treeForm.title || "").trim();
+
+    if (!title) {
+      setSaveError(t("legacy.tree_title_required", "Tree title is required."));
+
+      return;
+    }
+
+    if (!treeForm.saveToDb) {
+      setSaveError(
+        t(
+          "legacy.save_to_db_required",
+          'Please check "Save this tree to the database" before saving.',
+        ),
+      );
+
+      return;
+    }
+
+    if (!hasPeople && !isUpdateMode) {
+      const confirmed = window.confirm(
+        t("legacy.save_empty_tree_confirm", "Save this tree without any people yet?")
+      );
+
+      if (!confirmed) return;
+    }
+
+    const description = String(treeForm.description || "");
+
+    const isPublic = !!treeForm.isPublic;
+
+    setSaving(true);
+
+    try {
+      const includeFile = isUpdateMode ? peopleDirtyRef.current : hasPeople;
+
+      const nextHasGedcom = includeFile
+        ? true
+        : isUpdateMode
+        ? selectedTree?.hasGedcom
+        : false;
+
+      const treeId = await submitTree({
+        treeId: canUpdateSelected ? selectedTree?.id : null,
+
+        title,
+
+        description,
+
+        category: treeForm.category || "",
+
+        archiveSource: treeForm.archiveSource || "",
+
+        documentCode: treeForm.documentCode || "",
+
+        isPublic,
+
+        people,
+
+        includeFile,
+      });
+
+      if (treeId) {
+        const nextDataFormat = includeFile
+          ? (saveFormat === "gedcom" ? "gedcom" : saveFormat === "gedcom7" ? "gedcom7" : "gedcomx")
+          : selectedTree?.data_format;
+        applyTreeUpdate({
+          id: treeId,
+          title,
+          description,
+          category: treeForm.category || "",
+          archiveSource: treeForm.archiveSource || "",
+          documentCode: treeForm.documentCode || "",
+          isPublic,
+          hasGedcom: nextHasGedcom,
+          data_format: nextDataFormat,
+        });
+
+        setTab("my");
+
+        setSaveSuccess(
+          t(
+            isUpdateMode ? "tree_updated" : "tree_saved",
+
+            isUpdateMode ? "Tree updated." : "Tree saved."
+          )
+        );
+
+        if (!canUpdateSelected) {
+          const nextDataFormat = includeFile
+            ? (saveFormat === "gedcom" ? "gedcom" : saveFormat === "gedcom7" ? "gedcom7" : "gedcomx")
+            : undefined;
+          setSelectedTree({
+            id: treeId,
+            title,
+            description,
+            category: treeForm.category || "",
+            archiveSource: treeForm.archiveSource || "",
+            documentCode: treeForm.documentCode || "",
+            isPublic,
+            hasGedcom: nextHasGedcom,
+            data_format: nextDataFormat,
+          });
+          setSelectedScope("my");
+        }
+
+        peopleDirtyRef.current = false;
+      }
+
+      await refreshLists();
+    } catch (err) {
+      setSaveError(getApiErrorMessage(err, "Save failed"));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const deleteTree = async () => {
+    if (!canUpdateSelected || !selectedTree) return;
+
+    const shouldDelete = window.confirm(
+      t("legacy.confirm_delete_tree",
+
+        "Delete this tree? This action cannot be undone."
+      )
+    );
+
+    if (!shouldDelete) return;
+
+    const deletedId = selectedTree.id;
+
+    setDeletingTree(true);
+
+    setSaveError("");
+
+    setSaveSuccess("");
+
+    try {
+      await requestWithFallback(
+        [
+          () => api.delete(`/admin/trees/${selectedTree.id}`),
+          () => api.delete(`/my/trees/${selectedTree.id}`),
+        ],
+        (e) => e?.response?.status === 403 || e?.response?.status === 404
+      );
+
+      setMyTrees((prev) =>
+        prev.filter((t) => String(t.id) !== String(deletedId))
+      );
+
+      setPublicTrees((prev) =>
+        prev.filter((t) => String(t.id) !== String(deletedId))
+      );
+
+      setSelectedTree(null);
+
+      setSelectedScope(null);
+
+      setPeople([]);
+
+      peopleDirtyRef.current = false;
+
+      await refreshLists();
+
+      setTab("my");
+
+      setSaveSuccess(t("legacy.tree_deleted", "Tree deleted."));
+    } catch (err: any) {
+      if (err?.response?.status === 404) {
+        setMyTrees((prev) =>
+          prev.filter((t) => String(t.id) !== String(deletedId))
+        );
+
+        setPublicTrees((prev) =>
+          prev.filter((t) => String(t.id) !== String(deletedId))
+        );
+
+        setSelectedTree(null);
+        setSelectedScope(null);
+        setPeople([]);
+        peopleDirtyRef.current = false;
+        await refreshLists();
+        setTab("my");
+        setSaveSuccess(t("legacy.tree_deleted", "Tree deleted."));
+        return;
+      }
+      setSaveError(
+        getApiErrorMessage(err, t("legacy.delete_failed", "Delete failed"))
+      );
+    } finally {
+      setDeletingTree(false);
+    }
+  };
+
+  const saveToast = saveError || saveSuccess;
+
+  const saveToastTone = saveError ? "error" : "success";
+
+  return (
+    <div className={`p-4 min-h-screen ${pageBg} ${text} heritage-page-root`}>
+      <Toast message={saveToast} tone={saveToastTone} />
+
+      <div
+        className={`rounded-lg p-5 mb-6 border ${border}
+
+        bg-gradient-to-r from-[#0f2742]/10 to-[#24766f]/10 heritage-panel heritage-panel--accent`}
+      >
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div className="flex items-center gap-3">
+            <Network className="w-6 h-6 text-[#24766f]" />
+
+            <div>
+              <h3 className="text-2xl font-bold">
+                {t("legacy.trees_builder", "Family Tree Builder")}
+              </h3>
+
+              <p className="opacity-70">
+                {t("legacy.trees_builder_desc",
+                  "Public trees are visible to everyone; private trees are only for you.",
+                )}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              className={`px-4 py-2 rounded-md border ${border} hover:opacity-90 inline-flex items-center gap-2`}
+              onClick={() => void refreshLists({ notify: true })}
+              disabled={loadingTrees}
+            >
+              <RefreshCcw className="w-4 h-4" />
+
+              {t("legacy.refresh", "Refresh")}
+            </button>
+          </div>
+        </div>
+
+        {treesError || gedcomError ? (
+          <div
+            className={`mt-4 rounded-lg border ${border} ${card} p-4 heritage-panel`}
+          >
+            {treesError ? (
+              <div className="text-[#a0552a] font-semibold">{treesError}</div>
+            ) : null}
+
+            {gedcomError ? (
+              <div className="text-[#a0552a] font-semibold">{gedcomError}</div>
+            ) : null}
+          </div>
+        ) : null}
+      </div>
+
+      <div className="grid grid-cols-1 xl:grid-cols-[380px_1fr] gap-6">
+        <div className="space-y-6">
+          <div
+            className={`rounded-xl border ${border} ${card} p-5 shadow-md heritage-panel`}
+          >
+            <div
+              className={`text-lg font-bold mb-4 ${isDark ? "text-[#f8f5ef]" : "text-[#162238]"}`}
+            >
+              {selectedTree
+                ? t("legacy.tree_details", "Tree Details")
+                : t("legacy.new_tree", "New Tree")}
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <label
+                  className={`block text-sm font-semibold mb-1.5 ${isDark ? "text-[#e8e4dc]" : "text-[#24766f]"}`}
+                >
+                  {t("legacy.tree_title", "Tree title")}{" "}
+                  <span className="text-red-500">*</span>
+                </label>
+                <input
+                  value={treeForm.title}
+                  onChange={(e) =>
+                    setTreeForm((s) => ({ ...s, title: e.target.value }))
+                  }
+                  placeholder={t("legacy.tree_title", "Tree title")}
+                  className={`heritage-input w-full px-4 py-2.5 rounded-lg border ${border} ${inputBg} ${inputText}
+                  focus:outline-none focus:ring-2 focus:ring-[#24766f]/25 focus:border-[#24766f]/50 transition-all`}
+                />
+              </div>
+
+              <div>
+                <label
+                  className={`block text-sm font-semibold mb-1.5 ${isDark ? "text-[#e8e4dc]" : "text-[#24766f]"}`}
+                >
+                  {t("legacy.custom_category", "Custom Category")}{" "}
+                  <span className="text-xs opacity-60">
+                    ({t("legacy.optional", "Optional")})
+                  </span>
+                </label>
+                <input
+                  value={treeForm.category}
+                  onChange={(e) =>
+                    setTreeForm((s) => ({ ...s, category: e.target.value }))
+                  }
+                  placeholder={t("legacy.custom_category_placeholder", "Name this category...")}
+                  className={`heritage-input w-full px-4 py-2.5 rounded-lg border ${border} ${inputBg} ${inputText}
+                  focus:outline-none focus:ring-2 focus:ring-[#24766f]/25 focus:border-[#24766f]/50 transition-all`}
+                />
+              </div>
+
+              <div>
+                <label
+                  className={`block text-sm font-semibold mb-1.5 ${isDark ? "text-[#e8e4dc]" : "text-[#24766f]"}`}
+                >
+                  {t("legacy.description", "Description")}{" "}
+                  <span className="text-xs opacity-60">
+                    ({t("legacy.optional", "Optional")})
+                  </span>
+                </label>
+                <textarea
+                  value={treeForm.description}
+                  onChange={(e) =>
+                    setTreeForm((s) => ({ ...s, description: e.target.value }))
+                  }
+                  placeholder={t("legacy.description", "Description (optional)")}
+                  rows={3}
+                  className={`heritage-input w-full px-4 py-2.5 rounded-lg border ${border} ${inputBg} ${inputText}
+                  focus:outline-none focus:ring-2 focus:ring-[#24766f]/25 focus:border-[#24766f]/50 transition-all resize-none`}
+                />
+              </div>
+
+              <div>
+                <label
+                  className={`block text-sm font-semibold mb-1.5 ${isDark ? "text-[#e8e4dc]" : "text-[#24766f]"}`}
+                >
+                  {t("legacy.archive_source", "Archive Source")}{" "}
+                  <span className="text-xs opacity-60">
+                    ({t("legacy.optional", "Optional")})
+                  </span>
+                </label>
+                <input
+                  value={treeForm.archiveSource}
+                  onChange={(e) =>
+                    setTreeForm((s) => ({
+                      ...s,
+                      archiveSource: e.target.value,
+                    }))
+                  }
+                  placeholder={t("legacy.archive_source", "Archive Source (optional)")}
+                  className={`heritage-input w-full px-4 py-2.5 rounded-lg border ${border} ${inputBg} ${inputText}
+                  focus:outline-none focus:ring-2 focus:ring-[#24766f]/25 focus:border-[#24766f]/50 transition-all`}
+                />
+              </div>
+
+              <div>
+                <label
+                  className={`block text-sm font-semibold mb-1.5 ${isDark ? "text-[#e8e4dc]" : "text-[#24766f]"}`}
+                >
+                  {t("legacy.document_code", "Document Code")}{" "}
+                  <span className="text-xs opacity-60">
+                    ({t("legacy.optional", "Optional")})
+                  </span>
+                </label>
+                <input
+                  value={treeForm.documentCode}
+                  onChange={(e) =>
+                    setTreeForm((s) => ({ ...s, documentCode: e.target.value }))
+                  }
+                  placeholder={t("legacy.document_code", "Document Code (optional)")}
+                  className={`heritage-input w-full px-4 py-2.5 rounded-lg border ${border} ${inputBg} ${inputText}
+                  focus:outline-none focus:ring-2 focus:ring-[#24766f]/25 focus:border-[#24766f]/50 transition-all`}
+                />
+              </div>
+
+              <label
+                className={`flex items-center gap-3 p-3 rounded-lg border ${border} 
+              ${isDark ? "bg-white/5" : "bg-[#f8f5ef]/50"} cursor-pointer transition-all hover:opacity-90`}
+              >
+                <input
+                  type="checkbox"
+                  checked={treeForm.isPublic}
+                  onChange={(e) =>
+                    setTreeForm((s) => ({ ...s, isPublic: e.target.checked }))
+                  }
+                  className={`h-5 w-5 rounded border-2 ${border} 
+                  ${isDark ? "accent-[#d9a441]" : "accent-[#24766f]"} cursor-pointer`}
+                />
+                <span
+                  className={`text-sm font-semibold ${isDark ? "text-[#e8e4dc]" : "text-[#24766f]"}`}
+                >
+                  {treeForm.isPublic
+                    ? t("legacy.public", "Public")
+                    : t("legacy.private", "Private")}
+                </span>
+              </label>
+
+              {/* Obligatory consent: the tree (its GEDCOM pointer + full file
+                  content) is only persisted to the database when this is checked. */}
+              <label
+                className={`flex items-start gap-3 p-3 rounded-lg border transition-all cursor-pointer ${
+                  treeForm.saveToDb
+                    ? "border-[#24766f]/50 " + (isDark ? "bg-[#24766f]/15" : "bg-[#24766f]/5")
+                    : "border-red-400/60 " + (isDark ? "bg-red-500/10" : "bg-red-50")
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  checked={treeForm.saveToDb}
+                  onChange={(e) =>
+                    setTreeForm((s) => ({ ...s, saveToDb: e.target.checked }))
+                  }
+                  className={`mt-0.5 h-5 w-5 rounded border-2 ${border} ${isDark ? "accent-[#d9a441]" : "accent-[#24766f]"} cursor-pointer`}
+                />
+                <span
+                  className={`text-sm font-semibold ${isDark ? "text-[#e8e4dc]" : "text-[#24766f]"}`}
+                >
+                  {t("legacy.save_to_db_label", "Save this tree to the database")}{" "}
+                  <span className="text-red-500">*</span>
+                  <span className="block text-xs font-normal opacity-70">
+                    {t(
+                      "legacy.save_to_db_hint",
+                      "Required. Stores the tree and its GEDCOM content in the database so it is never lost.",
+                    )}
+                  </span>
+                </span>
+              </label>
+            </div>
+
+            <div className="mt-4 flex flex-wrap items-center gap-2">
+              <label className="flex items-center gap-2 text-sm font-medium">
+                <span className={isDark ? "text-[#e8e4dc]" : "text-[#24766f]"}>
+                  {t("legacy.save_file_as", "Save file as")}:
+                </span>
+                <select
+                  value={saveFormat}
+                  onChange={(e) => setSaveFormat(e.target.value)}
+                  className={`rounded-lg border ${border} px-3 py-2 text-sm ${inputBg} ${inputText}`}
+                >
+                  <option value="gedcom">
+                    {t("legacy.gedcom_format_551", "GEDCOM 5.5.1")}
+                  </option>
+                  <option value="gedcom7">
+                    {t("legacy.format_gedcom7", "GEDCOM 7.0")}
+                  </option>
+                  <option value="gedcomx_json">
+                    {t("legacy.gedcomx_format_json", "GEDCOM X (JSON)")}
+                  </option>
+                  <option value="gedcomx_xml">
+                    {t("legacy.gedcomx_format_xml", "GEDCOM X (XML)")}
+                  </option>
+                  <option value="gedcomx_gedx">
+                    {t("legacy.gedcomx_format_gedx", "GEDCOM X (.gedx)")}
+                  </option>
+                </select>
+              </label>
+              <button
+                type="button"
+                className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-lg font-semibold transition-all shadow-md hover:shadow-lg disabled:opacity-60
+                ${
+                  isDark
+                    ? "bg-[#24766f] hover:bg-[#24766f]/90 text-white"
+                    : "bg-[#24766f] hover:bg-[#24766f]/90 text-white"
+                }`}
+                onClick={() => void saveCurrentAsTree()}
+                disabled={saving || loadingGedcom || deletingTree || !treeForm.saveToDb}
+                title={
+                  !treeForm.saveToDb
+                    ? t("legacy.save_to_db_required", 'Please check "Save this tree to the database" before saving.')
+                    : undefined
+                }
+              >
+                <Save className="w-4 h-4" />
+                {saving
+                  ? t("legacy.saving", "Saving...")
+                  : canUpdateSelected
+                    ? t("legacy.update_tree", "Update Tree")
+                    : t("legacy.save_tree", "Save Tree")}
+              </button>
+
+              <button
+                type="button"
+                className={`px-4 py-2.5 rounded-lg border ${border} inline-flex items-center gap-2 font-medium transition-all
+                ${
+                  isDark
+                    ? "bg-white/10 hover:bg-white/15 text-white"
+                    : "bg-white hover:bg-[#f8f5ef] text-[#24766f]"
+                }`}
+                onClick={clearCanvas}
+                disabled={saving || loadingGedcom}
+                title={t("legacy.clear_canvas", "Clear canvas")}
+              >
+                <Trash2 className="w-4 h-4" />
+                {t("legacy.clear", "Clear")}
+              </button>
+
+              {canUpdateSelected && selectedTree ? (
+                <button
+                  type="button"
+                  className={`px-4 py-2.5 rounded-lg border ${border} text-sm font-semibold inline-flex items-center gap-2 transition-all
+                  ${
+                    isDark
+                      ? "bg-red-600/80 hover:bg-red-600 text-white"
+                      : "bg-red-600 hover:bg-red-700 text-white"
+                  }`}
+                  onClick={() => void deleteTree()}
+                  disabled={
+                    deletingTree || saving || loadingGedcom || autoSaving
+                  }
+                >
+                  <X className="w-4 h-4" />
+                  {deletingTree
+                    ? t("legacy.deleting", "Deleting...")
+                    : t("legacy.delete_tree", "Delete Tree")}
+                </button>
+              ) : null}
+            </div>
+
+            {autoSaving ? (
+              <div className="text-xs opacity-70 mt-2">
+                {t("legacy.auto_saving", "Auto-saving...")}
+              </div>
+            ) : autoSaveNotice ? (
+              <div className="text-xs opacity-70 mt-2">{autoSaveNotice}</div>
+            ) : null}
+          </div>
+
+          <div
+            className={`rounded-xl border ${border} ${card} p-5 shadow-md heritage-panel`}
+          >
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              <button
+                type="button"
+                className={`px-4 py-2.5 rounded-lg border text-sm font-semibold transition-all ${
+                  tab === "my"
+                    ? `${isDark ? "bg-[#24766f] text-white border-[#24766f] shadow-md" : "bg-[#24766f] text-white border-[#24766f] shadow-md"}`
+                    : `${border} ${hoverRow} ${isDark ? "text-[#e8e4dc]" : "text-[#24766f]"}`
+                }`}
+                onClick={() => setTab("my")}
+              >
+                {t("legacy.my_trees", "My Trees")}
+              </button>
+
+              <button
+                type="button"
+                className={`px-4 py-2.5 rounded-lg border text-sm font-semibold transition-all ${
+                  tab === "public"
+                    ? `${isDark ? "bg-[#24766f] text-white border-[#24766f] shadow-md" : "bg-[#24766f] text-white border-[#24766f] shadow-md"}`
+                    : `${border} ${hoverRow} ${isDark ? "text-[#e8e4dc]" : "text-[#24766f]"}`
+                }`}
+                onClick={() => setTab("public")}
+              >
+                {t("legacy.public_trees", "Public Trees")}
+              </button>
+            </div>
+
+            <div className="relative mb-4">
+              <Search
+                className={`w-4 h-4 absolute rtl:right-3 rtl:left-auto ltr:left-3 top-1/2 -translate-y-1/2 ${isDark ? "text-[#d9a441]/60" : "text-[#24766f]/60"}`}
+              />
+
+              <input
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                className={`heritage-input w-full rtl:pr-9 rtl:pl-3 ltr:pl-9 ltr:pr-3 py-2.5 rounded-lg border
+                focus:outline-none focus:ring-2 focus:ring-[#24766f]/25 focus:border-[#24766f]/50
+                transition-all ${inputBg} ${inputText} ${border}`}
+                placeholder={t("legacy.search_trees", "Search trees...")}
+              />
+            </div>
+
+            {loadingTrees ? (
+              <div className="py-8 text-center opacity-70">
+                {t("legacy.loading", "Loading...")}
+              </div>
+            ) : filteredTrees.length === 0 ? (
+              <div className="py-8 text-center opacity-70">
+                {t("legacy.no_trees_found", "No trees found.")}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 gap-4 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
+                {filteredTrees.map((tree) => {
+                  const active = selectedTree?.id === tree.id;
+                  const canDownload =
+                    Number.isFinite(Number(tree.id)) && tree.hasGedcom;
+
+                  return (
+                    <div
+                      key={tree.id}
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => void openTree(tree)}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.preventDefault();
+                          void openTree(tree);
+                        }
+                      }}
+                      className={`${card} border ${border} rounded-xl shadow-md overflow-hidden transition-all 
+                      focus:outline-none focus:ring-2 focus:ring-[#24766f]/40 cursor-pointer
+                      ${
+                        active
+                          ? `ring-2 ring-[#24766f]/50 border-[#24766f] ${isDark ? "bg-[#24766f]/20" : "bg-[#24766f]/10"} shadow-lg scale-[1.02]`
+                          : `hover:shadow-lg hover:border-[#24766f]/30 ${hoverRow}`
+                      }`}
+                    >
+                      <div className="p-4 border-b border-white/5 bg-gradient-to-r from-[#24766f]/10 to-transparent">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="min-w-0">
+                            <p className="text-[10px] uppercase tracking-[0.3em] text-[#24766f] opacity-70">
+                              {t("legacy.trees", "Family Trees")}
+                            </p>
+                            <h3 className="text-xl font-bold truncate">
+                              {tree.title}
+                            </h3>
+                            <p className="text-sm opacity-70">
+                              {tree.owner || t("legacy.unknown", "Unknown")}
+                            </p>
+                          </div>
+                          <span
+                            className={`text-[10px] uppercase tracking-[0.2em] px-3 py-1 rounded-full border ${border}`}
+                          >
+                            {tree.isPublic
+                              ? t("legacy.public", "Public")
+                              : t("legacy.private", "Private")}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="p-4 space-y-4">
+                        <p className="text-sm opacity-80 line-clamp-3">
+                          {tree.description ||
+                            t("legacy.no_description", "No description.")}
+                        </p>
+
+                        {tree.category ? (
+                          <span className="inline-flex w-fit px-2.5 py-1 rounded-full bg-[#24766f]/10 text-[#24766f] text-xs font-semibold">
+                            {tree.category}
+                          </span>
+                        ) : null}
+
+                        <div className="grid gap-3 sm:grid-cols-2">
+                          <div
+                            className={`${metaPanel} border rounded-xl p-3 flex items-start gap-2`}
+                          >
+                            <Archive className="w-4 h-4 text-[#d9a441] mt-0.5" />
+                            <div>
+                              <p className="text-[10px] uppercase opacity-60">
+                                {t("legacy.archive_source", "Archive Source")}
+                              </p>
+                              <p className="text-xs font-semibold break-words">
+                                {tree.archiveSource ||
+                                  t("legacy.not_provided", "Not provided")}
+                              </p>
+                            </div>
+                          </div>
+                          <div
+                            className={`${metaPanel} border rounded-xl p-3 flex items-start gap-2`}
+                          >
+                            <FileText className="w-4 h-4 text-[#d9a441] mt-0.5" />
+                            <div>
+                              <p className="text-[10px] uppercase opacity-60">
+                                {t("legacy.document_code", "Document Code")}
+                              </p>
+                              <p className="text-xs font-semibold font-mono break-words">
+                                {tree.documentCode ||
+                                  t("legacy.not_provided", "Not provided")}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="text-xs opacity-70 flex items-center gap-2 flex-wrap">
+                          <Users className="w-4 h-4" />
+                          {tree.hasGedcom
+                            ? t("legacy.has_file", "Has file")
+                            : t("legacy.no_file", "No file")}
+                          {tree.hasGedcom ? (
+                            <span
+                              className={`px-2 py-0.5 rounded font-medium inline-flex items-center gap-1 ${
+                                tree.hasGedcomBackup
+                                  ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+                                  : "bg-amber-500/15 text-amber-600 dark:text-amber-400"
+                              }`}
+                              title={
+                                tree.hasGedcomBackup
+                                  ? t(
+                                      "legacy.tree_db_backed_up_hint",
+                                      "This tree's data is stored in the database and is safe even if the uploads folder is lost.",
+                                    )
+                                  : t(
+                                      "legacy.tree_file_only_hint",
+                                      "This tree currently relies on its uploaded file only. Save it again (Edit → Save) to also store it safely in the database.",
+                                    )
+                              }
+                            >
+                              {tree.hasGedcomBackup
+                                ? t("legacy.tree_db_backed_up", "Backed up in database")
+                                : t("legacy.tree_file_only", "File-only – re-save to protect")}
+                            </span>
+                          ) : null}
+                          {tree.hasGedcom && tree.data_format === "gedcomx" ? (
+                            <span className="px-2 py-0.5 rounded bg-[#24766f]/20 text-[#24766f] dark:text-[#d9a441] font-medium">
+                              {t("legacy.saved_with_gedcomx", "Saved with GEDCOM X")}
+                            </span>
+                          ) : null}
+                          {tree.hasGedcom && tree.data_format === "gedcom7" ? (
+                            <span className="px-2 py-0.5 rounded bg-[#24766f]/20 text-[#24766f] dark:text-[#d9a441] font-medium">
+                              {t("legacy.saved_with_gedcom7", "Saved with GEDCOM 7.0")}
+                            </span>
+                          ) : null}
+                          {tree.hasGedcom &&
+                          tree.data_format !== "gedcomx" &&
+                          tree.data_format !== "gedcom7" ? (
+                            <span className="px-2 py-0.5 rounded bg-[#24766f]/10 text-[#24766f]/80 dark:text-[#e8e4dc]/80 font-medium">
+                              {t("legacy.saved_with_gedcom551",
+                                "Saved with GEDCOM 5.5.1",
+                              )}
+                            </span>
+                          ) : null}
+                          {loadingGedcom && active ? (
+                            <span className="ml-auto">
+                              {t("legacy.loading", "Loading...")}
+                            </span>
+                          ) : null}
+                        </div>
+
+                        <div className="flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              void openTree(tree);
+                            }}
+                            className={`px-4 py-2 rounded-md border ${border} hover:opacity-90 inline-flex items-center gap-2`}
+                          >
+                            <Eye className="w-4 h-4" />
+                            {t("legacy.view_tree", "View Tree")}
+                          </button>
+                          {canDownload ? (
+                            <button
+                              type="button"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                void downloadTreeFile(tree, tab);
+                              }}
+                              className="px-4 py-2 rounded-md text-white font-medium bg-gradient-to-r from-[#0f2742] to-[#d9a441] hover:opacity-90 transition inline-flex items-center gap-2"
+                            >
+                              <Download className="w-4 h-4" />
+                              {tree.data_format === "gedcomx"
+                                ? t("legacy.download_gedcomx", "Download GEDCOM X")
+                                : tree.data_format === "gedcom7"
+                                  ? t("legacy.download_gedcom7", "Download GEDCOM 7.0")
+                                  : t("legacy.download_gedcom551",
+                                      "Download GEDCOM 5.5.1",
+                                    )}
+                            </button>
+                          ) : null}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div
+          className={`rounded-xl border ${border} ${card} p-6 w-full shadow-md heritage-panel`}
+        >
+          <div className="mb-4">
+            <div
+              className={`text-xl font-bold mb-1 ${isDark ? "text-[#f8f5ef]" : "text-[#162238]"}`}
+            >
+              {selectedTree ? selectedTree.title : t("legacy.canvas", "Canvas")}
+            </div>
+
+            <div
+              className={`text-sm ${isDark ? "text-[#e8e4dc]/70" : "text-[#162238]"}`}
+            >
+              {selectedTree
+                ? selectedTree.description || ""
+                : t("legacy.canvas_hint", "Import a file or add people to start.")}
+            </div>
+          </div>
+
+          <ErrorBoundary
+            fallback={({ error, reset }) => (
+              <div className={`rounded-lg border ${border} ${metaPanel} p-4`}>
+                <div className="font-semibold">
+                  {t("legacy.tree_builder_error", "Tree builder failed to load.")}
+                </div>
+                <div className="text-sm opacity-70">
+                  {error?.message ||
+                    t("legacy.tree_builder_try_again", "Please try again.")}
+                </div>
+                <button
+                  type="button"
+                  onClick={reset}
+                  className={`mt-3 inline-flex items-center rounded-md border ${border} px-3 py-1 text-xs font-semibold uppercase tracking-wide`}
+                >
+                  {t("legacy.retry", "Retry")}
+                </button>
+              </div>
+            )}
+          >
+            <TreesBuilder
+              people={people}
+              setPeople={setPeople}
+              dataFormat={
+                selectedTree?.data_format === "gedcomx"
+                  ? "gedcomx"
+                  : selectedTree?.data_format === "gedcom7"
+                    ? "gedcom7"
+                    : "gedcom"
+              }
+              onAutoSave={scheduleAutoSave}
+              readOnly={builderReadOnly}
+            />
+          </ErrorBoundary>
+        </div>
+      </div>
+    </div>
+  );
+}

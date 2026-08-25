@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: https://server.rootstunisia.com
+    container_name: rootstunisia_frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    environment:
+      - VITE_API_URL=https://server.rootstunisia.com
+      - VITE_SITE_URL=https://rootstunisia.com
+    depends_on:
+      - backend
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: rootstunisia_backend
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      - NODE_ENV=production
+      - PORT=5000
+      - DB_HOST=localhost
+      - DB_PORT=3306
+      - DB_USER=root
+      - DB_PASSWORD=
+      - DB_DATABASE=rootstunisia
+      - JWT_SECRET=roots_tunisia_production_secret_key_2026
+      - CORS_ORIGIN=https://rootstunisia.com,https://www.rootstunisia.com,https://server.rootstunisia.com
+    volumes:
+      - backend_uploads:/app/uploads
+
+volumes:
+  backend_uploads:
+    driver: local
