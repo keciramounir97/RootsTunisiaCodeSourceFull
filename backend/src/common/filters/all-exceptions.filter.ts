@@ -46,6 +46,14 @@ export class AllExceptionsFilter implements ExceptionFilter {
         if (requestId !== '-') {
             response.setHeader('X-Request-Id', requestId);
         }
+
+        const origin = request.headers.origin;
+        if (origin) {
+            response.setHeader('Access-Control-Allow-Origin', origin);
+            response.setHeader('Vary', 'Origin');
+            response.setHeader('Access-Control-Allow-Credentials', 'true');
+        }
+
         response.status(status).json({
             statusCode: status,
             message: Array.isArray(errorMessage) ? errorMessage[0] : errorMessage,

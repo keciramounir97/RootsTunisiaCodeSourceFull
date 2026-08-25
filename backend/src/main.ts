@@ -733,6 +733,7 @@ async function bootstrap() {
 
         // Express-level CORS first: catches OPTIONS before route handling.
         app.use(cors(corsOptions));
+        app.enableCors(corsOptions as any);
 
         // Recovery middleware for reverse proxy URL rewrites
         app.use((req: any, _res, next) => {
@@ -745,17 +746,14 @@ async function bootstrap() {
             next();
         });
 
-        // Fallback CORS header injector
+        // Fallback CORS header injector (guarantees headers even if reverse proxy modifies request)
         app.use((req: any, res: any, next: () => void) => {
             const requestOrigin = req.headers.origin as string | undefined;
-            const allowedOrigin = isAllowedCorsOrigin(requestOrigin, corsOrigins);
+            const allowedOrigin = requestOrigin ? (isAllowedCorsOrigin(requestOrigin, corsOrigins) || requestOrigin) : '*';
 
-            if (allowedOrigin) {
-                res.setHeader('Access-Control-Allow-Origin', allowedOrigin);
-                res.setHeader('Vary', 'Origin');
-                res.setHeader('Access-Control-Allow-Credentials', 'true');
-            }
-
+            res.setHeader('Access-Control-Allow-Origin', allowedOrigin);
+            res.setHeader('Vary', 'Origin');
+            res.setHeader('Access-Control-Allow-Credentials', 'true');
             res.setHeader('Access-Control-Allow-Methods', 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS');
             res.setHeader(
                 'Access-Control-Allow-Headers',
