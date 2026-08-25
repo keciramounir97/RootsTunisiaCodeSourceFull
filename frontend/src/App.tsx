@@ -109,16 +109,20 @@ function AppWithRouter() {
   }, []);
 
   return (
-    <div
-      className="min-h-screen bg-cover bg-center bg-fixed bg-no-repeat transition-colors duration-300 relative"
-      style={{ backgroundImage: `url(${backgroundImage})` }}
-    >
-      {!isAdminRoute && <Navbar />}
-      <Suspense fallback={<LoadingFallback />}>
-        <AppRoutes />
-      </Suspense>
-      {!isAdminRoute && <Footer />}
-      {showWhatsApp && <WhatsAppButton />}
+    <div className="min-h-screen relative bg-[var(--background)] transition-colors duration-300">
+      {/* Historic Tunisian Landmark Background with soft opacity across all pages, sections, navbar & admin */}
+      <div
+        className="fixed inset-0 pointer-events-none z-0 bg-cover bg-center bg-no-repeat opacity-[0.06] dark:opacity-[0.08]"
+        style={{ backgroundImage: `url(${backgroundImage})` }}
+      />
+      <div className="relative z-10">
+        {!isAdminRoute && <Navbar />}
+        <Suspense fallback={<LoadingFallback />}>
+          <AppRoutes />
+        </Suspense>
+        {!isAdminRoute && <Footer />}
+        {showWhatsApp && <WhatsAppButton />}
+      </div>
     </div>
   );
 }

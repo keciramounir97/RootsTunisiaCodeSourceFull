@@ -8,15 +8,14 @@ import {
   Mic,
   Landmark,
 } from "lucide-react";
-import carthage from "../assets/tunisia-carthage.jpg";
+import carthage from "../assets/slider-carthage.jpg";
 import kairouan from "../assets/slider-kairouan.jpg";
-import sidiBouSaid from "../assets/tunisia-sidibousaid.jpg";
-import manuscript from "../assets/manuscript.jpg";
-import medina from "../assets/tunisia-medina.jpg";
-import eljem from "../assets/tunisia-eljem.jpg";
-import djerba from "../assets/djerba.jpg";
-import preserveSectionBg from "../assets/preserve-section-bg.jpg";
+import sidiBouSaid from "../assets/slider-sidibousaid.jpg";
 import familyArchive from "../assets/family-archive.jpg";
+import manuscript from "../assets/manuscript.jpg";
+import medina from "../assets/medina-tunis.jpg";
+import eljem from "../assets/eljem.jpg";
+import djerba from "../assets/djerba.jpg";
 import { Section, SectionHeading, InfoCard } from "../components/site/Primitives";
 import { TreeCard, featuredTrees } from "../components/site/TreeCard";
 import TunisiaGovernoratesMap from "../components/TunisiaGovernoratesMap";
@@ -25,8 +24,8 @@ import { useTranslation } from "../context/TranslationContext";
 
 const slides = [
   { image: carthage, label: "Carthage" },
-  { image: sidiBouSaid, label: "Sidi Bou Saïd" },
   { image: kairouan, label: "Kairouan" },
+  { image: sidiBouSaid, label: "Sidi Bou Saïd" },
 ];
 
 const stats = [
@@ -123,7 +122,7 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="bg-[var(--background)] text-[var(--foreground)] min-h-screen">
+    <div className="text-[var(--foreground)] min-h-screen">
       <SEO
         title="Roots Tunisia — Tunisian Sources, Archives & Family Timelines"
         description="Discover your Tunisian heritage: civil registers, beylical and Ottoman sijillat, habous deeds, Protectorate archives, family photographs and oral memory in one platform."
@@ -182,7 +181,7 @@ export default function Home() {
       <div className="mx-auto mt-10 max-w-7xl px-5">
         <div className="grid grid-cols-2 gap-px overflow-hidden rounded-md border border-[var(--gold)]/40 bg-[var(--gold)]/30 md:grid-cols-4">
           {stats.map((s) => (
-            <div key={s.label} className="bg-[var(--card)] px-6 py-8 text-center">
+            <div key={s.label} className="bg-[var(--card)]/90 backdrop-blur-sm px-6 py-8 text-center">
               <p className="font-display text-3xl font-semibold text-[var(--primary)] sm:text-4xl">
                 {s.value}
               </p>
@@ -194,12 +193,12 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Preserve banner - First section under home hero */}
+      {/* Preserve banner - Historic Tunisian El Jem Landmark Background */}
       <Section>
         <div className="frame-gold relative overflow-hidden rounded-md shadow-xl">
           <img
-            src={preserveSectionBg}
-            alt="Historical Tunisian Heritage and Architecture"
+            src={eljem}
+            alt="Roman Colosseum of El Jem, Tunisia"
             loading="lazy"
             width={1600}
             height={800}
@@ -271,7 +270,7 @@ export default function Home() {
             return (
               <article
                 key={tool.title}
-                className="surface-card group flex flex-col p-6 transition-transform hover:-translate-y-1"
+                className="surface-card group flex flex-col p-6 transition-transform hover:-translate-y-1 bg-[var(--card)]/90 backdrop-blur-sm"
               >
                 <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[var(--gold)]/15 text-[var(--gold)] ring-1 ring-[var(--gold)]/40">
                   <Icon className="h-5 w-5" />
@@ -305,7 +304,7 @@ export default function Home() {
           {timeline.map((item) => (
             <div
               key={item.era}
-              className="surface-card flex flex-col justify-between p-5 transition-transform hover:-translate-y-0.5"
+              className="surface-card flex flex-col justify-between p-5 transition-transform hover:-translate-y-0.5 bg-[var(--card)]/90 backdrop-blur-sm"
             >
               <div>
                 <div className="flex items-center justify-between gap-2">
@@ -433,7 +432,7 @@ export default function Home() {
 
       {/* Call to action */}
       <Section>
-        <div className="surface-card relative overflow-hidden rounded-lg p-10 text-center border-2 border-[var(--gold)]/50 sm:p-16">
+        <div className="surface-card relative overflow-hidden rounded-lg p-10 text-center border-2 border-[var(--gold)]/50 sm:p-16 bg-[var(--card)]/90 backdrop-blur-sm">
           <div className="zellige absolute inset-0 opacity-25 pointer-events-none" />
           <p className="eyebrow relative z-10">Start Your Journey</p>
           <h2 className="display-lg relative z-10 mt-3 text-[var(--foreground)]">

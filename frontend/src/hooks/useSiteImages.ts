@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { api } from "../api/client";
 import { getApiRoot } from "../api/helpers";
 
-import defaultSectionBackground from "../assets/fondavecopacityderrierelessections.png";
+import defaultSectionBackground from "../assets/medina-tunis.jpg";
 
 const heroBackground = "/assets/Tunisia-hero.svg";
 const fondBackground = defaultSectionBackground;

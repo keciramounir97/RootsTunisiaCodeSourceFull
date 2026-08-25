@@ -7,11 +7,11 @@ import { PageHero, Section, SectionHeading } from "../components/site/Primitives
 import { useTranslation } from "../context/TranslationContext";
 import { useAuth } from "../admin/components/AuthContext";
 import { localGalleryAssets, withLocalGalleryFallback, GalleryDataItem } from "../utils/galleryData";
-import sidiBouSaid from "../assets/tunisia-sidibousaid.jpg";
-import medina from "../assets/tunisia-medina.jpg";
-import eljem from "../assets/tunisia-eljem.jpg";
+import sidiBouSaid from "../assets/slider-sidibousaid.jpg";
+import medina from "../assets/medina-tunis.jpg";
+import eljem from "../assets/eljem.jpg";
 import djerba from "../assets/djerba.jpg";
-import carthage from "../assets/tunisia-carthage.jpg";
+import carthage from "../assets/slider-carthage.jpg";
 import kairouan from "../assets/slider-kairouan.jpg";
 import manuscript from "../assets/manuscript.jpg";
 import familyArchive from "../assets/family-archive.jpg";
