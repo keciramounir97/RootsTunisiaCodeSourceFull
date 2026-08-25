@@ -30,6 +30,7 @@ import { IndividualsModule } from './modules/individuals/individuals.module';
     imports: [
         ConfigModule.forRoot({
             isGlobal: true,
+            envFilePath: ['.env.production', '.env', '../.env.production', '../.env'],
         }),
         DatabaseModule,
         ActivityModule,

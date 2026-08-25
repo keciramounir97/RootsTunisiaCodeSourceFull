@@ -151,21 +151,19 @@ export default function Home() {
           ))}
           <div className="hero-scrim absolute inset-0" />
           <div className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center">
-            <p className="eyebrow text-[var(--gold)]">Roots Tunisia · جذور تونس</p>
+            <p className="eyebrow text-[var(--gold)]">{t("site_badge", "Roots Tunisia · جذور تونس")}</p>
             <h1 className="display-xl mt-4 max-w-4xl text-white font-semibold">
-              Discover Your Tunisian Heritage
+              {t("hero_title", "Discover Your Tunisian Heritage")}
             </h1>
             <p className="mt-5 max-w-2xl text-sm leading-relaxed text-white/90 sm:text-base">
-              Tunisian civil records, beylical and Ottoman registers, habous deeds, Protectorate
-              archives, family photographs, oral memory and historical periods — in one
-              research-ready heritage platform.
+              {t("hero_subtitle", "Tunisian civil records, beylical and Ottoman registers, habous deeds, Protectorate archives, family photographs, oral memory and historical periods — in one research-ready heritage platform.")}
             </p>
             <div className="mt-8 flex flex-wrap justify-center gap-3">
               <Link to="/sources" className="btn-base btn-gold">
-                Start Exploring
+                {t("start_exploring", "Start Exploring")}
               </Link>
               <Link to="/gallery/trees" className="btn-base btn-outline-light">
-                Browse Family Trees
+                {t("browse_family_trees", "Browse Family Trees")}
               </Link>
             </div>
             <div className="mt-8 flex gap-2">
@@ -193,7 +191,7 @@ export default function Home() {
                 {s.value}
               </p>
               <p className="mt-2 text-[0.68rem] font-bold uppercase tracking-[0.2em] text-[var(--muted-foreground)]">
-                {s.label}
+                {t(s.label.toLowerCase().replace(/[^a-z0-9]+/g, "_"), s.label)}
               </p>
             </div>
           ))}
@@ -213,11 +211,10 @@ export default function Home() {
           />
           <div className="absolute inset-0 bg-[var(--olive)]/70" />
           <div className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center">
-            <p className="eyebrow text-[var(--gold)]">Roots Tunisia</p>
-            <h2 className="display-lg mt-3 text-white font-semibold">Preserve Your Family Lineage</h2>
+            <p className="eyebrow text-[var(--gold)]">{t("site_title", "Roots Tunisia")}</p>
+            <h2 className="display-lg mt-3 text-white font-semibold">{t("preserve_lineage_title", "Preserve Your Family Lineage")}</h2>
             <p className="mt-4 max-w-2xl text-sm text-white/90 leading-relaxed">
-              Connect with your roots, explore historical records, and build a lasting digital
-              legacy for future generations.
+              {t("preserve_lineage_desc", "Connect with your roots, explore historical records, and build a lasting digital legacy for future generations.")}
             </p>
           </div>
         </div>

@@ -3,6 +3,40 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { Model } from 'objection';
 import * as Knex from 'knex';
 
+type DbConnectionConfig = {
+    host: string;
+    port: number;
+    user: string;
+    password: string;
+    database: string;
+    charset: string;
+};
+
+function readConnectionFromDatabaseUrl(databaseUrl?: string): Partial<DbConnectionConfig> {
+    if (!databaseUrl) return {};
+    try {
+        const parsed = new URL(databaseUrl);
+        return {
+            host: parsed.hostname,
+            port: Number(parsed.port || 3306),
+            user: decodeURIComponent(parsed.username || ''),
+            password: decodeURIComponent(parsed.password || ''),
+            database: (parsed.pathname || '').replace(/^\//, ''),
+        };
+    } catch {
+        return {};
+    }
+}
+
+function pickFirstDefined(...values: Array<string | number | undefined | null>): string | undefined {
+    for (const value of values) {
+        if (value === undefined || value === null) continue;
+        const normalized = String(value).trim();
+        if (normalized) return normalized;
+    }
+    return undefined;
+}
+
 @Global()
 @Module({
     imports: [ConfigModule],
@@ -11,84 +45,141 @@ import * as Knex from 'knex';
             provide: 'KnexConnection',
             inject: [ConfigService],
             useFactory: async (configService: ConfigService) => {
-                const knexConfig = {
-                    client: 'mysql2',
-                    connection: {
-                        host: configService.get<string>('DB_HOST') || '127.0.0.1',
-                        port: Number(configService.get<number>('DB_PORT')) || 3306,
-                        user: configService.get<string>('DB_USER') || 'karim',
-                        password: configService.get<string>('DB_PASSWORD') || '636363',
-                        database: configService.get<string>('DB_NAME') || configService.get<string>('DB_DATABASE') || 'rootstunisiadb',
-                        charset: 'utf8mb4',
-                    },
-                    pool: {
-                        min: 0,
-                        max: 5,
-                        acquireTimeoutMillis: 30000,
-                        createTimeoutMillis: 30000,
-                        destroyTimeoutMillis: 5000,
-                        idleTimeoutMillis: 30000,
-                        afterCreate: (conn: any, done: any) => {
-                            conn.on('error', (err: any) => {
-                                console.warn('⚠️ MySQL connection dropped/reset safely:', err?.message || err);
-                            });
-                            done(null, conn);
-                        },
-                    },
-                    debug: configService.get<string>('NODE_ENV') === 'development',
-                };
+                const dbUrl = configService.get<string>('DATABASE_URL') || process.env.DATABASE_URL;
+                const fromUrl = readConnectionFromDatabaseUrl(dbUrl);
 
-                let knex = Knex.default(knexConfig);
-                Model.knex(knex);
+                const primaryHost = pickFirstDefined(
+                    configService.get<string>('DB_HOST'),
+                    configService.get<string>('MYSQL_HOST'),
+                    configService.get<string>('MYSQLHOST'),
+                    process.env.DB_HOST,
+                    process.env.MYSQL_HOST,
+                    process.env.MYSQLHOST,
+                    fromUrl.host,
+                    'rootstunisia_rootstunisiadb',
+                ) || 'rootstunisia_rootstunisiadb';
 
-                const host = configService.get<string>('DB_HOST') || '127.0.0.1';
-                const database = configService.get<string>('DB_NAME') || 'RootsTunisia';
+                const port = Number(
+                    pickFirstDefined(
+                        configService.get<number>('DB_PORT'),
+                        configService.get<number>('MYSQL_PORT'),
+                        process.env.DB_PORT,
+                        process.env.MYSQL_PORT,
+                        fromUrl.port,
+                        3306,
+                    ) || 3306,
+                );
 
-                try {
-                    await knex.raw('SELECT 1');
-                    console.log(`🟢 DB HANDSHAKE OK (${host})`);
-                    return knex;
-                } catch (err: any) {
-                    console.warn(`⚠️ Primary DB host (${host}) failed: ${err?.message}. Trying local MySQL fallback...`);
-                    try { await knex.destroy(); } catch {}
+                const user = pickFirstDefined(
+                    configService.get<string>('DB_USER'),
+                    configService.get<string>('MYSQL_USER'),
+                    configService.get<string>('MYSQLUSER'),
+                    process.env.DB_USER,
+                    process.env.MYSQL_USER,
+                    process.env.MYSQLUSER,
+                    fromUrl.user,
+                    'karim',
+                ) || 'karim';
 
-                    const localConfig = {
-                        ...knexConfig,
-                        connection: {
-                            ...knexConfig.connection,
-                            host: '127.0.0.1',
-                            port: 3306,
-                            user: 'root',
-                            password: '636363',
-                            database,
-                        },
-                    };
-                    knex = Knex.default(localConfig);
-                    Model.knex(knex);
-                    try {
-                        await knex.raw('SELECT 1');
-                        console.log('🟢 DB HANDSHAKE OK (local fallback 127.0.0.1 root)');
-                        return knex;
-                    } catch (fallbackErr: any) {
-                        const mounirConfig = {
-                            ...localConfig,
+                const password = pickFirstDefined(
+                    configService.get<string>('DB_PASSWORD'),
+                    configService.get<string>('MYSQL_PASSWORD'),
+                    configService.get<string>('MYSQLPASSWORD'),
+                    process.env.DB_PASSWORD,
+                    process.env.MYSQL_PASSWORD,
+                    process.env.MYSQLPASSWORD,
+                    fromUrl.password,
+                    '636363',
+                ) || '636363';
+
+                const database = pickFirstDefined(
+                    configService.get<string>('DB_NAME'),
+                    configService.get<string>('DB_DATABASE'),
+                    configService.get<string>('MYSQL_DATABASE'),
+                    configService.get<string>('MYSQLDATABASE'),
+                    process.env.DB_NAME,
+                    process.env.DB_DATABASE,
+                    process.env.MYSQL_DATABASE,
+                    process.env.MYSQLDATABASE,
+                    fromUrl.database,
+                    'rootstunisiadb',
+                ) || 'rootstunisiadb';
+
+                console.log(`🟡 DB CONFIG primaryHost=${primaryHost} port=${port} database=${database} user=${user}`);
+
+                const candidateHosts = [
+                    primaryHost,
+                    'rootstunisia_rootstunisiadb',
+                    '2.24.71.239',
+                    'mysql',
+                    '127.0.0.1',
+                    'localhost',
+                ];
+                const uniqueHosts = [...new Set(candidateHosts)];
+
+                const candidateUsers = [
+                    { u: user, p: password },
+                    { u: 'karim', p: '636363' },
+                    { u: 'root', p: '636363' },
+                    { u: 'root', p: '' },
+                ];
+
+                for (const h of uniqueHosts) {
+                    for (const cred of candidateUsers) {
+                        const knexConfig = {
+                            client: 'mysql2',
                             connection: {
-                                ...localConfig.connection,
-                                user: 'mounir',
+                                host: h,
+                                port,
+                                user: cred.u,
+                                password: cred.p,
+                                database,
+                                charset: 'utf8mb4',
+                                connectTimeout: 10000,
                             },
+                            pool: {
+                                min: 0,
+                                max: 5,
+                                acquireTimeoutMillis: 30000,
+                                createTimeoutMillis: 30000,
+                                destroyTimeoutMillis: 5000,
+                                idleTimeoutMillis: 30000,
+                                afterCreate: (conn: any, done: any) => {
+                                    conn.on('error', (err: any) => {
+                                        console.warn('⚠️ MySQL connection dropped/reset safely:', err?.message || err);
+                                    });
+                                    done(null, conn);
+                                },
+                            },
+                            debug: false,
                         };
-                        const knexMounir = Knex.default(mounirConfig);
-                        Model.knex(knexMounir);
+
                         try {
-                            await knexMounir.raw('SELECT 1');
-                            console.log('🟢 DB HANDSHAKE OK (local fallback 127.0.0.1 mounir)');
-                            return knexMounir;
-                        } catch {
-                            console.error('🔴 DB HANDSHAKE FAILED on all hosts');
-                            return knex;
+                            const testKnex = Knex.default(knexConfig);
+                            await testKnex.raw('SELECT 1');
+                            console.log(`🟢 DB HANDSHAKE OK (host: ${h}, user: ${cred.u}, db: ${database})`);
+                            Model.knex(testKnex);
+                            return testKnex;
+                        } catch (err: any) {
+                            // try next host/cred
                         }
                     }
                 }
+
+                console.error('🔴 DB HANDSHAKE FAILED on all hosts. Initializing fallback instance for graceful boot.');
+                const fallbackKnex = Knex.default({
+                    client: 'mysql2',
+                    connection: {
+                        host: primaryHost,
+                        port,
+                        user,
+                        password,
+                        database,
+                        charset: 'utf8mb4',
+                    },
+                });
+                Model.knex(fallbackKnex);
+                return fallbackKnex;
             },
         },
     ],
