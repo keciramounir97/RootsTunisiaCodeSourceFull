@@ -181,7 +181,11 @@ function AppRoutes() {
       {/* ===== AUTH ROUTES ===== */}
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
+      <Route path="/register" element={<Signup />} />
       <Route path="/resetpassword" element={<ResetPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
+      <Route path="/forgot-password" element={<ResetPassword />} />
+      <Route path="/forgotpassword" element={<ResetPassword />} />
 
       {/* ===== FEATURE PAGES ===== */}
       <Route path="/subscriptions" element={<Subscriptions />} />

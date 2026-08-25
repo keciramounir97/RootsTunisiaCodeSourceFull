@@ -25,9 +25,9 @@ export function PageHero({
         />
         <div className="hero-scrim absolute inset-0" />
         <div className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center">
-          <p className="eyebrow">{eyebrow}</p>
-          <h1 className="display-lg mt-3 max-w-3xl text-[var(--parchment)]">{title}</h1>
-          <p className="mt-4 max-w-2xl text-sm leading-relaxed text-[var(--parchment)]/85 sm:text-base">
+          <p className="eyebrow text-[var(--gold)]">{eyebrow}</p>
+          <h1 className="display-lg mt-3 max-w-3xl text-white font-semibold">{title}</h1>
+          <p className="mt-4 max-w-2xl text-sm leading-relaxed text-white/90 sm:text-base">
             {subtitle}
           </p>
           {children && <div className="mt-7 flex flex-wrap justify-center gap-3">{children}</div>}

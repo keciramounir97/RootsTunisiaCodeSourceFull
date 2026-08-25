@@ -101,7 +101,7 @@ export function Navbar() {
               {t("nav_explore", "Explore")} <ChevronDown className="h-3 w-3" />
             </button>
             {exploreOpen && (
-              <div className="absolute left-0 top-full w-56 pt-2 z-50">
+              <div className="absolute start-0 top-full w-56 pt-2 z-50">
                 <div className="surface-card overflow-hidden p-1.5 shadow-xl border border-[var(--gold)]/40 rounded-sm">
                   {exploreLinks.map((l) => (
                     <Link
@@ -132,7 +132,7 @@ export function Navbar() {
               {t("nav_gallery", "Gallery")} <ChevronDown className="h-3 w-3" />
             </button>
             {galleryOpen && (
-              <div className="absolute left-0 top-full w-56 pt-2 z-50">
+              <div className="absolute start-0 top-full w-56 pt-2 z-50">
                 <div className="surface-card overflow-hidden p-1.5 shadow-xl border border-[var(--gold)]/40 rounded-sm">
                   {galleryLinks.map((l) => (
                     <Link
@@ -160,13 +160,13 @@ export function Navbar() {
           </NavLink>
         </nav>
 
-        <div className="ml-auto flex items-center gap-2">
+        <div className="ms-auto flex items-center gap-2">
           {/* Search bar */}
           <form
             onSubmit={handleSearchSubmit}
             className="hidden items-center gap-2 rounded-sm border border-[var(--border)] bg-[var(--background)]/60 px-3 py-1.5 xl:flex h-[34px]"
           >
-            <Search className="h-3.5 w-3.5 text-[var(--muted-foreground)]" />
+            <Search className="h-3.5 w-3.5 text-[var(--muted-foreground)] shrink-0" />
             <input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -205,7 +205,7 @@ export function Navbar() {
               </button>
 
               {userMenuOpen && (
-                <div className="absolute right-0 top-full mt-2 w-48 surface-card p-1.5 shadow-2xl border border-[var(--gold)]/40 z-50 rounded-sm">
+                <div className="absolute end-0 top-full mt-2 w-48 surface-card p-1.5 shadow-2xl border border-[var(--gold)]/40 z-50 rounded-sm">
                   <div className="px-3 py-2 border-b border-[var(--gold)]/20 mb-1">
                     <p className="text-xs font-bold text-[var(--foreground)] truncate">{user.name}</p>
                     <p className="text-[0.65rem] text-[var(--muted-foreground)] truncate">{user.email}</p>
@@ -224,7 +224,7 @@ export function Navbar() {
                       logout();
                       navigate("/");
                     }}
-                    className="w-full flex items-center gap-2 rounded-sm px-3 py-2 text-xs font-semibold text-red-500 hover:bg-red-500/10 text-left cursor-pointer"
+                    className="w-full flex items-center gap-2 rounded-sm px-3 py-2 text-xs font-semibold text-red-500 hover:bg-red-500/10 text-start cursor-pointer"
                   >
                     <LogOut className="h-3.5 w-3.5" />
                     {t("nav_signout", "Sign Out")}

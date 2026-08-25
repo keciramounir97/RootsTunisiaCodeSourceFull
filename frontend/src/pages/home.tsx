@@ -151,11 +151,11 @@ export default function Home() {
           ))}
           <div className="hero-scrim absolute inset-0" />
           <div className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center">
-            <p className="eyebrow">Roots Tunisia · جذور تونس</p>
-            <h1 className="display-xl mt-4 max-w-4xl text-[var(--parchment)]">
+            <p className="eyebrow text-[var(--gold)]">Roots Tunisia · جذور تونس</p>
+            <h1 className="display-xl mt-4 max-w-4xl text-white font-semibold">
               Discover Your Tunisian Heritage
             </h1>
-            <p className="mt-5 max-w-2xl text-sm leading-relaxed text-[var(--parchment)]/85 sm:text-base">
+            <p className="mt-5 max-w-2xl text-sm leading-relaxed text-white/90 sm:text-base">
               Tunisian civil records, beylical and Ottoman registers, habous deeds, Protectorate
               archives, family photographs, oral memory and historical periods — in one
               research-ready heritage platform.
