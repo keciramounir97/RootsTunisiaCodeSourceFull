@@ -2,6 +2,7 @@ import { Routes, Route, useLocation } from "react-router-dom";
 import { Suspense, useEffect, memo, lazy } from "react";
 import AOS from "aos";
 import "aos/dist/aos.css";
+import { useSiteImages } from "./hooks/useSiteImages";
 
 // ===== EAGERLY LOADED (Critical Path) =====
 import Navbar from "./components/Navbar";
@@ -96,6 +97,7 @@ function AppWithRouter() {
   const location = useLocation();
   const isAdminRoute = location.pathname.startsWith("/admin");
   const showWhatsApp = !isAdminRoute && WHATSAPP_PAGES.includes(location.pathname);
+  const { backgroundImage } = useSiteImages();
 
   useEffect(() => {
     AOS.init({
@@ -107,14 +109,17 @@ function AppWithRouter() {
   }, []);
 
   return (
-    <>
+    <div
+      className="min-h-screen bg-cover bg-center bg-fixed bg-no-repeat transition-colors duration-300 relative"
+      style={{ backgroundImage: `url(${backgroundImage})` }}
+    >
       {!isAdminRoute && <Navbar />}
       <Suspense fallback={<LoadingFallback />}>
         <AppRoutes />
       </Suspense>
       {!isAdminRoute && <Footer />}
       {showWhatsApp && <WhatsAppButton />}
-    </>
+    </div>
   );
 }
 

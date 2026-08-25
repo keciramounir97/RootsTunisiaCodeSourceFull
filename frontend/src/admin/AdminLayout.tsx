@@ -3,12 +3,14 @@ import { Outlet } from "react-router-dom";
 import AdminHeader from "./components/AdminHeader";
 import AdminSidebar from "./components/AdminSidebar";
 import Breadcrumb from "./components/Breadcrumb";
+import { useSiteImages } from "../hooks/useSiteImages";
 
 export default function AdminLayout() {
   const [open, setOpen] = useState(() => {
     if (typeof window === "undefined") return true;
     return window.innerWidth >= 1024;
   });
+  const { backgroundImage } = useSiteImages();
 
   useEffect(() => {
     const syncSidebarForViewport = () => {
@@ -19,7 +21,10 @@ export default function AdminLayout() {
   }, []);
 
   return (
-    <div className="bg-[var(--background)] text-[var(--foreground)] min-h-screen">
+    <div
+      className="bg-[var(--background)] text-[var(--foreground)] min-h-screen bg-cover bg-center bg-fixed bg-no-repeat transition-colors duration-300 relative"
+      style={{ backgroundImage: `url(${backgroundImage})` }}
+    >
       <AdminHeader sidebarOpen={open} onToggleSidebar={() => setOpen((v) => !v)} />
       <AdminSidebar open={open} onClose={() => setOpen(false)} onToggle={() => setOpen((v) => !v)} />
       <main
