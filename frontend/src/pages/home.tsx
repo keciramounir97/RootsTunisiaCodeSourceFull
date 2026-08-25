@@ -20,6 +20,7 @@ import manuscript from "../assets/manuscript.jpg";
 import medina from "../assets/medina-tunis.jpg";
 import eljem from "../assets/eljem.jpg";
 import djerba from "../assets/djerba.jpg";
+import galleryImage from "../assets/galleryimage.png";
 import { Section, SectionHeading, InfoCard } from "../components/site/Primitives";
 import { TreeCard, featuredTrees } from "../components/site/TreeCard";
 import TunisiaGovernoratesMap from "../components/TunisiaGovernoratesMap";
@@ -212,9 +213,9 @@ export default function Home() {
           />
           <div className="absolute inset-0 bg-[var(--olive)]/70" />
           <div className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center">
-            <p className="eyebrow">Roots Tunisia</p>
-            <h2 className="display-lg mt-3 text-[var(--parchment)]">Preserve Your Family Lineage</h2>
-            <p className="mt-4 max-w-2xl text-sm text-[var(--parchment)]/85">
+            <p className="eyebrow text-[var(--gold)]">Roots Tunisia</p>
+            <h2 className="display-lg mt-3 text-white font-semibold">Preserve Your Family Lineage</h2>
+            <p className="mt-4 max-w-2xl text-sm text-white/90 leading-relaxed">
               Connect with your roots, explore historical records, and build a lasting digital
               legacy for future generations.
             </p>
@@ -254,7 +255,7 @@ export default function Home() {
           </div>
           <div className="frame-gold overflow-hidden rounded-md">
             <img
-              src={familyArchive}
+              src={galleryImage}
               alt="Archival portrait and handwritten family notes from Tunisia"
               width={800}
               height={900}
@@ -424,8 +425,8 @@ export default function Home() {
                 height={600}
                 className="h-60 w-full object-cover transition-transform duration-500 group-hover:scale-105"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-transparent opacity-0 transition-opacity group-hover:opacity-100 flex items-end p-4">
-                <p className="text-xs text-[var(--parchment)] font-medium">{item.alt}</p>
+              <div className="absolute inset-0 flex items-end bg-gradient-to-t from-[var(--ink)]/85 to-transparent p-3 opacity-0 transition-opacity group-hover:opacity-100">
+                <p className="text-xs text-white font-medium">{item.alt}</p>
               </div>
             </div>
           ))}
