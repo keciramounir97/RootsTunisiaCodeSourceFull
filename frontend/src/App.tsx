@@ -208,13 +208,11 @@ function AppRoutes() {
       <Route
         path="/admin/*"
         element={
-          <TranslationProvider>
-            <Suspense fallback={<LoadingFallback />}>
-              <ProtectedRoute roles={[1, 2, 3]}>
-                <AdminLayout />
-              </ProtectedRoute>
-            </Suspense>
-          </TranslationProvider>
+          <Suspense fallback={<LoadingFallback />}>
+            <ProtectedRoute roles={[1, 2, 3]}>
+              <AdminLayout />
+            </ProtectedRoute>
+          </Suspense>
         }
       >
         <Route

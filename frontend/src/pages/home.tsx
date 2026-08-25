@@ -1,26 +1,22 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
-  Archive,
   BookOpen,
   Camera,
   FileText,
   GitBranch,
   Mic,
   Landmark,
-  Shield,
-  Sparkles,
-  Users,
-  ScrollText,
 } from "lucide-react";
-import carthage from "../assets/slider-carthage.jpg";
+import carthage from "../assets/tunisia-carthage.jpg";
 import kairouan from "../assets/slider-kairouan.jpg";
-import sidiBouSaid from "../assets/slider-sidibousaid.jpg";
+import sidiBouSaid from "../assets/tunisia-sidibousaid.jpg";
 import manuscript from "../assets/manuscript.jpg";
-import medina from "../assets/medina-tunis.jpg";
-import eljem from "../assets/eljem.jpg";
+import medina from "../assets/tunisia-medina.jpg";
+import eljem from "../assets/tunisia-eljem.jpg";
 import djerba from "../assets/djerba.jpg";
-import galleryImage from "../assets/galleryimage.png";
+import preserveSectionBg from "../assets/preserve-section-bg.jpg";
+import familyArchive from "../assets/family-archive.jpg";
 import { Section, SectionHeading, InfoCard } from "../components/site/Primitives";
 import { TreeCard, featuredTrees } from "../components/site/TreeCard";
 import TunisiaGovernoratesMap from "../components/TunisiaGovernoratesMap";
@@ -29,8 +25,8 @@ import { useTranslation } from "../context/TranslationContext";
 
 const slides = [
   { image: carthage, label: "Carthage" },
-  { image: kairouan, label: "Kairouan" },
   { image: sidiBouSaid, label: "Sidi Bou Saïd" },
+  { image: kairouan, label: "Kairouan" },
 ];
 
 const stats = [
@@ -162,7 +158,7 @@ export default function Home() {
               <Link to="/sources" className="btn-base btn-gold">
                 {t("start_exploring", "Start Exploring")}
               </Link>
-              <Link to="/gallery/trees" className="btn-base btn-outline-light">
+              <Link to="/gallery/trees" className="btn-base btn-outline-light !text-white hover:!text-white">
                 {t("browse_family_trees", "Browse Family Trees")}
               </Link>
             </div>
@@ -198,22 +194,22 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Preserve banner */}
+      {/* Preserve banner - First section under home hero */}
       <Section>
-        <div className="frame-gold relative overflow-hidden rounded-md">
+        <div className="frame-gold relative overflow-hidden rounded-md shadow-xl">
           <img
-            src={eljem}
-            alt="Roman amphitheatre of El Jem, Tunisia"
+            src={preserveSectionBg}
+            alt="Historical Tunisian Heritage and Architecture"
             loading="lazy"
-            width={1200}
+            width={1600}
             height={800}
-            className="h-[300px] w-full object-cover"
+            className="h-[320px] w-full object-cover"
           />
-          <div className="absolute inset-0 bg-[var(--olive)]/70" />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/60 to-black/80" />
           <div className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center">
             <p className="eyebrow text-[var(--gold)]">{t("site_title", "Roots Tunisia")}</p>
             <h2 className="display-lg mt-3 text-white font-semibold">{t("preserve_lineage_title", "Preserve Your Family Lineage")}</h2>
-            <p className="mt-4 max-w-2xl text-sm text-white/90 leading-relaxed">
+            <p className="mt-4 max-w-2xl text-sm text-white/95 leading-relaxed font-normal">
               {t("preserve_lineage_desc", "Connect with your roots, explore historical records, and build a lasting digital legacy for future generations.")}
             </p>
           </div>
@@ -250,13 +246,13 @@ export default function Home() {
               />
             </div>
           </div>
-          <div className="frame-gold overflow-hidden rounded-md">
+          <div className="frame-gold overflow-hidden rounded-md shadow-lg">
             <img
-              src={galleryImage}
-              alt="Archival portrait and handwritten family notes from Tunisia"
-              width={800}
+              src={familyArchive}
+              alt="Archival portrait and handwritten family records from Tunisia"
+              width={1200}
               height={900}
-              className="h-[480px] w-full object-cover"
+              className="h-[480px] w-full object-cover transition-transform duration-500 hover:scale-105"
             />
           </div>
         </div>
