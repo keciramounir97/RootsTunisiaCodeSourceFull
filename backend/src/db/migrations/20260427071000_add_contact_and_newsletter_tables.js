@@ -1,4 +1,4 @@
-export async function up(knex) {
+exports.up = async function (knex) {
   const hasNewsletter = await knex.schema.hasTable("newsletter_subscribers");
   if (!hasNewsletter) {
     await knex.schema.createTable("newsletter_subscribers", (table) => {
@@ -21,9 +21,9 @@ export async function up(knex) {
       table.index(["email"]);
     });
   }
-}
+};
 
-export async function down(knex) {
+exports.down = async function (knex) {
   const hasContact = await knex.schema.hasTable("contact_messages");
   if (hasContact) {
     await knex.schema.dropTable("contact_messages");
@@ -33,4 +33,4 @@ export async function down(knex) {
   if (hasNewsletter) {
     await knex.schema.dropTable("newsletter_subscribers");
   }
-}
+};

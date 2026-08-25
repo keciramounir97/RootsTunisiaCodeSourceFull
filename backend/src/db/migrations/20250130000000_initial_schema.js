@@ -1,4 +1,7 @@
-export async function up(knex) {
+/**
+ * Initial Schema Migration for Roots Tunisia
+ */
+exports.up = async function (knex) {
     // 1. Roles
     if (!(await knex.schema.hasTable('roles'))) {
         await knex.schema.createTable('roles', (table) => {
@@ -155,9 +158,9 @@ export async function up(knex) {
             table.index(['tree_id']);
         });
     }
-}
+};
 
-export async function down(knex) {
+exports.down = async function (knex) {
     await knex.schema.dropTableIfExists('persons');
     await knex.schema.dropTableIfExists('gallery');
     await knex.schema.dropTableIfExists('family_trees');
@@ -168,4 +171,4 @@ export async function down(knex) {
     await knex.schema.dropTableIfExists('activity_logs');
     await knex.schema.dropTableIfExists('users');
     await knex.schema.dropTableIfExists('roles');
-}
+};

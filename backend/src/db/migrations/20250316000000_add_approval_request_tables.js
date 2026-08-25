@@ -1,4 +1,4 @@
-export async function up(knex) {
+exports.up = async function (knex) {
     const hasPasswordResets = await knex.schema.hasTable('password_reset_requests');
     if (!hasPasswordResets) {
         await knex.schema.createTable('password_reset_requests', (table) => {
@@ -35,9 +35,9 @@ export async function up(knex) {
             table.index(['email']);
         });
     }
-}
+};
 
-export async function down(knex) {
+exports.down = async function (knex) {
     const hasAccountDeletions = await knex.schema.hasTable('account_deletion_requests');
     if (hasAccountDeletions) {
         await knex.schema.dropTable('account_deletion_requests');
@@ -47,4 +47,4 @@ export async function down(knex) {
     if (hasPasswordResets) {
         await knex.schema.dropTable('password_reset_requests');
     }
-}
+};

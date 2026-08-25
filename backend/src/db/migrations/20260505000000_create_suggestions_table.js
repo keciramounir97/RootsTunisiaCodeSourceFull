@@ -1,4 +1,4 @@
-export async function up(knex) {
+exports.up = async function (knex) {
   if (await knex.schema.hasTable("suggestions")) return;
 
   await knex.schema.createTable("suggestions", (table) => {
@@ -33,8 +33,8 @@ export async function up(knex) {
     table.index(["type", "status"]);
     table.index(["user_id"]);
   });
-}
+};
 
-export async function down(knex) {
+exports.down = async function (knex) {
   await knex.schema.dropTableIfExists("suggestions");
-}
+};

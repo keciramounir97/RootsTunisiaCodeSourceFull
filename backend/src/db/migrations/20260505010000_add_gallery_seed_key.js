@@ -1,4 +1,4 @@
-export async function up(knex) {
+exports.up = async function (knex) {
   if (await knex.schema.hasTable("gallery")) {
     const hasSeedKey = await knex.schema.hasColumn("gallery", "seed_key");
     if (!hasSeedKey) {
@@ -7,9 +7,9 @@ export async function up(knex) {
       });
     }
   }
-}
+};
 
-export async function down(knex) {
+exports.down = async function (knex) {
   if (await knex.schema.hasTable("gallery")) {
     const hasSeedKey = await knex.schema.hasColumn("gallery", "seed_key");
     if (hasSeedKey) {
@@ -18,4 +18,4 @@ export async function down(knex) {
       });
     }
   }
-}
+};

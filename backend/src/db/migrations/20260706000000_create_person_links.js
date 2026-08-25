@@ -1,4 +1,4 @@
-export async function up(knex) {
+exports.up = async function (knex) {
   if (await knex.schema.hasTable('person_links')) return;
   const hasPersons = await knex.schema.hasTable('persons');
   const hasDocuments = await knex.schema.hasTable('documents');
@@ -15,8 +15,8 @@ export async function up(knex) {
 
     table.index(['person_id']);
   });
-}
+};
 
-export async function down(knex) {
+exports.down = async function (knex) {
   await knex.schema.dropTableIfExists('person_links');
-}
+};
