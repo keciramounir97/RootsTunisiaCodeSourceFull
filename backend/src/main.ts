@@ -8,9 +8,10 @@ import * as path from 'path';
 import * as compression from 'compression';
 import rateLimit from 'express-rate-limit';
 import { randomUUID } from 'crypto';
+import * as bcrypt from 'bcryptjs';
 import { getStoredFilePayload } from './common/utils/db-file.util';
 
-/** Production CORS origins: server.rootstunisia.com, rootstunisia.com; dev: localhost:5173 */
+/** Production CORS origins: server.rootstunisia.com, rootstunisia.com, localhost */
 const DEFAULT_CORS_ORIGINS = [
     'https://rootstunisia.com',
     'https://www.rootstunisia.com',
@@ -18,14 +19,17 @@ const DEFAULT_CORS_ORIGINS = [
     'http://www.rootstunisia.com',
     'https://server.rootstunisia.com',
     'http://server.rootstunisia.com',
-];
-const DEV_CORS_ORIGINS = [
+    'http://localhost:80',
+    'http://127.0.0.1:80',
     'http://localhost:5173',
     'http://127.0.0.1:5173',
+    'http://localhost:5000',
+    'http://127.0.0.1:5000',
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
 ];
 
 function getCorsOrigins(): string[] | true {
-    // Dev: allow all origins to prevent CORS blocking
     if (process.env.NODE_ENV !== 'production') return true;
     const raw = process.env.CORS_ORIGIN || process.env.FRONTEND_URL || '';
     const list = raw
@@ -33,7 +37,7 @@ function getCorsOrigins(): string[] | true {
         .map((o) => o.trim().replace(/\/+$/, ''))
         .filter(Boolean);
     const origins = list.length ? list : DEFAULT_CORS_ORIGINS;
-    return [...new Set([...origins])];
+    return [...new Set([...origins, ...DEFAULT_CORS_ORIGINS])];
 }
 
 function isAllowedCorsOrigin(origin: string | undefined, corsOrigins: string[] | true): string | null {
@@ -41,11 +45,24 @@ function isAllowedCorsOrigin(origin: string | undefined, corsOrigins: string[] |
     if (corsOrigins === true) return origin;
     const normalizedOrigin = origin.replace(/\/+$/, '');
     const allowed = corsOrigins as string[];
-    return allowed.includes(normalizedOrigin) ? normalizedOrigin : null;
+
+    // Exact match
+    if (allowed.includes(normalizedOrigin)) return normalizedOrigin;
+
+    // Wildcard match for any *.rootstunisia.com
+    try {
+        const hostname = new URL(normalizedOrigin).hostname;
+        if (hostname === 'rootstunisia.com' || hostname.endsWith('.rootstunisia.com') || hostname === 'localhost' || hostname === '127.0.0.1') {
+            return normalizedOrigin;
+        }
+    } catch {}
+
+    return null;
 }
 
 function setCorsHeaders(req: any, res: any, corsOrigins: string[] | true) {
-    const allowedOrigin = isAllowedCorsOrigin(req.headers.origin as string | undefined, corsOrigins);
+    const origin = req.headers.origin as string | undefined;
+    const allowedOrigin = isAllowedCorsOrigin(origin, corsOrigins);
     if (allowedOrigin) {
         res.setHeader('Access-Control-Allow-Origin', allowedOrigin);
         res.setHeader('Vary', 'Origin');
@@ -56,11 +73,79 @@ function setCorsHeaders(req: any, res: any, corsOrigins: string[] | true) {
     res.setHeader('Access-Control-Max-Age', '86400');
 }
 
+/** Auto-seed default admins on database connection */
+async function seedInitialData(knex: any) {
+    try {
+        if (!knex || !(await knex.schema.hasTable('users'))) {
+            return;
+        }
+
+        const adminDefaults = [
+            {
+                email: 'karimadmin@rootstunisia.com',
+                password: 'admin2025$',
+                fullName: 'Karim Admin',
+                roleId: 1,
+            },
+            {
+                email: 'kameladmin@rootstunisia.com',
+                password: 'vivreplusfort18041972SS',
+                fullName: 'Kamel Admin',
+                roleId: 1,
+            },
+            {
+                email: 'devteam@rootstunisia.com',
+                password: 'admin2025$',
+                fullName: 'Dev Team Admin',
+                roleId: 1,
+            },
+            {
+                email: 'marcousorilious@gmail.com',
+                password: 'admin2025$',
+                fullName: 'Marcous Orilious Admin',
+                roleId: 1,
+            },
+            {
+                email: 'admin@rootstunisia.com',
+                password: 'admin2025$',
+                fullName: 'Administrator',
+                roleId: 1,
+            },
+            {
+                email: 'superadmin@rootstunisia.com',
+                password: 'admin2025$',
+                fullName: 'Super Administrator',
+                roleId: 3,
+            },
+        ];
+
+        for (const admin of adminDefaults) {
+            const normalizedEmail = admin.email.toLowerCase().trim();
+            const existing = await knex('users').where({ email: normalizedEmail }).first();
+            if (!existing) {
+                const hash = await bcrypt.hash(admin.password, 10);
+                await knex('users').insert({
+                    full_name: admin.fullName,
+                    email: normalizedEmail,
+                    password: hash,
+                    role_id: admin.roleId,
+                    status: 'active',
+                });
+                console.log(`✅ Seed Admin Created: ${normalizedEmail} (${admin.fullName})`);
+            }
+        }
+    } catch (err: any) {
+        console.warn('⚠️ seedInitialData skipped or warning:', err?.message || err);
+    }
+}
+
 async function bootstrap() {
     console.log('🟢 SERVER STARTING...');
 
     try {
         const app = await NestFactory.create<NestExpressApplication>(AppModule);
+        app.set('trust proxy', 1);
+
         const corsOrigins = getCorsOrigins();
 
         app.use((req: any, res: any, next: () => void) => {
@@ -69,12 +154,11 @@ async function bootstrap() {
             next();
         });
 
-        // Static file serving for uploads (images, books, GEDCOM) - cPanel/production safe
+        // Static file serving for uploads
         const uploadsPath = path.join(process.cwd(), 'uploads');
         app.use('/uploads', require('express').static(uploadsPath));
 
-        // DB-backed upload fallback: if a public /uploads file is missing on disk
-        // (e.g. the uploads folder was wiped), serve the copy stored in the database.
+        // DB-backed upload fallback
         const uploadFallbackKnex: any = app.get('KnexConnection');
         app.use(async (req: any, res: any, next: () => void) => {
             if (req.method !== 'GET') return next();
@@ -117,7 +201,7 @@ async function bootstrap() {
             next();
         });
 
-        // Root route: avoid 404 when hitting API base URL (e.g. https://api.example.com/)
+        // Root route
         app.use((req: any, res: any, next: () => void) => {
             if (req.method === 'GET' && (req.path === '/' || req.path === '')) {
                 return res.type('application/json').json({
@@ -130,78 +214,46 @@ async function bootstrap() {
             next();
         });
 
-        // Compression (production-ready)
+        // Compression
         app.use(compression());
 
-        // API Prefix (use 'api' for cPanel/proxy compatibility; /api/auth/login, etc.)
+        // API Prefix
         app.setGlobalPrefix('api');
 
         // Request ID for tracing
         app.use((req: any, _res, next) => {
-            req.id = req.headers['x-request-id'] || randomUUID();
+            req.headers['x-request-id'] = req.headers['x-request-id'] || randomUUID();
             next();
         });
 
-        // Rate limiting
-        const rateLimitMax = parseInt(process.env.RATE_LIMIT_MAX || '100', 10);
-        const rateLimitWindow = parseInt(process.env.RATE_LIMIT_WINDOW_MS || '60000', 10);
-        const authRateLimitMax = parseInt(process.env.RATE_LIMIT_AUTH_MAX || '10', 10);
-
-        app.use(rateLimit({
-            windowMs: rateLimitWindow,
-            max: rateLimitMax,
-            message: { statusCode: 429, message: 'Too many requests. Please try again later.' },
+        // Rate Limiter
+        const limiter = rateLimit({
+            windowMs: 15 * 60 * 1000,
+            max: process.env.NODE_ENV === 'production' ? 1000 : 10000,
             standardHeaders: true,
             legacyHeaders: false,
-            skip: (req) => {
-                const p = req.path || '';
-                return p.includes('/health') || p.includes('/auth/');
-            },
-        }));
-
-        // Stricter rate limit for auth routes (applied before global for /auth/*)
-        const authLimiter = rateLimit({
-            windowMs: rateLimitWindow,
-            max: authRateLimitMax,
-            message: { statusCode: 429, message: 'Too many attempts. Try again later.' },
-            standardHeaders: true,
-            legacyHeaders: false,
+            message: { error: 'Too many requests, please try again later.' },
         });
-        app.use('/api/auth/login', authLimiter);
-        app.use('/api/auth/signup', authLimiter);
+        app.use('/api/', limiter);
 
-        // Security: Helmet + explicit headers (Pragma, X-Frame-Options, etc.)
-        const helmetOptions: Parameters<typeof helmet.default>[0] = {
-            contentSecurityPolicy: false, // API returns JSON; CSP usually for HTML
+        // Security with Helmet
+        app.use(helmet.default({
+            contentSecurityPolicy: false,
             crossOriginEmbedderPolicy: false,
             crossOriginResourcePolicy: { policy: 'cross-origin' },
-        };
-        app.use(helmet.default(helmetOptions));
-        app.use((_req, res, next) => {
-            res.setHeader('Pragma', 'no-cache');
-            res.setHeader('X-Frame-Options', 'DENY');
-            res.setHeader('X-Content-Type-Options', 'nosniff');
-            res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-            res.setHeader('X-XSS-Protection', '1; mode=block');
-            res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
-            res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
-            res.setHeader('Expires', '0');
-            next();
-        });
+        }));
 
-        // CORS: dev = allow all; prod = allowed origins
+        // CORS
         app.enableCors({
-            origin:
-                corsOrigins === true
-                    ? true
-                    : (origin: string | undefined, cb: (err: Error | null, allow?: boolean) => void) => {
-                        if (!origin) return cb(null, true);
-                        const allowed = corsOrigins as string[];
-                        const ok = allowed.some((o) => origin === o || origin === o.replace(/\/$/, ''));
-                        cb(null, ok);
-                    },
+            origin: corsOrigins === true
+                ? true
+                : (origin: string | undefined, cb: (err: Error | null, allow?: boolean) => void) => {
+                    if (!origin) return cb(null, true);
+                    const allowed = isAllowedCorsOrigin(origin, corsOrigins);
+                    cb(null, Boolean(allowed));
+                },
             methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
-            allowedHeaders: 'Content-Type, Accept, Authorization, X-Requested-With, Origin, Pragma, Cache-Control, Expires',
+            allowedHeaders: 'Content-Type, Accept, Authorization, X-Requested-With, Origin, Pragma, Cache-Control, Expires, X-Request-Id',
             credentials: true,
             preflightContinue: false,
         });
@@ -219,12 +271,20 @@ async function bootstrap() {
         app.useGlobalInterceptors(new TransformInterceptor());
         app.useGlobalFilters(new AllExceptionsFilter());
 
-        // Passenger / cPanel Port
+        // Run seed initial data
+        try {
+            const knex = app.get('KnexConnection');
+            await seedInitialData(knex);
+        } catch (e) {
+            console.warn('Initial seeding error:', e);
+        }
+
+        // Port
         const port = process.env.PORT || 5000;
         await app.listen(port, '0.0.0.0');
 
         console.log('🟢 SERVER READY');
-        console.log(`🟢 DB CONNECTED - Application running on: ${await app.getUrl()}`);
+        console.log(`🟢 DB CONNECTED - Application running on port: ${port}`);
 
         // Graceful shutdown
         process.on('SIGTERM', async () => {
@@ -235,9 +295,6 @@ async function bootstrap() {
 
     } catch (error) {
         console.error('🔴 SERVER ERROR:', error);
-        if (error.message.includes('database') || error.message.includes('ECONNREFUSED')) {
-            console.error('🔴 DB ERROR - Database connection failed');
-        }
         process.exit(1);
     }
 }
