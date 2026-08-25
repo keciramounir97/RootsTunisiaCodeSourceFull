@@ -1,33 +1,32 @@
-
-import axios, { InternalAxiosRequestConfig } from "axios";
+import axios, { AxiosRequestConfig, AxiosError, InternalAxiosRequestConfig } from "axios";
 
 /**
  * ===============================
  * API ROOT RESOLUTION (PRO SAFE)
  * ===============================
  *
- * - In production (Vite build): use SAME DOMAIN
- * - In dev: use localhost backend
- *
- * DO NOT rely on cPanel env for Vite (build-time only)
+ * - In dev: localhost backend
+ * - In production: VITE_API_URL (supports with or without /api suffix)
  */
 const API_ROOT: string = (() => {
-  if (typeof window !== "undefined") {
-    const hostname = window.location.hostname;
-    // ONLY use localhost/LAN backend if browser is on localhost/127.0.0.1 or LAN IP
-    if (hostname === "localhost" || hostname === "127.0.0.1") {
-      return "http://localhost:5000";
+  // 1. Development mode: intelligently determine backend URL
+  if (import.meta.env.DEV) {
+    // If accessing via IP (e.g. 192.168.x.x), try to hit backend on same IP
+    if (
+      typeof window !== "undefined" &&
+      window.location.hostname !== "localhost" &&
+      window.location.hostname !== "127.0.0.1"
+    ) {
+      return `http://${window.location.hostname}:5000`;
     }
-    if (/^192\.168\.|^10\.|^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(hostname)) {
-      return `http://${hostname}:5000`;
-    }
+    return "http://localhost:5000";
   }
 
-  // All hosted / production environments hit the production backend
+  // 2. Production: explicit URL or default to https://server.rootstunisia.com
   return import.meta.env.VITE_API_URL || "https://server.rootstunisia.com";
 })();
 
-const NORMALIZED_API_ROOT = API_ROOT.replace(/\/+$/, "");
+const NORMALIZED_API_ROOT = API_ROOT.replace(/\/+$/, "").replace(/\/api$/i, "");
 
 /**
  * ===============================
@@ -62,142 +61,177 @@ const getRequestPath = (value: any): string => {
       return raw;
     }
   }
-  return raw;
+  return raw.startsWith("/") ? raw : `/${raw}`;
 };
 
-/**
- * ===============================
- * REQUEST INTERCEPTOR
- * - Attach JWT safely
- * ===============================
- */
+const isAuthRequest = (config?: InternalAxiosRequestConfig): boolean => {
+  const path = getRequestPath(config?.url);
+  return (
+    path.startsWith("/api/auth/login") ||
+    path.startsWith("/auth/login") ||
+    path.startsWith("/api/auth/signup") ||
+    path.startsWith("/auth/signup") ||
+    path.startsWith("/api/auth/refresh") ||
+    path.startsWith("/auth/refresh")
+  );
+};
+
+const isPublicGetRequest = (config?: InternalAxiosRequestConfig): boolean => {
+  const method = String(config?.method || "get").toLowerCase();
+  if (method !== "get") return false;
+
+  const path = getRequestPath(config?.url);
+  const publicPrefixes = [
+    "/api/site-settings",
+    "/site-settings",
+    "/api/gallery",
+    "/gallery",
+    "/api/books",
+    "/books",
+    "/api/audios",
+    "/audios",
+    "/api/documents",
+    "/documents",
+    "/api/articles",
+    "/articles",
+    "/api/periods",
+    "/periods",
+    "/api/tier-features",
+    "/tier-features",
+    "/api/legal-content",
+    "/legal-content",
+    "/api/settings",
+    "/settings",
+    "/api/help",
+    "/help",
+    "/api/health",
+    "/health",
+  ];
+
+  return publicPrefixes.some((prefix) => path.startsWith(prefix));
+};
+
 api.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     const token = localStorage.getItem("token");
-
-    const url = String(config?.url || "");
-    const path = getRequestPath(url);
-    const isProtected =
-      path.includes("/my/") ||
-      path.includes("/admin/") ||
-      path.includes("/auth/me") ||
-      path.includes("/auth/logout");
-
-    if (!token && isProtected) {
-      dispatchAuthEvent("auth:missing", { url, path });
-      const err: any = new Error("AUTH_MISSING");
-      err.code = "AUTH_MISSING";
-      err.isAuthError = true;
-      throw err;
-    }
-
-    if (token) {
-      config.headers = config.headers || {};
+    if (token && !config.headers.Authorization) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-
-    // Prevent caching
-    config.headers["Cache-Control"] = "no-cache, no-store, must-revalidate";
-    config.headers["Pragma"] = "no-cache";
-    config.headers["Expires"] = "0";
-
     return config;
   },
-  (error) => {
+  (error: AxiosError) => {
     return Promise.reject(error);
-  },
+  }
 );
 
-/**
- * ===============================
- * RESPONSE INTERCEPTOR
- * - Handle auth expiration cleanly
- * - Unwrap standard API envelope
- * ===============================
- */
+let isRefreshing = false;
+let failedQueue: Array<{
+  resolve: (token: string) => void;
+  reject: (error: any) => void;
+}> = [];
+
+const processQueue = (error: any, token: string | null = null) => {
+  failedQueue.forEach((prom) => {
+    if (error) {
+      prom.reject(error);
+    } else if (token) {
+      prom.resolve(token);
+    }
+  });
+  failedQueue = [];
+};
+
 api.interceptors.response.use(
   (response) => {
-    // Unwrap API Envelope { statusCode, data, meta } -> data
-    if (response.data && response.data.data && response.data.statusCode && Object.keys(response.data).length <= 5) {
-      // It's likely our envelope. Check typical keys.
-      const backendEnvelope = response.data;
-      response.data = backendEnvelope.data;
-      (response as any).meta = backendEnvelope.meta;
-    }
     return response;
   },
-  async (error: any) => {
-    const status = error?.response?.status;
-    const code = error?.code;
-    const message = error?.message || '';
+  async (error: AxiosError) => {
+    const originalRequest = error.config as AxiosRequestConfig & {
+      _retry?: boolean;
+    };
 
-    // Connection refused - server not running
-    if (code === 'ECONNREFUSED' || code === 'ERR_CONNECTION_REFUSED' || message.includes('ERR_CONNECTION_REFUSED')) {
-      console.error('❌ Backend server is not running!');
-      if (typeof window !== 'undefined') {
-        const errorMsg = 'Backend server is not running. Please start it with: cd backend && npm start';
-        dispatchAuthEvent('api:connection_error', { message: errorMsg, code });
-
-        error.isConnectionError = true;
-        error.userMessage = 'Cannot connect to server. Please make sure the backend is running on port 5000.';
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      if (isAuthRequest(originalRequest as InternalAxiosRequestConfig)) {
+        return Promise.reject(error);
       }
-    }
 
-    // Network errors
-    if (code === 'ERR_NETWORK' || code === 'ETIMEDOUT' || code === 'ECONNABORTED') {
-      console.error('❌ Network error:', message);
-      error.isNetworkError = true;
-      error.userMessage = 'Network error. Please check your connection and ensure the server is running.';
-    }
+      if (isPublicGetRequest(originalRequest as InternalAxiosRequestConfig)) {
+        return Promise.reject(error);
+      }
 
-    // Token invalid / expired — try refresh token
-    if (status === 401) {
+      if (isRefreshing) {
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        })
+          .then((token) => {
+            if (originalRequest.headers) {
+              originalRequest.headers.Authorization = `Bearer ${token}`;
+            }
+            return api(originalRequest);
+          })
+          .catch((err) => {
+            return Promise.reject(err);
+          });
+      }
+
+      originalRequest._retry = true;
+      isRefreshing = true;
+
       const refreshToken = localStorage.getItem("refreshToken");
-      if (refreshToken && !error.config?._retry) {
-        try {
-          const { data } = await axios.post(
-            `${NORMALIZED_API_ROOT}/api/auth/refresh`,
-            { refreshToken },
-            { headers: { "Content-Type": "application/json" } }
-          );
-          // Recursively unwrap here? No, axios call returns response.data
-          // Recent change means data might be enveloped.
-          // BUT this axios call bypasses our interceptor ?? No, it uses 'axios.post' not 'api.post' so it uses default axios?
-          // Wait, 'axios.post' creates a NEW instance/call. It does NOT use 'api' instance.
-          // So 'data' is the raw body. 
-          // If backend now returns envelope, 'data' = { statusCode, data: { token... } }
 
-          let newToken = data?.token;
-          let newRefreshToken = data?.refreshToken;
+      if (!refreshToken) {
+        isRefreshing = false;
+        processQueue(new Error("No refresh token available"), null);
+        localStorage.removeItem("token");
+        localStorage.removeItem("refreshToken");
+        dispatchAuthEvent("roots:auth-session-expired", {
+          status: 401,
+          message: "No refresh token available",
+        });
+        return Promise.reject(error);
+      }
 
-          if (!newToken && data?.data?.token) {
-            newToken = data.data.token;
-            newRefreshToken = data.data.refreshToken;
+      try {
+        const response = await axios.post(
+          `${NORMALIZED_API_ROOT}/api/auth/refresh`,
+          { refreshToken }
+        );
+
+        const { access_token, token: newToken } = response.data;
+        const finalToken = access_token || newToken;
+
+        if (finalToken) {
+          localStorage.setItem("token", finalToken);
+          api.defaults.headers.common.Authorization = `Bearer ${finalToken}`;
+          processQueue(null, finalToken);
+
+          if (originalRequest.headers) {
+            originalRequest.headers.Authorization = `Bearer ${finalToken}`;
           }
-
-          if (newToken) {
-            localStorage.setItem("token", newToken);
-            if (newRefreshToken) localStorage.setItem("refreshToken", newRefreshToken);
-            error.config.headers = error.config.headers || {};
-            error.config.headers.Authorization = `Bearer ${newToken}`;
-            error.config._retry = true;
-            return api.request(error.config);
-          }
-        } catch (e) {
-          // Refresh failed
+          return api(originalRequest);
+        } else {
+          throw new Error("No token returned from refresh endpoint");
         }
+      } catch (refreshError) {
+        processQueue(refreshError, null);
+        localStorage.removeItem("token");
+        localStorage.removeItem("refreshToken");
+        dispatchAuthEvent("roots:auth-session-expired", {
+          status: 401,
+          message: "Refresh token failed or expired",
+        });
+        return Promise.reject(refreshError);
+      } finally {
+        isRefreshing = false;
       }
-      localStorage.removeItem("token");
-      localStorage.removeItem("refreshToken");
-      dispatchAuthEvent("auth:expired", { status });
-      if (
-        typeof window !== "undefined" &&
-        !window.location.pathname.startsWith("/login")
-      ) {
-        window.location.href = "/login";
-      }
+    }
+
+    if (!error.response && error.request) {
+      console.warn("❌ Network error:", error.message);
     }
 
     return Promise.reject(error);
-  },
+  }
 );
+
+export default api;
