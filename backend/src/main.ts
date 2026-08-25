@@ -1,3 +1,8 @@
+import * as dotenv from 'dotenv';
+dotenv.config({ path: '.env.production' });
+dotenv.config({ path: '../.env.production' });
+dotenv.config();
+
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module';

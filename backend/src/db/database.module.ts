@@ -2,6 +2,12 @@ import { Global, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { Model } from 'objection';
 import * as Knex from 'knex';
+import * as dotenv from 'dotenv';
+
+// Load production/local env explicitly
+dotenv.config({ path: '.env.production' });
+dotenv.config({ path: '../.env.production' });
+dotenv.config();
 
 type DbConnectionConfig = {
     host: string;
@@ -49,64 +55,52 @@ function pickFirstDefined(...values: Array<string | number | undefined | null>):
                 const fromUrl = readConnectionFromDatabaseUrl(dbUrl);
 
                 const primaryHost = pickFirstDefined(
+                    process.env.DB_HOST,
                     configService.get<string>('DB_HOST'),
                     configService.get<string>('MYSQL_HOST'),
                     configService.get<string>('MYSQLHOST'),
-                    process.env.DB_HOST,
-                    process.env.MYSQL_HOST,
-                    process.env.MYSQLHOST,
                     fromUrl.host,
                     'rootstunisia_rootstunisiadb',
                 ) || 'rootstunisia_rootstunisiadb';
 
                 const port = Number(
                     pickFirstDefined(
+                        process.env.DB_PORT,
                         configService.get<number>('DB_PORT'),
                         configService.get<number>('MYSQL_PORT'),
-                        process.env.DB_PORT,
-                        process.env.MYSQL_PORT,
                         fromUrl.port,
                         3306,
                     ) || 3306,
                 );
 
                 const user = pickFirstDefined(
+                    process.env.DB_USER,
                     configService.get<string>('DB_USER'),
                     configService.get<string>('MYSQL_USER'),
-                    configService.get<string>('MYSQLUSER'),
-                    process.env.DB_USER,
-                    process.env.MYSQL_USER,
-                    process.env.MYSQLUSER,
                     fromUrl.user,
                     'karim',
                 ) || 'karim';
 
                 const password = pickFirstDefined(
+                    process.env.DB_PASSWORD,
                     configService.get<string>('DB_PASSWORD'),
                     configService.get<string>('MYSQL_PASSWORD'),
-                    configService.get<string>('MYSQLPASSWORD'),
-                    process.env.DB_PASSWORD,
-                    process.env.MYSQL_PASSWORD,
-                    process.env.MYSQLPASSWORD,
                     fromUrl.password,
                     '636363',
                 ) || '636363';
 
                 const database = pickFirstDefined(
-                    configService.get<string>('DB_NAME'),
-                    configService.get<string>('DB_DATABASE'),
-                    configService.get<string>('MYSQL_DATABASE'),
-                    configService.get<string>('MYSQLDATABASE'),
                     process.env.DB_NAME,
                     process.env.DB_DATABASE,
-                    process.env.MYSQL_DATABASE,
-                    process.env.MYSQLDATABASE,
+                    configService.get<string>('DB_NAME'),
+                    configService.get<string>('DB_DATABASE'),
                     fromUrl.database,
                     'rootstunisiadb',
                 ) || 'rootstunisiadb';
 
-                console.log(`🟡 DB CONFIG primaryHost=${primaryHost} port=${port} database=${database} user=${user}`);
+                console.log(`🟡 DB ATTEMPT primaryHost=${primaryHost} port=${port} database=${database} user=${user}`);
 
+                // Exact Easypanel candidate hosts from user credentials
                 const candidateHosts = [
                     primaryHost,
                     'rootstunisia_rootstunisiadb',
@@ -115,7 +109,7 @@ function pickFirstDefined(...values: Array<string | number | undefined | null>):
                     '127.0.0.1',
                     'localhost',
                 ];
-                const uniqueHosts = [...new Set(candidateHosts)];
+                const uniqueHosts = [...new Set(candidateHosts.filter(Boolean))];
 
                 const candidateUsers = [
                     { u: user, p: password },
@@ -135,7 +129,7 @@ function pickFirstDefined(...values: Array<string | number | undefined | null>):
                                 password: cred.p,
                                 database,
                                 charset: 'utf8mb4',
-                                connectTimeout: 10000,
+                                connectTimeout: 8000,
                             },
                             pool: {
                                 min: 0,
@@ -161,7 +155,7 @@ function pickFirstDefined(...values: Array<string | number | undefined | null>):
                             Model.knex(testKnex);
                             return testKnex;
                         } catch (err: any) {
-                            // try next host/cred
+                            // Try next host/credential combination
                         }
                     }
                 }
