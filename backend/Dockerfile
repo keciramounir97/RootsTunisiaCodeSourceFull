@@ -29,9 +29,13 @@ ENV PORT=5000
 COPY package*.json ./
 RUN npm ci --only=production --legacy-peer-deps
 
-# Copy built application from builder stage
+# Copy built application and database assets from builder stage
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/public ./public
+COPY --from=builder /app/src/db ./src/db
+COPY --from=builder /app/knexfile.js ./knexfile.js
+COPY --from=builder /app/server.js ./server.js
+COPY --from=builder /app/.env.production ./.env.production
 
 # Ensure uploads directory exists
 RUN mkdir -p uploads/gallery uploads/books uploads/audios uploads/documents uploads/trees private_uploads/trees

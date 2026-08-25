@@ -83,13 +83,196 @@ function getForwardedOriginalPath(req: any): string | null {
     return null;
 }
 
+/** Auto-create tables & columns to ensure 100% operational readiness */
+async function ensureCriticalSchema(knex: Knex) {
+    try {
+        // 1) roles table
+        if (!(await knex.schema.hasTable('roles'))) {
+            await knex.schema.createTable('roles', (t) => {
+                t.increments('id');
+                t.string('name', 50).notNullable();
+                t.string('permissions', 255).notNullable().defaultTo('read_only');
+            });
+            console.log('🟡 Schema patch: created roles table');
+        }
+
+        // 2) users table
+        if (!(await knex.schema.hasTable('users'))) {
+            await knex.schema.createTable('users', (t) => {
+                t.increments('id');
+                t.string('full_name', 255).notNullable();
+                t.string('email', 255).notNullable().unique();
+                t.string('password', 255).notNullable();
+                t.integer('role_id').unsigned().references('id').inTable('roles').onDelete('RESTRICT');
+                t.string('status', 50).notNullable().defaultTo('active');
+                t.text('admin_privileges').nullable();
+                t.timestamp('created_at').defaultTo(knex.fn.now());
+                t.timestamp('updated_at').defaultTo(knex.fn.now());
+            });
+            console.log('🟡 Schema patch: created users table');
+        } else if (!(await knex.schema.hasColumn('users', 'admin_privileges'))) {
+            await knex.schema.alterTable('users', (t) => {
+                t.text('admin_privileges').nullable();
+            });
+            console.log('🟡 Schema patch: added users.admin_privileges');
+        }
+
+        // 3) refresh_tokens table
+        if (!(await knex.schema.hasTable('refresh_tokens'))) {
+            await knex.schema.createTable('refresh_tokens', (t) => {
+                t.increments('id');
+                t.string('token', 500).unique().notNullable();
+                t.integer('user_id').unsigned().notNullable().references('id').inTable('users').onDelete('CASCADE');
+                t.dateTime('expires_at').notNullable();
+                t.dateTime('created_at').defaultTo(knex.fn.now());
+            });
+            console.log('🟡 Schema patch: created refresh_tokens table');
+        }
+
+        // 4) family_trees table
+        if (!(await knex.schema.hasTable('family_trees'))) {
+            await knex.schema.createTable('family_trees', (t) => {
+                t.increments('id');
+                t.integer('user_id').unsigned().references('id').inTable('users').onDelete('SET NULL');
+                t.string('title', 255).notNullable();
+                t.text('description').nullable();
+                t.string('category', 100).nullable();
+                t.string('gedcom_path', 500).nullable();
+                t.text('gedcom_text', 'longtext').nullable();
+                t.string('data_format', 20).defaultTo('gedcom');
+                t.string('archive_source', 255).nullable();
+                t.string('document_code', 100).nullable();
+                t.boolean('is_public').defaultTo(false);
+                t.timestamp('created_at').defaultTo(knex.fn.now());
+                t.timestamp('updated_at').defaultTo(knex.fn.now());
+            });
+            console.log('🟡 Schema patch: created family_trees table');
+        }
+
+        // 5) books table
+        if (!(await knex.schema.hasTable('books'))) {
+            await knex.schema.createTable('books', (t) => {
+                t.increments('id');
+                t.string('title', 255).notNullable();
+                t.string('author', 255).nullable();
+                t.text('description').nullable();
+                t.string('category', 100).nullable();
+                t.string('file_path', 500).notNullable();
+                t.string('cover_path', 500).nullable();
+                t.specificType('file_data', 'LONGBLOB').nullable();
+                t.string('file_mime_type', 120).nullable();
+                t.specificType('cover_data', 'LONGBLOB').nullable();
+                t.string('cover_mime_type', 120).nullable();
+                t.bigInteger('file_size').nullable();
+                t.string('archive_source', 255).nullable();
+                t.string('document_code', 100).nullable();
+                t.integer('uploaded_by').unsigned().references('id').inTable('users').onDelete('SET NULL');
+                t.boolean('is_public').defaultTo(false);
+                t.integer('download_count').defaultTo(0);
+                t.timestamp('created_at').defaultTo(knex.fn.now());
+                t.timestamp('updated_at').defaultTo(knex.fn.now());
+            });
+            console.log('🟡 Schema patch: created books table');
+        }
+
+        // 6) gallery table
+        if (!(await knex.schema.hasTable('gallery'))) {
+            await knex.schema.createTable('gallery', (t) => {
+                t.increments('id');
+                t.string('title', 255).notNullable();
+                t.text('description').nullable();
+                t.string('image_path', 500).notNullable();
+                t.specificType('image_data', 'LONGBLOB').nullable();
+                t.string('image_mime_type', 120).nullable();
+                t.integer('uploaded_by').unsigned().references('id').inTable('users').onDelete('SET NULL');
+                t.boolean('is_public').defaultTo(true);
+                t.string('archive_source', 255).nullable();
+                t.string('document_code', 100).nullable();
+                t.string('location', 255).nullable();
+                t.string('year', 50).nullable();
+                t.string('photographer', 255).nullable();
+                t.string('seed_key', 120).nullable();
+                t.boolean('show_details').defaultTo(true).nullable();
+                t.timestamp('created_at').defaultTo(knex.fn.now());
+                t.timestamp('updated_at').defaultTo(knex.fn.now());
+            });
+            console.log('🟡 Schema patch: created gallery table');
+        }
+
+        // 7) contact_messages table
+        if (!(await knex.schema.hasTable('contact_messages'))) {
+            await knex.schema.createTable('contact_messages', (t) => {
+                t.increments('id');
+                t.string('name', 255).notNullable();
+                t.string('email', 255).notNullable();
+                t.text('message').notNullable();
+                t.timestamp('created_at').defaultTo(knex.fn.now());
+            });
+            console.log('🟡 Schema patch: created contact_messages table');
+        }
+
+        // 8) newsletter_subscribers table
+        if (!(await knex.schema.hasTable('newsletter_subscribers'))) {
+            await knex.schema.createTable('newsletter_subscribers', (t) => {
+                t.increments('id');
+                t.string('email', 255).notNullable().unique();
+                t.timestamp('created_at').defaultTo(knex.fn.now());
+            });
+            console.log('🟡 Schema patch: created newsletter_subscribers table');
+        }
+
+        // 9) app_settings table
+        if (!(await knex.schema.hasTable('app_settings'))) {
+            await knex.schema.createTable('app_settings', (t) => {
+                t.string('key', 100).primary();
+                t.text('value').notNullable();
+                t.timestamp('updated_at').defaultTo(knex.fn.now());
+            });
+            console.log('🟡 Schema patch: created app_settings table');
+        }
+
+        // 10) password_resets table
+        if (!(await knex.schema.hasTable('password_resets'))) {
+            await knex.schema.createTable('password_resets', (t) => {
+                t.string('email', 255).primary();
+                t.string('code_hash', 255).notNullable();
+                t.dateTime('expires_at').notNullable();
+                t.timestamp('created_at').defaultTo(knex.fn.now());
+            });
+            console.log('🟡 Schema patch: created password_resets table');
+        }
+
+        console.log('🟢 Schema verification complete');
+    } catch (err: any) {
+        console.warn('⚠️ ensureCriticalSchema warning:', err?.message || err);
+    }
+}
+
 /** Auto-seed default admins on database connection */
-async function seedInitialData(knex: any) {
+async function seedInitialData(knex: Knex) {
     try {
         if (!knex || !(await knex.schema.hasTable('users'))) {
             return;
         }
 
+        // 1) Seed default roles
+        if (await knex.schema.hasTable('roles')) {
+            const existingRoles = await knex('roles').select('id');
+            const existingIds = new Set(existingRoles.map((r: any) => r.id));
+            const wantRoles = [
+                { id: 1, name: 'admin', permissions: 'all' },
+                { id: 2, name: 'user', permissions: 'read_only' },
+                { id: 3, name: 'super_admin', permissions: 'all' },
+            ];
+            for (const r of wantRoles) {
+                if (!existingIds.has(r.id)) {
+                    await knex('roles').insert(r);
+                    console.log(`🟡 Seeded role: ${r.name}`);
+                }
+            }
+        }
+
+        // 2) Seed admin accounts
         const adminDefaults = [
             {
                 email: 'karimadmin@rootstunisia.com',
@@ -147,6 +330,20 @@ async function seedInitialData(knex: any) {
     } catch (err: any) {
         console.warn('⚠️ seedInitialData skipped or warning:', err?.message || err);
     }
+}
+
+async function ensureSchemaReady(knex: Knex) {
+    console.log('INFO checking migrations...');
+    try {
+        const migrationsDir = path.join(process.cwd(), 'src', 'db', 'migrations');
+        await knex.migrate.latest({ directory: migrationsDir });
+        console.log('INFO migrations up to date');
+    } catch (migErr: any) {
+        console.warn('🟠 Migration runner warning (critical schema patch will handle tables):', migErr?.message);
+    }
+
+    await ensureCriticalSchema(knex);
+    await seedInitialData(knex);
 }
 
 async function bootstrap() {
@@ -327,12 +524,12 @@ async function bootstrap() {
         app.useGlobalInterceptors(new TransformInterceptor());
         app.useGlobalFilters(new AllExceptionsFilter());
 
-        // Run seed initial data
+        // Run migrations & seed data automatically on startup
         try {
             const knex = app.get('KnexConnection');
-            await seedInitialData(knex);
+            await ensureSchemaReady(knex);
         } catch (e) {
-            console.warn('Initial seeding error:', e);
+            console.warn('Initial schema setup warning:', e);
         }
 
         // Port
