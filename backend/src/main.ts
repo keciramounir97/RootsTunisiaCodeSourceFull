@@ -11,65 +11,21 @@ import { randomUUID } from 'crypto';
 import * as bcrypt from 'bcryptjs';
 import { getStoredFilePayload } from './common/utils/db-file.util';
 
-/** Production CORS origins: server.rootstunisia.com, rootstunisia.com, localhost */
-const DEFAULT_CORS_ORIGINS = [
-    'https://rootstunisia.com',
-    'https://www.rootstunisia.com',
-    'http://rootstunisia.com',
-    'http://www.rootstunisia.com',
-    'https://server.rootstunisia.com',
-    'http://server.rootstunisia.com',
-    'http://localhost:80',
-    'http://127.0.0.1:80',
-    'http://localhost:5173',
-    'http://127.0.0.1:5173',
-    'http://localhost:5000',
-    'http://127.0.0.1:5000',
-    'http://localhost:3000',
-    'http://127.0.0.1:3000',
-];
-
-function getCorsOrigins(): string[] | true {
-    if (process.env.NODE_ENV !== 'production') return true;
-    const raw = process.env.CORS_ORIGIN || process.env.FRONTEND_URL || '';
-    const list = raw
-        .split(',')
-        .map((o) => o.trim().replace(/\/+$/, ''))
-        .filter(Boolean);
-    const origins = list.length ? list : DEFAULT_CORS_ORIGINS;
-    return [...new Set([...origins, ...DEFAULT_CORS_ORIGINS])];
-}
-
-function isAllowedCorsOrigin(origin: string | undefined, corsOrigins: string[] | true): string | null {
-    if (!origin) return null;
-    if (corsOrigins === true) return origin;
-    const normalizedOrigin = origin.replace(/\/+$/, '');
-    const allowed = corsOrigins as string[];
-
-    // Exact match
-    if (allowed.includes(normalizedOrigin)) return normalizedOrigin;
-
-    // Wildcard match for any *.rootstunisia.com
-    try {
-        const hostname = new URL(normalizedOrigin).hostname;
-        if (hostname === 'rootstunisia.com' || hostname.endsWith('.rootstunisia.com') || hostname === 'localhost' || hostname === '127.0.0.1') {
-            return normalizedOrigin;
-        }
-    } catch {}
-
-    return null;
-}
-
-function setCorsHeaders(req: any, res: any, corsOrigins: string[] | true) {
+/**
+ * Universal CORS Header setter
+ * Reflects origin with credentials support for complete preflight & fetch compatibility
+ */
+function setCorsHeaders(req: any, res: any) {
     const origin = req.headers.origin as string | undefined;
-    const allowedOrigin = isAllowedCorsOrigin(origin, corsOrigins);
-    if (allowedOrigin) {
-        res.setHeader('Access-Control-Allow-Origin', allowedOrigin);
+    if (origin) {
+        res.setHeader('Access-Control-Allow-Origin', origin);
         res.setHeader('Vary', 'Origin');
         res.setHeader('Access-Control-Allow-Credentials', 'true');
+    } else {
+        res.setHeader('Access-Control-Allow-Origin', '*');
     }
     res.setHeader('Access-Control-Allow-Methods', 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Accept, Authorization, X-Requested-With, Origin, Pragma, Cache-Control, Expires, X-Request-Id');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Cache-Control, Pragma, Expires, If-Modified-Since, Accept, Origin, X-Request-Id');
     res.setHeader('Access-Control-Max-Age', '86400');
 }
 
@@ -146,12 +102,23 @@ async function bootstrap() {
         const app = await NestFactory.create<NestExpressApplication>(AppModule);
         app.set('trust proxy', 1);
 
-        const corsOrigins = getCorsOrigins();
-
+        // 1. First middleware: Global CORS and Preflight handler (never blocked by route matching or guards)
         app.use((req: any, res: any, next: () => void) => {
-            setCorsHeaders(req, res, corsOrigins);
-            if (req.method === 'OPTIONS') return res.sendStatus(204);
+            setCorsHeaders(req, res);
+            if (req.method === 'OPTIONS') {
+                return res.status(204).end();
+            }
             next();
+        });
+
+        // 2. Enable NestJS Native CORS with origin reflection
+        app.enableCors({
+            origin: true,
+            methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+            allowedHeaders: 'Content-Type, Authorization, X-Requested-With, Cache-Control, Pragma, Expires, If-Modified-Since, Accept, Origin, X-Request-Id',
+            credentials: true,
+            optionsSuccessStatus: 204,
+            preflightContinue: false,
         });
 
         // Static file serving for uploads
@@ -226,12 +193,13 @@ async function bootstrap() {
             next();
         });
 
-        // Rate Limiter
+        // Rate Limiter (skip OPTIONS requests completely)
         const limiter = rateLimit({
             windowMs: 15 * 60 * 1000,
-            max: process.env.NODE_ENV === 'production' ? 1000 : 10000,
+            max: process.env.NODE_ENV === 'production' ? 5000 : 20000,
             standardHeaders: true,
             legacyHeaders: false,
+            skip: (req) => req.method === 'OPTIONS',
             message: { error: 'Too many requests, please try again later.' },
         });
         app.use('/api/', limiter);
@@ -242,21 +210,6 @@ async function bootstrap() {
             crossOriginEmbedderPolicy: false,
             crossOriginResourcePolicy: { policy: 'cross-origin' },
         }));
-
-        // CORS
-        app.enableCors({
-            origin: corsOrigins === true
-                ? true
-                : (origin: string | undefined, cb: (err: Error | null, allow?: boolean) => void) => {
-                    if (!origin) return cb(null, true);
-                    const allowed = isAllowedCorsOrigin(origin, corsOrigins);
-                    cb(null, Boolean(allowed));
-                },
-            methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
-            allowedHeaders: 'Content-Type, Accept, Authorization, X-Requested-With, Origin, Pragma, Cache-Control, Expires, X-Request-Id',
-            credentials: true,
-            preflightContinue: false,
-        });
 
         // Validation
         app.useGlobalPipes(new ValidationPipe({
