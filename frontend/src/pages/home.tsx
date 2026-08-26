@@ -16,6 +16,15 @@ import manuscript from "../assets/manuscript.jpg";
 import medina from "../assets/medina-tunis.jpg";
 import eljem from "../assets/eljem.jpg";
 import djerba from "../assets/djerba.jpg";
+import carthageRuins from "../assets/01_Carthage_Ancient_Ruins_Landscape.jpg";
+import elJemPanorama from "../assets/04_El_Jem_Amphitheater_Panorama.jpg";
+import sidiBouSaidDoors from "../assets/11_Sidi_Bou_Said_Blue_Doors_Bougainvillea.jpg";
+import kairouanMosque from "../assets/14_Kairouan_Mosque_Arched_Doorways_Dome.jpg";
+import medinaDoor from "../assets/16_Medina_Ornate_Door_Blue_Grille.jpg";
+import capitoliumRuins from "../assets/02_Capitolium_Temple_Roman_Arches.jpg";
+import mosqueTilework from "../assets/07_Mosque_Mihrab_Intricate_Tilework.jpg";
+import sidiBouSaidCourtyard from "../assets/12_Sidi_Bou_Said_Blue_Gate_Courtyard.jpg";
+import kairouanMinaret from "../assets/13_Kairouan_Minaret_Night_Illuminated.jpg";
 import { Section, SectionHeading, InfoCard } from "../components/site/Primitives";
 import { TreeCard, featuredTrees } from "../components/site/TreeCard";
 import TunisiaGovernoratesMap from "../components/TunisiaGovernoratesMap";
@@ -23,9 +32,12 @@ import SEO from "../components/SEO";
 import { useTranslation } from "../context/TranslationContext";
 
 const slides = [
-  { image: carthage, label: "Carthage" },
-  { image: kairouan, label: "Kairouan" },
-  { image: sidiBouSaid, label: "Sidi Bou Saïd" },
+  { image: carthageRuins, label: "Carthage Ancient Ruins" },
+  { image: sidiBouSaidDoors, label: "Sidi Bou Saïd Blue Doors" },
+  { image: kairouanMosque, label: "Kairouan Great Mosque" },
+  { image: elJemPanorama, label: "El Jem Roman Amphitheatre" },
+  { image: medinaDoor, label: "Medina of Tunis Ornate Gate" },
+  { image: fortressPalms, label: "Coastal Fortress & Palms" },
 ];
 
 const stats = [
@@ -106,10 +118,14 @@ const archives = [
 ];
 
 const gallery = [
-  { image: medina, alt: "Arched souk alley in the Medina of Tunis" },
-  { image: eljem, alt: "Roman amphitheatre of El Jem" },
-  { image: djerba, alt: "Whitewashed domed houses of Djerba" },
-  { image: manuscript, alt: "Arabic manuscript register with wax seal" },
+  { image: carthageRuins, alt: "Carthage Punic foundations & Mediterranean panorama" },
+  { image: sidiBouSaidDoors, alt: "Blue doors & bougainvillea in Sidi Bou Saïd" },
+  { image: mosqueTilework, alt: "Intricate Mihrab zellige tilework in Kairouan" },
+  { image: elJemPanorama, alt: "Roman amphitheatre of El Jem" },
+  { image: medinaDoor, alt: "Studded ornate wooden door in the Medina of Tunis" },
+  { image: fortressPalms, alt: "Coastal fortress courtyard & palm groves" },
+  { image: sidiBouSaidCourtyard, alt: "Courtyard arches & blue gate in Sidi Bou Saïd" },
+  { image: kairouanMinaret, alt: "Kairouan Great Mosque minaret illuminated at night" },
 ];
 
 export default function Home() {

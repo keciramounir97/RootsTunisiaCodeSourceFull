@@ -5,28 +5,49 @@ import {
   resolveSiteImageUrl,
   type SiteImageRecord,
 } from "../hooks/useSiteImages";
-import slideCarthage from "../assets/slider-carthage.jpg";
-import slideKairouan from "../assets/slider-kairouan.jpg";
-import slideSidiBouSaid from "../assets/slider-sidibousaid.jpg";
+import slideCarthageRuins from "../assets/01_Carthage_Ancient_Ruins_Landscape.jpg";
+import slideElJemCorridor from "../assets/03_El_Jem_Amphitheater_Arched_Corridor.jpg";
+import slideMosqueTilework from "../assets/09_Mosque_Geometric_Tilework_Lantern.jpg";
+import slideSidiBouSaidDoors from "../assets/11_Sidi_Bou_Said_Blue_Doors_Bougainvillea.jpg";
+import slideMedinaDoor from "../assets/16_Medina_Ornate_Door_Blue_Grille.jpg";
+import slideFortress from "../assets/17_Fortress_Aerial_Courtyard_Palms.jpg";
 
 const TUNISIA_DEFAULT_SLIDES: SiteImageRecord[] = [
   {
     id: -1,
-    imagePath: slideCarthage,
-    title: "Carthage & Ancient Heritage",
-    caption: "3,000 years of Mediterranean and Tunisian lineage",
+    imagePath: slideCarthageRuins,
+    title: "Carthage & Mediterranean Antiquity",
+    caption: "3,000 years of Punic and Roman African lineage documented in Tunis archives",
   },
   {
     id: -2,
-    imagePath: slideKairouan,
-    title: "Kairouan & Islamic Archives",
-    caption: "Preserving historical manuscripts, waqf deeds and scholarly genealogies",
+    imagePath: slideSidiBouSaidDoors,
+    title: "Sidi Bou Saïd & Andalusian Heritage",
+    caption: "Blue doors, moucharabiehs, and family oral narratives above the Gulf of Tunis",
   },
   {
     id: -3,
-    imagePath: slideSidiBouSaid,
-    title: "Sidi Bou Saïd & Mediterranean Memories",
-    caption: "Family narratives, photographs, and oral histories across generations",
+    imagePath: slideMosqueTilework,
+    title: "Kairouan & Sacred Manuscript Archives",
+    caption: "Geometric zellige tilework, waqf deeds, and scholarly genealogies across generations",
+  },
+  {
+    id: -4,
+    imagePath: slideElJemCorridor,
+    title: "El Jem & Roman Africa Proconsularis",
+    caption: "Colosseum corridors, mosaic inscriptions, and Sahelian family origins",
+  },
+  {
+    id: -5,
+    imagePath: slideMedinaDoor,
+    title: "Medina of Tunis & Patrician Palaces",
+    caption: "Ornate studs, beylical court decrees, and urban family lineages",
+  },
+  {
+    id: -6,
+    imagePath: slideFortress,
+    title: "Coastal Fortresses & Island Memory",
+    caption: "Ribats, watchtowers, and maritime genealogical registers from Monastir to Djerba",
   },
 ];
 
