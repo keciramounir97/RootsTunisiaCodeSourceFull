@@ -125,13 +125,14 @@ export default function GalleryBooks() {
     <RootsPageShell
       hero={
         <div className="space-y-4 text-center">
-          <p className="eyebrow text-[var(--gold)]">
+          <p className="eyebrow text-[var(--gold)] text-shadow-gold tracking-widest font-bold">
             {t("nav_library", "Roots Tunisia Digital Library")}
           </p>
-          <h1 className="display-xl text-[var(--foreground)] font-serif">
+          <h1 className="display-xl text-white font-bold hero-title-shadow text-shadow-glow tracking-wide">
             {t("library_title", "Manuscripts & Heritage Books")}
           </h1>
-          <p className="max-w-3xl mx-auto text-base opacity-90 text-[var(--muted-foreground)]">
+          <div className="gold-rule mt-4 w-28 mx-auto shadow-lg" />
+          <p className="max-w-3xl mx-auto text-base text-slate-100/95 font-medium drop-shadow-md">
             {t(
               "library_desc",
               "Access digitized Tunisian manuscripts, Beylical chronicles, Charaïques court registers, and Andalusian family waqf deeds.",

@@ -146,11 +146,12 @@ export default function Home() {
           ))}
           <div className="hero-scrim absolute inset-0" />
           <div className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center">
-            <p className="eyebrow text-[var(--gold)]">{t("site_badge", "Roots Tunisia · جذور تونس")}</p>
-            <h1 className="display-xl mt-4 max-w-4xl text-white font-semibold">
+            <p className="eyebrow text-[var(--gold)] text-shadow-gold tracking-widest font-bold">{t("site_badge", "Roots Tunisia · جذور تونس")}</p>
+            <h1 className="display-xl mt-4 max-w-4xl text-white font-bold hero-title-shadow text-shadow-glow tracking-wide">
               {t("hero_title", "Discover Your Tunisian Heritage")}
             </h1>
-            <p className="mt-5 max-w-2xl text-sm leading-relaxed text-white/90 sm:text-base">
+            <div className="gold-rule mt-5 w-32 mx-auto shadow-lg" />
+            <p className="mt-5 max-w-2xl text-sm leading-relaxed text-slate-100/95 drop-shadow-md font-medium sm:text-base">
               {t("hero_subtitle", "Tunisian civil records, beylical and Ottoman registers, habous deeds, Protectorate archives, family photographs, oral memory and historical periods — in one research-ready heritage platform.")}
             </p>
             <div className="mt-8 flex flex-wrap justify-center gap-3">

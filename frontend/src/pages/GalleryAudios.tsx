@@ -231,13 +231,14 @@ export default function GalleryAudios() {
     <RootsPageShell
       hero={
         <div className="space-y-4 text-center">
-          <p className="eyebrow text-[var(--gold)]">
+          <p className="eyebrow text-[var(--gold)] text-shadow-gold tracking-widest font-bold">
             {t("audio_gallery_eyebrow", "Roots Tunisia Audio Archives")}
           </p>
-          <h1 className="display-xl text-[var(--foreground)] font-serif">
+          <h1 className="display-xl text-white font-bold hero-title-shadow text-shadow-glow tracking-wide">
             {t("nav_audios", "Oral Histories & Audio Recordings")}
           </h1>
-          <p className="max-w-3xl mx-auto text-base opacity-90 text-[var(--muted-foreground)]">
+          <div className="gold-rule mt-4 w-28 mx-auto shadow-lg" />
+          <p className="max-w-3xl mx-auto text-base text-slate-100/95 font-medium drop-shadow-md">
             {t(
               "audio_gallery_desc",
               "Listen to oral memories, Andalusian Malouf pedigree songs, elders' testimonies, and regional dialect recordings from Tunis to Djerba.",

@@ -137,13 +137,13 @@ export default function HeroSlider({
         <div className="absolute bottom-24 left-0 right-0 px-6 pointer-events-none z-10">
           <div className="max-w-3xl mx-auto text-center">
             {slide.title && (
-              <p className="text-[#d4a843] text-sm font-semibold uppercase tracking-[0.35em] mb-1 drop-shadow-lg">
-                {slide.title}
+              <p className="eyebrow text-[var(--gold)] text-shadow-gold text-sm font-bold uppercase tracking-[0.35em] mb-1 drop-shadow-xl">
+                {t(slide.title, slide.title)}
               </p>
             )}
             {slide.caption && (
-              <p className="text-white/80 text-base drop-shadow-md">
-                {slide.caption}
+              <p className="text-slate-100/95 text-base font-medium drop-shadow-md">
+                {t(slide.caption, slide.caption)}
               </p>
             )}
           </div>

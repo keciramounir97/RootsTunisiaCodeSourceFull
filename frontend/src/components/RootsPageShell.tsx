@@ -18,13 +18,13 @@ function RootsPageShell({
 
   return (
     <div
-      className={`roots-shell page-container w-full mx-auto relative ${className}`}
+      className={`roots-shell page-container w-full mx-auto relative bg-background text-foreground transition-colors duration-300 ${className}`}
     >
       {hero ? (
         <section
-          className={`heritage-hero text-center py-16 px-4 ${heroClassName}`}
+          className={`heritage-hero text-center py-16 px-4 border-b border-gold/40 shadow-lg relative ${heroClassName}`}
           style={{
-            backgroundImage: `linear-gradient(rgba(26, 15, 10, 0.78), rgba(42, 31, 21, 0.88)), url(${heroImage})`,
+            backgroundImage: `linear-gradient(rgba(26, 15, 10, 0.80), rgba(42, 31, 21, 0.90)), url(${heroImage})`,
             backgroundSize: "cover",
             backgroundPosition: "center",
           }}

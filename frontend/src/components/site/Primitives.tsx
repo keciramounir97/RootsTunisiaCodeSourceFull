@@ -25,9 +25,10 @@ export function PageHero({
         />
         <div className="hero-scrim absolute inset-0" />
         <div className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center">
-          <p className="eyebrow text-[var(--gold)]">{eyebrow}</p>
-          <h1 className="display-lg mt-3 max-w-3xl text-white font-semibold">{title}</h1>
-          <p className="mt-4 max-w-2xl text-sm leading-relaxed text-white/90 sm:text-base">
+          <p className="eyebrow text-[var(--gold)] text-shadow-gold tracking-widest font-bold">{eyebrow}</p>
+          <h1 className="display-lg mt-3 max-w-3xl text-white font-bold hero-title-shadow text-shadow-glow tracking-wide">{title}</h1>
+          <div className="gold-rule mt-4 w-28 mx-auto shadow-lg" />
+          <p className="mt-4 max-w-2xl text-sm leading-relaxed text-slate-100/95 drop-shadow-md font-medium sm:text-base">
             {subtitle}
           </p>
           {children && <div className="mt-7 flex flex-wrap justify-center gap-3">{children}</div>}
@@ -62,8 +63,8 @@ export function SectionHeading({
 }) {
   return (
     <div className={center ? "mx-auto max-w-3xl text-center" : "max-w-3xl"}>
-      {eyebrow && <p className="eyebrow">{eyebrow}</p>}
-      <h2 className="display-lg mt-3 text-[var(--foreground)]">{title}</h2>
+      {eyebrow && <p className="eyebrow text-shadow-gold tracking-widest">{eyebrow}</p>}
+      <h2 className="display-lg mt-3 text-[var(--foreground)] font-display font-semibold tracking-wide drop-shadow-sm">{title}</h2>
       <div className={`gold-rule mt-5 w-24 ${center ? "mx-auto" : ""}`} />
       {intro && <p className="mt-5 text-sm leading-relaxed text-[var(--muted-foreground)] sm:text-base">{intro}</p>}
     </div>

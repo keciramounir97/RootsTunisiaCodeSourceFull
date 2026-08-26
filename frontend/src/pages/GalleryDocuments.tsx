@@ -124,13 +124,14 @@ export default function GalleryDocuments() {
     <RootsPageShell
       hero={
         <div className="space-y-4 text-center">
-          <p className="eyebrow text-[var(--gold)]">
+          <p className="eyebrow text-[var(--gold)] text-shadow-gold tracking-widest font-bold">
             {t("nav_documents", "Roots Tunisia Legal & Archival Records")}
           </p>
-          <h1 className="display-xl text-[var(--foreground)] font-serif">
+          <h1 className="display-xl text-white font-bold hero-title-shadow text-shadow-glow tracking-wide">
             {t("gallery_docs_title", "Historical Documents & Civil Extracts")}
           </h1>
-          <p className="max-w-3xl mx-auto text-base opacity-90 text-[var(--muted-foreground)]">
+          <div className="gold-rule mt-4 w-28 mx-auto shadow-lg" />
+          <p className="max-w-3xl mx-auto text-base text-slate-100/95 font-medium drop-shadow-md">
             {t(
               "gallery_docs_desc",
               "Search digitized Beylical sijillat, habous property deeds, Ottoman decrees, and Protectorate civil extracts from the Archives Nationales de Tunisie.",
