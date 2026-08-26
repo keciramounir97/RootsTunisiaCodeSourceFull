@@ -29,6 +29,11 @@ const hmrClientHost =
     : serverHost;
 
 export default defineConfig({
+  test: {
+    globals: true,
+    environment: "jsdom",
+    setupFiles: ["./src/test/setup.ts"],
+  },
   base: "/",
   define: {
     "import.meta.env.VITE_API_URL": JSON.stringify(

@@ -130,8 +130,50 @@ export default function Gallery() {
         image={sidiBouSaid}
       />
 
+      {/* Sub-Galleries Tab Navigation Bar */}
+      <div className="mx-auto max-w-7xl px-5 pt-6">
+        <div className="flex items-center gap-2 overflow-x-auto pb-2 border-b border-[var(--border)]">
+          <Link
+            to="/gallery/images"
+            className="px-4 py-2 rounded-md text-xs font-bold uppercase tracking-wider bg-[var(--gold)] text-[var(--accent-foreground)] shadow-sm hover:opacity-90 transition-opacity"
+          >
+            📷 {t("nav_photos", "Photos")}
+          </Link>
+          <Link
+            to="/gallery/trees"
+            className="px-4 py-2 rounded-md text-xs font-bold uppercase tracking-wider bg-[var(--card)] text-[var(--foreground)] border border-[var(--border)] hover:border-[var(--gold)] transition-colors"
+          >
+            🌳 {t("nav_trees", "Family Trees")}
+          </Link>
+          <Link
+            to="/gallery/books"
+            className="px-4 py-2 rounded-md text-xs font-bold uppercase tracking-wider bg-[var(--card)] text-[var(--foreground)] border border-[var(--border)] hover:border-[var(--gold)] transition-colors"
+          >
+            📖 {t("nav_library", "Books & Manuscripts")}
+          </Link>
+          <Link
+            to="/gallery/audios"
+            className="px-4 py-2 rounded-md text-xs font-bold uppercase tracking-wider bg-[var(--card)] text-[var(--foreground)] border border-[var(--border)] hover:border-[var(--gold)] transition-colors"
+          >
+            🎧 {t("nav_audios", "Audio Memories")}
+          </Link>
+          <Link
+            to="/gallery/documents"
+            className="px-4 py-2 rounded-md text-xs font-bold uppercase tracking-wider bg-[var(--card)] text-[var(--foreground)] border border-[var(--border)] hover:border-[var(--gold)] transition-colors"
+          >
+            📜 {t("nav_documents", "Documents & Sijillat")}
+          </Link>
+          <Link
+            to="/gallery/articles"
+            className="px-4 py-2 rounded-md text-xs font-bold uppercase tracking-wider bg-[var(--card)] text-[var(--foreground)] border border-[var(--border)] hover:border-[var(--gold)] transition-colors"
+          >
+            📰 {t("nav_articles", "Heritage Articles")}
+          </Link>
+        </div>
+      </div>
+
       {/* Search & Actions Bar */}
-      <div className="mx-auto max-w-7xl px-5 pt-8">
+      <div className="mx-auto max-w-7xl px-5 pt-6">
         <div className="flex flex-col sm:flex-row gap-3 items-center justify-between">
           <div className="surface-card flex items-center gap-3 p-3 w-full sm:max-w-xl">
             <Search className="h-4 w-4 text-[var(--muted-foreground)] ml-2 shrink-0" />

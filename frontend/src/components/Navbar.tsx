@@ -3,7 +3,7 @@ import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { Logo } from "./site/Logo";
 import LanguageMenu from "./LanguageMenu";
 import { useTranslation } from "../context/TranslationContext";
-import { useThemeStore } from "../store/theme";
+import { useTheme } from "../context/ThemeContext";
 import { useAuth } from "../admin/components/AuthContext";
 import {
   Menu,
@@ -27,7 +27,7 @@ export function Navbar() {
   const location = useLocation();
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const { theme, toggleTheme } = useThemeStore();
+  const { theme, toggleTheme } = useTheme();
   const { user, logout } = useAuth();
 
   const handleSearchSubmit = (e: React.FormEvent) => {

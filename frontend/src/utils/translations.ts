@@ -6,6 +6,9 @@ import it from "../locales/it.json";
 import mt from "../locales/mt.json";
 import eo from "../locales/eo.json";
 import { SOURCE_FALLBACK_TRANSLATIONS } from "./sourceFallbackTranslations";
+import { AUTO_TRANSLATIONS } from "./generatedTranslations";
+import { englishGeneratedTranslations } from "./englishGeneratedTranslations";
+import { FEATURE_TRANSLATIONS } from "./featureTranslations";
 
 export const SUPPORTED_LOCALES = ["en", "fr", "ar", "es", "it", "mt", "eo"] as const;
 export type SupportedLocale = (typeof SUPPORTED_LOCALES)[number];
@@ -34,14 +37,43 @@ export const LOCALE_FULL_NAMES: Record<SupportedLocale, string> = {
 
 export const RTL_LOCALES: SupportedLocale[] = ["ar"];
 
+// Merged dictionaries with precedence:
+// Custom JSON locales > FEATURE_TRANSLATIONS > AUTO_TRANSLATIONS > SOURCE_FALLBACK_TRANSLATIONS > Generated EN
 const dictionaries: Record<SupportedLocale, Record<string, string>> = {
-  en: { ...(SOURCE_FALLBACK_TRANSLATIONS.en || {}), ...(en as Record<string, string>) },
-  fr: { ...(SOURCE_FALLBACK_TRANSLATIONS.fr || {}), ...(fr as Record<string, string>) },
-  ar: { ...(SOURCE_FALLBACK_TRANSLATIONS.ar || {}), ...(ar as Record<string, string>) },
-  es: { ...(SOURCE_FALLBACK_TRANSLATIONS.es || {}), ...(es as Record<string, string>) },
-  it: { ...(it as Record<string, string>) },
-  mt: { ...(mt as Record<string, string>) },
-  eo: { ...(eo as Record<string, string>) },
+  en: {
+    ...englishGeneratedTranslations,
+    ...(SOURCE_FALLBACK_TRANSLATIONS.en || {}),
+    ...(AUTO_TRANSLATIONS.en || {}),
+    ...(FEATURE_TRANSLATIONS.en || {}),
+    ...(en as Record<string, string>),
+  },
+  fr: {
+    ...(SOURCE_FALLBACK_TRANSLATIONS.fr || {}),
+    ...(AUTO_TRANSLATIONS.fr || {}),
+    ...(FEATURE_TRANSLATIONS.fr || {}),
+    ...(fr as Record<string, string>),
+  },
+  ar: {
+    ...(SOURCE_FALLBACK_TRANSLATIONS.ar || {}),
+    ...(AUTO_TRANSLATIONS.ar || {}),
+    ...(FEATURE_TRANSLATIONS.ar || {}),
+    ...(ar as Record<string, string>),
+  },
+  es: {
+    ...(SOURCE_FALLBACK_TRANSLATIONS.es || {}),
+    ...(AUTO_TRANSLATIONS.es || {}),
+    ...(FEATURE_TRANSLATIONS.es || {}),
+    ...(es as Record<string, string>),
+  },
+  it: {
+    ...(it as Record<string, string>),
+  },
+  mt: {
+    ...(mt as Record<string, string>),
+  },
+  eo: {
+    ...(eo as Record<string, string>),
+  },
 };
 
 export function isRtlLocale(locale: string): boolean {

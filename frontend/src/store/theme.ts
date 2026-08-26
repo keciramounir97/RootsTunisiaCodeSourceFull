@@ -1,8 +1,21 @@
 import { create } from "zustand";
 
-const initialTheme = localStorage.getItem("theme") || "light";
-document.documentElement.classList.remove("light", "dark");
-document.documentElement.classList.add(initialTheme);
+const getInitialTheme = (): string => {
+  if (typeof window !== "undefined" && window.localStorage) {
+    try {
+      return localStorage.getItem("theme") || "light";
+    } catch {
+      return "light";
+    }
+  }
+  return "light";
+};
+
+const initialTheme = getInitialTheme();
+if (typeof document !== "undefined" && document.documentElement) {
+  document.documentElement.classList.remove("light", "dark");
+  document.documentElement.classList.add(initialTheme);
+}
 
 interface ThemeState {
   theme: string;

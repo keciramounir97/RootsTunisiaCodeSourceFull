@@ -8,6 +8,7 @@ import { Toaster } from "react-hot-toast";
 import "./index.css";
 import App from "./App";
 import { AuthProvider } from "./admin/components/AuthContext";
+import { ThemeProvider } from "./context/ThemeContext";
 import { TranslationProvider } from "./context/TranslationContext";
 import { queryClient } from "./lib/queryClient";
 import { GlobalProvider } from "./context/GlobalContext";
@@ -23,16 +24,18 @@ if (rootElement) {
       <BrowserRouter>
         <QueryClientProvider client={queryClient}>
           <GlobalProvider>
-            <TranslationProvider>
-              <AuthProvider>
-                <NotificationProvider>
-                  <FavoritesProvider>
-                    <App />
-                    <Toaster position="top-center" />
-                  </FavoritesProvider>
-                </NotificationProvider>
-              </AuthProvider>
-            </TranslationProvider>
+            <ThemeProvider>
+              <TranslationProvider>
+                <AuthProvider>
+                  <NotificationProvider>
+                    <FavoritesProvider>
+                      <App />
+                      <Toaster position="top-center" />
+                    </FavoritesProvider>
+                  </NotificationProvider>
+                </AuthProvider>
+              </TranslationProvider>
+            </ThemeProvider>
           </GlobalProvider>
         </QueryClientProvider>
       </BrowserRouter>
