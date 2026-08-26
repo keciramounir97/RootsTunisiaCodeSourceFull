@@ -24,6 +24,7 @@ import capitoliumRuins from "../assets/02_Capitolium_Temple_Roman_Arches.jpg";
 import mosqueTilework from "../assets/07_Mosque_Mihrab_Intricate_Tilework.jpg";
 import sidiBouSaidCourtyard from "../assets/12_Sidi_Bou_Said_Blue_Gate_Courtyard.jpg";
 import kairouanMinaret from "../assets/13_Kairouan_Minaret_Night_Illuminated.jpg";
+import fortressPalms from "../assets/17_Fortress_Aerial_Courtyard_Palms.jpg";
 import { Section, SectionHeading, InfoCard } from "../components/site/Primitives";
 import { TreeCard, featuredTrees } from "../components/site/TreeCard";
 import TunisiaGovernoratesMap from "../components/TunisiaGovernoratesMap";
