@@ -759,13 +759,18 @@ async function bootstrap() {
             next();
         });
 
-        // Recovery middleware for reverse proxy URL rewrites
+        // Recovery & path normalization middleware for reverse proxy URL rewrites
         app.use((req: any, _res, next) => {
-            if (req.path === '/api/errors/not-found') {
-                const originalPath = getForwardedOriginalPath(req);
-                if (originalPath && originalPath !== req.path) {
-                    req.url = originalPath;
-                }
+            const originalPath = getForwardedOriginalPath(req);
+            if (req.path === '/api/errors/not-found' && originalPath && originalPath !== req.path) {
+                req.url = originalPath;
+            } else if (
+                !req.url.startsWith('/api/') &&
+                !req.url.startsWith('/uploads/') &&
+                req.url !== '/' &&
+                req.url !== '/health'
+            ) {
+                req.url = `/api${req.url.startsWith('/') ? '' : '/'}${req.url}`;
             }
             next();
         });
