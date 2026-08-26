@@ -14,7 +14,6 @@ import djerba from "../assets/djerba.jpg";
 import carthage from "../assets/slider-carthage.jpg";
 import kairouan from "../assets/slider-kairouan.jpg";
 import manuscript from "../assets/manuscript.jpg";
-import familyArchive from "../assets/family-archive.jpg";
 import SEO from "../components/SEO";
 
 // High-fidelity seeded archive photos
@@ -26,7 +25,7 @@ const baseCuratedItems: { id: string; image: string; title: string; caption: str
   { id: "djerba-1", image: djerba, title: "Djerba Traditional Menzel & Palm Oases", caption: "Fortified island menzel architecture, ibadi watchtowers, and olive orchards.", location: "Houmt Souk, Djerba", year: "c. 1930" },
   { id: "sidibousaid-1", image: sidiBouSaid, title: "Sidi Bou Saïd Andalusian Village", caption: "Whitewashed walls and moucharabieh balconies above Cap Carthage.", location: "Sidi Bou Saïd, Tunis", year: "c. 1925" },
   { id: "manuscript-1", image: manuscript, title: "Charaïque Court Sijill with Beylical Seal", caption: "Handwritten Habous endowment and property inheritance deeds with official Ottoman tugra.", location: "Archives Nationales de Tunisie", year: "1874" },
-  { id: "family-1", image: familyArchive, title: "Beldi Family Studio Portrait & Archive", caption: "Traditional embroidered silk jebba and farmla attire documented in Tunis photo studio.", location: "Tunis Medina", year: "c. 1918" },
+  { id: "family-1", image: medina, title: "Medina of Tunis Ornate Studded Door", caption: "Patrician palace entrance with wrought-iron grille in Tunis Medina.", location: "Tunis Medina", year: "c. 1918" },
 ];
 
 export default function Gallery() {

@@ -7,7 +7,6 @@ import carthage from "../assets/slider-carthage.jpg";
 import kairouan from "../assets/slider-kairouan.jpg";
 import sidiBouSaid from "../assets/slider-sidibousaid.jpg";
 import manuscript from "../assets/manuscript.jpg";
-import familyArchive from "../assets/family-archive.jpg";
 
 export const Route = createFileRoute("/gallery")({
   head: () => ({
@@ -36,7 +35,7 @@ const items = [
   { image: djerba, title: "Djerba", caption: "Menzel houses, olive groves and island registers" },
   { image: sidiBouSaid, title: "Sidi Bou Saïd", caption: "Blue and white heritage above the Gulf of Tunis" },
   { image: manuscript, title: "Charaïque register", caption: "Qadi court entry with wax seal, 19th century" },
-  { image: familyArchive, title: "Family portrait", caption: "Studio photograph, jebba and sefsari, c. 1915" },
+  { image: medina, title: "Medina Ornate Gate", caption: "Studded wooden door with wrought-iron grille, c. 1915" },
 ];
 
 function Gallery() {

@@ -1,7 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { PageHero, Section, SectionHeading } from "../components/site/Primitives";
-import { TreeCard, featuredTrees } from "../components/site/TreeCard";
-import familyArchive from "../assets/family-archive.jpg";
+import sidiBouSaid from "../assets/slider-sidibousaid.jpg";
 
 export const Route = createFileRoute("/genealogy-gallery")({
   head: () => ({
@@ -30,7 +29,7 @@ function GenealogyGallery() {
         eyebrow="Genealogy Gallery"
         title="Tunisian Family Trees"
         subtitle="Public lineages documented with état civil extracts, charaïque registers, habous deeds and family memory."
-        image={familyArchive}
+        image={sidiBouSaid}
       >
         <Link to="/signup" className="btn-base btn-gold">
           Create your tree

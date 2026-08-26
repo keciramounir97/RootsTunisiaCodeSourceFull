@@ -21,7 +21,6 @@ import RootsPageShell from "../components/RootsPageShell";
 import carthage from "../assets/slider-carthage.jpg";
 import kairouan from "../assets/slider-kairouan.jpg";
 import sidiBouSaid from "../assets/slider-sidibousaid.jpg";
-import familyArchive from "../assets/family-archive.jpg";
 import medina from "../assets/medina-tunis.jpg";
 import eljem from "../assets/eljem.jpg";
 import djerba from "../assets/djerba.jpg";
@@ -91,12 +90,12 @@ const TUNISIAN_INITIAL_IMAGES: ImageItem[] = [
   },
   {
     id: "img-tn-6",
-    title: "Tunisian Family Archival Portrait & Studio Photo",
-    category: "Family Portraits",
+    title: "Medina of Tunis Ornate Studded Door & Blue Grille",
+    category: "Landmarks & Architecture",
     governorate: "Tunis",
     yearStr: "c. 1915",
-    imageUrl: familyArchive,
-    description: "Restored vintage family portrait from an early 20th century studio in Tunis, capturing traditional attire and ancestral poise.",
+    imageUrl: medina,
+    description: "Ornate studded wooden door with wrought-iron grille in the Medina of Tunis, reflecting patrician architectural heritage.",
     likes: 104,
   },
 ];

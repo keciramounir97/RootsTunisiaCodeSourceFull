@@ -11,7 +11,6 @@ import {
 import carthage from "../assets/slider-carthage.jpg";
 import kairouan from "../assets/slider-kairouan.jpg";
 import sidiBouSaid from "../assets/slider-sidibousaid.jpg";
-import familyArchive from "../assets/family-archive.jpg";
 import manuscript from "../assets/manuscript.jpg";
 import medina from "../assets/medina-tunis.jpg";
 import eljem from "../assets/eljem.jpg";
@@ -238,34 +237,32 @@ export default function Home() {
           <div>
             <SectionHeading
               center={false}
-              eyebrow="Why Roots Tunisia"
-              title="Tunisian family history needs sources, places and periods together"
-              intro="Roots Tunisia is built for families who want evidence without losing memory. It connects état civil extracts, charaïque court sijillat, habous deeds, Protectorate files, photographs, cadastral maps and oral testimony."
+              eyebrow={t("why_roots_tunisia_eyebrow", "Why Roots Tunisia")}
+              title={t("why_roots_tunisia_title", "Tunisian family history needs sources, places and periods together")}
+              intro={t("why_roots_tunisia_intro", "Roots Tunisia is built for families who want evidence without losing memory. It connects état civil extracts, charaïque court sijillat, habous deeds, Protectorate files, photographs, cadastral maps and oral testimony.")}
             />
             <p className="mt-5 max-w-2xl text-sm leading-relaxed text-[var(--muted-foreground)]">
-              A family branch can begin with a modern CIN extract, move into a marriage contract
-              from a Tunis qadi register, connect to a village in the Sahel or the Djérid, and
-              finally sit inside the historical period that produced that record.
+              {t("why_roots_tunisia_paragraph_2", "A family branch can begin with a modern CIN extract, move into a marriage contract from a Tunis qadi register, connect to a village in the Sahel or the Djérid, and finally sit inside the historical period that produced that record.")}
             </p>
             <div className="mt-8 grid gap-4 sm:grid-cols-3">
               <InfoCard
-                title="Primary Evidence"
-                body="Civil status, sijillat, waqf deeds and ANOM dossiers cited directly on person cards."
+                title={t("primary_evidence_title", "Primary Evidence")}
+                body={t("primary_evidence_body", "Civil status, sijillat, waqf deeds and ANOM dossiers cited directly on person cards.")}
               />
               <InfoCard
-                title="Territorial Depth"
-                body="Governorate-level context from Carthage to Djerba, with historical place names."
+                title={t("territorial_depth_title", "Territorial Depth")}
+                body={t("territorial_depth_body", "Governorate-level context from Carthage to Djerba, with historical place names.")}
               />
               <InfoCard
-                title="Period Context"
-                body="Nine eras from Punic antiquity to the contemporary republic to anchor your narrative."
+                title={t("period_context_title", "Period Context")}
+                body={t("period_context_body", "Nine eras from Punic antiquity to the contemporary republic to anchor your narrative.")}
               />
             </div>
           </div>
           <div className="frame-gold overflow-hidden rounded-md shadow-lg">
             <img
-              src={familyArchive}
-              alt="Archival portrait and handwritten family records from Tunisia"
+              src={medinaDoor}
+              alt={t("medina_door_alt", "Medina of Tunis Ornate Studded Door & Blue Grille")}
               width={1200}
               height={900}
               className="h-[480px] w-full object-cover transition-transform duration-500 hover:scale-105"
