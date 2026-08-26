@@ -635,6 +635,58 @@ async function bootstrap() {
         // Running behind EasyPanel reverse proxy (X-Forwarded-* headers).
         app.set('trust proxy', 1);
 
+        // Top-level CORS handling for all incoming HTTP requests & OPTIONS preflights
+        const corsOrigins = getCorsOrigins();
+
+        app.use((req: any, res: any, next: () => void) => {
+            const requestOrigin = req.headers.origin as string | undefined;
+            const allowedOrigin = requestOrigin ? (isAllowedCorsOrigin(requestOrigin, corsOrigins) || requestOrigin) : '*';
+
+            res.setHeader('Access-Control-Allow-Origin', allowedOrigin);
+            res.setHeader('Vary', 'Origin');
+            res.setHeader('Access-Control-Allow-Credentials', 'true');
+            res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, PUT, PATCH, POST, DELETE, OPTIONS');
+            res.setHeader(
+                'Access-Control-Allow-Headers',
+                'Content-Type, Authorization, X-Requested-With, Cache-Control, Pragma, Expires, If-Modified-Since, Accept, Origin, X-Request-Id, X-Original-URI, X-Rewrite-URL',
+            );
+            res.setHeader('Access-Control-Max-Age', '86400');
+
+            if (req.method === 'OPTIONS') {
+                return res.status(204).end();
+            }
+            next();
+        });
+
+        const corsOptions: ExpressCorsOptions = {
+            origin: (origin: string | undefined, cb: (err: Error | null, allow?: string | boolean) => void) => {
+                if (!origin) return cb(null, true);
+                const allowedOrigin = isAllowedCorsOrigin(origin, corsOrigins);
+                cb(null, allowedOrigin || origin || true);
+            },
+            methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
+            allowedHeaders: [
+                'Content-Type',
+                'Authorization',
+                'X-Requested-With',
+                'Cache-Control',
+                'Pragma',
+                'Expires',
+                'If-Modified-Since',
+                'Accept',
+                'Origin',
+                'X-Request-Id',
+                'X-Original-URI',
+                'X-Rewrite-URL',
+            ],
+            credentials: true,
+            optionsSuccessStatus: 204,
+            preflightContinue: false,
+        };
+
+        app.use(cors(corsOptions));
+        app.enableCors(corsOptions as any);
+
         // Static file serving for uploads
         const uploadsPath = path.join(process.cwd(), 'uploads');
         app.use('/uploads', require('express').static(uploadsPath));
@@ -707,39 +759,6 @@ async function bootstrap() {
             next();
         });
 
-        // CORS: exact same setup as RootsAbraham & RootsEgypt
-        const corsOrigins = getCorsOrigins();
-
-        const corsOptions: ExpressCorsOptions = {
-            origin: corsOrigins === true
-                ? true
-                : (origin: string | undefined, cb: (err: Error | null, allow?: boolean) => void) => {
-                    if (!origin) return cb(null, true);
-                    const allowedOrigin = isAllowedCorsOrigin(origin, corsOrigins);
-                    cb(null, !!allowedOrigin);
-                },
-            methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
-            allowedHeaders: [
-                'Content-Type',
-                'Authorization',
-                'X-Requested-With',
-                'Cache-Control',
-                'Pragma',
-                'Expires',
-                'If-Modified-Since',
-                'Accept',
-                'Origin',
-                'X-Request-Id',
-            ],
-            credentials: true,
-            optionsSuccessStatus: 204,
-            preflightContinue: false,
-        };
-
-        // Express-level CORS first: catches OPTIONS before route handling.
-        app.use(cors(corsOptions));
-        app.enableCors(corsOptions as any);
-
         // Recovery middleware for reverse proxy URL rewrites
         app.use((req: any, _res, next) => {
             if (req.path === '/api/errors/not-found') {
@@ -747,27 +766,6 @@ async function bootstrap() {
                 if (originalPath && originalPath !== req.path) {
                     req.url = originalPath;
                 }
-            }
-            next();
-        });
-
-        // Fallback CORS header injector (guarantees headers even if reverse proxy modifies request)
-        app.use((req: any, res: any, next: () => void) => {
-            const requestOrigin = req.headers.origin as string | undefined;
-            const allowedOrigin = requestOrigin ? (isAllowedCorsOrigin(requestOrigin, corsOrigins) || requestOrigin) : '*';
-
-            res.setHeader('Access-Control-Allow-Origin', allowedOrigin);
-            res.setHeader('Vary', 'Origin');
-            res.setHeader('Access-Control-Allow-Credentials', 'true');
-            res.setHeader('Access-Control-Allow-Methods', 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS');
-            res.setHeader(
-                'Access-Control-Allow-Headers',
-                'Content-Type, Authorization, X-Requested-With, Cache-Control, Pragma, Expires, If-Modified-Since, Accept, Origin, X-Request-Id',
-            );
-            res.setHeader('Access-Control-Max-Age', '86400');
-
-            if (req.method === 'OPTIONS') {
-                return res.sendStatus(204);
             }
             next();
         });
