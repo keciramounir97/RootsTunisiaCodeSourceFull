@@ -4,7 +4,7 @@ import { getApiRoot } from "../api/helpers";
 
 import defaultSectionBackground from "../assets/medina-tunis.jpg";
 
-const heroBackground = "/assets/Tunisia-hero.svg";
+const heroBackground = defaultSectionBackground;
 const fondBackground = defaultSectionBackground;
 
 export type SiteImageRecord = {

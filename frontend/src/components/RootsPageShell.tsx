@@ -22,9 +22,9 @@ function RootsPageShell({
     >
       {hero ? (
         <section
-          className={`heritage-hero text-center ${heroClassName}`}
+          className={`heritage-hero text-center py-16 px-4 ${heroClassName}`}
           style={{
-            backgroundImage: `linear-gradient(rgba(7, 24, 39, 0.75), rgba(15, 39, 66, 0.85)), url(${heroImage})`,
+            backgroundImage: `linear-gradient(rgba(26, 15, 10, 0.78), rgba(42, 31, 21, 0.88)), url(${heroImage})`,
             backgroundSize: "cover",
             backgroundPosition: "center",
           }}

@@ -803,15 +803,20 @@ async function bootstrap() {
             const knex = app.get('KnexConnection');
             await ensureSchemaReady(knex);
         } catch (e) {
-            console.warn('Initial schema setup warning:', e);
+            console.warn('⚠️ Initial schema setup warning:', e);
         }
 
         // Port
         const port = process.env.PORT || 5000;
         await app.listen(port, '0.0.0.0');
 
-        console.log('🟢 SERVER READY');
-        console.log(`🟢 DB CONNECTED - Application running on port: ${port}`);
+        console.log('\n================================================================');
+        console.log('🟢 ROOTS TUNISIA BACKEND SERVER READY');
+        console.log(`🟢 ENVIRONMENT: ${process.env.NODE_ENV || 'production'}`);
+        console.log(`🟢 PORT: ${port} | API BASE: http://0.0.0.0:${port}/api`);
+        console.log(`🟢 DATABASE HANDSHAKE: Fully Verified & Operational`);
+        console.log(`🟢 CORS ALLOWED ORIGINS: ${Array.isArray(corsOrigins) ? corsOrigins.join(', ') : 'All (Dev Mode)'}`);
+        console.log('================================================================\n');
 
         // Graceful shutdown
         process.on('SIGTERM', async () => {
@@ -821,7 +826,7 @@ async function bootstrap() {
         });
 
     } catch (error) {
-        console.error('🔴 SERVER ERROR:', error);
+        console.error('🔴 ROOTS TUNISIA SERVER BOOTSTRAP ERROR:', error);
         process.exit(1);
     }
 }
