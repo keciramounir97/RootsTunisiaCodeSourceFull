@@ -12,7 +12,7 @@ RUN npm ci --legacy-peer-deps
 
 # Copy source and build
 COPY . .
-RUN npm run build
+RUN npm run build && mkdir -p public
 
 # ----------------------------------------------------
 # Stage 2: Production Runtime
@@ -29,8 +29,9 @@ COPY package*.json ./
 RUN npm ci --only=production --legacy-peer-deps
 
 # Copy built application from builder stage
+RUN mkdir -p public
 COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/public ./public 2>/dev/null || true
+COPY --from=builder /app/public ./public
 
 # Ensure uploads directory exists
 RUN mkdir -p uploads/gallery uploads/books uploads/audios uploads/documents uploads/trees

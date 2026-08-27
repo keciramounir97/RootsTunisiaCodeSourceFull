@@ -7,6 +7,8 @@ import {
   GitBranch,
   Mic,
   Landmark,
+  User,
+  Eye,
 } from "lucide-react";
 import carthage from "../assets/slider-carthage.jpg";
 import kairouan from "../assets/slider-kairouan.jpg";
@@ -28,6 +30,7 @@ import fortressPalms from "../assets/17_Fortress_Aerial_Courtyard_Palms.jpg";
 import { Section, SectionHeading, InfoCard } from "../components/site/Primitives";
 import { TreeCard } from "../components/site/TreeCard";
 import TunisiaGovernoratesMap from "../components/TunisiaGovernoratesMap";
+import FamilyCardModal from "../components/FamilyCardModal";
 import SEO from "../components/SEO";
 import { useTranslation } from "../context/TranslationContext";
 import { api } from "../api/client";
@@ -127,6 +130,8 @@ export default function Home() {
   const { t } = useTranslation();
   const [active, setActive] = useState(0);
   const [dbTrees, setDbTrees] = useState<any[]>([]);
+  const [dbIndividuals, setDbIndividuals] = useState<any[]>([]);
+  const [selectedIndividual, setSelectedIndividual] = useState<any | null>(null);
 
   useEffect(() => {
     const id = setInterval(() => setActive((i) => (i + 1) % slides.length), 6000);
@@ -141,6 +146,24 @@ export default function Home() {
         setDbTrees(items);
       } catch {
         setDbTrees([]);
+      }
+    })();
+  }, []);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const { data } = await api.get("/individuals");
+        const items = Array.isArray(data?.data) ? data.data : Array.isArray(data) ? data : [];
+        setDbIndividuals(items);
+      } catch {
+        try {
+          const { data } = await api.get("/admin/individuals");
+          const items = Array.isArray(data?.data) ? data.data : Array.isArray(data) ? data : [];
+          setDbIndividuals(items);
+        } catch {
+          setDbIndividuals([]);
+        }
       }
     })();
   }, []);
@@ -430,6 +453,74 @@ export default function Home() {
           </Link>
         </div>
       </Section>
+
+      {/* Featured Tunisian Individuals */}
+      <Section className="bg-[var(--secondary)]/20">
+        <SectionHeading
+          eyebrow="Personnalités & Lignées"
+          title="Individus & Registres Généalogiques"
+          intro="Explorez les fiches généalogiques d'ancêtres, savants, marchands et notables répertoriés dans les archives tunisiennes."
+        />
+        {dbIndividuals.length > 0 ? (
+          <div className="mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {dbIndividuals.slice(0, 6).map((person, idx) => (
+              <div
+                key={person.id || idx}
+                className="surface-card frame-gold p-6 rounded-lg shadow-md flex flex-col justify-between hover:-translate-y-1 transition-transform border border-[var(--gold)]/30 space-y-4"
+              >
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="px-2.5 py-0.5 rounded-sm text-[0.65rem] font-bold uppercase tracking-wider bg-[var(--gold)]/15 text-[var(--gold)] border border-[var(--gold)]/30">
+                      📍 {person.birth_place || person.birthPlace || "Tunisie"}
+                    </span>
+                    <span className="text-[0.65rem] px-2.5 py-0.5 rounded-full bg-[var(--gold)]/10 text-[var(--gold)] font-mono font-bold">
+                      {person.gender === 'F' ? '♀ Femme' : '♂ Homme'}
+                    </span>
+                  </div>
+
+                  <h3 className="text-xl font-serif font-bold text-[var(--foreground)] leading-snug">
+                    {person.first_name || person.firstName} {person.last_name || person.lastName || person.surname}
+                  </h3>
+
+                  {person.occupation && (
+                    <p className="text-xs font-semibold text-[var(--gold)]">
+                      {person.occupation}
+                    </p>
+                  )}
+
+                  <div className="text-xs text-[var(--muted-foreground)] space-y-1 font-mono pt-1">
+                    <p>✳️ Nais.: {person.birth_date || person.birthDate || "Inconnue"} {person.birth_place ? `• ${person.birth_place}` : ""}</p>
+                    <p>✝️ Décès: {person.death_date || person.deathDate || "N/A"}</p>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => setSelectedIndividual(person)}
+                  className="w-full btn-base btn-gold text-xs py-2 flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <Eye className="w-4 h-4" />
+                  <span>Afficher la Fiche Individuelle 3D</span>
+                </button>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="mt-8 p-8 rounded-lg surface-card text-center border border-[var(--border)] max-w-lg mx-auto">
+            <User className="w-10 h-10 text-[var(--gold)] mx-auto mb-2 opacity-80" />
+            <p className="text-sm text-[var(--muted-foreground)]">
+              Aucun individu répertorié pour le moment.
+            </p>
+          </div>
+        )}
+      </Section>
+
+      {/* Individual Details Modal */}
+      {selectedIndividual && (
+        <FamilyCardModal
+          individual={selectedIndividual}
+          onClose={() => setSelectedIndividual(null)}
+        />
+      )}
 
       {/* Photo Gallery Grid */}
       <Section className="bg-[var(--secondary)]/40">
