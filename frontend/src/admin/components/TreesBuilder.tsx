@@ -8,7 +8,7 @@ const SOURCE_HOST_LABELS: Array<[string, string]> = [
   ["archives.gov", "National Archives (US)"],
   ["archive.org", "Internet Archive"],
   ["nationalarchives.gov.uk", "National Archives (UK)"],
-  ["archives.nat.tn", "Archives Nationales de Tunisie"],
+  ["archives.nat.tn", "National Archives of Maghreb"],
 ];
 
 export function isDomainOrHostString(str: string): boolean {

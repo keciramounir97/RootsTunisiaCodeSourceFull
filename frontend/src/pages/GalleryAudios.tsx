@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, useRef } from "react";
+import { useThemeStore } from "../store/theme";
 import AOS from "aos";
 import "aos/dist/aos.css";
 import {
@@ -18,11 +19,11 @@ import {
   ListMusic,
   Plus,
   Send,
-  Headphones,
+  Lightbulb,
 } from "lucide-react";
 import { api } from "../api/client";
-import { useTranslation } from "../context/TranslationContext";
-import { useTheme } from "../context/ThemeContext";
+import { getApiErrorMessage, getApiRoot } from "../api/helpers";
+import { useLanguage } from "../i18n";
 import RootsPageShell from "../components/RootsPageShell";
 
 interface AudioItem {
@@ -32,62 +33,27 @@ interface AudioItem {
   audioPath?: string;
   duration?: number;
   category?: string;
-  governorate?: string;
   archiveSource?: string;
   createdAt?: string;
   likes?: number;
-  comments?: { id: string; userName: string; text: string; createdAt: string }[];
+  comments?: Comment[];
   isLiked?: boolean;
+  isPlaying?: boolean;
 }
 
-const TUNISIAN_INITIAL_AUDIOS: AudioItem[] = [
-  {
-    id: "aud-tn-1",
-    title: "Malouf Heritage & Andalusian Pedigree Songs of Testour",
-    description: "Oral testimony recorded in 1968 detailing family lineages and Andalusian musical traditions brought to Testour in the 17th century.",
-    audioPath: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
-    duration: 380,
-    category: "Oral History & Music",
-    governorate: "Béja / Testour",
-    archiveSource: "Centre des Musiques Arabes et Méditerranéennes (Ennejma Ezzahra)",
-    createdAt: new Date(Date.now() - 86400000 * 10).toISOString(),
-    likes: 54,
-    comments: [
-      {
-        id: "ac1",
-        userName: "Sami Testouri",
-        text: "Preserving this oral heritage is vital for Andalusian families in North Tunisia.",
-        createdAt: new Date(Date.now() - 86400000 * 2).toISOString(),
-      },
-    ],
-  },
-  {
-    id: "aud-tn-2",
-    title: "Memories of the Beylical Majba & Family Taxes in Sfax (1881)",
-    description: "Oral history interview with elders from Sfax sharing generational accounts of Beylical tax registers and coastal maritime trade.",
-    audioPath: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
-    duration: 512,
-    category: "Oral History",
-    governorate: "Sfax",
-    archiveSource: "Société d'Histoire de Sfax & Archives Nationales",
-    createdAt: new Date(Date.now() - 86400000 * 18).toISOString(),
-    likes: 39,
-    comments: [],
-  },
-  {
-    id: "aud-tn-3",
-    title: "Djerban Maritime & Caravan Dialect Memories",
-    description: "Audio recordings capturing older Djerban Arabic idioms, family waqf terms, and island trade routes across Gabès and Tozeur.",
-    audioPath: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3",
-    duration: 420,
-    category: "Dialect & Culture",
-    governorate: "Médenine / Djerba",
-    archiveSource: "Djerba Cultural Heritage Archives",
-    createdAt: new Date(Date.now() - 86400000 * 30).toISOString(),
-    likes: 47,
-    comments: [],
-  },
-];
+interface Comment {
+  id: number | string;
+  userId: string;
+  userName: string;
+  text: string;
+  createdAt: string;
+}
+
+interface Playlist {
+  id: number | string;
+  name: string;
+  audios: AudioItem[];
+}
 
 const formatDuration = (seconds: number) => {
   const mins = Math.floor(seconds / 60);
@@ -95,396 +61,805 @@ const formatDuration = (seconds: number) => {
   return `${mins}:${secs.toString().padStart(2, "0")}`;
 };
 
+const sortByDateDesc = (items: AudioItem[]) =>
+  [...items].sort((a, b) => {
+    const da = a?.createdAt ? new Date(a.createdAt).getTime() : 0;
+    const db = b?.createdAt ? new Date(b.createdAt).getTime() : 0;
+    return db - da;
+  });
+
 export default function GalleryAudios() {
-  const { theme } = useTheme();
-  const { t } = useTranslation();
+  const { theme } = useThemeStore();
+  const { t } = useLanguage();
   const audioRef = useRef<HTMLAudioElement>(null);
 
   const [audios, setAudios] = useState<AudioItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [query, setQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [currentAudio, setCurrentAudio] = useState<AudioItem | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [volume, setVolume] = useState(1);
   const [isMuted, setIsMuted] = useState(false);
-  const [volume, setVolume] = useState(0.8);
   const [showUploadModal, setShowUploadModal] = useState(false);
-
-  // New audio form state
-  const [newTitle, setNewTitle] = useState("");
-  const [newDesc, setNewDesc] = useState("");
-  const [newCategory, setNewCategory] = useState("Oral History");
-  const [newGov, setNewGov] = useState("Tunis");
-  const [newUrl, setNewUrl] = useState("");
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [showSuggestionModal, setShowSuggestionModal] = useState(false);
+  const [suggestionForm, setSuggestionForm] = useState({
+    category: "",
+    message: "",
+  });
+  const [suggestionSubmitting, setSuggestionSubmitting] = useState(false);
+  const [suggestionSuccess, setSuggestionSuccess] = useState(false);
+  const [newComment, setNewComment] = useState("");
+  const apiRoot = useMemo(() => getApiRoot(), []);
+  const playlists = useMemo<Playlist[]>(
+    () => [
+      { id: 1, name: t("legacy.oral_histories", "Oral Histories"), audios: [] },
+      { id: 2, name: t("legacy.family_stories", "Family Stories"), audios: [] },
+      { id: 3, name: t("legacy.traditional_songs", "Traditional Songs"), audios: [] },
+    ],
+    [t],
+  );
 
   useEffect(() => {
-    AOS.init({ duration: 800, once: true });
+    AOS.init({ duration: 900, once: true });
+  }, []);
+
+  useEffect(() => {
+    let mounted = true;
     (async () => {
       try {
         setLoading(true);
+        setError("");
         const { data } = await api.get("/audios");
-        const items = Array.isArray(data?.data) ? data.data : Array.isArray(data) ? data : [];
-        if (items.length > 0) {
-          setAudios(items);
-          setCurrentAudio(items[0]);
-        } else {
-          setAudios(TUNISIAN_INITIAL_AUDIOS);
-          setCurrentAudio(TUNISIAN_INITIAL_AUDIOS[0]);
-        }
-      } catch {
-        setAudios(TUNISIAN_INITIAL_AUDIOS);
-        setCurrentAudio(TUNISIAN_INITIAL_AUDIOS[0]);
+        if (!mounted) return;
+        const items = Array.isArray(data?.data)
+          ? data.data
+          : Array.isArray(data?.audios)
+            ? data.audios
+            : Array.isArray(data)
+              ? data
+              : [];
+        setAudios(
+          sortByDateDesc(
+            items.map((item: any) => ({
+              ...item,
+              audioPath: item.audio_path ?? item.audioPath,
+              likes: item.likes || 0,
+              comments: item.comments || [],
+              isLiked: false,
+            })),
+          ),
+        );
+      } catch (err) {
+        if (!mounted) return;
+        setError(
+          getApiErrorMessage(
+            err,
+            t("legacy.audio_load_failed", "Failed to load audio"),
+          ),
+        );
+        setAudios([]);
       } finally {
-        setLoading(false);
+        if (mounted) setLoading(false);
       }
     })();
-  }, []);
+    return () => {
+      mounted = false;
+    };
+  }, [t]);
+
+  const fileUrl = (path: string | undefined) => {
+    if (!path) return "";
+    const raw = String(path).trim();
+    if (raw.startsWith("http")) return raw;
+    const p = raw.startsWith("/") ? raw : `/${raw}`;
+    return `${apiRoot.replace(/\/+$/, "")}${p}`;
+  };
+
+  // Keep the hidden <audio> element in sync with the selected track.
+  useEffect(() => {
+    const el = audioRef.current;
+    if (!el || !currentAudio) return;
+    const src = fileUrl(currentAudio.audioPath);
+    if (!src) return;
+    if (el.src !== src) {
+      el.src = src;
+      el.load();
+    }
+    if (isPlaying) {
+      el.play().catch(() => setIsPlaying(false));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentAudio?.id]);
+
+  // Keep actual playback in sync with the isPlaying toggle.
+  useEffect(() => {
+    const el = audioRef.current;
+    if (!el || !currentAudio) return;
+    if (isPlaying) {
+      el.play().catch(() => setIsPlaying(false));
+    } else {
+      el.pause();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isPlaying]);
+
+  // Keep actual volume/mute in sync with the volume controls.
+  useEffect(() => {
+    const el = audioRef.current;
+    if (!el) return;
+    el.volume = volume;
+    el.muted = isMuted;
+  }, [volume, isMuted]);
 
   const filteredAudios = useMemo(() => {
-    return audios.filter((item) => {
-      const matchQuery =
-        !query ||
-        item.title.toLowerCase().includes(query.toLowerCase()) ||
-        (item.description && item.description.toLowerCase().includes(query.toLowerCase())) ||
-        (item.governorate && item.governorate.toLowerCase().includes(query.toLowerCase()));
-      const matchCat = categoryFilter === "all" || item.category === categoryFilter;
-      return matchQuery && matchCat;
-    });
+    let result = audios;
+
+    if (query.trim()) {
+      const q = query.toLowerCase();
+      result = result.filter(
+        (audio) =>
+          audio.title?.toLowerCase().includes(q) ||
+          audio.description?.toLowerCase().includes(q) ||
+          audio.category?.toLowerCase().includes(q),
+      );
+    }
+
+    if (categoryFilter !== "all") {
+      result = result.filter((audio) => audio.category === categoryFilter);
+    }
+
+    return sortByDateDesc(result);
   }, [audios, query, categoryFilter]);
 
-  const togglePlay = (audio?: AudioItem) => {
-    if (audio && currentAudio?.id !== audio.id) {
+  const categories = useMemo(() => {
+    const cats = new Set(audios.map((a) => a.category).filter(Boolean));
+    return ["all", ...Array.from(cats)] as string[];
+  }, [audios]);
+
+  const handlePlayPause = (audio: AudioItem) => {
+    if (currentAudio?.id === audio.id) {
+      setIsPlaying(!isPlaying);
+    } else {
       setCurrentAudio(audio);
       setIsPlaying(true);
-      return;
+      setDuration(audio.duration || 0);
+      setCurrentTime(0);
     }
-    if (audioRef.current) {
-      if (isPlaying) {
-        audioRef.current.pause();
-        setIsPlaying(false);
-      } else {
-        audioRef.current.play();
-        setIsPlaying(true);
-      }
+  };
+
+  const handleLike = (audioId: number | string) => {
+    setAudios((prev) =>
+      prev.map((audio) =>
+        audio.id === audioId
+          ? {
+              ...audio,
+              isLiked: !audio.isLiked,
+              likes: audio.isLiked
+                ? (audio.likes || 0) - 1
+                : (audio.likes || 0) + 1,
+            }
+          : audio,
+      ),
+    );
+    if (currentAudio?.id === audioId) {
+      setCurrentAudio((prev) =>
+        prev
+          ? {
+              ...prev,
+              isLiked: !prev.isLiked,
+              likes: prev.isLiked
+                ? (prev.likes || 0) - 1
+                : (prev.likes || 0) + 1,
+            }
+          : null,
+      );
     }
+  };
+
+  const handleComment = (audioId: number | string) => {
+    if (!newComment.trim()) return;
+
+    const comment: Comment = {
+      id: Date.now(),
+      userId: "user",
+      userName: t("legacy.you", "You"),
+      text: newComment,
+      createdAt: new Date().toISOString(),
+    };
+
+    setAudios((prev) =>
+      prev.map((audio) =>
+        audio.id === audioId
+          ? { ...audio, comments: [...(audio.comments || []), comment] }
+          : audio,
+      ),
+    );
+
+    setNewComment("");
   };
 
   const handleTimeUpdate = () => {
     if (audioRef.current) {
       setCurrentTime(audioRef.current.currentTime);
-      setDuration(audioRef.current.duration || 0);
     }
   };
 
   const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = Number(e.target.value);
+    const time = parseFloat(e.target.value);
+    setCurrentTime(time);
     if (audioRef.current) {
-      audioRef.current.currentTime = val;
-      setCurrentTime(val);
+      audioRef.current.currentTime = time;
     }
   };
 
   const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = Number(e.target.value);
-    setVolume(val);
+    const vol = parseFloat(e.target.value);
+    setVolume(vol);
     if (audioRef.current) {
-      audioRef.current.volume = val;
-      setIsMuted(val === 0);
+      audioRef.current.volume = vol;
     }
+    setIsMuted(vol === 0);
   };
 
-  const toggleMute = () => {
-    if (audioRef.current) {
-      audioRef.current.muted = !isMuted;
-      setIsMuted(!isMuted);
-    }
-  };
-
-  const handleUploadAudio = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newTitle.trim()) return;
-
-    const created: AudioItem = {
-      id: Date.now(),
-      title: newTitle.trim(),
-      description: newDesc.trim(),
-      category: newCategory,
-      governorate: newGov,
-      audioPath: newUrl.trim() || "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
-      duration: 300,
-      createdAt: new Date().toISOString(),
-      likes: 0,
-      comments: [],
-    };
-
-    setAudios((prev) => [created, ...prev]);
-    setCurrentAudio(created);
-    setIsPlaying(true);
-    setShowUploadModal(false);
-    setNewTitle("");
-    setNewDesc("");
-  };
+  const isDark = theme === "dark";
+  const borderColor = isDark ? "border-[#1a3048]" : "border-[#e8e4dc]";
+  const cardBg = isDark ? "bg-[#0f1f33]" : "bg-white";
+  const accentBg = isDark ? "bg-[#24766f]/20" : "bg-[#24766f]/10";
 
   return (
     <RootsPageShell
       hero={
-        <div className="space-y-4 text-center">
-          <p className="eyebrow text-[var(--gold)] text-shadow-gold tracking-widest font-bold">
-            {t("audio_gallery_eyebrow", "Roots Tunisia Audio Archives")}
+        <div className="space-y-4">
+          <div className="flex items-center justify-center gap-3">
+            <Music className="w-12 h-12 text-[#d9a441]" />
+          </div>
+          <p className="text-sm uppercase tracking-[0.3em] text-[#d9a441]">
+            {t("legacy.family_collections", "Family Collections")}
           </p>
-          <h1 className="display-xl text-white font-bold hero-title-shadow text-shadow-glow tracking-wide">
-            {t("nav_audios", "Oral Histories & Audio Recordings")}
+          <h1 className="text-5xl font-bold">
+            {t("legacy.audio_archives", "Audio Archives")}
           </h1>
-          <div className="gold-rule mt-4 w-28 mx-auto shadow-lg" />
-          <p className="max-w-3xl mx-auto text-base text-slate-100/95 font-medium drop-shadow-md">
-            {t(
-              "audio_gallery_desc",
-              "Listen to oral memories, Andalusian Malouf pedigree songs, elders' testimonies, and regional dialect recordings from Tunis to Djerba.",
+          <p className="max-w-4xl mx-auto text-lg opacity-90">
+            {t("legacy.audios_intro",
+              "Listen to oral histories, traditional songs, and family recordings. Save your favorites and build your heritage playlist.",
             )}
           </p>
         </div>
       }
     >
-      <div className="max-w-6xl mx-auto px-4 py-8 space-y-8">
-        {/* Active Audio Player Bar */}
-        {currentAudio && (
-          <div className="surface-card frame-gold p-6 rounded-lg shadow-xl space-y-4">
-            <audio
-              ref={audioRef}
-              src={currentAudio.audioPath}
-              onTimeUpdate={handleTimeUpdate}
-              onEnded={() => setIsPlaying(false)}
-              autoPlay={isPlaying}
+      {/* Search and Filter */}
+      <section className="roots-section roots-section-alt" data-aos="fade-up">
+        <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
+          <div className="relative flex-1 max-w-xl">
+            <Search className="absolute left-3 top-3 text-[#24766f] opacity-80 w-5 h-5" />
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder={t("legacy.search_audios_placeholder",
+                "Search audio archives...",
+              )}
+              className={`w-full pl-10 py-3 rounded-xl bg-transparent border ${borderColor} outline-none focus:border-[#d9a441] transition-colors ${
+                isDark
+                  ? "text-white placeholder-white/50"
+                  : "text-[#162238] placeholder-[#162238]/50"
+              }`}
             />
-            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-              <div className="flex items-center gap-4 w-full md:w-auto">
-                <div className="w-14 h-14 rounded-lg bg-[var(--primary)] text-white flex items-center justify-center shrink-0 shadow-md">
-                  <Headphones className="w-7 h-7" />
-                </div>
-                <div>
-                  <span className="text-[0.65rem] font-bold uppercase tracking-wider text-[var(--gold)]">
-                    {currentAudio.category} {currentAudio.governorate ? `• ${currentAudio.governorate}` : ""}
-                  </span>
-                  <h3 className="text-lg font-serif font-bold text-[var(--foreground)] leading-snug">
-                    {currentAudio.title}
-                  </h3>
-                  <p className="text-xs text-[var(--muted-foreground)] line-clamp-1">
-                    {currentAudio.description}
-                  </p>
-                </div>
-              </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <select
+              value={categoryFilter}
+              onChange={(e) => setCategoryFilter(e.target.value)}
+              className={`px-4 py-3 rounded-xl bg-transparent border ${borderColor} outline-none ${
+                isDark ? "text-white" : "text-[#162238]"
+              }`}
+            >
+              {categories.map((cat) => (
+                <option key={cat} value={cat}>
+                  {cat === "all" ? t("legacy.all_categories", "All Categories") : cat}
+                </option>
+              ))}
+            </select>
+            <button
+              onClick={() => setShowUploadModal(true)}
+              className="flex items-center gap-2 px-5 py-3 rounded-xl bg-[#24766f] text-white font-semibold hover:bg-[#24766f]/90 transition-colors shadow-lg"
+            >
+              <Upload className="w-5 h-5" />
+              {t("legacy.upload", "Upload")}
+            </button>
+            <button
+              onClick={() => setShowSuggestionModal(true)}
+              className={`flex items-center gap-2 px-5 py-3 rounded-xl border ${borderColor} font-semibold hover:bg-[#d9a441]/10 transition-colors`}
+            >
+              <Lightbulb className="w-5 h-5 text-[#d9a441]" />
+              {t("legacy.suggest_category", "Suggest Category")}
+            </button>
+          </div>
+        </div>
+      </section>
 
-              {/* Player Controls */}
-              <div className="flex items-center gap-4">
-                <button
-                  onClick={() => togglePlay()}
-                  className="w-12 h-12 rounded-full bg-[var(--gold)] text-[var(--accent-foreground)] font-bold flex items-center justify-center hover:scale-105 transition-transform cursor-pointer shadow-md"
-                >
-                  {isPlaying ? <Pause className="w-6 h-6 fill-current" /> : <Play className="w-6 h-6 fill-current ms-0.5" />}
-                </button>
-              </div>
+      {/* Main Player - Spotify Style */}
+      {currentAudio && (
+        <section
+          className={`sticky bottom-4 z-40 mx-auto max-w-4xl ${cardBg} rounded-2xl shadow-2xl border ${borderColor} overflow-hidden`}
+          data-aos="fade-up"
+        >
+          <div className="p-4 flex items-center gap-4">
+            {/* Album Art Placeholder */}
+            <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-[#24766f] to-[#d9a441] flex items-center justify-center shrink-0">
+              <Music className="w-8 h-8 text-white" />
             </div>
 
-            {/* Seek Bar */}
-            <div className="space-y-1">
+            {/* Track Info */}
+            <div className="flex-1 min-w-0">
+              <h4 className="font-bold truncate">{currentAudio.title}</h4>
+              <p className="text-sm opacity-70 truncate">
+                {currentAudio.category}
+              </p>
+            </div>
+
+            {/* Controls */}
+            <div className="flex items-center gap-2">
+              <button className="p-2 rounded-full hover:bg-white/10 transition-colors">
+                <SkipBack className="w-5 h-5" />
+              </button>
+              <button
+                onClick={() => setIsPlaying(!isPlaying)}
+                className="p-3 rounded-full bg-[#24766f] text-white hover:bg-[#24766f]/90 transition-colors"
+              >
+                {isPlaying ? (
+                  <Pause className="w-6 h-6" />
+                ) : (
+                  <Play className="w-6 h-6 ml-0.5" />
+                )}
+              </button>
+              <button className="p-2 rounded-full hover:bg-white/10 transition-colors">
+                <SkipForward className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Progress */}
+            <div className="hidden md:flex items-center gap-2 w-48">
+              <span className="text-xs opacity-70">
+                {formatDuration(currentTime)}
+              </span>
               <input
                 type="range"
                 min={0}
                 max={duration || 100}
                 value={currentTime}
                 onChange={handleSeek}
-                className="w-full h-1.5 bg-[var(--border)] accent-[var(--gold)] rounded-lg cursor-pointer"
+                className="flex-1 h-1 rounded-full appearance-none bg-white/20 cursor-pointer"
               />
-              <div className="flex justify-between text-[0.65rem] text-[var(--muted-foreground)] font-mono">
-                <span>{formatDuration(currentTime)}</span>
-                <span>{formatDuration(duration || currentAudio.duration || 0)}</span>
-              </div>
+              <span className="text-xs opacity-70">
+                {formatDuration(duration)}
+              </span>
             </div>
-          </div>
-        )}
 
-        {/* Filter Controls & Upload Button */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pb-4 border-b border-[var(--border)]">
-          <div className="flex items-center gap-3 w-full sm:w-auto">
-            <div className="relative flex-1 sm:w-64">
-              <Search className="w-4 h-4 text-[var(--muted-foreground)] absolute start-3 top-2.5" />
-              <input
-                type="text"
-                placeholder={t("search_audio_placeholder", "Search audio, region or topic…")}
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                className="w-full ps-9 pe-3 py-1.5 text-xs rounded-sm border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] outline-none focus:border-[var(--gold)]"
-              />
-            </div>
-            <select
-              value={categoryFilter}
-              onChange={(e) => setCategoryFilter(e.target.value)}
-              className="px-3 py-1.5 text-xs rounded-sm border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)]"
-            >
-              <option value="all">{t("all_categories", "All Categories")}</option>
-              <option value="Oral History">{t("oral_history", "Oral History")}</option>
-              <option value="Oral History & Music">{t("music_heritage", "Music Heritage")}</option>
-              <option value="Dialect & Culture">{t("dialect_culture", "Dialect & Culture")}</option>
-            </select>
-          </div>
-
-          <button
-            onClick={() => setShowUploadModal(true)}
-            className="btn-base btn-gold text-xs px-4 py-2 flex items-center gap-2 cursor-pointer"
-          >
-            <Upload className="w-4 h-4" />
-            <span>{t("upload_audio", "Contribute Audio Record")}</span>
-          </button>
-        </div>
-
-        {/* Audio Grid */}
-        {loading ? (
-          <div className="flex justify-center py-16">
-            <div className="w-10 h-10 border-2 border-[var(--gold)] border-t-transparent rounded-full animate-spin" />
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredAudios.map((item) => (
-              <div
-                key={item.id}
-                className={`surface-card p-5 frame-gold rounded-lg transition-all space-y-3 flex flex-col justify-between ${
-                  currentAudio?.id === item.id ? "border-[var(--gold)] ring-1 ring-[var(--gold)]" : ""
-                }`}
+            {/* Volume */}
+            <div className="hidden lg:flex items-center gap-2">
+              <button
+                onClick={() => setIsMuted(!isMuted)}
+                className="p-2 hover:bg-white/10 rounded-full transition-colors"
               >
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between text-[0.65rem] font-bold text-[var(--gold)] uppercase">
-                    <span>{item.category}</span>
-                    <span>{item.governorate}</span>
-                  </div>
-                  <h4 className="text-base font-serif font-bold text-[var(--foreground)] line-clamp-2">
-                    {item.title}
-                  </h4>
-                  <p className="text-xs text-[var(--muted-foreground)] line-clamp-3 leading-relaxed">
-                    {item.description}
-                  </p>
-                </div>
+                {isMuted ? (
+                  <VolumeX className="w-5 h-5" />
+                ) : (
+                  <Volume2 className="w-5 h-5" />
+                )}
+              </button>
+              <input
+                type="range"
+                min={0}
+                max={1}
+                step={0.1}
+                value={isMuted ? 0 : volume}
+                onChange={handleVolumeChange}
+                className="w-20 h-1 rounded-full appearance-none bg-white/20 cursor-pointer"
+              />
+            </div>
 
-                <div className="pt-3 border-t border-[var(--border)] flex items-center justify-between">
-                  <span className="text-[0.65rem] text-[var(--muted-foreground)] flex items-center gap-1 font-mono">
-                    <Clock className="w-3 h-3 text-[var(--gold)]" />
-                    {formatDuration(item.duration || 0)}
-                  </span>
+            {/* Like */}
+            <button
+              onClick={() => handleLike(currentAudio.id)}
+              className={`p-2 rounded-full hover:bg-white/10 transition-colors ${
+                currentAudio.isLiked ? "text-red-500" : ""
+              }`}
+            >
+              <Heart
+                className={`w-5 h-5 ${currentAudio.isLiked ? "fill-current" : ""}`}
+              />
+            </button>
+          </div>
+        </section>
+      )}
+
+      {loading ? (
+        <section className="roots-section">
+          <div className="flex flex-col items-center justify-center py-20">
+            <div className="w-16 h-16 border-4 border-[#d9a441] border-t-transparent rounded-full animate-spin mb-4" />
+            <p className="text-lg opacity-70">{t("legacy.loading", "Loading...")}</p>
+          </div>
+        </section>
+      ) : error ? (
+        <section className="roots-section">
+          <div className="text-center text-red-500 font-semibold py-10">
+            {error}
+          </div>
+        </section>
+      ) : (
+        <section className="roots-section" data-aos="fade-up">
+          <h2 className="text-3xl font-bold border-l-8 border-[#d9a441] pl-4 mb-8">
+            {t("legacy.audios", "Audio Archives")}{" "}
+            <span className="text-[#24766f]">({filteredAudios.length})</span>
+          </h2>
+
+          {filteredAudios.length === 0 ? (
+            <div
+              className={`${cardBg} p-12 rounded-2xl shadow-xl border ${borderColor} text-center`}
+            >
+              <Music className="w-16 h-16 mx-auto text-[#24766f]/50 mb-4" />
+              <p className="text-xl opacity-70">
+                {t("legacy.no_audios_found", "No audio archives found.")}
+              </p>
+            </div>
+          ) : (
+            <div className="grid gap-4">
+              {filteredAudios.map((audio, index) => (
+                <div
+                  key={audio.id}
+                  className={`group flex items-center gap-4 p-4 rounded-xl ${cardBg} border ${borderColor} hover:shadow-lg transition-all cursor-pointer ${
+                    currentAudio?.id === audio.id ? accentBg : ""
+                  }`}
+                  data-aos="fade-up"
+                  data-aos-delay={index * 50}
+                  onClick={() => handlePlayPause(audio)}
+                >
+                  {/* Play Button */}
                   <button
-                    onClick={() => togglePlay(item)}
-                    className="btn-base btn-red text-xs px-3 py-1.5 flex items-center gap-1.5 cursor-pointer"
+                    className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 transition-colors ${
+                      currentAudio?.id === audio.id && isPlaying
+                        ? "bg-[#24766f] text-white"
+                        : "bg-white/10 hover:bg-[#24766f] hover:text-white"
+                    }`}
                   >
-                    {currentAudio?.id === item.id && isPlaying ? (
-                      <>
-                        <Pause className="w-3.5 h-3.5 fill-current" />
-                        <span>{t("pause", "Pause")}</span>
-                      </>
+                    {currentAudio?.id === audio.id && isPlaying ? (
+                      <Pause className="w-5 h-5" />
                     ) : (
-                      <>
-                        <Play className="w-3.5 h-3.5 fill-current" />
-                        <span>{t("listen", "Listen")}</span>
-                      </>
+                      <Play className="w-5 h-5 ml-0.5" />
                     )}
                   </button>
+
+                  {/* Track Info */}
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-bold truncate group-hover:text-[#d9a441] transition-colors">
+                      {audio.title}
+                    </h3>
+                    <div className="flex items-center gap-3 text-sm opacity-70">
+                      <span>{audio.category}</span>
+                      {audio.duration && (
+                        <span className="flex items-center gap-1">
+                          <Clock className="w-3 h-3" />
+                          {formatDuration(audio.duration)}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleLike(audio.id);
+                      }}
+                      className={`p-2 rounded-full hover:bg-white/10 transition-colors ${
+                        audio.isLiked ? "text-red-500" : "opacity-70"
+                      }`}
+                    >
+                      <Heart
+                        className={`w-4 h-4 ${audio.isLiked ? "fill-current" : ""}`}
+                      />
+                    </button>
+                    <span className="text-sm opacity-70">
+                      {audio.likes || 0}
+                    </span>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setCurrentAudio(audio);
+                        setShowDetailModal(true);
+                      }}
+                      className="p-2 rounded-full hover:bg-white/10 opacity-70 hover:opacity-100 transition-all"
+                    >
+                      <MessageCircle className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+      )}
+
+      {/* Playlists Sidebar */}
+      <section className="roots-section" data-aos="fade-up">
+        <h2 className="text-2xl font-bold border-l-8 border-[#24766f] pl-4 mb-6">
+          {t("legacy.your_playlists", "Your Playlists")}
+        </h2>
+        <div className="grid md:grid-cols-3 gap-4">
+          {playlists.map((playlist) => (
+            <div
+              key={playlist.id}
+              className={`p-5 rounded-xl ${cardBg} border ${borderColor} hover:shadow-lg transition-all cursor-pointer`}
+            >
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-[#d9a441] to-[#24766f] flex items-center justify-center">
+                  <ListMusic className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h4 className="font-bold">{playlist.name}</h4>
+                  <p className="text-sm opacity-70">
+                    {playlist.audios.length} {t("legacy.tracks", "tracks")}
+                  </p>
                 </div>
               </div>
-            ))}
-          </div>
-        )}
+            </div>
+          ))}
+          <button
+            className={`p-5 rounded-xl border-2 border-dashed ${borderColor} flex items-center justify-center gap-2 opacity-70 hover:opacity-100 transition-opacity`}
+          >
+            <Plus className="w-5 h-5" />
+            {t("legacy.create_playlist", "Create Playlist")}
+          </button>
+        </div>
+      </section>
 
-        {/* Upload Audio Modal */}
-        {showUploadModal && (
-          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-            <div className="surface-card frame-gold p-6 rounded-lg max-w-lg w-full space-y-4 bg-[var(--card)] shadow-2xl">
-              <div className="flex items-center justify-between border-b border-[var(--border)] pb-3">
-                <h3 className="text-lg font-serif font-bold text-[var(--foreground)]">
-                  {t("upload_audio_title", "Submit Audio Record or Interview")}
-                </h3>
-                <button onClick={() => setShowUploadModal(false)} className="text-[var(--muted-foreground)] hover:text-[var(--foreground)]">
-                  <X className="w-5 h-5" />
+      {/* Hidden Audio Element */}
+      <audio
+        ref={audioRef}
+        onTimeUpdate={handleTimeUpdate}
+        onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)}
+        onEnded={() => setIsPlaying(false)}
+      />
+
+      {/* Detail Modal */}
+      {showDetailModal && currentAudio && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+          onClick={() => setShowDetailModal(false)}
+        >
+          <div
+            className={`w-full max-w-lg rounded-2xl shadow-2xl p-6 ${cardBg} border ${borderColor}`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-bold">{currentAudio.title}</h3>
+              <button
+                onClick={() => setShowDetailModal(false)}
+                className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <p className="opacity-80 mb-4">{currentAudio.description}</p>
+            <div className="space-y-3">
+              <h4 className="font-semibold">{t("legacy.comments", "Comments")}</h4>
+              <div className="max-h-40 overflow-auto space-y-2">
+                {(currentAudio.comments || []).map((comment) => (
+                  <div
+                    key={comment.id}
+                    className={`p-3 rounded-xl ${isDark ? "bg-white/5" : "bg-black/5"}`}
+                  >
+                    <p className="text-sm font-medium">{comment.userName}</p>
+                    <p className="text-sm opacity-80">{comment.text}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={newComment}
+                  onChange={(e) => setNewComment(e.target.value)}
+                  placeholder={t("legacy.write_comment", "Write a comment...")}
+                  className={`flex-1 px-4 py-2 rounded-xl bg-transparent border ${borderColor} outline-none`}
+                  onKeyDown={(e) =>
+                    e.key === "Enter" && handleComment(currentAudio.id)
+                  }
+                />
+                <button
+                  onClick={() => handleComment(currentAudio.id)}
+                  className="p-2 rounded-xl bg-[#24766f] text-white"
+                >
+                  <Send className="w-5 h-5" />
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
 
-              <form onSubmit={handleUploadAudio} className="space-y-3">
+      {/* Upload Modal */}
+      {showUploadModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+          onClick={() => setShowUploadModal(false)}
+        >
+          <div
+            className={`w-full max-w-lg rounded-2xl shadow-2xl p-6 ${cardBg} border ${borderColor}`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-bold">
+                {t("legacy.upload_audio", "Upload Audio")}
+              </h3>
+              <button
+                onClick={() => setShowUploadModal(false)}
+                className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div
+              className={`border-2 border-dashed ${borderColor} rounded-xl p-8 text-center`}
+            >
+              <Upload className="w-12 h-12 mx-auto text-[#24766f] mb-4" />
+              <p className="opacity-70 mb-2">
+                {t("legacy.drag_drop_audio", "Drag and drop an audio file here")}
+              </p>
+              <p className="text-sm opacity-50">
+                {t("legacy.audio_file_formats_short", "MP3, WAV, M4A supported")}
+              </p>
+              <input type="file" accept="audio/*" className="hidden" />
+            </div>
+            <div className="mt-4 space-y-3">
+              <input
+                type="text"
+                placeholder={t("legacy.title", "Title")}
+                className={`w-full px-4 py-2 rounded-xl bg-transparent border ${borderColor} outline-none`}
+              />
+              <input
+                type="text"
+                placeholder={t("legacy.custom_category_placeholder", "Name this category...")}
+                className={`w-full px-4 py-2 rounded-xl bg-transparent border ${borderColor} outline-none`}
+              />
+              <textarea
+                placeholder={t("legacy.description", "Description")}
+                rows={3}
+                className={`w-full px-4 py-2 rounded-xl bg-transparent border ${borderColor} outline-none resize-none`}
+              />
+              <button className="w-full py-3 rounded-xl bg-[#24766f] text-white font-semibold hover:bg-[#24766f]/90 transition-colors">
+                {t("legacy.upload", "Upload")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Category Suggestion Modal */}
+      {showSuggestionModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+          onClick={() => {
+            setShowSuggestionModal(false);
+            setSuggestionSuccess(false);
+            setSuggestionForm({ category: "", message: "" });
+          }}
+        >
+          <div
+            className={`w-full max-w-lg rounded-2xl shadow-2xl p-6 ${cardBg} border ${borderColor}`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-bold flex items-center gap-2">
+                <Lightbulb className="w-5 h-5 text-[#d9a441]" />
+                {t("legacy.suggest_category", "Suggest a Category")}
+              </h3>
+              <button
+                onClick={() => {
+                  setShowSuggestionModal(false);
+                  setSuggestionSuccess(false);
+                  setSuggestionForm({ category: "", message: "" });
+                }}
+                className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {suggestionSuccess ? (
+              <div className="text-center py-8">
+                <div className="w-16 h-16 rounded-full bg-green-500/20 flex items-center justify-center mx-auto mb-4">
+                  <Lightbulb className="w-8 h-8 text-green-500" />
+                </div>
+                <p className="text-lg font-semibold mb-2">
+                  {t("legacy.suggestion_sent", "Suggestion Sent!")}
+                </p>
+                <p className="text-sm opacity-70">
+                  {t("legacy.suggestion_pending_review",
+                    "An admin will review your suggestion. If approved, it will appear in the category list.",
+                  )}
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4">
                 <div>
-                  <label className="block text-xs font-bold mb-1 text-[var(--foreground)]">
-                    {t("audio_title", "Recording Title")}
+                  <label className="block text-sm font-semibold mb-2">
+                    {t("legacy.category_name", "Category Name")}{" "}
+                    <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
-                    required
-                    placeholder="e.g. Oral Testimony of Haj Ahmed from Sousse"
-                    value={newTitle}
-                    onChange={(e) => setNewTitle(e.target.value)}
-                    className="w-full px-3 py-2 text-xs rounded-sm border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] outline-none focus:border-[var(--gold)]"
+                    value={suggestionForm.category}
+                    onChange={(e) =>
+                      setSuggestionForm({
+                        ...suggestionForm,
+                        category: e.target.value,
+                      })
+                    }
+                    placeholder={t("legacy.category_placeholder",
+                      "e.g., Nile Delta oral history",
+                    )}
+                    className={`w-full px-4 py-3 rounded-xl bg-transparent border ${borderColor} outline-none focus:border-[#d9a441]`}
                   />
                 </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-bold mb-1 text-[var(--foreground)]">Category</label>
-                    <select
-                      value={newCategory}
-                      onChange={(e) => setNewCategory(e.target.value)}
-                      className="w-full px-3 py-2 text-xs rounded-sm border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)]"
-                    >
-                      <option value="Oral History">Oral History</option>
-                      <option value="Oral History & Music">Music Heritage</option>
-                      <option value="Dialect & Culture">Dialect & Culture</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold mb-1 text-[var(--foreground)]">Governorate</label>
-                    <input
-                      type="text"
-                      placeholder="e.g. Tunis, Kairouan, Sfax"
-                      value={newGov}
-                      onChange={(e) => setNewGov(e.target.value)}
-                      className="w-full px-3 py-2 text-xs rounded-sm border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)]"
-                    />
-                  </div>
-                </div>
-
                 <div>
-                  <label className="block text-xs font-bold mb-1 text-[var(--foreground)]">Audio File URL / Path</label>
-                  <input
-                    type="text"
-                    placeholder="https://... or audio file URL"
-                    value={newUrl}
-                    onChange={(e) => setNewUrl(e.target.value)}
-                    className="w-full px-3 py-2 text-xs rounded-sm border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)]"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold mb-1 text-[var(--foreground)]">Description & Context</label>
+                  <label className="block text-sm font-semibold mb-2">
+                    {t("legacy.description", "Description")}
+                  </label>
                   <textarea
+                    value={suggestionForm.message}
+                    onChange={(e) =>
+                      setSuggestionForm({
+                        ...suggestionForm,
+                        message: e.target.value,
+                      })
+                    }
+                    placeholder={t("legacy.why_category",
+                      "Why would this category be useful?",
+                    )}
                     rows={3}
-                    placeholder="Provide details about the speaker, period, or lineage referenced..."
-                    value={newDesc}
-                    onChange={(e) => setNewDesc(e.target.value)}
-                    className="w-full px-3 py-2 text-xs rounded-sm border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)]"
+                    className={`w-full px-4 py-3 rounded-xl bg-transparent border ${borderColor} outline-none focus:border-[#d9a441] resize-none`}
                   />
                 </div>
-
-                <div className="flex justify-end gap-2 pt-2">
-                  <button
-                    type="button"
-                    onClick={() => setShowUploadModal(false)}
-                    className="btn-base btn-outline-ink text-xs px-4 py-2 cursor-pointer"
-                  >
-                    Cancel
-                  </button>
-                  <button type="submit" className="btn-base btn-gold text-xs px-5 py-2 cursor-pointer">
-                    Submit Audio
-                  </button>
-                </div>
-              </form>
-            </div>
+                <button
+                  onClick={async () => {
+                    if (!suggestionForm.category.trim()) return;
+                    setSuggestionSubmitting(true);
+                    try {
+                      await api.post("/suggestions", {
+                        type: "audio_category",
+                        category: suggestionForm.category,
+                        message: suggestionForm.message,
+                      });
+                    } catch {
+                      // Demo mode - still show success
+                    }
+                    setSuggestionSubmitting(false);
+                    setSuggestionSuccess(true);
+                  }}
+                  disabled={
+                    suggestionSubmitting || !suggestionForm.category.trim()
+                  }
+                  className={`w-full py-3 rounded-xl bg-[#d9a441] text-[#071827] font-semibold hover:bg-[#d9a441]/90 transition-colors ${
+                    suggestionSubmitting || !suggestionForm.category.trim()
+                      ? "opacity-50 cursor-not-allowed"
+                      : ""
+                  }`}
+                >
+                  {suggestionSubmitting
+                    ? t("legacy.sending", "Sending...")
+                    : t("legacy.send_suggestion", "Send Suggestion")}
+                </button>
+              </div>
+            )}
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </RootsPageShell>
   );
 }

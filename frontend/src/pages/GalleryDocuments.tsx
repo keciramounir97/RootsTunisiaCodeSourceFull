@@ -1,278 +1,610 @@
 import { useEffect, useMemo, useState } from "react";
+import { useThemeStore } from "../store/theme";
 import AOS from "aos";
 import "aos/dist/aos.css";
 import {
-  FileText,
+  Heart,
+  MessageCircle,
+  Share2,
+  Upload,
   Search,
-  Download,
-  Eye,
-  Filter,
+  FileText,
   X,
-  Building,
-  Calendar,
-  Shield,
-  FileCode,
-  MapPin,
-  ExternalLink,
+  Send,
+  Archive,
 } from "lucide-react";
 import { api } from "../api/client";
-import { useTranslation } from "../context/TranslationContext";
-import { useTheme } from "../context/ThemeContext";
+import { getApiErrorMessage, getApiRoot } from "../api/helpers";
+import { useLanguage } from "../i18n";
 import RootsPageShell from "../components/RootsPageShell";
-import manuscriptImage from "../assets/manuscript.jpg";
+import RequestDownloadButton from "../components/RequestDownloadButton";
 
-interface DocumentItem {
+interface Document {
   id: number | string;
   title: string;
-  type: string;
-  governorate?: string;
-  dateStr?: string;
-  archiveFonds?: string;
-  summary: string;
-  documentUrl?: string;
-  previewImage?: string;
+  description?: string;
+  category?: string;
+  filePath?: string;
+  file_path?: string;
+  fileType?: string;
+  file_type?: string;
+  archiveSource?: string;
+  documentCode?: string;
+  date?: string;
+  createdAt?: string;
+  created_at?: string;
+  likes?: number;
+  comments?: Comment[];
+  isLiked?: boolean;
 }
 
-const TUNISIAN_INITIAL_DOCS: DocumentItem[] = [
-  {
-    id: "doc-tn-1",
-    title: "Beylical Sijill Decrees — Tunis Medina (1852)",
-    type: "Beylical Decree",
-    governorate: "Tunis",
-    dateStr: "1268 AH / 1852 AD",
-    archiveFonds: "Archives Nationales de Tunisie (Fonds Sadiki / Beylical)",
-    summary: "Royal decree bearing the seal of Ahmed I Bey granting waqf exemptions and naming lineage leaders in Tunis Medina.",
-    previewImage: manuscriptImage,
-  },
-  {
-    id: "doc-tn-2",
-    title: "Habous Land Deed — Olive Groves of Sfax & Mahdia",
-    type: "Habous & Property",
-    governorate: "Sfax / Mahdia",
-    dateStr: "1874 AD",
-    archiveFonds: "Registres Charaïques de Sfax",
-    summary: "Endowment deed detailing family inheritance, olive grove boundaries (ghaba), and patron lineage names in coastal Tunisia.",
-    previewImage: manuscriptImage,
-  },
-  {
-    id: "doc-tn-3",
-    title: "Etat Civil Civil Extract — Protectorate Register (1894)",
-    type: "Etat Civil",
-    governorate: "Bizerte",
-    dateStr: "1894 AD",
-    archiveFonds: "Archives du Protectorat & ANOM",
-    summary: "Civil registry extract recording birth, parent names, occupation, and residence in Bizerte under late 19th century registers.",
-    previewImage: manuscriptImage,
-  },
-  {
-    id: "doc-tn-4",
-    title: "Kairouan Waqf Charter for Al-Zaytuna Scholars",
-    type: "Waqf & Education",
-    governorate: "Kairouan",
-    dateStr: "1782 AD",
-    archiveFonds: "Bibliothèque Nationale de Tunisie",
-    summary: "Scholar waqf certificate establishing family lineage ties and scholarship stipends for Kairouani scholars studying in Zaytuna.",
-    previewImage: manuscriptImage,
-  },
-];
+interface Comment {
+  id: number | string;
+  userId: string;
+  userName: string;
+  text: string;
+  createdAt: string;
+}
+
+const sortByDateDesc = (items: Document[]) =>
+  [...items].sort((a, b) => {
+    const aDate = a?.createdAt ?? a?.created_at;
+    const bDate = b?.createdAt ?? b?.created_at;
+    const da = aDate ? new Date(aDate).getTime() : 0;
+    const db = bDate ? new Date(bDate).getTime() : 0;
+    return db - da;
+  });
+
+const getFileIcon = (fileType?: string) => {
+  switch (fileType?.toLowerCase()) {
+    case "pdf":
+      return "📄";
+    case "doc":
+    case "docx":
+      return "📝";
+    case "xls":
+    case "xlsx":
+      return "📊";
+    case "txt":
+      return "📃";
+    default:
+      return "📁";
+  }
+};
 
 export default function GalleryDocuments() {
-  const { theme } = useTheme();
-  const { t } = useTranslation();
+  const { theme } = useThemeStore();
+  const { t } = useLanguage();
 
-  const [documents, setDocuments] = useState<DocumentItem[]>([]);
+  const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [query, setQuery] = useState("");
-  const [typeFilter, setTypeFilter] = useState("All");
-  const [activeDoc, setActiveDoc] = useState<DocumentItem | null>(null);
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
+  const [newComment, setNewComment] = useState("");
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [uploadForm, setUploadForm] = useState({
+    title: "",
+    description: "",
+    category: "",
+    archiveSource: "",
+    documentCode: "",
+  });
+
+  const apiRoot = useMemo(() => getApiRoot(), []);
 
   useEffect(() => {
-    AOS.init({ duration: 800, once: true });
+    AOS.init({ duration: 900, once: true });
+  }, []);
+
+  useEffect(() => {
+    let mounted = true;
     (async () => {
       try {
         setLoading(true);
+        setError("");
         const { data } = await api.get("/documents");
-        const items = Array.isArray(data?.data) ? data.data : Array.isArray(data) ? data : [];
-        if (items.length > 0) {
-          setDocuments(items);
-        } else {
-          setDocuments(TUNISIAN_INITIAL_DOCS);
-        }
-      } catch {
-        setDocuments(TUNISIAN_INITIAL_DOCS);
+        if (!mounted) return;
+        const items = Array.isArray(data?.data)
+          ? data.data
+          : Array.isArray(data?.documents)
+            ? data.documents
+            : Array.isArray(data)
+              ? data
+              : [];
+        setDocuments(
+          items.map((item: any) => ({
+            ...item,
+            likes: item.likes || 0,
+            comments: item.comments || [],
+            isLiked: false,
+          })),
+        );
+      } catch (err) {
+        if (!mounted) return;
+        setError(
+          getApiErrorMessage(
+            err,
+            t("legacy.documents_load_failed", "Failed to load documents"),
+          ),
+        );
+        setDocuments([]);
       } finally {
-        setLoading(false);
+        if (mounted) setLoading(false);
       }
     })();
-  }, []);
+    return () => {
+      mounted = false;
+    };
+  }, [t]);
 
-  const documentTypes = ["All", "Beylical Decree", "Habous & Property", "Etat Civil", "Waqf & Education"];
+  const filteredDocuments = useMemo(() => {
+    let result = documents;
 
-  const filteredDocs = useMemo(() => {
-    return documents.filter((item) => {
-      const matchQuery =
-        !query ||
-        item.title.toLowerCase().includes(query.toLowerCase()) ||
-        (item.governorate && item.governorate.toLowerCase().includes(query.toLowerCase())) ||
-        item.summary.toLowerCase().includes(query.toLowerCase());
-      const matchType = typeFilter === "All" || item.type === typeFilter;
-      return matchQuery && matchType;
-    });
-  }, [documents, query, typeFilter]);
+    if (query.trim()) {
+      const q = query.toLowerCase();
+      result = result.filter(
+        (doc) =>
+          doc.title?.toLowerCase().includes(q) ||
+          doc.description?.toLowerCase().includes(q) ||
+          doc.archiveSource?.toLowerCase().includes(q) ||
+          doc.documentCode?.toLowerCase().includes(q),
+      );
+    }
+
+    if (categoryFilter !== "all") {
+      result = result.filter((doc) => doc.category === categoryFilter);
+    }
+
+    return sortByDateDesc(result);
+  }, [documents, query, categoryFilter]);
+
+  const categories = useMemo(() => {
+    const cats = new Set(documents.map((d) => d.category).filter(Boolean));
+    return ["all", ...Array.from(cats)] as string[];
+  }, [documents]);
+
+  const handleLike = (docId: number | string) => {
+    setDocuments((prev) =>
+      prev.map((doc) =>
+        doc.id === docId
+          ? {
+              ...doc,
+              isLiked: !doc.isLiked,
+              likes: doc.isLiked ? (doc.likes || 0) - 1 : (doc.likes || 0) + 1,
+            }
+          : doc
+      )
+    );
+    if (selectedDocument?.id === docId) {
+      setSelectedDocument((prev) =>
+        prev
+          ? {
+              ...prev,
+              isLiked: !prev.isLiked,
+              likes: prev.isLiked ? (prev.likes || 0) - 1 : (prev.likes || 0) + 1,
+            }
+          : null
+      );
+    }
+  };
+
+  const handleComment = (docId: number | string) => {
+    if (!newComment.trim()) return;
+
+    const comment: Comment = {
+      id: Date.now(),
+      userId: "user",
+      userName: t("legacy.you", "You"),
+      text: newComment,
+      createdAt: new Date().toISOString(),
+    };
+
+    setDocuments((prev) =>
+      prev.map((doc) =>
+        doc.id === docId
+          ? { ...doc, comments: [...(doc.comments || []), comment] }
+          : doc
+      )
+    );
+
+    if (selectedDocument?.id === docId) {
+      setSelectedDocument((prev) =>
+        prev ? { ...prev, comments: [...(prev.comments || []), comment] } : null
+      );
+    }
+
+    setNewComment("");
+  };
+
+  const handleUpload = () => {
+    const newDoc: Document = {
+      id: Date.now(),
+      title: uploadForm.title,
+      description: uploadForm.description,
+      category: uploadForm.category,
+      archiveSource: uploadForm.archiveSource,
+      documentCode: uploadForm.documentCode,
+      fileType: "PDF",
+      likes: 0,
+      comments: [],
+      isLiked: false,
+      createdAt: new Date().toISOString(),
+    };
+
+    setDocuments((prev) => [newDoc, ...prev]);
+    setShowUploadModal(false);
+    setUploadForm({ title: "", description: "", category: "", archiveSource: "", documentCode: "" });
+  };
+
+  const isDark = theme === "dark";
+  const borderColor = isDark ? "border-[#1a3048]" : "border-[#e8e4dc]";
+  const cardBg = isDark ? "bg-[#0f1f33]" : "bg-white";
 
   return (
     <RootsPageShell
       hero={
-        <div className="space-y-4 text-center">
-          <p className="eyebrow text-[var(--gold)] text-shadow-gold tracking-widest font-bold">
-            {t("nav_documents", "Roots Tunisia Legal & Archival Records")}
+        <div className="space-y-4">
+          <div className="flex items-center justify-center gap-3">
+            <FileText className="w-12 h-12 text-[#d9a441]" />
+          </div>
+          <p className="text-sm uppercase tracking-[0.3em] text-[#d9a441]">
+            {t("legacy.family_collections", "Family Collections")}
           </p>
-          <h1 className="display-xl text-white font-bold hero-title-shadow text-shadow-glow tracking-wide">
-            {t("gallery_docs_title", "Historical Documents & Civil Extracts")}
+          <h1 className="text-5xl font-bold">
+            {t("legacy.documents", "Documents Archive")}
           </h1>
-          <div className="gold-rule mt-4 w-28 mx-auto shadow-lg" />
-          <p className="max-w-3xl mx-auto text-base text-slate-100/95 font-medium drop-shadow-md">
-            {t(
-              "gallery_docs_desc",
-              "Search digitized Beylical sijillat, habous property deeds, Ottoman decrees, and Protectorate civil extracts from the Archives Nationales de Tunisie.",
+          <p className="max-w-4xl mx-auto text-lg opacity-90">
+            {t("legacy.documents_intro",
+              "Access vital records, certificates, immigration papers, and historical documents. Upload and share your family documents.",
             )}
           </p>
         </div>
       }
     >
-      <div className="max-w-6xl mx-auto px-4 py-8 space-y-8">
-        {/* Controls */}
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4 pb-4 border-b border-[var(--border)]">
-          <div className="relative w-full md:w-80">
-            <Search className="w-4 h-4 text-[var(--muted-foreground)] absolute start-3 top-2.5" />
+      {/* Search and Filter */}
+      <section className="roots-section roots-section-alt" data-aos="fade-up">
+        <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
+          <div className="relative flex-1 max-w-xl">
+            <Search className="absolute left-3 top-3 text-[#24766f] opacity-80 w-5 h-5" />
             <input
               type="text"
-              placeholder={t("search_docs_placeholder", "Search document title, region, or summary…")}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              className="w-full ps-9 pe-3 py-1.5 text-xs rounded-sm border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] outline-none focus:border-[var(--gold)]"
+              placeholder={t("legacy.search_documents_placeholder", "Search documents...")}
+              className={`w-full pl-10 py-3 rounded-xl bg-transparent border ${borderColor} outline-none focus:border-[#d9a441] transition-colors ${
+                isDark ? "text-white placeholder-white/50" : "text-[#162238] placeholder-[#162238]/50"
+              }`}
             />
           </div>
-
-          <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto">
-            <Filter className="w-4 h-4 text-[var(--gold)] shrink-0" />
-            {documentTypes.map((type) => (
-              <button
-                key={type}
-                onClick={() => setTypeFilter(type)}
-                className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap cursor-pointer transition-all ${
-                  typeFilter === type
-                    ? "bg-[var(--primary)] text-white shadow-sm"
-                    : "bg-[var(--card)] text-[var(--foreground)] border border-[var(--border)] hover:border-[var(--gold)]"
-                }`}
-              >
-                {type}
-              </button>
-            ))}
+          <div className="flex items-center gap-3">
+            <select
+              value={categoryFilter}
+              onChange={(e) => setCategoryFilter(e.target.value)}
+              className={`px-4 py-3 rounded-xl bg-transparent border ${borderColor} outline-none ${
+                isDark ? "text-white" : "text-[#162238]"
+              }`}
+            >
+              {categories.map((cat) => (
+                <option key={cat} value={cat}>
+                  {cat === "all" ? t("legacy.all_categories", "All Categories") : cat}
+                </option>
+              ))}
+            </select>
+            <button
+              onClick={() => setShowUploadModal(true)}
+              className="flex items-center gap-2 px-5 py-3 rounded-xl bg-[#24766f] text-white font-semibold hover:bg-[#24766f]/90 transition-colors shadow-lg"
+            >
+              <Upload className="w-5 h-5" />
+              {t("legacy.upload_document", "Upload Document")}
+            </button>
           </div>
         </div>
+      </section>
 
-        {/* Documents Grid */}
-        {loading ? (
-          <div className="flex justify-center py-16">
-            <div className="w-10 h-10 border-2 border-[var(--gold)] border-t-transparent rounded-full animate-spin" />
+      {loading ? (
+        <section className="roots-section">
+          <div className="flex flex-col items-center justify-center py-20">
+            <div className="w-16 h-16 border-4 border-[#d9a441] border-t-transparent rounded-full animate-spin mb-4" />
+            <p className="text-lg opacity-70">{t("legacy.loading", "Loading...")}</p>
           </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {filteredDocs.map((doc) => (
-              <div
-                key={doc.id}
-                className="surface-card frame-gold p-5 rounded-lg shadow-md space-y-3 flex flex-col justify-between"
-              >
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="px-2.5 py-0.5 rounded-sm text-[0.65rem] font-bold uppercase tracking-wider bg-[var(--gold)]/15 text-[var(--gold)] border border-[var(--gold)]/30">
-                      {doc.type}
-                    </span>
-                    <span className="text-[0.65rem] font-mono text-[var(--muted-foreground)] flex items-center gap-1">
-                      <MapPin className="w-3 h-3 text-[var(--primary)]" />
-                      {doc.governorate}
-                    </span>
+        </section>
+      ) : error ? (
+        <section className="roots-section">
+          <div className="text-center text-red-500 font-semibold py-10">{error}</div>
+        </section>
+      ) : (
+        <section className="roots-section" data-aos="fade-up">
+          <h2 className="text-3xl font-bold border-l-8 border-[#d9a441] pl-4 mb-8">
+            {t("legacy.documents", "Documents")} <span className="text-[#24766f]">({filteredDocuments.length})</span>
+          </h2>
+
+          {filteredDocuments.length === 0 ? (
+            <div className={`${cardBg} p-12 rounded-2xl shadow-xl border ${borderColor} text-center`}>
+              <FileText className="w-16 h-16 mx-auto text-[#24766f]/50 mb-4" />
+              <p className="text-xl opacity-70">{t("legacy.no_documents_found", "No documents found.")}</p>
+            </div>
+          ) : (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredDocuments.map((doc, index) => (
+                <div
+                  key={doc.id}
+                  className={`group ${cardBg} border ${borderColor} rounded-2xl shadow-lg hover:shadow-2xl overflow-hidden transition-all duration-300 hover:-translate-y-1 cursor-pointer`}
+                  data-aos="fade-up"
+                  data-aos-delay={index * 50}
+                  onClick={() => setSelectedDocument(doc)}
+                >
+                  {/* File Type Header */}
+                  <div className="h-24 bg-gradient-to-br from-[#0f2742]/10 via-[#24766f]/10 to-[#d9a441]/10 flex items-center justify-center relative">
+                    <div className="text-4xl">{getFileIcon(doc.fileType ?? doc.file_type)}</div>
+                    <div className="absolute top-3 right-3">
+                      <span className="px-2 py-1 rounded-full text-xs bg-[#24766f]/20 text-[#24766f]">
+                        {doc.fileType || doc.file_type || t("legacy.file", "File").toUpperCase()}
+                      </span>
+                    </div>
                   </div>
 
-                  <h3 className="text-base font-serif font-bold text-[var(--foreground)] leading-snug">
-                    {doc.title}
-                  </h3>
+                  {/* Content */}
+                  <div className="p-5">
+                    <h3 className="font-bold text-lg truncate group-hover:text-[#d9a441] transition-colors">
+                      {doc.title}
+                    </h3>
+                    {doc.archiveSource && (
+                      <p className="text-sm opacity-70 flex items-center gap-1 mt-1">
+                        <Archive className="w-3 h-3" />
+                        {doc.archiveSource}
+                      </p>
+                    )}
+                    {doc.documentCode && (
+                      <p className="text-xs opacity-50 font-mono mt-1">{doc.documentCode}</p>
+                    )}
 
-                  <p className="text-xs text-[var(--foreground)]/80 leading-relaxed line-clamp-3">
-                    {doc.summary}
-                  </p>
-                </div>
-
-                <div className="pt-3 border-t border-[var(--border)] space-y-2">
-                  <div className="flex items-center justify-between text-[0.65rem] text-[var(--muted-foreground)] font-mono">
-                    <span className="flex items-center gap-1">
-                      <Calendar className="w-3 h-3 text-[var(--gold)]" />
-                      {doc.dateStr || "Historical Era"}
-                    </span>
-                    <span className="truncate max-w-[200px]">{doc.archiveFonds}</span>
+                    <div className={`flex items-center justify-between mt-4 pt-3 border-t ${borderColor}`}>
+                      <div className="flex items-center gap-4">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleLike(doc.id);
+                          }}
+                          className={`flex items-center gap-1 transition-colors ${
+                            doc.isLiked ? "text-red-500" : "opacity-70 hover:text-red-500"
+                          }`}
+                        >
+                          <Heart className={`w-4 h-4 ${doc.isLiked ? "fill-current" : ""}`} />
+                          <span className="text-xs">{doc.likes || 0}</span>
+                        </button>
+                        <div className="flex items-center gap-1 opacity-70">
+                          <MessageCircle className="w-4 h-4" />
+                          <span className="text-xs">{doc.comments?.length || 0}</span>
+                        </div>
+                      </div>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                        }}
+                        className="opacity-70 hover:opacity-100 transition-opacity"
+                      >
+                        <Share2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
-
-                  <button
-                    onClick={() => setActiveDoc(doc)}
-                    className="w-full btn-base btn-gold text-xs py-1.5 flex items-center justify-center gap-1.5 cursor-pointer"
-                  >
-                    <Eye className="w-3.5 h-3.5" />
-                    <span>{t("view_document", "Inspect Document Details")}</span>
-                  </button>
                 </div>
-              </div>
-            ))}
-          </div>
-        )}
+              ))}
+            </div>
+          )}
+        </section>
+      )}
 
-        {/* Inspection Modal */}
-        {activeDoc && (
-          <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4">
-            <div className="surface-card frame-gold p-6 rounded-lg max-w-xl w-full space-y-4 bg-[var(--card)] shadow-2xl">
-              <div className="flex items-center justify-between border-b border-[var(--border)] pb-3">
+      {/* Document Detail Modal */}
+      {selectedDocument && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+          onClick={() => setSelectedDocument(null)}
+        >
+          <div
+            className={`w-full max-w-3xl max-h-[90vh] rounded-2xl shadow-2xl overflow-hidden flex flex-col ${cardBg} border ${borderColor}`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className={`p-6 border-b ${borderColor} flex items-start justify-between`}>
+              <div className="flex items-start gap-4">
+                <div className="w-16 h-16 rounded-lg bg-gradient-to-br from-[#24766f]/20 to-[#d9a441]/10 flex items-center justify-center shrink-0 text-3xl">
+                  {getFileIcon(selectedDocument.fileType ?? selectedDocument.file_type)}
+                </div>
                 <div>
-                  <span className="text-[0.65rem] font-bold uppercase text-[var(--gold)]">{activeDoc.type}</span>
-                  <h3 className="text-lg font-serif font-bold text-[var(--foreground)]">{activeDoc.title}</h3>
-                </div>
-                <button onClick={() => setActiveDoc(null)} className="text-[var(--muted-foreground)] hover:text-[var(--foreground)] cursor-pointer">
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-
-              <div className="overflow-hidden rounded-md border border-[var(--border)] max-h-60">
-                <img src={activeDoc.previewImage || manuscriptImage} alt={activeDoc.title} className="w-full object-cover" />
-              </div>
-
-              <div className="space-y-2 text-xs text-[var(--foreground)]">
-                <h4 className="font-bold text-sm text-[var(--gold)]">Document Summary</h4>
-                <p className="leading-relaxed">{activeDoc.summary}</p>
-                <div className="p-3 rounded-sm bg-[var(--background)] border border-[var(--border)] font-mono text-[0.7rem] space-y-1">
-                  <div><strong>Governorate:</strong> {activeDoc.governorate}</div>
-                  <div><strong>Date / Period:</strong> {activeDoc.dateStr}</div>
-                  <div><strong>Archival Fonds:</strong> {activeDoc.archiveFonds}</div>
+                  <h3 className="text-2xl font-bold">{selectedDocument.title}</h3>
+                  {selectedDocument.category && (
+                    <span className="inline-block mt-2 px-2 py-1 rounded-full text-xs bg-[#24766f]/20 text-[#24766f]">
+                      {selectedDocument.category}
+                    </span>
+                  )}
                 </div>
               </div>
+              <button
+                onClick={() => setSelectedDocument(null)}
+                className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
 
-              <div className="flex justify-end gap-2 pt-2 border-t border-[var(--border)]">
+            {/* Content */}
+            <div className="flex-1 overflow-auto p-6 space-y-4">
+              {selectedDocument.description && (
+                <p className="opacity-80">{selectedDocument.description}</p>
+              )}
+
+              <div className="grid grid-cols-2 gap-3">
+                {selectedDocument.archiveSource && (
+                  <div className={`p-3 rounded-xl ${isDark ? "bg-white/5" : "bg-black/5"}`}>
+                    <p className="text-xs uppercase opacity-60 mb-1">{t("legacy.archive_source", "Archive Source")}</p>
+                    <p className="font-medium flex items-center gap-1">
+                      <Archive className="w-4 h-4 text-[#24766f]" />
+                      {selectedDocument.archiveSource}
+                    </p>
+                  </div>
+                )}
+                {selectedDocument.documentCode && (
+                  <div className={`p-3 rounded-xl ${isDark ? "bg-white/5" : "bg-black/5"}`}>
+                    <p className="text-xs uppercase opacity-60 mb-1">{t("legacy.document_code", "Document Code")}</p>
+                    <p className="font-medium font-mono text-sm">{selectedDocument.documentCode}</p>
+                  </div>
+                )}
+                {selectedDocument.date && (
+                  <div className={`p-3 rounded-xl ${isDark ? "bg-white/5" : "bg-black/5"}`}>
+                    <p className="text-xs uppercase opacity-60 mb-1">{t("legacy.date", "Date")}</p>
+                    <p className="font-medium flex items-center gap-1">
+                      <Archive className="w-4 h-4 text-[#24766f]" />
+                      {selectedDocument.date}
+                    </p>
+                  </div>
+                )}
+                <div className={`p-3 rounded-xl ${isDark ? "bg-white/5" : "bg-black/5"}`}>
+                  <p className="text-xs uppercase opacity-60 mb-1">{t("legacy.file_type", "File Type")}</p>
+                  <p className="font-medium">{selectedDocument.fileType || selectedDocument.file_type || t("legacy.unknown", "Unknown")}</p>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className={`flex items-center gap-3 py-4 border-y ${borderColor}`}>
                 <button
-                  onClick={() => setActiveDoc(null)}
-                  className="btn-base btn-outline-ink text-xs px-4 py-2 cursor-pointer"
+                  onClick={() => handleLike(selectedDocument.id)}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-colors ${
+                    selectedDocument.isLiked
+                      ? "bg-red-500/20 text-red-500"
+                      : "bg-white/5 hover:bg-white/10"
+                  }`}
                 >
-                  Close
+                  <Heart className={`w-5 h-5 ${selectedDocument.isLiked ? "fill-current" : ""}`} />
+                  <span>{selectedDocument.likes || 0}</span>
                 </button>
-                <a
-                  href="/my-download-requests"
-                  className="btn-base btn-gold text-xs px-5 py-2 flex items-center gap-1.5 cursor-pointer"
+                <button className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 transition-colors">
+                  <Share2 className="w-5 h-5" />
+                  {t("legacy.share", "Share")}
+                </button>
+                {(selectedDocument.filePath || selectedDocument.file_path) && (
+                  <RequestDownloadButton
+                    contentType="document"
+                    contentId={selectedDocument.id}
+                    downloadHref={`${apiRoot}/api/documents/${selectedDocument.id}/download`}
+                    fileName={`${String(selectedDocument.title || "document").trim().replace(/[^\w.-]+/g, "_") || "document"}`}
+                  />
+                )}
+              </div>
+
+              {/* Comments */}
+              <div className="space-y-3">
+                <h4 className="font-semibold">{t("legacy.comments", "Comments")}</h4>
+                <div className="space-y-2 max-h-40 overflow-auto">
+                  {(selectedDocument.comments || []).map((comment) => (
+                    <div key={comment.id} className={`p-3 rounded-xl ${isDark ? "bg-white/5" : "bg-black/5"}`}>
+                      <p className="text-sm font-medium">{comment.userName}</p>
+                      <p className="text-sm opacity-80">{comment.text}</p>
+                    </div>
+                  ))}
+                  {(!selectedDocument.comments || selectedDocument.comments.length === 0) && (
+                    <p className="text-sm opacity-50">{t("legacy.no_comments", "No comments yet.")}</p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Comment Input */}
+            <div className={`p-4 border-t ${borderColor}`}>
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={newComment}
+                  onChange={(e) => setNewComment(e.target.value)}
+                  placeholder={t("legacy.write_comment", "Write a comment...")}
+                  className={`flex-1 px-4 py-2 rounded-xl bg-transparent border ${borderColor} outline-none focus:border-[#d9a441] transition-colors`}
+                  onKeyDown={(e) => e.key === "Enter" && handleComment(selectedDocument.id)}
+                />
+                <button
+                  onClick={() => handleComment(selectedDocument.id)}
+                  className="p-2 rounded-xl bg-[#24766f] text-white hover:bg-[#24766f]/90 transition-colors"
                 >
-                  <Download className="w-3.5 h-3.5" />
-                  <span>Request Full Copy</span>
-                </a>
+                  <Send className="w-5 h-5" />
+                </button>
               </div>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
+
+      {/* Upload Modal */}
+      {showUploadModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+          onClick={() => setShowUploadModal(false)}
+        >
+          <div
+            className={`w-full max-w-lg rounded-2xl shadow-2xl p-6 ${cardBg} border ${borderColor}`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-bold">{t("legacy.upload_document", "Upload Document")}</h3>
+              <button
+                onClick={() => setShowUploadModal(false)}
+                className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="space-y-4">
+              <input
+                type="text"
+                placeholder={t("legacy.title", "Title")}
+                value={uploadForm.title}
+                onChange={(e) => setUploadForm({ ...uploadForm, title: e.target.value })}
+                className={`w-full px-4 py-3 rounded-xl bg-transparent border ${borderColor} outline-none focus:border-[#d9a441]`}
+              />
+              <input
+                type="text"
+                value={uploadForm.category}
+                onChange={(e) => setUploadForm({ ...uploadForm, category: e.target.value })}
+                placeholder={t("legacy.custom_category_placeholder", "Name this category...")}
+                className={`w-full px-4 py-3 rounded-xl bg-transparent border ${borderColor} outline-none focus:border-[#d9a441]`}
+              />
+              <input
+                type="text"
+                placeholder={t("legacy.archive_source", "Archive Source")}
+                value={uploadForm.archiveSource}
+                onChange={(e) => setUploadForm({ ...uploadForm, archiveSource: e.target.value })}
+                className={`w-full px-4 py-3 rounded-xl bg-transparent border ${borderColor} outline-none focus:border-[#d9a441]`}
+              />
+              <input
+                type="text"
+                placeholder={t("legacy.document_code", "Document Code")}
+                value={uploadForm.documentCode}
+                onChange={(e) => setUploadForm({ ...uploadForm, documentCode: e.target.value })}
+                className={`w-full px-4 py-3 rounded-xl bg-transparent border ${borderColor} outline-none focus:border-[#d9a441]`}
+              />
+              <textarea
+                placeholder={t("legacy.description", "Description")}
+                value={uploadForm.description}
+                onChange={(e) => setUploadForm({ ...uploadForm, description: e.target.value })}
+                rows={3}
+                className={`w-full px-4 py-3 rounded-xl bg-transparent border ${borderColor} outline-none focus:border-[#d9a441] resize-none`}
+              />
+              <div className={`border-2 border-dashed ${borderColor} rounded-xl p-6 text-center`}>
+                <Upload className="w-8 h-8 mx-auto text-[#24766f] mb-2" />
+                <p className="text-sm opacity-70">
+                  {t("legacy.upload_document_file", "Upload document file")}
+                </p>
+                <input type="file" accept=".pdf,.doc,.docx,.txt" className="hidden" />
+              </div>
+              <button
+                onClick={handleUpload}
+                className="w-full py-3 rounded-xl bg-[#24766f] text-white font-semibold hover:bg-[#24766f]/90 transition-colors"
+              >
+                {t("legacy.upload", "Upload")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </RootsPageShell>
   );
 }

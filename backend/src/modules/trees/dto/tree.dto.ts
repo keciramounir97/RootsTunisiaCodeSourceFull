@@ -1,4 +1,5 @@
-import { IsOptional, IsString } from 'class-validator';
+
+import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { Transform } from 'class-transformer';
 
 export class CreateTreeDto {
@@ -18,10 +19,6 @@ export class CreateTreeDto {
 
     @IsString()
     @IsOptional()
-    category?: string;
-
-    @IsString()
-    @IsOptional()
     archiveSource?: string;
 
     @IsString()
@@ -34,12 +31,6 @@ export class CreateTreeDto {
     @IsString()
     @IsOptional()
     dataFormat?: string;
-
-    @IsOptional()
-    gedcomText?: string;
-
-    @IsOptional()
-    gedcomData?: any;
 }
 
 export class UpdateTreeDto {
@@ -57,10 +48,6 @@ export class UpdateTreeDto {
 
     @IsString()
     @IsOptional()
-    category?: string;
-
-    @IsString()
-    @IsOptional()
     archiveSource?: string;
 
     @IsString()
@@ -73,10 +60,4 @@ export class UpdateTreeDto {
     @IsString()
     @IsOptional()
     dataFormat?: string;
-
-    @IsOptional()
-    gedcomText?: string;
-
-    @IsOptional()
-    gedcomData?: any;
 }
