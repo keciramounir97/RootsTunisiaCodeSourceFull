@@ -2956,11 +2956,14 @@ export default function TreesBuilder({
 
     draw();
 
+    const autoCenterTimer = setTimeout(() => {
+      centerTree();
+    }, 400);
+
     return () => {
+      clearTimeout(autoCenterTimer);
       if (cleanupSim) cleanupSim();
-
       if (ro) ro.disconnect();
-
       if (resizeCleanup) resizeCleanup();
     };
   }, [people, links, locale, isDark, t, nameOf, relationName, displayGender]);
@@ -3916,57 +3919,51 @@ export default function TreesBuilder({
     t,
   ]);
 
-  const centerTree = () => {
+  const centerTree = useCallback(() => {
     const zoom = zoomRef.current;
-
     const wrapEl = wrapRef.current;
-
     const svgEl = svgRef.current;
-
     const nodes = nodesRef.current || [];
 
     if (!zoom || !wrapEl || !svgEl || nodes.length === 0) return;
 
-    const width = Math.max(320, wrapEl.clientWidth || 0);
+    const rect = wrapEl.getBoundingClientRect();
+    const width = Math.max(320, rect.width || wrapEl.clientWidth || 0);
+    const height = Math.max(400, rect.height || wrapEl.clientHeight || 0);
 
-    const height = Math.max(520, wrapEl.clientHeight || 0);
-
-    const xs = nodes.map((n) => n.x).filter((v) => Number.isFinite(v));
-
-    const ys = nodes.map((n) => n.y).filter((v) => Number.isFinite(v));
+    const xs = nodes.map((n: any) => Number(n.x)).filter((v) => Number.isFinite(v));
+    const ys = nodes.map((n: any) => Number(n.y)).filter((v) => Number.isFinite(v));
 
     if (!xs.length || !ys.length) return;
 
-    const minX = Math.min(...xs) - CARD_W / 2;
+    const minX = Math.min(...xs) - CARD_W / 2 - 30;
+    const maxX = Math.max(...xs) + CARD_W / 2 + 30;
+    const minY = Math.min(...ys) - CARD_H / 2 - 30;
+    const maxY = Math.max(...ys) + CARD_H / 2 + 30;
 
-    const maxX = Math.max(...xs) + CARD_W / 2;
+    const boundsWidth = Math.max(maxX - minX, CARD_W + 60);
+    const boundsHeight = Math.max(maxY - minY, CARD_H + 60);
 
-    const minY = Math.min(...ys) - CARD_H / 2;
-
-    const maxY = Math.max(...ys) + CARD_H / 2;
-
-    const boundsWidth = Math.max(maxX - minX, CARD_W);
-
-    const boundsHeight = Math.max(maxY - minY, CARD_H);
-
-    const scale = Math.min(width / boundsWidth, height / boundsHeight);
-
-    const clamped = Math.max(0.2, Math.min(scale * 0.9, 2.8));
+    const scaleX = width / boundsWidth;
+    const scaleY = height / boundsHeight;
+    const scale = Math.min(scaleX, scaleY);
+    const clampedScale = Math.max(0.3, Math.min(scale * 0.88, 1.8));
 
     const midX = (minX + maxX) / 2;
-
     const midY = (minY + maxY) / 2;
 
     const transform = d3.zoomIdentity
-
       .translate(width / 2, height / 2)
-
-      .scale(clamped)
-
+      .scale(clampedScale)
       .translate(-midX, -midY);
 
-    d3.select(svgEl).transition().duration(500).call(zoom.transform, transform);
-  };
+    d3.select(svgEl)
+      .interrupt()
+      .transition()
+      .duration(550)
+      .ease(d3.easeCubicOut)
+      .call(zoom.transform, transform);
+  }, []);
 
   // Which GEDCOM standard this tree's data is stored in — surfaced on the
   // person details modal so researchers know the provenance format.
