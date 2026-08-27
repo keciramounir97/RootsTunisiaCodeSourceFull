@@ -43,26 +43,7 @@ import { useAuth } from "../components/AuthContext";
 
 const MAX_GEDCOM_BYTES = 50 * 1024 * 1024;
 
-const buildMockTrees = () => [
-  {
-    id: "smoke-tree-5links-Tunisia",
-    title: "Arbre Généalogique Smoke Test Tunisia (5 Sources)",
-    description: "Arbre de démonstration Smoke Test incluant 5 sources multimédias (1 Image, 1 Audio, 1 Document, 2 Liens Externes) sur l'ancêtre principal.",
-    owner: "RootsTunisia Admin",
-    isPublic: true,
-    hasGedcom: true,
-    createdAt: new Date().toISOString(),
-  },
-  ...Array.from({ length: 9 }).map((_, i) => ({
-    id: `mock-tree-${i + 1}`,
-    title: `RootsTunisia Sample Family ${i + 1}`,
-    description: `A sample Tunisian family tree for testing the genealogy panel.`,
-    owner: "RootsTunisia Admin",
-    isPublic: i % 2 === 0,
-    hasGedcom: true,
-    createdAt: new Date().toISOString(),
-  })),
-];
+const buildMockTrees = () => [];
 
 export default function Trees() {
   const { theme } = useThemeStore();
@@ -153,11 +134,8 @@ export default function Trees() {
     setTreesError("");
     setSaveError("");
 
-    const isMock =
-      import.meta.env.DEV &&
-      localStorage.getItem("mockupDataActive") === "true";
-
-    const mockTrees = isMock ? buildMockTrees() : [];
+    const isMock = false;
+    const mockTrees = [];
 
     const mergeById = (list: any[]) => {
       const map = new Map();

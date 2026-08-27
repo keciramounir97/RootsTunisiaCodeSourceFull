@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Menu, Search, User, LogOut, ExternalLink } from "lucide-react";
+import { Menu, Search, User, LogOut, ExternalLink, PanelLeft, PanelLeftClose } from "lucide-react";
 import { useTranslation } from "../../context/TranslationContext";
 import { useAuth } from "./AuthContext";
 import LanguageMenu from "../../components/LanguageMenu";
@@ -29,9 +29,10 @@ export default function AdminHeader({
         <button
           onClick={onToggleSidebar}
           aria-label="Toggle sidebar"
-          className="rounded p-2 text-[var(--foreground)] hover:bg-[var(--gold)]/15"
+          title={sidebarOpen ? t("close_sidebar", "Close Sidebar") : t("open_sidebar", "Open Sidebar")}
+          className="rounded p-2 text-[var(--foreground)] hover:bg-[var(--gold)]/15 transition-colors cursor-pointer"
         >
-          <Menu className="h-5 w-5" />
+          {sidebarOpen ? <PanelLeftClose className="h-5 w-5 text-[var(--gold)]" /> : <PanelLeft className="h-5 w-5" />}
         </button>
 
         <form onSubmit={handleSearch} className="hidden sm:flex items-center gap-2 rounded border border-[var(--border)] bg-[var(--background)]/60 px-3 py-1.5">
@@ -39,7 +40,7 @@ export default function AdminHeader({
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search records or trees…"
+            placeholder={t("nav_search_placeholder", "Search records or trees…")}
             className="w-48 bg-transparent text-xs text-[var(--foreground)] outline-none placeholder:text-[var(--muted-foreground)]"
           />
         </form>
@@ -51,7 +52,7 @@ export default function AdminHeader({
           target="_blank"
           className="hidden md:inline-flex items-center gap-1 text-xs font-bold uppercase tracking-[0.14em] text-[var(--gold)] hover:underline"
         >
-          <span>View Public Site</span>
+          <span>{t("view_public_site", "View Public Site")}</span>
           <ExternalLink className="h-3 w-3" />
         </Link>
 
@@ -63,8 +64,8 @@ export default function AdminHeader({
           </div>
           <button
             onClick={() => logout()}
-            title="Sign Out"
-            className="p-1.5 text-[var(--muted-foreground)] hover:text-red-500 rounded hover:bg-red-500/10"
+            title={t("nav_signout", "Sign Out")}
+            className="p-1.5 text-[var(--muted-foreground)] hover:text-red-500 rounded hover:bg-red-500/10 cursor-pointer"
           >
             <LogOut className="h-4 w-4" />
           </button>

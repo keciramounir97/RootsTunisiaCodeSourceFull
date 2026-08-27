@@ -101,14 +101,9 @@ function pickFirstDefined(...values: Array<string | number | undefined | null>):
                 console.log(`🟡 DB ATTEMPT primaryHost=${primaryHost} port=${port} database=${database} user=${user}`);
 
                 // Exact Easypanel candidate hosts from user credentials
-                const candidateHosts = [
-                    primaryHost,
-                    'rootstunisia_rootstunisiadb',
-                    '2.24.71.239',
-                    'mysql',
-                    '127.0.0.1',
-                    'localhost',
-                ];
+                const candidateHosts = process.env.NODE_ENV === 'production'
+                    ? [primaryHost, 'rootstunisia_rootstunisiadb', '2.24.71.239', '127.0.0.1', 'localhost']
+                    : [primaryHost, '2.24.71.239', '127.0.0.1', 'localhost', 'rootstunisia_rootstunisiadb'];
                 const uniqueHosts = [...new Set(candidateHosts.filter(Boolean))];
 
                 const candidateUsers = [
@@ -129,7 +124,7 @@ function pickFirstDefined(...values: Array<string | number | undefined | null>):
                                 password: cred.p,
                                 database,
                                 charset: 'utf8mb4',
-                                connectTimeout: 1500,
+                                connectTimeout: 2500,
                             },
                             pool: {
                                 min: 0,

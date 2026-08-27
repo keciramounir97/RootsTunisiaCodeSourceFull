@@ -58,6 +58,7 @@ export class GalleryService implements OnModuleInit {
 
     async listPublic() {
         return Gallery.query(this.knex)
+            .select('id', 'title', 'description', 'category', 'image_path', 'is_public', 'location', 'year', 'photographer', 'seed_key', 'show_details', 'uploaded_by', 'created_at', 'updated_at')
             .where('is_public', true)
             .orderBy('created_at', 'desc')
             .withGraphFetched('uploader')
@@ -77,12 +78,14 @@ export class GalleryService implements OnModuleInit {
 
     async listByUser(userId: number) {
         return Gallery.query(this.knex)
+            .select('id', 'title', 'description', 'category', 'image_path', 'is_public', 'location', 'year', 'photographer', 'seed_key', 'show_details', 'uploaded_by', 'created_at', 'updated_at')
             .where('uploaded_by', userId)
             .orderBy('created_at', 'desc');
     }
 
     async listAdmin() {
         return Gallery.query(this.knex)
+            .select('id', 'title', 'description', 'category', 'image_path', 'is_public', 'location', 'year', 'photographer', 'seed_key', 'show_details', 'uploaded_by', 'created_at', 'updated_at')
             .orderBy('created_at', 'desc')
             .withGraphFetched('uploader')
             .modifyGraph('uploader', (builder: any) => builder.select('id', 'full_name', 'email'));

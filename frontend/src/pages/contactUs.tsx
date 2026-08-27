@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Mail, MapPin, Phone, Clock, Send, CheckCircle2, AlertCircle } from "lucide-react";
+import { Mail, MapPin, Phone, Clock, Send, CheckCircle2, AlertCircle, X } from "lucide-react";
 import { useTranslation } from "../context/TranslationContext";
 import { api } from "../api/client";
 import { PageHero, Section, SectionHeading } from "../components/site/Primitives";
@@ -15,7 +15,11 @@ type ContactFormData = z.infer<typeof contactSchema>;
 export default function ContactUs() {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
-  const [status, setStatus] = useState({ type: "", msg: "" });
+  const [modalStatus, setModalStatus] = useState<{ open: boolean; type: "success" | "error"; msg: string }>({
+    open: false,
+    type: "success",
+    msg: "",
+  });
 
   const {
     register,
@@ -33,16 +37,20 @@ export default function ContactUs() {
 
   const onSubmit = async (data: ContactFormData) => {
     setLoading(true);
-    setStatus({ type: "", msg: "" });
 
     try {
       await api.post("/contact", data);
-      setStatus({ type: "success", msg: t("message_sent_success", "Message sent successfully! A researcher will respond soon.") });
+      setModalStatus({
+        open: true,
+        type: "success",
+        msg: t("message_sent_success", "Your message has been sent successfully to devteam@rootstunisia.com! A researcher will respond soon."),
+      });
       reset();
     } catch (err: any) {
-      setStatus({
+      setModalStatus({
+        open: true,
         type: "error",
-        msg: err.response?.data?.message || t("message_send_failed", "Failed to send message."),
+        msg: err.response?.data?.message || t("message_send_failed", "Failed to send message. Please try again later."),
       });
     } finally {
       setLoading(false);
@@ -56,6 +64,43 @@ export default function ContactUs() {
         description="Contact the Roots Tunisia team in the Medina of Tunis for research help, archive partnerships, script translation and institutional access."
         keywords={["Contact Roots Tunisia", "Tunisian genealogy support", "Tunisian archives help"]}
       />
+
+      {/* Submission Feedback Modal */}
+      {modalStatus.open && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
+          <div className="surface-card w-full max-w-md p-6 rounded-xl border border-[var(--gold)]/40 shadow-2xl relative text-center">
+            <button
+              onClick={() => setModalStatus({ ...modalStatus, open: false })}
+              className="absolute right-4 top-4 text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-teal-500/10 text-teal-600">
+              {modalStatus.type === "success" ? (
+                <CheckCircle2 className="w-8 h-8 text-emerald-500" />
+              ) : (
+                <AlertCircle className="w-8 h-8 text-rose-500" />
+              )}
+            </div>
+
+            <h3 className="font-display text-xl font-bold mb-2">
+              {modalStatus.type === "success" ? "Message Sent!" : "Transmission Error"}
+            </h3>
+
+            <p className="text-sm text-[var(--muted-foreground)] leading-relaxed mb-6">
+              {modalStatus.msg}
+            </p>
+
+            <button
+              onClick={() => setModalStatus({ ...modalStatus, open: false })}
+              className="btn-base btn-gold w-full text-sm font-semibold py-2.5"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
 
       <PageHero
         eyebrow="Contact"
@@ -71,23 +116,6 @@ export default function ContactUs() {
             onSubmit={handleSubmit(onSubmit)}
           >
             <SectionHeading center={false} eyebrow="Send a message" title="How can we help?" />
-
-            {status.msg && (
-              <div
-                className={`mt-4 p-4 rounded text-sm flex items-center gap-2 ${
-                  status.type === "success"
-                    ? "bg-green-100 text-green-800 border border-green-300 dark:bg-green-950 dark:text-green-200"
-                    : "bg-red-100 text-red-800 border border-red-300 dark:bg-red-950 dark:text-red-200"
-                }`}
-              >
-                {status.type === "success" ? (
-                  <CheckCircle2 className="w-5 h-5 shrink-0" />
-                ) : (
-                  <AlertCircle className="w-5 h-5 shrink-0" />
-                )}
-                <span>{status.msg}</span>
-              </div>
-            )}
 
             <div className="mt-8 grid gap-5">
               <label className="grid gap-2">
@@ -134,8 +162,9 @@ export default function ContactUs() {
               <button
                 type="submit"
                 disabled={loading}
-                className="btn-base btn-red justify-self-start"
+                className="btn-base btn-red justify-self-start flex items-center gap-2"
               >
+                <Send className="w-4 h-4" />
                 {loading ? "Sending…" : "Send message"}
               </button>
             </div>
@@ -154,8 +183,8 @@ export default function ContactUs() {
                 </li>
                 <li className="flex items-center gap-3">
                   <Mail className="h-5 w-5 text-[var(--gold)] shrink-0" />
-                  <a href="mailto:contact@rootstunisia.com" className="hover:text-[var(--gold)]">
-                    contact@rootstunisia.com
+                  <a href="mailto:devteam@rootstunisia.com" className="hover:text-[var(--gold)]">
+                    devteam@rootstunisia.com
                   </a>
                 </li>
                 <li className="flex items-center gap-3">

@@ -53,4 +53,72 @@ export class NewsletterController {
     async listSubscribers() {
         return this.knex('newsletter_subscribers').select('*').orderBy('created_at', 'desc');
     }
+
+    @Post('admin/newsletter/send-campaign')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles('admin', 'super_admin')
+    async sendCampaign(@Body() body: { subject: string; content: string }) {
+        const { subject, content } = body;
+        if (!subject || !content) {
+            throw new BadRequestException('Subject and content are required');
+        }
+
+        const subscribers = await this.knex('newsletter_subscribers').select('email');
+        if (!subscribers || subscribers.length === 0) {
+            return { message: 'No subscribers found', count: 0 };
+        }
+
+        let sentCount = 0;
+        let failCount = 0;
+
+        for (const sub of subscribers) {
+            try {
+                await this.mailerService.sendMail({
+                    to: sub.email,
+                    subject: subject,
+                    text: content,
+                    html: `
+                        <div style="font-family: Arial, sans-serif; color: #2c1810; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e5e7eb; border-radius: 8px;">
+                            <h2 style="color: #134E4A; margin-bottom: 16px;">${subject}</h2>
+                            <div style="white-space: pre-wrap; font-size: 14px; line-height: 1.6; color: #374151;">${content}</div>
+                            <hr style="margin: 24px 0; border: none; border-top: 1px solid #e5e7eb;" />
+                            <p style="font-size: 12px; color: #9ca3af; text-align: center;">Roots Tunisia · Heritage & Archives</p>
+                        </div>
+                    `,
+                });
+                sentCount++;
+            } catch (err: any) {
+                console.error(`Failed to send campaign email to ${sub.email}:`, err?.message || err);
+                failCount++;
+            }
+        }
+
+        return { message: `Campaign sent to ${sentCount} subscribers (${failCount} failed)`, sentCount, failCount };
+    }
+
+    @Post('admin/newsletter/send-individual')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles('admin', 'super_admin')
+    async sendIndividual(@Body() body: { email: string; subject: string; content: string }) {
+        const { email, subject, content } = body;
+        if (!email || !subject || !content) {
+            throw new BadRequestException('Email, subject, and content are required');
+        }
+
+        await this.mailerService.sendMail({
+            to: email,
+            subject: subject,
+            text: content,
+            html: `
+                <div style="font-family: Arial, sans-serif; color: #2c1810; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e5e7eb; border-radius: 8px;">
+                    <h2 style="color: #134E4A; margin-bottom: 16px;">${subject}</h2>
+                    <div style="white-space: pre-wrap; font-size: 14px; line-height: 1.6; color: #374151;">${content}</div>
+                    <hr style="margin: 24px 0; border: none; border-top: 1px solid #e5e7eb;" />
+                    <p style="font-size: 12px; color: #9ca3af; text-align: center;">Roots Tunisia · Heritage & Archives</p>
+                </div>
+            `,
+        });
+
+        return { message: `Email sent to ${email}` };
+    }
 }

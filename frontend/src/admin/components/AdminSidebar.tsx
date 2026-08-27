@@ -118,10 +118,11 @@ export default function AdminSidebar({
         <div className="flex h-16 items-center justify-between px-5 border-b border-[var(--gold)]/25">
           <Logo />
           <button
-            onClick={onClose}
-            className="rounded p-1 text-[var(--muted-foreground)] hover:text-[var(--foreground)] lg:hidden"
+            onClick={onToggle}
+            title={t("close_sidebar", "Close Sidebar")}
+            className="rounded p-1.5 text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-[var(--gold)]/10 transition-colors"
           >
-            <X className="h-5 w-5" />
+            <PanelLeftClose className="h-5 w-5" />
           </button>
         </div>
 
@@ -134,7 +135,7 @@ export default function AdminSidebar({
             <div className="flex-1 min-w-0">
               <p className="text-xs font-bold text-[var(--foreground)] truncate">{user?.name || "Admin"}</p>
               <p className="text-[0.65rem] text-[var(--gold)] uppercase tracking-[0.14em] font-semibold">
-                {isSuperAdmin ? "Super Admin" : "Researcher"}
+                {isSuperAdmin ? t("super_admin", "Super Admin") : t("researcher", "Researcher")}
               </p>
             </div>
           </div>
@@ -143,7 +144,7 @@ export default function AdminSidebar({
         {/* Navigation links */}
         <div className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
           <p className="px-3 text-[0.65rem] font-bold uppercase tracking-[0.2em] text-[var(--gold)] mb-2">
-            Navigation
+            {t("navigation", "Navigation")}
           </p>
           {visibleLinks.map(({ to, end, labelKey, Icon }) => (
             <NavLink
@@ -175,7 +176,7 @@ export default function AdminSidebar({
             className="flex items-center gap-1.5 rounded px-3 py-1.5 text-xs font-semibold text-red-500 hover:bg-red-500/10 transition-colors"
           >
             <LogOut className="h-3.5 w-3.5" />
-            <span>Sign Out</span>
+            <span>{t("nav_signout", "Sign Out")}</span>
           </button>
         </div>
       </aside>

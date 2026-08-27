@@ -7,12 +7,14 @@ import { JwtModule } from '@nestjs/jwt';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ActivityModule } from '../activity/activity.module';
+import { MailerModule } from '../../common/mailer/mailer.module';
 
 @Module({
     imports: [
         UsersModule,
         PassportModule,
         ActivityModule,
+        MailerModule,
         JwtModule.registerAsync({
             imports: [ConfigModule],
             useFactory: async (configService: ConfigService) => ({

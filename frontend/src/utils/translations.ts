@@ -13,7 +13,7 @@ import { FEATURE_TRANSLATIONS } from "./featureTranslations";
 export const SUPPORTED_LOCALES = ["en", "fr", "ar", "es", "it", "mt", "eo"] as const;
 export type SupportedLocale = (typeof SUPPORTED_LOCALES)[number];
 
-export const DEFAULT_LOCALE: SupportedLocale = "en";
+export const DEFAULT_LOCALE: SupportedLocale = "fr";
 
 export const LOCALE_LABELS: Record<SupportedLocale, string> = {
   en: "EN",
@@ -66,12 +66,21 @@ const dictionaries: Record<SupportedLocale, Record<string, string>> = {
     ...(es as Record<string, string>),
   },
   it: {
+    ...(SOURCE_FALLBACK_TRANSLATIONS.it || {}),
+    ...(AUTO_TRANSLATIONS.it || {}),
+    ...(FEATURE_TRANSLATIONS.it || {}),
     ...(it as Record<string, string>),
   },
   mt: {
+    ...(SOURCE_FALLBACK_TRANSLATIONS.mt || {}),
+    ...(AUTO_TRANSLATIONS.mt || {}),
+    ...(FEATURE_TRANSLATIONS.mt || {}),
     ...(mt as Record<string, string>),
   },
   eo: {
+    ...(SOURCE_FALLBACK_TRANSLATIONS.eo || {}),
+    ...(AUTO_TRANSLATIONS.eo || {}),
+    ...(FEATURE_TRANSLATIONS.eo || {}),
     ...(eo as Record<string, string>),
   },
 };
@@ -87,7 +96,7 @@ export function localeLabel(locale: string): string {
 
 export function tForLocale(locale: string, key: string, fallback?: string): string {
   const normalizedLocale = (locale || DEFAULT_LOCALE).toLowerCase() as SupportedLocale;
-  const dict = dictionaries[normalizedLocale] || dictionaries.en;
+  const dict = dictionaries[normalizedLocale] || dictionaries.fr;
   
   if (dict && dict[key]) {
     return dict[key];
@@ -98,7 +107,11 @@ export function tForLocale(locale: string, key: string, fallback?: string): stri
     return rawFb[key];
   }
   
-  // Fallback to English dictionary
+  // Fallback to French dictionary then English dictionary
+  if (dictionaries.fr && dictionaries.fr[key]) {
+    return dictionaries.fr[key];
+  }
+
   if (dictionaries.en && dictionaries.en[key]) {
     return dictionaries.en[key];
   }

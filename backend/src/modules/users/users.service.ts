@@ -7,12 +7,14 @@ import { ActivityLog } from '../../models/ActivityLog';
 import * as bcrypt from 'bcryptjs';
 import * as crypto from 'crypto';
 import { ActivityService } from '../activity/activity.service';
+import { MailerService } from '../../common/mailer/mailer.service';
 
 @Injectable()
 export class UsersService {
     constructor(
         @Inject('KnexConnection') private readonly knex,
         private readonly activityService: ActivityService,
+        private readonly mailerService: MailerService,
     ) { }
 
     async findAll() {
@@ -142,6 +144,27 @@ export class UsersService {
         });
 
         await this.activityService.log(adminId, 'users', `Deleted user #${id}`);
+
+        try {
+            await this.mailerService.sendMail({
+                to: user.email,
+                subject: 'Account Deleted - Roots Tunisia',
+                text: `Hello ${(user as any).full_name || (user as any).fullName || ''},\n\nYour account on Roots Tunisia has been deleted. If you have any questions, please contact support at devteam@rootstunisia.com.\n\n- Roots Tunisia Team`,
+                html: `
+                    <div style="font-family: Arial, sans-serif; color: #2c1810; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e5e7eb; border-radius: 8px;">
+                        <h2 style="color: #991b1b;">Account Deleted</h2>
+                        <p>Hello ${(user as any).full_name || (user as any).fullName || 'User'},</p>
+                        <p>Your account on <strong>Roots Tunisia</strong> has been deleted by an administrator.</p>
+                        <p>If you believe this was done in error or if you have questions, please contact our support team at <a href="mailto:devteam@rootstunisia.com">devteam@rootstunisia.com</a>.</p>
+                        <br>
+                        <p>- Roots Tunisia Team</p>
+                    </div>
+                `,
+            });
+        } catch (err: any) {
+            console.error('Failed to send account deletion email:', err?.message || err);
+        }
+
         return { message: 'User deleted' };
     }
 }
