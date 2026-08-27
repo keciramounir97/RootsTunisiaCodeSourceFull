@@ -1945,7 +1945,8 @@ export function buildGedcomXXml(people, locale, t) {
 /** ===== MAIN COMPONENT ===== */
 
 export default function TreesBuilder({
-  people: rawPeople = [],
+  people: peopleProp = [],
+  rawPeople: rawPeopleProp = [],
   setPeople,
   readOnly = false,
   onAutoSave,
@@ -1958,10 +1959,11 @@ export default function TreesBuilder({
 
   const { language: locale, dir, t } = useLanguage();
 
-  const people = useMemo(
-    () => (Array.isArray(rawPeople) ? rawPeople : []),
-    [rawPeople]
-  );
+  const people = useMemo(() => {
+    if (Array.isArray(rawPeopleProp) && rawPeopleProp.length > 0) return rawPeopleProp;
+    if (Array.isArray(peopleProp) && peopleProp.length > 0) return peopleProp;
+    return [];
+  }, [peopleProp, rawPeopleProp]);
 
   const canMutatePeople = typeof setPeople === "function";
 

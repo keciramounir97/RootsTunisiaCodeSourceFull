@@ -356,8 +356,9 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
               </div>
             </div>
 
-            <div className="h-[520px] sm:h-[580px] w-full rounded-xl overflow-hidden border-2 border-[var(--gold)]/50 relative bg-[#090d16] shadow-inner">
+            <div className="h-[540px] sm:h-[600px] w-full rounded-xl overflow-hidden border-2 border-[var(--gold)]/60 relative bg-[#0b1726] shadow-2xl">
               <TreesBuilder
+                people={normalizedPeople}
                 rawPeople={normalizedPeople}
                 readOnly={true}
                 canDownloadDirectly={true}
