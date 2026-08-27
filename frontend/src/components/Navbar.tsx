@@ -36,7 +36,7 @@ import { useAuth } from "../admin/components/AuthContext";
 import { api } from "../api/client";
 import { useTranslation } from "../context/TranslationContext";
 import LanguageMenu from "./LanguageMenu";
-import logoSvg from "../assets/logo.svg";
+import logoSvg from "../assets/logo.png";
 
 const searchSchema = z.object({
   query: z.string().min(1, "Search cannot be empty"),
