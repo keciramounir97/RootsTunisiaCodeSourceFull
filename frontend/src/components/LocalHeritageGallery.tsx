@@ -52,7 +52,7 @@ export default function LocalHeritageGallery() {
     <section className="roots-section mb-16" data-aos="fade-up">
       <div className="roots-section-inner">
         <div className="text-center mb-10">
-          <h2 className="roots-heading">Maghrebi Visual Heritage</h2>
+          <h2 className="roots-heading">Tunisian Visual Heritage</h2>
           <p className="max-w-3xl mx-auto text-lg opacity-90">Browse the images uploaded to the Roots Tunisia gallery.</p>
         </div>
         <div className="flex justify-center mb-10">

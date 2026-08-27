@@ -1,40 +1,76 @@
 import { useTranslation } from "../context/TranslationContext";
 import { Shield } from "lucide-react";
+import SEO from "../components/SEO";
 
 export default function Terms() {
   const { t } = useTranslation();
   return (
-    <div className="page-container py-12">
-      <div className="max-w-3xl mx-auto">
-        <div className="flex items-center gap-3 mb-6">
-          <Shield className="w-8 h-8 text-[var(--brand-gold)]" />
-          <h1 className="text-3xl font-bold font-cinzel text-[var(--brand-teal)] dark:text-[var(--gold-light)]">
-            {t("terms_of_service", "Terms of Service")}
+    <div className="bg-[var(--background)] text-[var(--foreground)] min-h-screen py-16">
+      <SEO
+        title="Terms of Service — Roots Tunisia"
+        description="Terms of Service and conditions of use for the Roots Tunisia genealogical platform."
+      />
+      <div className="max-w-4xl mx-auto px-5">
+        <div className="surface-card p-8 sm:p-12">
+          <p className="eyebrow">Legal & Compliance</p>
+          <h1 className="display-lg mt-2 text-[var(--foreground)]">
+            Terms of Service
           </h1>
-        </div>
-        <p className="text-sm opacity-60 mb-8">{t("last_updated", "Last updated")}: June 2026</p>
-        <div className="prose prose-lg max-w-none space-y-6">
-          <p className="opacity-80">{t("terms_intro", "Please read these terms carefully before using Roots Tunisia.")}</p>
-          <section>
-            <h2 className="text-xl font-bold font-cinzel text-[var(--brand-teal)] dark:text-[var(--gold-light)] mb-3">1. Acceptance of Terms</h2>
-            <p className="opacity-80">By accessing and using Roots Tunisia, you agree to be bound by these Terms of Service. If you do not agree, please do not use our services.</p>
-          </section>
-          <section>
-            <h2 className="text-xl font-bold font-cinzel text-[var(--brand-teal)] dark:text-[var(--gold-light)] mb-3">2. User Accounts</h2>
-            <p className="opacity-80">You are responsible for maintaining the confidentiality of your account credentials and for all activities under your account.</p>
-          </section>
-          <section>
-            <h2 className="text-xl font-bold font-cinzel text-[var(--brand-teal)] dark:text-[var(--gold-light)] mb-3">3. Data & Privacy</h2>
-            <p className="opacity-80">We respect your privacy. Please refer to our Privacy Policy for information on how we collect, use, and protect your personal data.</p>
-          </section>
-          <section>
-            <h2 className="text-xl font-bold font-cinzel text-[var(--brand-teal)] dark:text-[var(--gold-light)] mb-3">4. Intellectual Property</h2>
-            <p className="opacity-80">All content uploaded by users remains their property. Roots Tunisia claims no ownership over user-generated family trees, documents, or narratives.</p>
-          </section>
-          <section>
-            <h2 className="text-xl font-bold font-cinzel text-[var(--brand-teal)] dark:text-[var(--gold-light)] mb-3">5. Limitation of Liability</h2>
-            <p className="opacity-80">Roots Tunisia provides genealogical research tools but cannot guarantee the accuracy of user-submitted data or third-party archive records.</p>
-          </section>
+          <div className="gold-rule mt-4 w-20" />
+          <p className="text-xs text-[var(--muted-foreground)] mt-4">
+            Last updated: March 2026 · Tunis, Tunisia
+          </p>
+
+          <div className="mt-8 space-y-8 text-sm leading-relaxed text-[var(--foreground)]/90">
+            <p>
+              Please read these Terms of Service carefully before accessing or using the Roots Tunisia platform, archives catalog, or family tree building tools.
+            </p>
+
+            <section>
+              <h2 className="font-display text-xl font-semibold text-[var(--foreground)] mb-2">
+                1. Acceptance of Terms
+              </h2>
+              <p className="text-[var(--muted-foreground)]">
+                By creating an account, browsing records, or uploading family materials to Roots Tunisia, you agree to be bound by these terms, all applicable Tunisian laws, and international data protection standards.
+              </p>
+            </section>
+
+            <section>
+              <h2 className="font-display text-xl font-semibold text-[var(--foreground)] mb-2">
+                2. User Accounts & Verification
+              </h2>
+              <p className="text-[var(--muted-foreground)]">
+                You are responsible for maintaining the confidentiality of your login credentials and for all activity conducted through your account. Family tree records may be set to public or private at your discretion.
+              </p>
+            </section>
+
+            <section>
+              <h2 className="font-display text-xl font-semibold text-[var(--foreground)] mb-2">
+                3. Historical Documents & Archival Accuracy
+              </h2>
+              <p className="text-[var(--muted-foreground)]">
+                Roots Tunisia provides citations and cataloging for civil status registers, charaïque court records, habous deeds, and municipal archives. While we strive for absolute documentary fidelity, researchers are encouraged to verify primary evidence.
+              </p>
+            </section>
+
+            <section>
+              <h2 className="font-display text-xl font-semibold text-[var(--foreground)] mb-2">
+                4. Intellectual Property & Family Ownership
+              </h2>
+              <p className="text-[var(--muted-foreground)]">
+                Users retain full moral and intellectual property over family photographs, oral histories, and private memoirs uploaded to their accounts. Roots Tunisia claims no ownership over user-generated pedigrees.
+              </p>
+            </section>
+
+            <section>
+              <h2 className="font-display text-xl font-semibold text-[var(--foreground)] mb-2">
+                5. Governing Law & Jurisdiction
+              </h2>
+              <p className="text-[var(--muted-foreground)]">
+                These terms are governed by the laws of the Republic of Tunisia. Any disputes shall be submitted to the competent courts of Tunis.
+              </p>
+            </section>
+          </div>
         </div>
       </div>
     </div>

@@ -1,36 +1,57 @@
 import { useTranslation } from "../context/TranslationContext";
-import { Lock } from "lucide-react";
+import SEO from "../components/SEO";
 
 export default function Privacy() {
   const { t } = useTranslation();
   return (
-    <div className="page-container py-12">
-      <div className="max-w-3xl mx-auto">
-        <div className="flex items-center gap-3 mb-6">
-          <Lock className="w-8 h-8 text-[var(--brand-gold)]" />
-          <h1 className="text-3xl font-bold font-cinzel text-[var(--brand-teal)] dark:text-[var(--gold-light)]">
-            {t("privacy_policy", "Privacy Policy")}
+    <div className="bg-[var(--background)] text-[var(--foreground)] min-h-screen py-16">
+      <SEO
+        title="Privacy Policy — Roots Tunisia"
+        description="Privacy policy and data protection guidelines for Roots Tunisia researchers and families."
+      />
+      <div className="max-w-4xl mx-auto px-5">
+        <div className="surface-card p-8 sm:p-12">
+          <p className="eyebrow">Privacy & Protection</p>
+          <h1 className="display-lg mt-2 text-[var(--foreground)]">
+            Privacy Policy
           </h1>
-        </div>
-        <p className="text-sm opacity-60 mb-8">{t("last_updated", "Last updated")}: June 2026</p>
-        <div className="space-y-6">
-          <p className="opacity-80">{t("privacy_intro", "We respect your privacy and are committed to protecting your personal data.")}</p>
-          <section>
-            <h2 className="text-xl font-bold font-cinzel text-[var(--brand-teal)] dark:text-[var(--gold-light)] mb-3">1. Data We Collect</h2>
-            <p className="opacity-80">We collect information you provide when creating an account, uploading family trees, and using our services. This includes name, email address, and genealogical data.</p>
-          </section>
-          <section>
-            <h2 className="text-xl font-bold font-cinzel text-[var(--brand-teal)] dark:text-[var(--gold-light)] mb-3">2. How We Use Data</h2>
-            <p className="opacity-80">Your data is used solely to provide and improve our genealogical services. We do not sell your personal information to third parties.</p>
-          </section>
-          <section>
-            <h2 className="text-xl font-bold font-cinzel text-[var(--brand-teal)] dark:text-[var(--gold-light)] mb-3">3. Data Security</h2>
-            <p className="opacity-80">We implement industry-standard security measures to protect your data against unauthorized access, alteration, or destruction.</p>
-          </section>
-          <section>
-            <h2 className="text-xl font-bold font-cinzel text-[var(--brand-teal)] dark:text-[var(--gold-light)] mb-3">4. Your Rights</h2>
-            <p className="opacity-80">You have the right to access, correct, or delete your personal data at any time. Contact us for assistance.</p>
-          </section>
+          <div className="gold-rule mt-4 w-20" />
+          <p className="text-xs text-[var(--muted-foreground)] mt-4">
+            Last updated: March 2026 · Tunis, Tunisia
+          </p>
+
+          <div className="mt-8 space-y-8 text-sm leading-relaxed text-[var(--foreground)]/90">
+            <p>
+              Roots Tunisia respects the sensitivity of family heritage and genealogical records. We are committed to protecting the privacy of living individuals and securing archival data.
+            </p>
+
+            <section>
+              <h2 className="font-display text-xl font-semibold text-[var(--foreground)] mb-2">
+                1. Protection of Living Individuals
+              </h2>
+              <p className="text-[var(--muted-foreground)]">
+                Details concerning living persons (born less than 100 years ago without death records) are automatically privatized by default and hidden from public searches unless explicitly shared by the tree owner.
+              </p>
+            </section>
+
+            <section>
+              <h2 className="font-display text-xl font-semibold text-[var(--foreground)] mb-2">
+                2. Information We Collect
+              </h2>
+              <p className="text-[var(--muted-foreground)]">
+                We collect account details (name, email, governorate/region), user-uploaded GEDCOM files, oral history recordings, and research inquiries submitted to our team.
+              </p>
+            </section>
+
+            <section>
+              <h2 className="font-display text-xl font-semibold text-[var(--foreground)] mb-2">
+                3. Data Hosting & Security
+              </h2>
+              <p className="text-[var(--muted-foreground)]">
+                All genealogical databases and document stores are encrypted in transit and at rest, adhering to Tunisian data protection regulations and modern cybersecurity standards.
+              </p>
+            </section>
+          </div>
         </div>
       </div>
     </div>

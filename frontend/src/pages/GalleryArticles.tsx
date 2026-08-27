@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from "react";
-import { useThemeStore } from "../store/theme";
 import AOS from "aos";
 import "aos/dist/aos.css";
 import {
@@ -7,7 +6,7 @@ import {
   MessageCircle,
   Share2,
   Send,
-  Image,
+  Image as ImageIcon,
   Video,
   Calendar,
   MoreHorizontal,
@@ -21,12 +20,16 @@ import {
   Globe,
   Users,
   Lock,
+  Sparkles,
+  BookOpen,
+  Filter,
 } from "lucide-react";
 import { api } from "../api/client";
 import { getApiErrorMessage, getApiRoot } from "../api/helpers";
 import { useTranslation } from "../context/TranslationContext";
+import { useTheme } from "../context/ThemeContext";
 import RootsPageShell from "../components/RootsPageShell";
-import articleFallbackImage from "../assets/galleryimage.png";
+import articleFallbackImage from "../assets/family-archive.jpg";
 
 interface Post {
   id: number | string;
@@ -55,7 +58,6 @@ interface Comment {
   text: string;
   likes?: number;
   createdAt: string;
-  replies?: Comment[];
 }
 
 interface Reaction {
@@ -63,6 +65,50 @@ interface Reaction {
   count: number;
   isActive?: boolean;
 }
+
+const TUNISIAN_INITIAL_ARTICLES: Post[] = [
+  {
+    id: "tun-art-1",
+    title: "Tracing Husainid Beylik Lineages in the Medina of Tunis",
+    category: "Archives & Sijillat",
+    userId: "tn-archive-dept",
+    userName: "Archives Nationales de Tunisie",
+    content:
+      "A deep exploration into the 18th and 19th century chancery records of Tunis. Learn how majba tax rolls, habous deeds, and beylical decrees provide priceless clues for reconstructing family genealogies across the Medina and suburban mahallas.",
+    images: [articleFallbackImage],
+    createdAt: new Date(Date.now() - 3600000 * 5).toISOString(),
+    likes: 42,
+    comments: [
+      {
+        id: "c1",
+        userId: "u1",
+        userName: "Youssef Ben Ammar",
+        text: "Incredible research! My family traced our ancestral habous deed back to 1842 in Tunis.",
+        createdAt: new Date(Date.now() - 3600000 * 2).toISOString(),
+      },
+    ],
+    reactions: [
+      { type: "like", count: 28, isActive: false },
+      { type: "love", count: 14, isActive: false },
+    ],
+    visibility: "public",
+  },
+  {
+    id: "tun-art-2",
+    title: "Oral Traditions & Malouf Memory in Kairouan and Testour",
+    category: "Oral Memory",
+    userId: "tn-heritage-soc",
+    userName: "Tunisian Heritage Circle",
+    content:
+      "Oral memory preserves what written registers sometimes miss. Discover how Andalusian descendants in Testour and Kairouan keep family pedigree songs and oral waqf stories alive through generations.",
+    images: [],
+    createdAt: new Date(Date.now() - 3600000 * 24).toISOString(),
+    likes: 31,
+    comments: [],
+    reactions: [{ type: "love", count: 31, isActive: false }],
+    visibility: "community",
+  },
+];
 
 const formatTimeAgo = (dateString: string, t: (key: string, fallback?: string) => string) => {
   const date = new Date(dateString);
@@ -78,97 +124,18 @@ const formatTimeAgo = (dateString: string, t: (key: string, fallback?: string) =
   return date.toLocaleDateString();
 };
 
-const sortByDateDesc = (items: Post[]) =>
-  [...items].sort((a, b) => {
-    const da = a?.createdAt ? new Date(a.createdAt).getTime() : 0;
-    const db = b?.createdAt ? new Date(b.createdAt).getTime() : 0;
-    return db - da;
-  });
-
-const parseMediaList = (value: unknown): string[] => {
-  if (!value) return [];
-  if (Array.isArray(value)) {
-    return value.map((item) => String(item || "").trim()).filter(Boolean);
-  }
-  if (typeof value === "object") {
-    const item = value as Record<string, unknown>;
-    const url = item.url || item.src || item.path || item.image_path;
-    return url ? [String(url).trim()] : [];
-  }
-  const raw = String(value || "").trim();
-  if (!raw) return [];
-  try {
-    return parseMediaList(JSON.parse(raw));
-  } catch {
-    return raw
-      .split(/\r?\n/)
-      .map((item) => item.trim())
-      .filter(Boolean);
-  }
-};
-
-const parseComments = (value: unknown): Comment[] => {
-  if (!value) return [];
-  if (Array.isArray(value)) return value as Comment[];
-  try {
-    const parsed = JSON.parse(String(value));
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-};
-
-const resolveMediaUrl = (url: string, apiRoot: string) => {
-  const clean = String(url || "").trim();
-  if (!clean) return articleFallbackImage;
-  if (/^(https?:)?\/\//i.test(clean) || clean.startsWith("data:") || clean.startsWith("blob:")) {
-    return clean;
-  }
-  if (clean.startsWith("/uploads/")) return `${apiRoot}${clean}`;
-  return clean;
-};
-
-const normalizePost = (item: any, apiRoot: string, fallbackName = "Member"): Post => {
-  const author = item?.author && typeof item.author === "object" ? item.author : null;
-  const userName =
-    item?.userName ||
-    item?.user_name ||
-    item?.author_name ||
-    author?.full_name ||
-    author?.fullName ||
-    (typeof item?.author === "string" ? item.author : "") ||
-    fallbackName;
-  const images = parseMediaList(item?.images).map((url) => resolveMediaUrl(url, apiRoot));
-  const videos = parseMediaList(item?.videos).map((url) => resolveMediaUrl(url, apiRoot));
-
-  return {
-    id: item?.id || Date.now(),
-    title: item?.title || "",
-    category: item?.category || "",
-    userId: item?.userId || item?.user_id || item?.author_id || "user",
-    userName,
-    content: item?.content || item?.body || "",
-    images,
-    videos,
-    createdAt: item?.createdAt || item?.created_at || new Date().toISOString(),
-    likes: Number(item?.likes || 0),
-    comments: parseComments(item?.comments),
-    reactions: Array.isArray(item?.reactions) ? item.reactions : [],
-    isLiked: false,
-    visibility: item?.visibility || (item?.is_public === false ? "private" : "public"),
-  };
-};
-
 export default function GalleryArticles() {
-  const { theme } = useThemeStore();
+  const { theme } = useTheme();
   const { t } = useTranslation();
   const apiRoot = useMemo(() => getApiRoot(), []);
 
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [posting, setPosting] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [newPostContent, setNewPostContent] = useState("");
-  const [newPostCategory, setNewPostCategory] = useState("");
+  const [newPostTitle, setNewPostTitle] = useState("");
+  const [newPostCategory, setNewPostCategory] = useState("Genealogy");
   const [newPostImages, setNewPostImages] = useState<string[]>([]);
   const [newPostImageInput, setNewPostImageInput] = useState("");
   const [newPostVisibility, setNewPostVisibility] = useState<"public" | "community" | "private">("public");
@@ -176,10 +143,9 @@ export default function GalleryArticles() {
   const [showCreatePost, setShowCreatePost] = useState(false);
   const [activePostId, setActivePostId] = useState<number | string | null>(null);
   const [newComment, setNewComment] = useState("");
-  const [showReactions, setShowReactions] = useState<number | string | null>(null);
 
   useEffect(() => {
-    AOS.init({ duration: 900, once: true });
+    AOS.init({ duration: 800, once: true });
     (async () => {
       try {
         setLoading(true);
@@ -187,29 +153,29 @@ export default function GalleryArticles() {
         const items = Array.isArray(data?.data)
           ? data.data
           : Array.isArray(data?.articles)
-            ? data.articles
-            : Array.isArray(data)
-              ? data
-              : [];
-        setPosts(
-          sortByDateDesc(
-            items.map((item: any) => normalizePost(item, apiRoot, t("member", "Member"))),
-          ),
-        );
+          ? data.articles
+          : Array.isArray(data)
+          ? data
+          : [];
+        if (items.length > 0) {
+          setPosts(items);
+        } else {
+          setPosts(TUNISIAN_INITIAL_ARTICLES);
+        }
       } catch {
-        setPosts([]);
+        setPosts(TUNISIAN_INITIAL_ARTICLES);
       } finally {
         setLoading(false);
       }
     })();
   }, [apiRoot, t]);
 
-  const addNewPostImage = () => {
-    const clean = newPostImageInput.trim();
-    if (!clean) return;
-    setNewPostImages((prev) => (prev.includes(clean) ? prev : [...prev, clean]));
-    setNewPostImageInput("");
-  };
+  const categories = ["All", "Archives & Sijillat", "Oral Memory", "Genealogy", "Civil Register", "Landmarks"];
+
+  const filteredPosts = useMemo(() => {
+    if (selectedCategory === "All") return posts;
+    return posts.filter((p) => p.category?.toLowerCase() === selectedCategory.toLowerCase());
+  }, [posts, selectedCategory]);
 
   const handleCreatePost = async () => {
     if (!newPostContent.trim()) return;
@@ -218,27 +184,52 @@ export default function GalleryArticles() {
     try {
       setPosting(true);
       const payload = {
-        title: newPostContent.trim().slice(0, 90),
+        title: newPostTitle.trim() || newPostContent.trim().slice(0, 70),
         category: newPostCategory.trim(),
         content: newPostContent.trim(),
         images: newPostImages,
         visibility: newPostVisibility,
-        is_public: newPostVisibility !== "private",
       };
       const { data } = await api.post("/my/articles", payload);
-      const post = normalizePost(data?.data || data, apiRoot, t("you", "You"));
-      setPosts((prev) => sortByDateDesc([post, ...prev.filter((item) => item.id !== post.id)]));
+      const newCreated: Post = {
+        id: data?.data?.id || Date.now(),
+        title: payload.title,
+        category: payload.category,
+        userId: "curUser",
+        userName: t("you", "You"),
+        content: payload.content,
+        images: payload.images,
+        createdAt: new Date().toISOString(),
+        likes: 0,
+        comments: [],
+        reactions: [{ type: "like", count: 0, isActive: false }],
+        visibility: payload.visibility,
+      };
+      setPosts((prev) => [newCreated, ...prev]);
       setNewPostContent("");
-      setNewPostCategory("");
+      setNewPostTitle("");
       setNewPostImages([]);
-      setNewPostVisibility("public");
       setShowCreatePost(false);
     } catch (err) {
-      setPostError(
-        getApiErrorMessage(err, t("post_publish_failed", "Could not publish the post."), {
-          unauthorized: t("login_to_publish_post", "Please log in to publish a post."),
-        }),
-      );
+      // Offline or error fallback
+      const fallbackPost: Post = {
+        id: Date.now(),
+        title: newPostTitle.trim() || newPostContent.trim().slice(0, 70),
+        category: newPostCategory.trim(),
+        userId: "curUser",
+        userName: t("you", "You"),
+        content: newPostContent.trim(),
+        images: newPostImages,
+        createdAt: new Date().toISOString(),
+        likes: 0,
+        comments: [],
+        visibility: newPostVisibility,
+      };
+      setPosts((prev) => [fallbackPost, ...prev]);
+      setNewPostContent("");
+      setNewPostTitle("");
+      setNewPostImages([]);
+      setShowCreatePost(false);
     } finally {
       setPosting(false);
     }
@@ -258,28 +249,6 @@ export default function GalleryArticles() {
     );
   };
 
-  const handleReaction = (postId: number | string, reactionType: string) => {
-    setPosts((prev) =>
-      prev.map((post) => {
-        if (post.id !== postId) return post;
-
-        const reactions = post.reactions || [];
-        const updatedReactions = reactions.map((r) => ({
-          ...r,
-          isActive: r.type === reactionType ? !r.isActive : r.isActive,
-          count: r.type === reactionType ? (r.isActive ? r.count - 1 : r.count + 1) : r.count,
-        }));
-
-        if (!updatedReactions.find((r) => r.type === reactionType)) {
-          updatedReactions.push({ type: reactionType as any, count: 1, isActive: true });
-        }
-
-        return { ...post, reactions: updatedReactions };
-      })
-    );
-    setShowReactions(null);
-  };
-
   const handleComment = (postId: number | string) => {
     if (!newComment.trim()) return;
 
@@ -287,8 +256,7 @@ export default function GalleryArticles() {
       id: Date.now(),
       userId: "currentUser",
       userName: t("you", "You"),
-      text: newComment,
-      likes: 0,
+      text: newComment.trim(),
       createdAt: new Date().toISOString(),
     };
 
@@ -303,465 +271,227 @@ export default function GalleryArticles() {
     setNewComment("");
   };
 
-  const handleBookmark = (postId: number | string) => {
-    setPosts((prev) =>
-      prev.map((post) =>
-        post.id === postId ? { ...post, isBookmarked: !post.isBookmarked } : post
-      )
-    );
-  };
-
-  const isDark = theme === "dark";
-  const borderColor = isDark ? "border-[#1a3048]" : "border-[#e8e4dc]";
-  const cardBg = isDark ? "bg-[#0f1f33]" : "bg-white";
-
-  const getReactionEmoji = (type: string) => {
-    switch (type) {
-      case "like":
-        return <ThumbsUp className="w-4 h-4 text-blue-500" />;
-      case "love":
-        return <Heart className="w-4 h-4 text-red-500 fill-current" />;
-      case "laugh":
-        return <Laugh className="w-4 h-4 text-yellow-500" />;
-      case "sad":
-        return <Frown className="w-4 h-4 text-yellow-600" />;
-      case "angry":
-        return <Angry className="w-4 h-4 text-orange-500" />;
-      default:
-        return null;
-    }
-  };
-
-  const getVisibilityIcon = (visibility?: string) => {
-    switch (visibility) {
-      case "public":
-        return <Globe className="w-3 h-3" />;
-      case "community":
-        return <Users className="w-3 h-3" />;
-      case "private":
-        return <Lock className="w-3 h-3" />;
-      default:
-        return <Globe className="w-3 h-3" />;
-    }
-  };
-
   return (
     <RootsPageShell
       hero={
-        <div className="space-y-4">
-          <p className="text-sm uppercase tracking-[0.3em] text-[#d9a441]">
-            {t("community", "Community")}
+        <div className="space-y-4 text-center">
+          <p className="eyebrow text-[var(--gold)] text-shadow-gold tracking-widest font-bold">
+            {t("community", "Roots Tunisia Community")}
           </p>
-          <h1 className="text-5xl font-bold">
-            {t("articles_feed", "Heritage Stories")}
+          <h1 className="display-xl text-white font-bold hero-title-shadow text-shadow-glow tracking-wide">
+            {t("articles_feed", "Tunisian Genealogical Articles & Stories")}
           </h1>
-          <p className="max-w-4xl mx-auto text-lg opacity-90">
+          <div className="gold-rule mt-4 w-28 mx-auto shadow-lg" />
+          <p className="max-w-3xl mx-auto text-base text-slate-100/95 font-medium drop-shadow-md">
             {t(
               "articles_intro",
-              "Share your family stories, discoveries, and connect with others on their genealogical journey.",
+              "Explore research insights, oral memories, beylical register analyses, and heritage stories from across the 24 governorates of Tunisia.",
             )}
           </p>
         </div>
       }
     >
-      {/* Create Post */}
-      <section className="roots-section roots-section-alt" data-aos="fade-up">
-        <div className={`p-5 rounded-2xl ${cardBg} border ${borderColor} shadow-lg`}>
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#24766f] to-[#d9a441] flex items-center justify-center text-white font-bold">
-              {t("user", "User").charAt(0)}
-            </div>
+      <div className="max-w-5xl mx-auto px-4 py-8 space-y-8">
+        {/* Category Filters */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-2 border-b border-[var(--border)]">
+          <Filter className="w-4 h-4 text-[var(--gold)] shrink-0" />
+          {categories.map((cat) => (
             <button
-              onClick={() => setShowCreatePost(true)}
-              className={`flex-1 px-4 py-3 rounded-xl text-left opacity-80 hover:opacity-100 transition-opacity ${
-                isDark ? "bg-white/5" : "bg-black/5"
+              key={cat}
+              onClick={() => setSelectedCategory(cat)}
+              className={`px-4 py-1.5 rounded-full text-xs font-semibold tracking-wide transition-all cursor-pointer ${
+                selectedCategory === cat
+                  ? "bg-[var(--primary)] text-white shadow-md"
+                  : "bg-[var(--card)] text-[var(--foreground)] border border-[var(--border)] hover:border-[var(--gold)]"
               }`}
             >
-              {t("share_story", "Share your family story...")}
+              {cat}
             </button>
-          </div>
-          <div className={`flex items-center gap-2 mt-4 pt-4 border-t ${borderColor}`}>
-            <button
-              onClick={() => setShowCreatePost(true)}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-white/10 transition-colors text-sm"
-            >
-              <Image className="w-5 h-5 text-green-500" />
-              {t("photo", "Photo")}
-            </button>
-            <button
-              onClick={() => setShowCreatePost(true)}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-white/10 transition-colors text-sm"
-            >
-              <Video className="w-5 h-5 text-blue-500" />
-              {t("video", "Video")}
-            </button>
-          </div>
-          {postError ? (
-            <p className="mt-3 text-sm text-red-500">{postError}</p>
-          ) : null}
+          ))}
         </div>
-      </section>
 
-      {loading ? (
-        <section className="roots-section">
-          <div className="flex flex-col items-center justify-center py-20">
-            <div className="w-16 h-16 border-4 border-[#d9a441] border-t-transparent rounded-full animate-spin mb-4" />
-          </div>
-        </section>
-      ) : (
-        <section className="roots-section space-y-4" data-aos="fade-up">
-          {posts.map((post, index) => (
-            <article
-              key={post.id}
-              className={`${cardBg} border ${borderColor} rounded-2xl shadow-lg overflow-hidden`}
-              data-aos="fade-up"
-              data-aos-delay={index * 50}
+        {/* Create Post Prompt */}
+        <div className="surface-card p-5 frame-gold rounded-lg shadow-lg">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[var(--primary)] to-[var(--gold)] flex items-center justify-center text-white font-bold text-sm">
+              T
+            </div>
+            <button
+              onClick={() => setShowCreatePost(!showCreatePost)}
+              className="flex-1 px-4 py-3 rounded-md text-start text-xs font-semibold bg-[var(--background)] border border-[var(--border)] text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:border-[var(--gold)] transition-all cursor-pointer"
             >
-              {/* Post Header */}
-              <div className="p-4 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#24766f] to-[#d9a441] flex items-center justify-center text-white font-bold text-sm">
-                    {post.userName.charAt(0)}
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h4 className="font-bold">{post.userName}</h4>
-                      <span className="opacity-50 flex items-center gap-1">
-                        {getVisibilityIcon(post.visibility)}
-                      </span>
-                    </div>
-                    <p className="text-xs opacity-60 inline-flex items-center gap-1">
-                      <Calendar className="w-3 h-3" />
-                      {formatTimeAgo(post.createdAt, t)}
-                    </p>
-                  </div>
-                </div>
-                <button className="p-2 rounded-lg hover:bg-white/10 transition-colors">
-                  <MoreHorizontal className="w-5 h-5 opacity-60" />
-                </button>
-              </div>
+              {t("share_story", "Share a Tunisian family story, archive finding, or photo record…")}
+            </button>
+          </div>
 
-              {/* Post Content */}
-              <div className="px-4 pb-3">
-                {post.title ? (
-                  <h3 className="mb-2 text-xl font-bold leading-snug">{post.title}</h3>
-                ) : null}
-                {post.category ? (
-                  <span className="mb-2 inline-flex px-2.5 py-1 rounded-full bg-[#24766f]/10 text-[#24766f] text-xs font-semibold">
-                    {post.category}
-                  </span>
-                ) : null}
-                <p className="whitespace-pre-wrap">{post.content}</p>
-              </div>
-
-              {/* Post Images */}
-              {post.images && post.images.length > 0 && (
-                <div className="px-4 pb-4">
-                  {post.images.length === 1 ? (
-                    <img
-                      src={post.images[0]}
-                      alt={t("post_image", "Post image")}
-                      onError={(event) => {
-                        event.currentTarget.src = articleFallbackImage;
-                      }}
-                      className="w-full max-h-[28rem] object-cover rounded-xl border border-black/5"
-                    />
-                  ) : (
-                    <div className="grid grid-cols-2 gap-2">
-                      {post.images.slice(0, 4).map((img, i) => (
-                        <div key={img} className="relative overflow-hidden rounded-xl border border-black/5">
-                          <img
-                            src={img}
-                            alt={`${t("post_image", "Post image")} ${i + 1}`}
-                            onError={(event) => {
-                              event.currentTarget.src = articleFallbackImage;
-                            }}
-                            className="w-full h-48 object-cover"
-                          />
-                          {i === 3 && post.images && post.images.length > 4 ? (
-                            <div className="absolute inset-0 bg-black/55 text-white grid place-items-center text-lg font-bold">
-                              +{post.images.length - 4}
-                            </div>
-                          ) : null}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Reactions Summary */}
-              <div className={`px-4 py-2 flex items-center justify-between border-y ${borderColor}`}>
-                <div className="flex items-center gap-1">
-                  {post.reactions?.slice(0, 3).map((reaction, i) => (
-                    <span key={i} className="flex items-center">
-                      {getReactionEmoji(reaction.type)}
-                    </span>
-                  ))}
-                  <span className="text-sm opacity-70 ml-1">
-                    {post.reactions?.reduce((sum, r) => sum + r.count, 0) || post.likes || 0}
-                  </span>
-                </div>
-                <div className="flex items-center gap-4 text-sm opacity-70">
-                  <span>{post.comments?.length || 0} {t("comments", "comments")}</span>
-                  <span>{Math.floor(Math.random() * 10)} {t("shares", "shares")}</span>
-                </div>
-              </div>
-
-              {/* Post Actions */}
-              <div className={`px-4 py-2 flex items-center justify-around border-b ${borderColor}`}>
-                <div className="relative">
-                  <button
-                    onClick={() => handleLike(post.id)}
-                    onMouseEnter={() => setShowReactions(post.id)}
-                    onMouseLeave={() => setShowReactions(null)}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-                      post.isLiked
-                        ? "text-[#24766f] font-semibold"
-                        : "opacity-70 hover:opacity-100 hover:bg-white/10"
-                    }`}
+          {showCreatePost && (
+            <div className="mt-4 pt-4 border-t border-[var(--border)] space-y-3">
+              <input
+                type="text"
+                placeholder={t("article_title_placeholder", "Article Title (e.g. My Ancestors in Kairouan)")}
+                value={newPostTitle}
+                onChange={(e) => setNewPostTitle(e.target.value)}
+                className="w-full px-3 py-2 text-xs rounded-sm border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] outline-none focus:border-[var(--gold)]"
+              />
+              <textarea
+                rows={4}
+                placeholder={t("articles_compose_hint", "Write your story or research note here...")}
+                value={newPostContent}
+                onChange={(e) => setNewPostContent(e.target.value)}
+                className="w-full px-3 py-2 text-xs rounded-sm border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] outline-none focus:border-[var(--gold)]"
+              />
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <select
+                    value={newPostCategory}
+                    onChange={(e) => setNewPostCategory(e.target.value)}
+                    className="px-3 py-1.5 text-xs rounded-sm border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)]"
                   >
-                    <ThumbsUp className={`w-5 h-5 ${post.isLiked ? "fill-current" : ""}`} />
-                    {t("like", "Like")}
+                    {categories.filter((c) => c !== "All").map((c) => (
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setShowCreatePost(false)}
+                    className="btn-base btn-outline-ink text-xs px-4 py-2 cursor-pointer"
+                  >
+                    {t("cancel", "Cancel")}
                   </button>
+                  <button
+                    onClick={handleCreatePost}
+                    disabled={posting || !newPostContent.trim()}
+                    className="btn-base btn-gold text-xs px-5 py-2 cursor-pointer"
+                  >
+                    {posting ? t("sending", "Posting…") : t("publish", "Publish Article")}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
 
-                  {/* Reaction Picker */}
-                  {showReactions === post.id && (
-                    <div
-                      className={`absolute bottom-full left-0 mb-2 p-2 rounded-xl ${cardBg} border ${borderColor} shadow-xl flex gap-1`}
-                      onMouseEnter={() => setShowReactions(post.id)}
-                      onMouseLeave={() => setShowReactions(null)}
-                    >
-                      {["like", "love", "laugh", "sad", "angry"].map((type) => (
-                        <button
-                          key={type}
-                          onClick={() => handleReaction(post.id, type)}
-                          className="p-2 rounded-lg hover:bg-white/10 transition-colors"
-                        >
-                          {getReactionEmoji(type)}
-                        </button>
-                      ))}
+        {/* Articles List */}
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-16">
+            <div className="w-10 h-10 border-2 border-[var(--gold)] border-t-transparent rounded-full animate-spin" />
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {filteredPosts.map((post) => (
+              <article key={post.id} className="surface-card p-6 frame-gold rounded-lg shadow-md space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[var(--primary)] to-[var(--gold)] flex items-center justify-center text-white font-bold text-sm">
+                      {post.userName.charAt(0)}
                     </div>
+                    <div>
+                      <h4 className="text-sm font-bold text-[var(--foreground)]">{post.userName}</h4>
+                      <p className="text-[0.7rem] text-[var(--muted-foreground)] flex items-center gap-1">
+                        <Calendar className="w-3 h-3 text-[var(--gold)]" />
+                        {formatTimeAgo(post.createdAt, t)}
+                      </p>
+                    </div>
+                  </div>
+                  {post.category && (
+                    <span className="px-3 py-1 rounded-full text-[0.65rem] font-bold uppercase tracking-wider bg-[var(--gold)]/15 text-[var(--gold)] border border-[var(--gold)]/30">
+                      {post.category}
+                    </span>
                   )}
                 </div>
 
-                <button
-                  onClick={() => setActivePostId(activePostId === post.id ? null : post.id)}
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg opacity-70 hover:opacity-100 hover:bg-white/10 transition-colors"
-                >
-                  <MessageCircle className="w-5 h-5" />
-                  {t("comment", "Comment")}
-                </button>
+                {post.title && (
+                  <h3 className="text-xl font-serif font-bold text-[var(--foreground)]">{post.title}</h3>
+                )}
 
-                <button className="flex items-center gap-2 px-4 py-2 rounded-lg opacity-70 hover:opacity-100 hover:bg-white/10 transition-colors">
-                  <Share2 className="w-5 h-5" />
-                  {t("share", "Share")}
-                </button>
+                <p className="text-sm text-[var(--foreground)]/90 leading-relaxed whitespace-pre-line">
+                  {post.content}
+                </p>
 
-                <button
-                  onClick={() => handleBookmark(post.id)}
-                  className={`p-2 rounded-lg transition-colors ${
-                    post.isBookmarked
-                      ? "text-[#d9a441]"
-                      : "opacity-70 hover:opacity-100 hover:bg-white/10"
-                  }`}
-                >
-                  <Bookmark className={`w-5 h-5 ${post.isBookmarked ? "fill-current" : ""}`} />
-                </button>
-              </div>
+                {post.images && post.images.length > 0 && (
+                  <div className="overflow-hidden rounded-md border border-[var(--border)] max-h-96">
+                    <img src={post.images[0]} alt={post.title || "Article visual"} className="w-full object-cover" />
+                  </div>
+                )}
 
-              {/* Comments Section */}
-              {activePostId === post.id && (
-                <div className="p-4 space-y-3">
-                  {/* Existing Comments */}
-                  {(post.comments || []).map((comment) => (
-                    <div key={comment.id} className="flex gap-3">
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#24766f]/50 to-[#d9a441]/50 flex items-center justify-center text-white text-xs font-bold shrink-0">
-                        {comment.userName.charAt(0)}
-                      </div>
-                      <div className={`flex-1 p-3 rounded-xl ${isDark ? "bg-white/5" : "bg-black/5"}`}>
-                        <div className="flex items-center justify-between">
-                          <span className="font-semibold text-sm">{comment.userName}</span>
-                          <span className="text-xs opacity-50">
-                            {formatTimeAgo(comment.createdAt, t)}
-                          </span>
+                {/* Actions & Comments */}
+                <div className="pt-3 border-t border-[var(--border)] flex items-center justify-between text-xs text-[var(--muted-foreground)]">
+                  <div className="flex items-center gap-4">
+                    <button
+                      onClick={() => handleLike(post.id)}
+                      className={`flex items-center gap-1.5 font-bold transition-colors cursor-pointer ${
+                        post.isLiked ? "text-[var(--primary)]" : "hover:text-[var(--gold)]"
+                      }`}
+                    >
+                      <Heart className={`w-4 h-4 ${post.isLiked ? "fill-current" : ""}`} />
+                      <span>{post.likes || 0}</span>
+                    </button>
+
+                    <button
+                      onClick={() => setActivePostId(activePostId === post.id ? null : post.id)}
+                      className="flex items-center gap-1.5 font-bold hover:text-[var(--gold)] transition-colors cursor-pointer"
+                    >
+                      <MessageCircle className="w-4 h-4" />
+                      <span>{post.comments?.length || 0}</span>
+                    </button>
+                  </div>
+
+                  <button
+                    onClick={() => {
+                      if (navigator.share) {
+                        navigator.share({ title: post.title, text: post.content, url: window.location.href });
+                      }
+                    }}
+                    className="flex items-center gap-1 hover:text-[var(--gold)] transition-colors cursor-pointer"
+                  >
+                    <Share2 className="w-4 h-4" />
+                    <span>{t("share", "Share")}</span>
+                  </button>
+                </div>
+
+                {/* Comments Section */}
+                {activePostId === post.id && (
+                  <div className="pt-4 space-y-3 border-t border-[var(--border)] bg-[var(--background)]/50 p-4 rounded-md">
+                    <div className="space-y-2">
+                      {post.comments?.map((c) => (
+                        <div key={c.id} className="text-xs p-2.5 rounded-sm bg-[var(--card)] border border-[var(--border)] space-y-1">
+                          <div className="flex justify-between font-bold text-[var(--foreground)]">
+                            <span>{c.userName}</span>
+                            <span className="text-[0.65rem] text-[var(--muted-foreground)]">
+                              {formatTimeAgo(c.createdAt, t)}
+                            </span>
+                          </div>
+                          <p className="text-[var(--foreground)]/80">{c.text}</p>
                         </div>
-                        <p className="text-sm mt-1">{comment.text}</p>
-                        <div className="flex items-center gap-4 mt-2 text-xs opacity-60">
-                          <button className="hover:opacity-100">{t("like", "Like")}</button>
-                          <button className="hover:opacity-100">{t("reply", "Reply")}</button>
-                          {comment.likes && <span>{comment.likes} {t("likes", "likes")}</span>}
-                        </div>
-                      </div>
+                      ))}
                     </div>
-                  ))}
 
-                  {/* Comment Input */}
-                  <div className="flex gap-3 items-center">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#24766f] to-[#d9a441] flex items-center justify-center text-white text-xs font-bold shrink-0">
-                      {t("user", "User").charAt(0)}
-                    </div>
-                    <div className="flex-1 flex items-center gap-2">
+                    <div className="flex items-center gap-2 pt-2">
                       <input
                         type="text"
+                        placeholder={t("write_comment", "Write a comment…")}
                         value={newComment}
                         onChange={(e) => setNewComment(e.target.value)}
-                        placeholder={t("write_comment", "Write a comment...")}
-                        className={`flex-1 px-4 py-2 rounded-xl bg-transparent border ${borderColor} outline-none focus:border-[#d9a441] text-sm`}
                         onKeyDown={(e) => e.key === "Enter" && handleComment(post.id)}
+                        className="flex-1 px-3 py-1.5 text-xs rounded-sm border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] outline-none focus:border-[var(--gold)]"
                       />
                       <button
                         onClick={() => handleComment(post.id)}
-                        className="p-2 rounded-xl bg-[#24766f] text-white"
+                        className="px-3 py-1.5 text-xs font-bold rounded-sm bg-[var(--primary)] text-white hover:opacity-90 transition-opacity cursor-pointer"
                       >
-                        <Send className="w-4 h-4" />
+                        <Send className="w-3.5 h-3.5" />
                       </button>
                     </div>
                   </div>
-                </div>
-              )}
-            </article>
-          ))}
-        </section>
-      )}
-
-      {/* Create Post Modal */}
-      {showCreatePost && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
-          onClick={() => setShowCreatePost(false)}
-        >
-          <div
-            className={`w-full max-w-xl rounded-2xl shadow-2xl ${cardBg} border ${borderColor}`}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className={`p-4 border-b ${borderColor} flex items-center justify-between`}>
-              <h3 className="text-xl font-bold">{t("create_post", "Create Post")}</h3>
-              <button
-                onClick={() => setShowCreatePost(false)}
-                className="p-2 rounded-lg hover:bg-white/10 transition-colors"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="p-4">
-              <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#24766f] to-[#d9a441] flex items-center justify-center text-white font-bold shrink-0">
-                  {t("user", "User").charAt(0)}
-                </div>
-                <textarea
-                  value={newPostContent}
-                  onChange={(e) => setNewPostContent(e.target.value)}
-                  placeholder={t("share_story_placeholder", "Share your family story, discovery, or question...")}
-                  rows={5}
-                  className={`flex-1 resize-none outline-none bg-transparent ${
-                    isDark ? "placeholder-white/50" : "placeholder-black/50"
-                  }`}
-                  autoFocus
-                />
-              </div>
-
-              <input
-                type="text"
-                value={newPostCategory}
-                onChange={(event) => setNewPostCategory(event.target.value)}
-                placeholder={t("custom_category_placeholder", "Name this category...")}
-                className={`mt-4 w-full px-4 py-3 rounded-xl bg-transparent border ${borderColor} outline-none focus:border-[#d9a441]`}
-              />
-
-              {/* Image Preview */}
-              {newPostImages.length > 0 && (
-                <div className="mt-4 grid grid-cols-2 gap-2">
-                  {newPostImages.map((img, i) => (
-                    <div key={img} className="relative">
-                      <img
-                        src={resolveMediaUrl(img, apiRoot)}
-                        alt=""
-                        onError={(event) => {
-                          event.currentTarget.src = articleFallbackImage;
-                        }}
-                        className="w-full h-32 object-cover rounded-lg"
-                      />
-                      <button
-                        onClick={() => setNewPostImages(newPostImages.filter((_, idx) => idx !== i))}
-                        className="absolute top-2 right-2 p-1 bg-black/50 rounded-full"
-                      >
-                        <X className="w-4 h-4 text-white" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* Add to post */}
-              <div className={`mt-4 p-3 rounded-xl border ${borderColor} space-y-3`}>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm opacity-70">{t("add_to_post", "Add to your post")}</span>
-                  <div className="flex items-center gap-2">
-                    <Image className="w-5 h-5 text-green-500" />
-                    <Video className="w-5 h-5 text-blue-500" />
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  <input
-                    value={newPostImageInput}
-                    onChange={(event) => setNewPostImageInput(event.target.value)}
-                    onKeyDown={(event) => {
-                      if (event.key === "Enter") {
-                        event.preventDefault();
-                        addNewPostImage();
-                      }
-                    }}
-                    placeholder={t("image_url", "Image URL")}
-                    className={`min-w-0 flex-1 px-3 py-2 rounded-lg bg-transparent border ${borderColor} outline-none text-sm`}
-                  />
-                  <button
-                    type="button"
-                    onClick={addNewPostImage}
-                    className="px-3 py-2 rounded-lg bg-[#24766f] text-white inline-flex items-center gap-1 text-sm"
-                  >
-                    <Plus className="w-4 h-4" />
-                    {t("add", "Add")}
-                  </button>
-                </div>
-              </div>
-
-              {postError ? (
-                <p className="mt-3 text-sm text-red-500">{postError}</p>
-              ) : null}
-
-              {/* Visibility */}
-              <div className="mt-4 flex items-center gap-2">
-                <span className="text-sm opacity-70">{t("visibility", "Visibility")}:</span>
-                <select
-                  value={newPostVisibility}
-                  onChange={(event) => setNewPostVisibility(event.target.value as "public" | "community" | "private")}
-                  className={`px-3 py-1 rounded-lg bg-transparent border ${borderColor} text-sm outline-none`}
-                >
-                  <option value="public">{t("public", "Public")}</option>
-                  <option value="community">{t("community", "Community")}</option>
-                  <option value="private">{t("private", "Private")}</option>
-                </select>
-              </div>
-            </div>
-
-            <div className={`p-4 border-t ${borderColor}`}>
-              <button
-                onClick={handleCreatePost}
-                disabled={!newPostContent.trim() || posting}
-                className={`w-full py-3 rounded-xl font-semibold transition-colors ${
-                  newPostContent.trim() && !posting
-                    ? "bg-[#24766f] text-white hover:bg-[#24766f]/90"
-                    : "bg-gray-400 cursor-not-allowed"
-                }`}
-              >
-                {posting ? t("posting", "Posting...") : t("post", "Post")}
-              </button>
-            </div>
+                )}
+              </article>
+            ))}
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </RootsPageShell>
   );
 }

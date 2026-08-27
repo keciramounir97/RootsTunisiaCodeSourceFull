@@ -5,14 +5,49 @@ import {
   resolveSiteImageUrl,
   type SiteImageRecord,
 } from "../hooks/useSiteImages";
-import defaultHeroImage from "../assets/background-image-herosection.png";
+import slideCarthageRuins from "../assets/01_Carthage_Ancient_Ruins_Landscape.jpg";
+import slideElJemCorridor from "../assets/03_El_Jem_Amphitheater_Arched_Corridor.jpg";
+import slideMosqueTilework from "../assets/09_Mosque_Geometric_Tilework_Lantern.jpg";
+import slideSidiBouSaidDoors from "../assets/11_Sidi_Bou_Said_Blue_Doors_Bougainvillea.jpg";
+import slideMedinaDoor from "../assets/16_Medina_Ornate_Door_Blue_Grille.jpg";
+import slideFortress from "../assets/17_Fortress_Aerial_Courtyard_Palms.jpg";
 
-const MAGHREB_DEFAULT_SLIDES: SiteImageRecord[] = [
+const TUNISIA_DEFAULT_SLIDES: SiteImageRecord[] = [
   {
     id: -1,
-    imagePath: defaultHeroImage,
-    title: "Family Connections",
-    caption: "Preserving memory, documents, and family roots",
+    imagePath: slideCarthageRuins,
+    title: "Carthage & Mediterranean Antiquity",
+    caption: "3,000 years of Punic and Roman African lineage documented in Tunis archives",
+  },
+  {
+    id: -2,
+    imagePath: slideSidiBouSaidDoors,
+    title: "Sidi Bou Saïd & Andalusian Heritage",
+    caption: "Blue doors, moucharabiehs, and family oral narratives above the Gulf of Tunis",
+  },
+  {
+    id: -3,
+    imagePath: slideMosqueTilework,
+    title: "Kairouan & Sacred Manuscript Archives",
+    caption: "Geometric zellige tilework, waqf deeds, and scholarly genealogies across generations",
+  },
+  {
+    id: -4,
+    imagePath: slideElJemCorridor,
+    title: "El Jem & Roman Africa Proconsularis",
+    caption: "Colosseum corridors, mosaic inscriptions, and Sahelian family origins",
+  },
+  {
+    id: -5,
+    imagePath: slideMedinaDoor,
+    title: "Medina of Tunis & Patrician Palaces",
+    caption: "Ornate studs, beylical court decrees, and urban family lineages",
+  },
+  {
+    id: -6,
+    imagePath: slideFortress,
+    title: "Coastal Fortresses & Island Memory",
+    caption: "Ribats, watchtowers, and maritime genealogical registers from Monastir to Djerba",
   },
 ];
 
@@ -41,7 +76,7 @@ export default function HeroSlider({
     slides && slides.length > 0
       ? slides
       : useDefaultFallback
-        ? MAGHREB_DEFAULT_SLIDES
+        ? TUNISIA_DEFAULT_SLIDES
         : [];
 
   const [current, setCurrent] = useState(0);
@@ -123,13 +158,13 @@ export default function HeroSlider({
         <div className="absolute bottom-24 left-0 right-0 px-6 pointer-events-none z-10">
           <div className="max-w-3xl mx-auto text-center">
             {slide.title && (
-              <p className="text-[#d4a843] text-sm font-semibold uppercase tracking-[0.35em] mb-1 drop-shadow-lg">
-                {slide.title}
+              <p className="eyebrow text-[var(--gold)] text-shadow-gold text-sm font-bold uppercase tracking-[0.35em] mb-1 drop-shadow-xl">
+                {t(slide.title, slide.title)}
               </p>
             )}
             {slide.caption && (
-              <p className="text-white/80 text-base drop-shadow-md">
-                {slide.caption}
+              <p className="text-slate-100/95 text-base font-medium drop-shadow-md">
+                {t(slide.caption, slide.caption)}
               </p>
             )}
           </div>

@@ -1,10 +1,10 @@
-/* eslint-disable no-unused-vars */
 import { NavLink } from "react-router-dom";
 import ThemeToggle from "./ThemeToggle";
 import { useThemeStore } from "../../store/theme";
 import { useTranslation } from "../../context/TranslationContext";
 import LanguageMenu from "../../components/LanguageMenu";
 import { useAuth } from "./AuthContext";
+import { Logo } from "../../components/site/Logo";
 import {
   LayoutDashboard,
   Network,
@@ -82,7 +82,6 @@ export default function AdminSidebar({
   const { theme } = useThemeStore();
   const { logout, user } = useAuth();
   const { t } = useTranslation();
-  const isDark = theme === "dark";
 
   const granted = Array.isArray(user?.permissions) ? user.permissions : [];
   const normalizedRole = Number(user?.role);
@@ -101,129 +100,83 @@ export default function AdminSidebar({
 
   return (
     <>
-      {/* Backdrop - mobile/tablet when sidebar overlays */}
-      <div
-        onClick={onClose}
-        className={`fixed inset-0 z-40 transition-opacity duration-300 lg:hidden ${
-          open
-            ? "opacity-100 pointer-events-auto bg-black/50 backdrop-blur-sm"
-            : "opacity-0 pointer-events-none"
-        }`}
-        aria-hidden="true"
-      />
-
-      {/* Sidebar Panel - toggleable on ALL screen sizes */}
-      <aside
-        className={`fixed top-0 left-0 bottom-0 w-72 z-50 transition-transform duration-300 ease-out ${
-          open ? "translate-x-0" : "-translate-x-full"
-        } flex flex-col shadow-2xl overflow-hidden
-        ${isDark ? "bg-[#092C2B] border-r border-[#C39637]/20" : "bg-[#092C2B] border-r border-[#C39637]/20"}`}
-        style={{ borderRadius: "0 1.25rem 1.25rem 0" }}
-      >
-        {/* Subtle gradient overlay */}
+      {/* Mobile backdrop */}
+      {open && (
         <div
-          className="absolute inset-0 pointer-events-none opacity-30"
-          style={{
-            background:
-              "radial-gradient(ellipse at top left, rgba(195,150,55,0.08) 0%, transparent 60%)",
-          }}
+          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden"
+          onClick={onClose}
         />
+      )}
 
-        {/* Header */}
-        <div className="relative h-20 flex items-center justify-between px-5 border-b border-white/10 shrink-0">
+      {/* Sidebar Container */}
+      <aside
+        className={`fixed top-0 bottom-0 left-0 z-40 flex flex-col w-64 border-r border-[var(--gold)]/30 bg-[var(--card)]/98 backdrop-blur shadow-2xl transition-transform duration-300 ${
+          open ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        {/* Brand / Logo Top */}
+        <div className="flex h-16 items-center justify-between px-5 border-b border-[var(--gold)]/25">
+          <Logo />
+          <button
+            onClick={onToggle}
+            title={t("close_sidebar", "Close Sidebar")}
+            className="rounded p-1.5 text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-[var(--gold)]/10 transition-colors"
+          >
+            <PanelLeftClose className="h-5 w-5" />
+          </button>
+        </div>
+
+        {/* User Mini Profile */}
+        <div className="px-5 py-4 border-b border-[var(--gold)]/15 bg-[var(--secondary)]/40">
           <div className="flex items-center gap-3">
-            <img src="/logo.svg" alt="Roots Tunisia Logo" className="h-12 w-auto object-contain rounded-xl" />
-            <div>
-              <span className="text-[10px] tracking-[0.2em] text-[#C39637]/90 uppercase font-medium block">
-                Admin Panel
-              </span>
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--primary)] text-xs font-bold text-white uppercase">
+              {user?.name ? user.name.charAt(0) : "A"}
             </div>
-          </div>
-          <div className="flex items-center gap-1">
-            <button
-              onClick={onToggle}
-              className="admin-icon-btn hidden lg:flex p-2 rounded-lg hover:bg-white/10 text-[#e8dfca]/70 hover:text-white transition-colors"
-              aria-label={open ? t("close_sidebar", "Close sidebar") : t("open_sidebar", "Open sidebar")}
-              title={open ? t("close_sidebar", "Close sidebar") : t("open_sidebar", "Open sidebar")}
-            >
-              <PanelLeftClose className="w-5 h-5" />
-            </button>
-            <button
-              onClick={onClose}
-              className="admin-icon-btn lg:hidden p-2 rounded-lg hover:bg-white/10 text-[#e8dfca]/70 hover:text-white transition-colors"
-              aria-label={t("close_sidebar", "Close sidebar")}
-            >
-              <X className="w-5 h-5" />
-            </button>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-bold text-[var(--foreground)] truncate">{user?.name || "Admin"}</p>
+              <p className="text-[0.65rem] text-[var(--gold)] uppercase tracking-[0.14em] font-semibold">
+                {isSuperAdmin ? t("super_admin", "Super Admin") : t("researcher", "Researcher")}
+              </p>
+            </div>
           </div>
         </div>
 
-        {/* Navigation */}
-        <nav className="relative flex-1 overflow-y-auto py-5 px-3 flex flex-col gap-1">
-          <div className="px-3 mb-3">
-            <span className="text-[10px] uppercase tracking-[0.2em] font-semibold text-[#C39637]/60">
-              {t("menu", "Main Menu")}
-            </span>
-          </div>
-
+        {/* Navigation links */}
+        <div className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
+          <p className="px-3 text-[0.65rem] font-bold uppercase tracking-[0.2em] text-[var(--gold)] mb-2">
+            {t("navigation", "Navigation")}
+          </p>
           {visibleLinks.map(({ to, end, labelKey, Icon }) => (
             <NavLink
               key={to}
               to={to}
               end={end}
-              onClick={onClose}
+              onClick={() => {
+                if (window.innerWidth < 1024) onClose();
+              }}
               className={({ isActive }) =>
-                `group flex items-center gap-3 px-3.5 py-3 rounded-xl transition-all duration-200 ${
+                `flex items-center gap-3 rounded-md px-3 py-2.5 text-xs font-semibold tracking-wide transition-all ${
                   isActive
-                    ? "bg-[#C39637] text-[#092C2B] font-semibold shadow-md shadow-[#C39637]/25"
-                    : "text-[#e8dfca]/80 hover:bg-white/8 hover:text-white"
+                    ? "bg-[var(--gold)]/15 text-[var(--gold)] border-r-2 border-[var(--gold)] font-bold"
+                    : "text-[var(--muted-foreground)] hover:bg-[var(--gold)]/10 hover:text-[var(--foreground)]"
                 }`
               }
             >
-              {({ isActive }) => (
-                <>
-                  <div
-                    className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 transition-colors ${
-                      isActive ? "bg-[#092C2B]/20" : "bg-white/5 group-hover:bg-white/10"
-                    }`}
-                  >
-                    <Icon
-                      className={`w-4 h-4 ${isActive ? "text-[#092C2B]" : "text-[#C39637]"}`}
-                    />
-                  </div>
-                  <span className="text-sm tracking-wide flex-1">{t(labelKey, labelFallbacks[labelKey] || labelKey)}</span>
-                  {isActive && (
-                    <ChevronRight className="w-4 h-4 text-[#092C2B]/60 shrink-0" />
-                  )}
-                </>
-              )}
+              <Icon className="h-4 w-4 shrink-0" />
+              <span className="truncate">{t(labelKey, labelFallbacks[labelKey] || labelKey)}</span>
             </NavLink>
           ))}
-        </nav>
+        </div>
 
-        {/* Footer */}
-        <div className="relative p-4 border-t border-white/10 bg-black/20 shrink-0 space-y-3">
-          <div className="grid grid-cols-2 gap-2">
-            <LanguageMenu
-              align="up"
-              buttonClassName="w-full justify-center px-3 py-2 rounded-lg border border-white/10 bg-white/5 text-[#e8dfca] hover:bg-white/10 transition-colors text-xs font-medium"
-            />
-            <ThemeToggle
-              className="w-full justify-center px-3 py-2 rounded-lg border border-white/10 bg-white/5 text-[#e8dfca] hover:bg-white/10 transition-colors"
-            />
-          </div>
-
+        {/* Bottom Utility Bar */}
+        <div className="p-3 border-t border-[var(--gold)]/20 bg-[var(--secondary)]/40 flex items-center justify-between gap-2">
+          <ThemeToggle />
           <button
-            onClick={() => {
-              logout();
-              onClose();
-            }}
-            className="interactive-btn w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl
-              bg-red-500/15 text-red-400 hover:bg-red-500/25 hover:text-red-300
-              border border-red-500/20 transition-all duration-200 text-sm font-medium"
+            onClick={() => logout()}
+            className="flex items-center gap-1.5 rounded px-3 py-1.5 text-xs font-semibold text-red-500 hover:bg-red-500/10 transition-colors"
           >
-            <LogOut className="w-4 h-4" />
-            <span>{t("logout", "Sign Out")}</span>
+            <LogOut className="h-3.5 w-3.5" />
+            <span>{t("nav_signout", "Sign Out")}</span>
           </button>
         </div>
       </aside>
