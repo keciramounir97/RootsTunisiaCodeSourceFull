@@ -648,6 +648,10 @@ export default function Individuals() {
       else if (/\.(png|jpe?g|gif|webp)$/i.test(lower) || lower.includes("/uploads/gallery/")) detectedKind = "image";
       else detectedKind = "external";
     }
+    if (detectedKind === "external") {
+      window.open(fullUrl, "_blank", "noopener,noreferrer");
+      return;
+    }
     setPreviewSource({
       url: fullUrl,
       label: label || fullUrl.split("/").pop() || "Source",

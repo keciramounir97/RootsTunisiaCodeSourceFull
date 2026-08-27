@@ -797,6 +797,10 @@ async function bootstrap() {
             next();
         });
 
+        // Static file serving for uploads & public assets
+        app.useStaticAssets(path.join(process.cwd(), 'uploads'), { prefix: '/uploads/' });
+        app.useStaticAssets(path.join(process.cwd(), 'public'), { prefix: '/public/' });
+
         // Compression
         app.use(compression());
 

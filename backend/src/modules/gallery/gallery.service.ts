@@ -21,6 +21,12 @@ export class GalleryService implements OnModuleInit {
             if (!(await this.knex.schema.hasColumn('gallery', 'image_mime_type'))) {
                 await this.knex.schema.alterTable('gallery', (t: any) => t.string('image_mime_type', 120).nullable());
             }
+            if (!(await this.knex.schema.hasColumn('gallery', 'book_id'))) {
+                await this.knex.schema.alterTable('gallery', (t: any) => t.integer('book_id').unsigned().nullable());
+            }
+            if (!(await this.knex.schema.hasColumn('gallery', 'tree_id'))) {
+                await this.knex.schema.alterTable('gallery', (t: any) => t.integer('tree_id').unsigned().nullable());
+            }
             await this.backfillImageData();
         } catch (err: any) {
             console.warn(`Gallery file-backup init skipped: ${err?.message || err}`);
@@ -103,25 +109,37 @@ export class GalleryService implements OnModuleInit {
         }
 
         const isPublic = data.isPublic === 'true' || data.isPublic === true;
-        const imagePath = `/uploads/gallery/${file.filename}`;
+        const filename = file.filename || `${Date.now()}-${(file.originalname || 'photo.webp').replace(/[^\w.-]+/g, '_')}`;
+        const targetDir = path.join(process.cwd(), 'uploads/gallery');
+        if (!fs.existsSync(targetDir)) fs.mkdirSync(targetDir, { recursive: true });
+        const targetPath = path.join(targetDir, filename);
 
-        // Gallery currently only fully public uploads in legacy code (no private folder logic seen in galleryController, unlike books/trees)
-        // Legacy: imagePath: `/uploads/gallery/${req.file.filename}`
+        let imageData: Buffer;
+        if (file.buffer) {
+            imageData = file.buffer;
+            fs.writeFileSync(targetPath, file.buffer);
+        } else if (file.path && fs.existsSync(file.path)) {
+            imageData = fs.readFileSync(file.path);
+        } else {
+            imageData = Buffer.from([]);
+        }
+
+        const imagePath = `/uploads/gallery/${filename}`;
 
         const newItem = await Gallery.query(this.knex).insertAndFetch({
             title: data.title,
-            description: data.description,
+            description: data.description || '',
             image_path: imagePath,
-            image_data: fs.readFileSync(file.path),
+            image_data: imageData,
             image_mime_type: file.mimetype || this.mimeForPath(file.originalname || imagePath),
             uploaded_by: userId,
             is_public: isPublic,
-            archive_source: data.archiveSource,
-            document_code: data.documentCode,
-            location: data.location,
-            year: data.year,
-            photographer: data.photographer,
-            book_id: data.bookId || data.book_id || null, // Support both
+            archive_source: data.archiveSource || null,
+            document_code: data.documentCode || null,
+            location: data.location || null,
+            year: data.year || null,
+            photographer: data.photographer || null,
+            book_id: data.bookId || data.book_id || null,
             tree_id: data.treeId || data.tree_id || null,
         });
 
@@ -154,10 +172,25 @@ export class GalleryService implements OnModuleInit {
         updateData.is_public = Boolean(isPublic);
 
         if (file) {
+            const filename = file.filename || `${Date.now()}-${(file.originalname || 'photo.webp').replace(/[^\w.-]+/g, '_')}`;
+            const targetDir = path.join(process.cwd(), 'uploads/gallery');
+            if (!fs.existsSync(targetDir)) fs.mkdirSync(targetDir, { recursive: true });
+            const targetPath = path.join(targetDir, filename);
+
+            let imageData: Buffer;
+            if (file.buffer) {
+                imageData = file.buffer;
+                fs.writeFileSync(targetPath, file.buffer);
+            } else if (file.path && fs.existsSync(file.path)) {
+                imageData = fs.readFileSync(file.path);
+            } else {
+                imageData = Buffer.from([]);
+            }
+
             if (item.image_path) safeUnlink(resolveStoredFilePath(item.image_path));
-            updateData.image_path = `/uploads/gallery/${file.filename}`;
-            updateData.image_data = fs.readFileSync(file.path);
-            updateData.image_mime_type = file.mimetype || this.mimeForPath(file.originalname || file.filename);
+            updateData.image_path = `/uploads/gallery/${filename}`;
+            updateData.image_data = imageData;
+            updateData.image_mime_type = file.mimetype || this.mimeForPath(file.originalname || filename);
         }
 
         await Gallery.query(this.knex).patch(updateData).where('id', id);

@@ -4632,7 +4632,13 @@ export default function TreesBuilder({
                               <div className="flex items-center gap-1.5 shrink-0">
                                 <button
                                   type="button"
-                                  onClick={() => setPreviewSource({ url: l.url, label: l.label, kind: l.kind })}
+                                  onClick={() => {
+                                    if (l.kind === "external" || (/^https?:\/\//i.test(l.url) && !/\.(png|jpe?g|gif|webp|pdf|mp3|wav)$/i.test(l.url))) {
+                                      window.open(l.url, "_blank", "noopener,noreferrer");
+                                    } else {
+                                      setPreviewSource({ url: l.url, label: l.label, kind: l.kind });
+                                    }
+                                  }}
                                   className="inline-flex items-center gap-1 rounded-lg bg-[#0d9488]/15 px-2.5 py-1 text-xs font-semibold text-[#0d9488] dark:text-[#5eead4] hover:bg-[#0d9488]/25 transition"
                                 >
                                   <ExternalLink className="h-3 w-3" />
