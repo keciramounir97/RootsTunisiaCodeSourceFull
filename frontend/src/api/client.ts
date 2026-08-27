@@ -9,20 +9,29 @@ import axios, { AxiosRequestConfig, AxiosError, InternalAxiosRequestConfig } fro
  * - In production: VITE_API_URL (supports with or without /api suffix)
  */
 const API_ROOT: string = (() => {
-  // 1. Development mode: intelligently determine backend URL
-  if (import.meta.env.DEV) {
-    // If accessing via IP (e.g. 192.168.x.x), try to hit backend on same IP
-    if (
-      typeof window !== "undefined" &&
-      window.location.hostname !== "localhost" &&
-      window.location.hostname !== "127.0.0.1"
-    ) {
-      return `http://${window.location.hostname}:5000`;
+  if (typeof window !== "undefined") {
+    const hostname = window.location.hostname;
+    const protocol = window.location.protocol;
+
+    // A) If accessing via direct IP address (e.g. 2.24.71.239) or localhost/127.0.0.1
+    if (/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(hostname) || hostname === "localhost" || hostname === "127.0.0.1") {
+      return `${protocol}//${hostname}:5000`;
     }
-    return "http://localhost:5000";
+
+    // B) If explicit VITE_API_URL env var is set
+    if (import.meta.env.VITE_API_URL) {
+      return String(import.meta.env.VITE_API_URL);
+    }
+
+    // C) Production domain fallback
+    if (hostname.includes("rootstunisia.com")) {
+      return `${protocol}//server.rootstunisia.com`;
+    }
+
+    // D) Generic host fallback
+    return `${protocol}//${hostname}:5000`;
   }
 
-  // 2. Production: explicit URL or default to https://server.rootstunisia.com
   return import.meta.env.VITE_API_URL || "https://server.rootstunisia.com";
 })();
 
