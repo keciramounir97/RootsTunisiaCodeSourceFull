@@ -105,6 +105,7 @@ export default function AdminManagement() {
       const { data } = await requestWithFallback(
         [
           () => api.get("/admin/admins"),
+          () => api.get("/admin/users"),
         ],
         shouldFallback
       );
@@ -201,6 +202,7 @@ export default function AdminManagement() {
         await requestWithFallback(
           [
             () => api.patch(`/admin/admins/${editingAdmin.id}`, payload),
+            () => api.patch(`/admin/users/${editingAdmin.id}`, payload),
           ],
           shouldFallback
         );
@@ -212,6 +214,7 @@ export default function AdminManagement() {
         const { data } = await requestWithFallback(
           [
             () => api.post("/admin/admins", payload),
+            () => api.post("/admin/users", payload),
           ],
           shouldFallback
         );
@@ -253,6 +256,7 @@ export default function AdminManagement() {
       await requestWithFallback(
         [
           () => api.delete(`/admin/admins/${id}`),
+          () => api.delete(`/admin/users/${id}`),
         ],
         shouldFallback
       );

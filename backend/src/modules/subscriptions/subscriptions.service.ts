@@ -9,7 +9,28 @@ export class SubscriptionsService {
     constructor(@Inject('KnexConnection') private readonly knex) {}
 
     async listTiers() {
-        return SubscriptionTier.query(this.knex).where('is_active', true).orderBy('sort_order');
+        try {
+            const hasIsActive = await this.knex.schema.hasColumn('subscription_tiers', 'is_active');
+            const hasSortOrder = await this.knex.schema.hasColumn('subscription_tiers', 'sort_order');
+            let q = SubscriptionTier.query(this.knex);
+            if (hasIsActive) q = q.where('is_active', true);
+            if (hasSortOrder) q = q.orderBy('sort_order', 'asc');
+            return await q;
+        } catch {
+            return this.knex('subscription_tiers').select('*');
+        }
+    }
+
+    async listTiersForAdmin() {
+        try {
+            const hasSortOrder = await this.knex.schema.hasColumn('subscription_tiers', 'sort_order');
+            if (hasSortOrder) {
+                return await this.knex('subscription_tiers').orderBy('sort_order', 'asc');
+            }
+            return await this.knex('subscription_tiers').select('*');
+        } catch {
+            return this.knex('subscription_tiers').select('*');
+        }
     }
 
     async getTier(id: number) {
@@ -45,10 +66,6 @@ export class SubscriptionsService {
             });
         }
         this.tierFeaturesReady = true;
-    }
-
-    async listTiersForAdmin() {
-        return this.knex('subscription_tiers').orderBy('sort_order', 'asc');
     }
 
     async listTierFeatures() {
