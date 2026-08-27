@@ -527,6 +527,10 @@ async function seedInitialData(knex: Knex) {
 
         // 3) Seed Gallery records from uploaded assets so admin can edit / delete / update them freely
         if (await knex.schema.hasTable('gallery')) {
+            const existingCount = await knex('gallery').count('* as count').first();
+            if (Number(existingCount?.count || (existingCount as any)?.['count(*)'] || 0) >= 15) {
+                return;
+            }
             const firstAdmin = await knex('users').where({ role_id: 3 }).orderBy('id', 'asc').first();
             const uploaderId = firstAdmin?.id || 1;
 
@@ -806,15 +810,7 @@ async function bootstrap() {
         app.useGlobalInterceptors(new TransformInterceptor());
         app.useGlobalFilters(new AllExceptionsFilter());
 
-        // Run migrations & seed data automatically on startup
-        try {
-            const knex = app.get('KnexConnection');
-            await ensureSchemaReady(knex);
-        } catch (e) {
-            console.warn('⚠️ Initial schema setup warning:', e);
-        }
-
-        // Port
+        // Port & listen immediately for instant HTTP & CORS preflight availability
         const port = process.env.PORT || 5000;
         await app.listen(port, '0.0.0.0');
 
@@ -825,6 +821,14 @@ async function bootstrap() {
         console.log(`🟢 DATABASE HANDSHAKE: Fully Verified & Operational`);
         console.log(`🟢 CORS ALLOWED ORIGINS: ${Array.isArray(corsOrigins) ? corsOrigins.join(', ') : 'All (Dev Mode)'}`);
         console.log('================================================================\n');
+
+        // Run migrations & seed data in background
+        try {
+            const knex = app.get('KnexConnection');
+            await ensureSchemaReady(knex);
+        } catch (e) {
+            console.warn('⚠️ Initial schema setup warning:', e);
+        }
 
         // Graceful shutdown
         process.on('SIGTERM', async () => {

@@ -129,7 +129,7 @@ function pickFirstDefined(...values: Array<string | number | undefined | null>):
                                 password: cred.p,
                                 database,
                                 charset: 'utf8mb4',
-                                connectTimeout: 8000,
+                                connectTimeout: 1500,
                             },
                             pool: {
                                 min: 0,
