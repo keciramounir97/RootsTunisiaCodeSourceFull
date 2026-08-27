@@ -1,20 +1,9 @@
 import { useEffect, useMemo, useState, FormEvent } from "react";
 import { Link } from "react-router-dom";
-import {
-  Facebook,
-  Twitter,
-  Instagram,
-  Youtube,
-  MapPin,
-  Mail,
-  Phone,
-  Clock,
-  MessageCircle,
-  Send,
-} from "lucide-react";
+import { Mail, MapPin, Phone, Send } from "lucide-react";
 import { useTranslation } from "../context/TranslationContext";
 import { api } from "../api/client";
-
+import { Logo } from "./site/Logo";
 import { loadFooterConfig } from "../admin/pages/FooterSettings";
 
 interface FooterProps {
@@ -24,6 +13,22 @@ interface FooterProps {
     brandTagline?: string;
   };
 }
+
+const explore = [
+  { to: "/gallery/trees", label: "Family Trees" },
+  { to: "/gallery", label: "Photo Gallery" },
+  { to: "/library", label: "Library" },
+  { to: "/gallery/audios", label: "Oral Histories" },
+  { to: "/gallery/articles", label: "Articles" },
+];
+
+const research = [
+  { to: "/periods", label: "Tunisian Periods" },
+  { to: "/sources", label: "Sources" },
+  { to: "/archives", label: "Archives" },
+  { to: "/subscriptions", label: "Subscriptions" },
+  { to: "/contact", label: "Contact" },
+];
 
 const fallbackFooter = {
   enabled: true,
@@ -56,38 +61,6 @@ export default function Footer({ data }: FooterProps) {
       setLoaded(true);
     }
   }, [data]);
-
-  const navLinks = useMemo(
-    () => [
-      { label: t("home", "Home"), href: "/" },
-      { label: t("gallery", "Gallery"), href: "/gallery" },
-      { label: t("periods", "Periods"), href: "/periods" },
-      { label: t("sources", "Sources"), href: "/sources" },
-      { label: t("subscriptions", "Subscriptions"), href: "/subscriptions" },
-    ],
-    [t]
-  );
-
-  const resourceLinks = useMemo(
-    () => [
-      { label: t("sources", "Sources"), href: "/sources" },
-      { label: t("gallery", "Gallery"), href: "/gallery" },
-      { label: t("periods", "Periods"), href: "/periods" },
-      { label: t("terms_of_service", "Terms"), href: "/terms" },
-      { label: t("privacy_policy", "Privacy"), href: "/privacy" },
-    ],
-    [t]
-  );
-
-  const socialLinks = useMemo(
-    () => [
-      { Icon: Facebook, href: "https://facebook.com" },
-      { Icon: Twitter, href: "https://twitter.com" },
-      { Icon: Instagram, href: "https://instagram.com" },
-      { Icon: Youtube, href: "https://youtube.com" },
-    ],
-    []
-  );
 
   const handleNewsletterSubmit = async (event: FormEvent) => {
     event.preventDefault();
@@ -127,146 +100,103 @@ export default function Footer({ data }: FooterProps) {
   if (!loaded || footer?.enabled === false) return null;
 
   return (
-    <footer className="heritage-footer text-white">
-      <div className="heritage-footer-grid mx-auto pb-4">
-        <div className="heritage-footer-column">
-          <div className="heritage-logo mb-4">
-            <img src="/logo.svg" alt="Roots Tunisia" className="h-10 w-auto object-contain" />
-          </div>
-          <p className="text-dark-beige/80 mb-6 leading-relaxed">
+    <footer className="mt-24 border-t border-[var(--gold)]/35 bg-[var(--secondary)]/60 text-[var(--foreground)]">
+      <div className="mx-auto grid max-w-7xl gap-10 px-5 py-14 md:grid-cols-4">
+        <div>
+          <Logo />
+          <p className="mt-4 max-w-xs text-sm leading-relaxed text-[var(--muted-foreground)]">
             {footer.brandTagline ||
-              t(
-                "footer_desc",
-                "La référence pour préserver l'histoire familiale de la Tunisie."
-              )}
+              "A Tunisian genealogy platform connecting civil registers, beylical and Ottoman registers, habous deeds, Protectorate archives, photographs and family memory — from Carthage to Kairouan, Tunis to Djerba."}
           </p>
-          <div className="heritage-social-links flex gap-4">
-            {socialLinks.map(({ Icon, href }) => (
-              <a
-                key={href}
-                href={href}
-                target="_blank"
-                rel="noreferrer"
-                className="w-10 h-10 rounded-full bg-white/10 hover:bg-accent-gold/20 flex items-center justify-center transition-all hover:scale-110"
-              >
-                <Icon size={18} className="text-accent-gold" />
-              </a>
-            ))}
-          </div>
         </div>
 
-        <div className="heritage-footer-column">
-          <h3 className="text-lg font-bold mb-4 text-accent-gold">{t("links", "Liens rapides")}</h3>
-          <ul className="heritage-footer-links space-y-2">
-            {navLinks.map((link) => (
-              <li key={link.href}>
+        <div>
+          <h4 className="eyebrow">{t("explore", "Explore")}</h4>
+          <ul className="mt-4 space-y-2.5">
+            {explore.map((l) => (
+              <li key={l.to}>
                 <Link
-                  to={link.href}
-                  className="text-dark-beige/80 hover:text-accent-gold transition-colors inline-block interactive-link"
+                  to={l.to}
+                  className="text-sm text-[var(--muted-foreground)] transition-colors hover:text-[var(--gold)]"
                 >
-                  {link.label}
+                  {l.label}
                 </Link>
               </li>
             ))}
           </ul>
         </div>
 
-        <div className="heritage-footer-column">
-          <h3 className="text-lg font-bold mb-4 text-accent-gold">{t("resources", "Ressources")}</h3>
-          <ul className="heritage-footer-links space-y-2">
-            {resourceLinks.map((link) => (
-              <li key={link.href}>
+        <div>
+          <h4 className="eyebrow">{t("research", "Research")}</h4>
+          <ul className="mt-4 space-y-2.5">
+            {research.map((l) => (
+              <li key={l.to}>
                 <Link
-                  to={link.href}
-                  className="text-dark-beige/80 hover:text-accent-gold transition-colors inline-block interactive-link"
+                  to={l.to}
+                  className="text-sm text-[var(--muted-foreground)] transition-colors hover:text-[var(--gold)]"
                 >
-                  {link.label}
+                  {l.label}
                 </Link>
               </li>
             ))}
           </ul>
         </div>
 
-        <div className="heritage-footer-column">
-          <h3 className="text-lg font-bold mb-4 text-accent-gold">{t("contact", "Contact")}</h3>
-          <ul className="heritage-footer-links space-y-3">
-            <li className="flex items-center gap-2 text-dark-beige/80">
-              <MapPin size={16} className="text-accent-gold" />
-              <span>Location opening soon</span>
+        <div>
+          <h4 className="eyebrow">{t("contact", "Contact")}</h4>
+          <ul className="mt-4 space-y-3 text-sm text-[var(--muted-foreground)]">
+            <li className="flex items-start gap-2">
+              <MapPin className="mt-0.5 h-4 w-4 text-[var(--gold)] shrink-0" />
+              <span>Rue de la Kasbah, Medina of Tunis, Tunisia</span>
             </li>
-            <li className="flex items-center gap-2 text-dark-beige/80">
-              <Mail size={16} className="text-accent-gold" />
-              <a href="mailto:contact@rootstunisia.com" className="hover:text-accent-gold transition-colors interactive-link">
+            <li className="flex items-center gap-2">
+              <Mail className="h-4 w-4 text-[var(--gold)] shrink-0" />
+              <a href="mailto:contact@rootstunisia.com" className="hover:text-[var(--gold)]">
                 contact@rootstunisia.com
               </a>
             </li>
-            <li className="flex items-center gap-2 text-dark-beige/80">
-              <Phone size={16} className="text-accent-gold" />
-              <a href="tel:+9613626082" className="hover:text-accent-gold transition-colors interactive-link">
-                +961 36 26 082
+            <li className="flex items-center gap-2">
+              <Phone className="h-4 w-4 text-[var(--gold)] shrink-0" />
+              <a href="tel:+21671000000" className="hover:text-[var(--gold)]">
+                +216 71 000 000
               </a>
             </li>
-            <li className="flex items-center gap-2 text-dark-beige/80">
-              <MessageCircle size={16} className="text-accent-gold" />
-              <span>WhatsApp: +961 36 26 082</span>
-            </li>
-            <li className="flex items-center gap-2 text-dark-beige/80">
-              <Clock size={16} className="text-accent-gold" />
-              <span>Lun-Ven: 9h-17h</span>
-            </li>
           </ul>
-          <form className="mt-6 space-y-4" onSubmit={handleNewsletterSubmit}>
-            <p className="text-sm uppercase tracking-[0.3em] text-accent-gold font-semibold">
-              {t("newsletter", "Newsletter")}
-            </p>
-            <p className="text-sm text-dark-beige/80">
-              {t(
-                "newsletter_prompt",
-                "Leave your email and we will reach out to you."
-              )}
-            </p>
-            <div className="flex flex-col sm:flex-row gap-2">
+
+          <form className="mt-5 space-y-2" onSubmit={handleNewsletterSubmit}>
+            <div className="flex gap-1.5">
               <input
                 type="email"
                 value={newsletterEmail}
-                onChange={(event) => {
-                  setNewsletterEmail(event.target.value);
-                  if (newsletterStatus.message) {
-                    setNewsletterStatus({ type: "", message: "" });
-                  }
-                }}
+                onChange={(e) => setNewsletterEmail(e.target.value)}
                 placeholder={t("email", "Email")}
-                className="heritage-input flex-1 min-w-0 px-4 py-2.5 rounded-lg bg-white/10 border border-white/20 text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-accent-gold/50"
-                aria-label={t("email", "Email")}
+                className="w-full px-3 py-1.5 rounded text-xs bg-[var(--card)] border border-[var(--border)] text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] focus:outline-none focus:border-[var(--gold)]"
               />
               <button
                 type="submit"
-                className="interactive-btn px-5 py-2.5 rounded-lg bg-accent-gold text-leather-brown font-semibold hover:bg-accent-gold/90 transition-all disabled:opacity-60 flex items-center justify-center gap-2 shrink-0"
                 disabled={newsletterLoading}
+                className="btn-base btn-gold px-3 py-1.5 text-[0.65rem] shrink-0"
               >
-                <Send size={16} />
-                {newsletterLoading
-                  ? t("subscribing", "Subscribing...")
-                  : t("subscribe", "Subscribe")}
+                <Send className="h-3 w-3" />
               </button>
             </div>
-            {newsletterStatus.message ? (
-              <p
-                className={`text-sm font-medium ${newsletterStatus.type === "success"
-                  ? "text-green-400"
-                  : "text-red-400"
-                  }`}
-              >
+            {newsletterStatus.message && (
+              <p className={`text-xs ${newsletterStatus.type === "success" ? "text-green-600" : "text-red-500"}`}>
                 {newsletterStatus.message}
               </p>
-            ) : null}
+            )}
           </form>
         </div>
       </div>
-      <div className="heritage-footer-meta border-t border-white/10 mt-8 pt-6 text-center text-sm text-[var(--gold-light)]/60">
-        {footer.fineprint || "© Roots Tunisia. Tous droits réservés."}
+
+      <div className="gold-rule" />
+
+      <div className="mx-auto flex max-w-7xl flex-col gap-2 px-5 py-5 text-xs text-[var(--muted-foreground)] sm:flex-row sm:items-center sm:justify-between">
+        <p>{footer.fineprint || `© ${new Date().getFullYear()} Roots Tunisia. All rights reserved.`}</p>
+        <p className="font-display text-sm tracking-wide text-[var(--gold)]">
+          جذور تونس · Preserving Tunisian lineage
+        </p>
       </div>
     </footer>
   );
 }
-

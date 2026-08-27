@@ -1,19 +1,9 @@
-import { useEffect, useState } from "react";
-import { useThemeStore } from "../store/theme";
-import AOS from "aos";
-import "aos/dist/aos.css";
-import {
-  Mail,
-  Phone,
-  MapPin,
-  Clock,
-  Send,
-  AlertCircle,
-  CheckCircle2,
-} from "lucide-react";
+import { useState } from "react";
+import { Mail, MapPin, Phone, Clock, Send, CheckCircle2, AlertCircle, X } from "lucide-react";
 import { useTranslation } from "../context/TranslationContext";
 import { api } from "../api/client";
-import RootsPageShell from "../components/RootsPageShell";
+import { PageHero, Section, SectionHeading } from "../components/site/Primitives";
+import sidiBouSaid from "../assets/slider-sidibousaid.jpg";
 import SEO from "../components/SEO";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -23,11 +13,13 @@ import { z } from "zod";
 type ContactFormData = z.infer<typeof contactSchema>;
 
 export default function ContactUs() {
-  const { theme } = useThemeStore();
   const { t } = useTranslation();
-
   const [loading, setLoading] = useState(false);
-  const [status, setStatus] = useState({ type: "", msg: "" });
+  const [modalStatus, setModalStatus] = useState<{ open: boolean; type: "success" | "error"; msg: string }>({
+    open: false,
+    type: "success",
+    msg: "",
+  });
 
   const {
     register,
@@ -43,206 +35,180 @@ export default function ContactUs() {
     },
   });
 
-  useEffect(() => {
-    AOS.init({ duration: 900, once: true });
-  }, []);
-
   const onSubmit = async (data: ContactFormData) => {
     setLoading(true);
-    setStatus({ type: "", msg: "" });
 
     try {
       await api.post("/contact", data);
-      setStatus({ type: "success", msg: t("message_sent_success", "Message sent successfully!") });
+      setModalStatus({
+        open: true,
+        type: "success",
+        msg: t("message_sent_success", "Your message has been sent successfully to devteam@rootstunisia.com! A researcher will respond soon."),
+      });
       reset();
     } catch (err: any) {
-      setStatus({
+      setModalStatus({
+        open: true,
         type: "error",
-        msg: err.response?.data?.message || t("message_send_failed", "Failed to send message."),
+        msg: err.response?.data?.message || t("message_send_failed", "Failed to send message. Please try again later."),
       });
     } finally {
       setLoading(false);
     }
   };
 
-  const cardBg = theme === "dark" ? "bg-gray-900" : "bg-white";
-  const borderColor = "border-[var(--border-color)]";
-  const inputBg = theme === "dark" ? "bg-gray-800" : "bg-[var(--paper-color)]";
-
   return (
-    <RootsPageShell
-      hero={
-        <div className="space-y-5">
-          <SEO
-            title={t("contact_us", "Contact Us")}
-            description="Contact Roots Tunisia. Reach out to our genealogy and archiving team for inquiries, support with tracing your Maghrebi ancestors, or local archive query submissions."
-            keywords={["Contact Roots Tunisia", "Maghrebi genealogy support", "Trace ancestors Maghreb"]}
-          />
-          <h1 className="text-4xl md:text-5xl font-bold drop-shadow">
-            {t("contact_us", "Contact Us")}
-          </h1>
-          <p className="max-w-3xl mx-auto text-lg opacity-90">
-            {t("contact_hero_para", "We're ready to assist you with your genealogical research, archive queries, and story preservation. Drop us a line and our team will get back within 24 hours.")}
-          </p>
+    <div className="bg-[var(--background)] text-[var(--foreground)] min-h-screen">
+      <SEO
+        title="Contact Roots Tunisia — Research Help & Partnerships"
+        description="Contact the Roots Tunisia team in the Medina of Tunis for research help, archive partnerships, script translation and institutional access."
+        keywords={["Contact Roots Tunisia", "Tunisian genealogy support", "Tunisian archives help"]}
+      />
+
+      {/* Submission Feedback Modal */}
+      {modalStatus.open && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
+          <div className="surface-card w-full max-w-md p-6 rounded-xl border border-[var(--gold)]/40 shadow-2xl relative text-center">
+            <button
+              onClick={() => setModalStatus({ ...modalStatus, open: false })}
+              className="absolute right-4 top-4 text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-teal-500/10 text-teal-600">
+              {modalStatus.type === "success" ? (
+                <CheckCircle2 className="w-8 h-8 text-emerald-500" />
+              ) : (
+                <AlertCircle className="w-8 h-8 text-rose-500" />
+              )}
+            </div>
+
+            <h3 className="font-display text-xl font-bold mb-2">
+              {modalStatus.type === "success" ? "Message Sent!" : "Transmission Error"}
+            </h3>
+
+            <p className="text-sm text-[var(--muted-foreground)] leading-relaxed mb-6">
+              {modalStatus.msg}
+            </p>
+
+            <button
+              onClick={() => setModalStatus({ ...modalStatus, open: false })}
+              className="btn-base btn-gold w-full text-sm font-semibold py-2.5"
+            >
+              Close
+            </button>
+          </div>
         </div>
-      }
-    >
-      <section className="roots-section roots-section-alt" data-aos="fade-up">
-        <div className="grid lg:grid-cols-2 gap-16">
-          <div
-            className={`${cardBg} p-10 rounded-md shadow-xl border ${borderColor}`}
+      )}
+
+      <PageHero
+        eyebrow="Contact"
+        title="Talk to the Roots Tunisia Team"
+        subtitle="Research questions, archive partnerships, script translation, or institutional access — write to us and a Tunisian researcher will reply."
+        image={sidiBouSaid}
+      />
+
+      <Section>
+        <div className="grid gap-10 lg:grid-cols-[1.2fr_1fr]">
+          <form
+            className="surface-card p-8 transition-transform"
+            onSubmit={handleSubmit(onSubmit)}
           >
-            <h2 className="text-3xl font-bold mb-6">
-              {t("send_us_message", "Send us a Message")}
-            </h2>
+            <SectionHeading center={false} eyebrow="Send a message" title="How can we help?" />
 
-            {status.msg && (
-              <div
-                className={`p-4 rounded-md mb-6 flex items-center gap-3 ${
-                  status.type === "success"
-                    ? "bg-emerald-500/10 text-emerald-400"
-                    : "bg-rose-500/10 text-rose-400"
-                }`}
-              >
-                {status.type === "success" ? (
-                  <CheckCircle2 className="w-5 h-5" />
-                ) : (
-                  <AlertCircle className="w-5 h-5" />
-                )}
-                <span>{status.msg}</span>
-              </div>
-            )}
-
-            <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
-              <div className="space-y-2">
-                <label className="font-semibold">
-                  {t("full_name", "Full Name")}
-                </label>
+            <div className="mt-8 grid gap-5">
+              <label className="grid gap-2">
+                <span className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
+                  Full name
+                </span>
                 <input
-                  type="text"
                   {...register("name")}
-                  placeholder={t("full_name_placeholder", "Your name")}
-                  className={`w-full p-3 rounded-md ${inputBg} border ${
-                    errors.name ? "border-red-500/50 animate-pulse border-2" : borderColor
-                  } outline-none text-[var(--text-color)] focus:border-[var(--brand-gold)] transition-colors`}
+                  required
+                  className="rounded-sm border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm text-[var(--foreground)] outline-none focus:border-[var(--gold)]"
+                  placeholder="Amel Ben Salah"
                 />
-                {errors.name && (
-                  <p className="text-red-500 text-xs mt-1 font-medium font-body">
-                    {errors.name.message}
-                  </p>
-                )}
-              </div>
+                {errors.name && <p className="text-xs text-red-500">{errors.name.message}</p>}
+              </label>
 
-              <div className="space-y-2">
-                <label className="font-semibold">{t("email", "Email")}</label>
+              <label className="grid gap-2">
+                <span className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
+                  Email
+                </span>
                 <input
-                  type="email"
                   {...register("email")}
-                  placeholder={t("email_placeholder_example", "example@email.com")}
-                  className={`w-full p-3 rounded-md ${inputBg} border ${
-                    errors.email ? "border-red-500/50 animate-pulse border-2" : borderColor
-                  } outline-none text-[var(--text-color)] focus:border-[var(--brand-gold)] transition-colors`}
+                  type="email"
+                  required
+                  className="rounded-sm border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm text-[var(--foreground)] outline-none focus:border-[var(--gold)]"
+                  placeholder="you@example.tn"
                 />
-                {errors.email && (
-                  <p className="text-red-500 text-xs mt-1 font-medium font-body">
-                    {errors.email.message}
-                  </p>
-                )}
-              </div>
+                {errors.email && <p className="text-xs text-red-500">{errors.email.message}</p>}
+              </label>
 
-              <div className="space-y-2">
-                <label className="font-semibold">
-                  {t("your_message", "Your Message")}
-                </label>
+              <label className="grid gap-2">
+                <span className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
+                  Message
+                </span>
                 <textarea
-                  rows={5}
                   {...register("message")}
-                  placeholder={t("message_placeholder", "How can we help you?")}
-                  className={`w-full p-3 rounded-md ${inputBg} border ${
-                    errors.message ? "border-red-500/50 animate-pulse border-2" : borderColor
-                  } outline-none resize-none text-[var(--text-color)] focus:border-[var(--brand-gold)] transition-colors`}
+                  rows={5}
+                  required
+                  className="rounded-sm border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm text-[var(--foreground)] outline-none focus:border-[var(--gold)]"
+                  placeholder="Describe the family, places and documents you already have…"
                 />
-                {errors.message && (
-                  <p className="text-red-500 text-xs mt-1 font-medium font-body">
-                    {errors.message.message}
-                  </p>
-                )}
-              </div>
+                {errors.message && <p className="text-xs text-red-500">{errors.message.message}</p>}
+              </label>
 
               <button
                 type="submit"
                 disabled={loading}
-                className="interactive-btn w-full py-3 px-6 rounded-md bg-gradient-to-r from-[var(--brand-teal)] to-[var(--brand-gold)] text-[var(--teal-dark)] font-semibold shadow-lg hover:opacity-90 transition flex items-center justify-center gap-2 disabled:opacity-50"
+                className="btn-base btn-red justify-self-start flex items-center gap-2"
               >
-                {loading ? (
-                  <span>{t("sending", "Sending...")}</span>
-                ) : (
-                  <>
-                    <Send className="w-5 h-5" />
-                    {t("send_message", "Send Message")}
-                  </>
-                )}
+                <Send className="w-4 h-4" />
+                {loading ? "Sending…" : "Send message"}
               </button>
-            </form>
-          </div>
+            </div>
+          </form>
 
-          <div className="space-y-10">
-            {[
-              {
-                icon: Phone,
-                label: t("call_us", "Call Us"),
-                value: "+961 36 26 082",
-                accent: "#0B5B52",
-              },
-              {
-                icon: Mail,
-                label: t("email", "Email"),
-                value: "kameladmin@rootstunisia.com",
-                accent: "#C39637",
-              },
-              {
-                icon: MapPin,
-                label: t("visit_us", "Visit Us"),
-                value: t("location_opening_soon", "Location opening soon"),
-                accent: "#0B5B52",
-              },
-              {
-                icon: Clock,
-                label: t("opening_hours", "Opening Hours"),
-                value: "Sun-Thu: 9:00-18:00",
-                accent: "#0B5B52",
-              },
-            ].map((item) => (
-              <div
-                key={item.label}
-                className={`interactive-card ${cardBg} p-6 rounded-md shadow-lg border ${borderColor} flex items-center gap-6`}
-              >
-                <item.icon
-                  className="w-10 h-10"
-                  style={{ color: item.accent }}
-                />
-                <div>
-                  <h3 className="text-xl font-bold">{item.label}</h3>
-                  <p className="opacity-90 mt-1">{item.value}</p>
-                </div>
-              </div>
-            ))}
+          <div className="space-y-6">
+            <div className="surface-card p-8">
+              <h3 className="font-display text-2xl text-[var(--foreground)]">Direct Contact</h3>
+              <p className="mt-2 text-sm text-[var(--muted-foreground)]">
+                Our editorial and research team is based in the heart of Tunis.
+              </p>
+              <ul className="mt-6 space-y-4 text-sm text-[var(--foreground)]">
+                <li className="flex items-start gap-3">
+                  <MapPin className="mt-0.5 h-5 w-5 text-[var(--gold)] shrink-0" />
+                  <span>Rue de la Kasbah, Medina of Tunis, Tunisia</span>
+                </li>
+                <li className="flex items-center gap-3">
+                  <Mail className="h-5 w-5 text-[var(--gold)] shrink-0" />
+                  <a href="mailto:devteam@rootstunisia.com" className="hover:text-[var(--gold)]">
+                    devteam@rootstunisia.com
+                  </a>
+                </li>
+                <li className="flex items-center gap-3">
+                  <Phone className="h-5 w-5 text-[var(--gold)] shrink-0" />
+                  <a href="tel:+21671000000" className="hover:text-[var(--gold)]">
+                    +216 71 000 000
+                  </a>
+                </li>
+                <li className="flex items-center gap-3">
+                  <Clock className="h-5 w-5 text-[var(--gold)] shrink-0" />
+                  <span>Monday – Friday · 09:00 – 17:00 (GMT+1)</span>
+                </li>
+              </ul>
+            </div>
+
+            <div className="surface-card p-8 border-l-4 border-l-[var(--gold)]">
+              <h4 className="font-display text-lg text-[var(--foreground)]">Archive Partnerships</h4>
+              <p className="mt-2 text-sm leading-relaxed text-[var(--muted-foreground)]">
+                Are you an institution, municipality or private collector with Tunisian manuscripts, photos or deeds? We offer non-destructive digitization and indexing partnerships.
+              </p>
+            </div>
           </div>
         </div>
-      </section>
-
-      <section className="roots-section" data-aos="zoom-in">
-        <h2 className="text-3xl font-bold text-center mb-8">{t("our_location", "Our Location")}</h2>
-        <div
-          className={`${cardBg} rounded-md border ${borderColor} shadow-xl min-h-[220px] flex flex-col items-center justify-center gap-4`}
-        >
-          <MapPin className="w-16 h-16 text-[var(--brand-teal)] opacity-70" />
-          <p className="opacity-70 text-lg font-bold">{t("location_opening_soon", "Location opening soon")}</p>
-          <p className="opacity-50 text-sm">
-            {t("stay_tuned", "Stay tuned for our grand opening!")}
-          </p>
-        </div>
-      </section>
-    </RootsPageShell>
+      </Section>
+    </div>
   );
 }

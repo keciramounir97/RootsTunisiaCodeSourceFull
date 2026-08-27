@@ -1,14 +1,14 @@
 /** Client-side article feed persistence (v2) with migration from v1. */
 
-export const ART_KEY_V1 = "rootstunisia_articles_v1";
-export const ART_KEY = "rootstunisia_articles_v2";
-export const CMT_KEY_V1 = "rootstunisia_article_comments_v1";
-export const CMT_KEY = "rootstunisia_article_comments_v2";
-export const LIKE_CNT_KEY = "rootstunisia_article_like_counts_v1";
-export const LIKE_MINE_KEY = "rootstunisia_article_like_mine_v1";
-export const CMT_LIKE_CNT_KEY = "rootstunisia_comment_like_counts_v1";
-export const CMT_LIKE_MINE_KEY = "rootstunisia_comment_like_mine_v1";
-export const SHARE_CNT_KEY = "rootstunisia_article_share_counts_v1";
+export const ART_KEY_V1 = "RootsTunisia_articles_v1";
+export const ART_KEY = "RootsTunisia_articles_v2";
+export const CMT_KEY_V1 = "RootsTunisia_article_comments_v1";
+export const CMT_KEY = "RootsTunisia_article_comments_v2";
+export const LIKE_CNT_KEY = "RootsTunisia_article_like_counts_v1";
+export const LIKE_MINE_KEY = "RootsTunisia_article_like_mine_v1";
+export const CMT_LIKE_CNT_KEY = "RootsTunisia_comment_like_counts_v1";
+export const CMT_LIKE_MINE_KEY = "RootsTunisia_comment_like_mine_v1";
+export const SHARE_CNT_KEY = "RootsTunisia_article_share_counts_v1";
 
 export interface ArticlePost {
   id: string;

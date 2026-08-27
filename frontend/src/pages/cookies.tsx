@@ -1,36 +1,48 @@
 import { useTranslation } from "../context/TranslationContext";
-import { FileText } from "lucide-react";
+import SEO from "../components/SEO";
 
 export default function Cookies() {
   const { t } = useTranslation();
   return (
-    <div className="page-container py-12">
-      <div className="max-w-3xl mx-auto">
-        <div className="flex items-center gap-3 mb-6">
-          <FileText className="w-8 h-8 text-[var(--brand-gold)]" />
-          <h1 className="text-3xl font-bold font-cinzel text-[var(--brand-teal)] dark:text-[var(--gold-light)]">
-            {t("cookie_policy", "Cookie Policy")}
+    <div className="bg-[var(--background)] text-[var(--foreground)] min-h-screen py-16">
+      <SEO
+        title="Cookie Policy — Roots Tunisia"
+        description="Cookie policy and session storage practices on Roots Tunisia."
+      />
+      <div className="max-w-4xl mx-auto px-5">
+        <div className="surface-card p-8 sm:p-12">
+          <p className="eyebrow">Cookies & Preferences</p>
+          <h1 className="display-lg mt-2 text-[var(--foreground)]">
+            Cookie Policy
           </h1>
-        </div>
-        <p className="text-sm opacity-60 mb-8">{t("last_updated", "Last updated")}: June 2026</p>
-        <div className="space-y-6">
-          <p className="opacity-80">{t("cookies_intro", "We use cookies and similar technologies to enhance your experience on Roots Tunisia.")}</p>
-          <section>
-            <h2 className="text-xl font-bold font-cinzel text-[var(--brand-teal)] dark:text-[var(--gold-light)] mb-3">1. What Are Cookies</h2>
-            <p className="opacity-80">Cookies are small text files stored on your device by your web browser. They help us remember your preferences and improve site functionality.</p>
-          </section>
-          <section>
-            <h2 className="text-xl font-bold font-cinzel text-[var(--brand-teal)] dark:text-[var(--gold-light)] mb-3">2. Types We Use</h2>
-            <ul className="list-disc pl-6 space-y-2 opacity-80">
-              <li><strong>Essential:</strong> Required for authentication and basic site functions</li>
-              <li><strong>Preference:</strong> Remember your language and theme settings</li>
-              <li><strong>Analytics:</strong> Help us understand how you use our site to improve it</li>
-            </ul>
-          </section>
-          <section>
-            <h2 className="text-xl font-bold font-cinzel text-[var(--brand-teal)] dark:text-[var(--gold-light)] mb-3">3. Managing Cookies</h2>
-            <p className="opacity-80">You can control cookies through your browser settings. Disabling cookies may affect certain functionalities.</p>
-          </section>
+          <div className="gold-rule mt-4 w-20" />
+          <p className="text-xs text-[var(--muted-foreground)] mt-4">
+            Last updated: March 2026 · Tunis, Tunisia
+          </p>
+
+          <div className="mt-8 space-y-8 text-sm leading-relaxed text-[var(--foreground)]/90">
+            <p>
+              Roots Tunisia uses minimal, privacy-first cookies and local storage tokens exclusively to manage user authentication sessions and remember your language and theme preferences.
+            </p>
+
+            <section>
+              <h2 className="font-display text-xl font-semibold text-[var(--foreground)] mb-2">
+                1. Essential Cookies
+              </h2>
+              <p className="text-[var(--muted-foreground)]">
+                Authentication tokens (JWT) and session cookies enable secure access to your private family trees, notes, and admin dashboards.
+              </p>
+            </section>
+
+            <section>
+              <h2 className="font-display text-xl font-semibold text-[var(--foreground)] mb-2">
+                2. Preference Storage
+              </h2>
+              <p className="text-[var(--muted-foreground)]">
+                Local storage remembers your chosen language (English, French, Arabic, Spanish) and dark/parchment theme mode.
+              </p>
+            </section>
+          </div>
         </div>
       </div>
     </div>

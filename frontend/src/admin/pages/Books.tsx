@@ -138,9 +138,7 @@ export default function Books() {
       setLoading(true);
       setError("");
       try {
-        const isMock =
-          import.meta.env.DEV &&
-          localStorage.getItem("mockupDataActive") === "true";
+        const isMock = false;
         if (isMock) {
           // REALISTIC ARABIC/ENGLISH/FRENCH HISTORY BOOKS
           const mockBooks = [

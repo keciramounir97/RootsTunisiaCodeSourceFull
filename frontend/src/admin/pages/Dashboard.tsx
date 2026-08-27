@@ -204,12 +204,12 @@ export default function Dashboard() {
             {t("tunisia_control_panel", "Roots Tunisia Control Panel")}
           </p>
           <h1>
-            {t("easy_panel_title", "Your Maghreb heritage, organized")}
+            {t("easy_panel_title", "Your Tunisia heritage, organized")}
           </h1>
           <p>
             {isAdmin
               ? t("easy_panel_admin_desc", "Manage the community, curate family records, and keep North African lineage data organized from one clear panel.")
-              : t("easy_panel_user_desc", "Build your family tree, collect archive sources, and preserve your Maghreb family history.")}
+              : t("easy_panel_user_desc", "Build your family tree, collect archive sources, and preserve your Tunisia family history.")}
           </p>
         </div>
         <div className="easy-hero-actions">

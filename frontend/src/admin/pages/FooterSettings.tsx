@@ -25,7 +25,7 @@ import {
   Link as LinkIcon,
 } from "lucide-react";
 
-const STORAGE_KEY = "rootstunisia_footer_settings";
+const STORAGE_KEY = "RootsTunisia_footer_settings";
 
 export type SocialIconType =
   | "facebook" | "instagram" | "youtube" | "twitter" | "linkedin"
@@ -76,10 +76,10 @@ export const DEFAULT_FOOTER_CONFIG: FooterConfig = {
     { id: "ig", icon: "instagram", url: "https://instagram.com", enabled: true },
     { id: "yt", icon: "youtube", url: "https://youtube.com", enabled: true },
   ],
-  location: "Casablanca, Morocco",
+  location: "Rue de la Kasbah, Médina de Tunis, Tunisie",
   email: "contact@rootstunisia.com",
-  phone: "+212 522 000 000",
-  whatsapp: "+212 661 000 000",
+  phone: "+216 71 000 000",
+  whatsapp: "+216 71 000 000",
 };
 
 function normalizeFooterConfig(value: Partial<FooterConfig> | null): FooterConfig {
@@ -372,7 +372,7 @@ export default function FooterSettings() {
               <p className="mt-2 text-sm leading-6 opacity-70">
                 {t(
                   "footer_preview_desc",
-                  "A modern home for Maghrebi lineage, archive research, and community memory.",
+                  "A modern home for Tunisian lineage, archive research, and community memory.",
                 )}
               </p>
               <div className="mt-4 flex flex-wrap gap-2">

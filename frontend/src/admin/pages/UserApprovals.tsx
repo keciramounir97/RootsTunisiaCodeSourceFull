@@ -80,47 +80,7 @@ export default function AdminUserApprovals() {
         (Array.isArray(data) && data) ||
         [];
 
-      // Mock data for demo
-      if (list.length === 0) {
-        const mockUsers: PendingUser[] = [
-          {
-            id: 1,
-            fullName: "Tariq Benali",
-            email: "tariq.benali@example.com",
-            phone: "+212612345678",
-            createdAt: new Date(Date.now() - 3600000).toISOString(),
-            status: "pending",
-          },
-          {
-            id: 2,
-            fullName: "Sarah Ben-Ami",
-            email: "sarah.benami@example.com",
-            phone: "+212698765432",
-            createdAt: new Date(Date.now() - 7200000).toISOString(),
-            status: "pending",
-          },
-          {
-            id: 3,
-            fullName: "David Levy",
-            email: "david.levy@example.com",
-            phone: "+212661234567",
-            createdAt: new Date(Date.now() - 86400000).toISOString(),
-            status: "pending",
-          },
-          {
-            id: 4,
-            fullName: "Rachel Toledano",
-            email: "rachel.toledano@example.com",
-            phone: "+212678901234",
-            createdAt: new Date(Date.now() - 172800000).toISOString(),
-            status: "approved",
-            validatedAt: new Date().toISOString(),
-          },
-        ];
-        setPendingUsers(mockUsers);
-      } else {
-        setPendingUsers(list);
-      }
+      setPendingUsers(list);
     } catch (error) {
       console.error("Failed to load pending users:", error);
       notify(getApiErrorMessage(error, "Failed to load pending users"), "error");

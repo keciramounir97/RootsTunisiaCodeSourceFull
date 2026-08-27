@@ -43,26 +43,7 @@ import { useAuth } from "../components/AuthContext";
 
 const MAX_GEDCOM_BYTES = 50 * 1024 * 1024;
 
-const buildMockTrees = () => [
-  {
-    id: "smoke-tree-5links-maghreb",
-    title: "Arbre Généalogique Smoke Test Maghreb (5 Sources)",
-    description: "Arbre de démonstration Smoke Test incluant 5 sources multimédias (1 Image, 1 Audio, 1 Document, 2 Liens Externes) sur l'ancêtre principal.",
-    owner: "RootsTunisia Admin",
-    isPublic: true,
-    hasGedcom: true,
-    createdAt: new Date().toISOString(),
-  },
-  ...Array.from({ length: 9 }).map((_, i) => ({
-    id: `mock-tree-${i + 1}`,
-    title: `RootsTunisia Sample Family ${i + 1}`,
-    description: `A sample Maghrebian family tree for testing the genealogy panel.`,
-    owner: "RootsTunisia Admin",
-    isPublic: i % 2 === 0,
-    hasGedcom: true,
-    createdAt: new Date().toISOString(),
-  })),
-];
+const buildMockTrees = () => [];
 
 export default function Trees() {
   const { theme } = useThemeStore();
@@ -124,7 +105,7 @@ export default function Trees() {
 
     isPublic: isAdmin,
 
-    saveToDb: true,
+    saveToDb: false,
   });
 
   const [saving, setSaving] = useState(false);
@@ -153,11 +134,8 @@ export default function Trees() {
     setTreesError("");
     setSaveError("");
 
-    const isMock =
-      import.meta.env.DEV &&
-      localStorage.getItem("mockupDataActive") === "true";
-
-    const mockTrees = isMock ? buildMockTrees() : [];
+    const isMock = false;
+    const mockTrees = [];
 
     const mergeById = (list: any[]) => {
       const map = new Map();
@@ -194,13 +172,14 @@ export default function Trees() {
       ]);
 
       if (mineRes.status === "fulfilled") {
-        const rawMine = mineRes.value?.data;
-        const mineList = Array.isArray(rawMine) ? rawMine : Array.isArray(rawMine?.data) ? rawMine.data : [];
-        const liveMine = mineList.map((t: any) =>
-          normalizeTree(t, {
-            isPublic: !!t?.is_public || !!t?.isPublic,
-          }),
-        );
+        const mine = mineRes.value?.data;
+        const liveMine = Array.isArray(mine)
+          ? mine.map((t) =>
+              normalizeTree(t, {
+                isPublic: !!t?.is_public || !!t?.isPublic,
+              }),
+            )
+          : [];
 
         const myList = mergeById([...liveMine, ...mockTrees]);
 
@@ -212,13 +191,14 @@ export default function Trees() {
       }
 
       if (pubRes.status === "fulfilled") {
-        const rawPub = pubRes.value?.data;
-        const pubList = Array.isArray(rawPub) ? rawPub : Array.isArray(rawPub?.data) ? rawPub.data : [];
-        const livePublic = pubList.map((t: any) => normalizeTree(t, { isPublic: true }));
+        const pub = pubRes.value?.data;
+        const livePublic = Array.isArray(pub)
+          ? pub.map((t) => normalizeTree(t, { isPublic: true }))
+          : [];
 
         const publicList = mergeById([
           ...livePublic,
-          ...mockTrees.filter((t: any) => t.isPublic),
+          ...mockTrees.filter((t) => t.isPublic),
         ]);
 
         setPublicTrees(publicList);
@@ -440,7 +420,7 @@ export default function Trees() {
     }
 
       if (String(tree.id).startsWith("mock-")) {
-        // Generate sample Maghrebian family members for local mock mode.
+        // Generate sample Tunisian family members for local mock mode.
 
         const familyName = tree.title.split(" ").pop() || "El-Masry";
 
@@ -700,7 +680,7 @@ export default function Trees() {
     }
 
     if (treeId) {
-      const res = await requestWithFallback(
+      await requestWithFallback(
         isAdmin
           ? [
               () => api.put(`/admin/trees/${treeId}`, fd),
@@ -714,19 +694,17 @@ export default function Trees() {
             ],
         shouldFallbackTreeWrite
       );
-      const payload = res?.data;
-      return payload?.data?.id ?? payload?.id ?? treeId;
+      return treeId;
     }
 
-    const res = await requestWithFallback(
+    const { data } = await requestWithFallback(
       isAdmin
         ? [() => api.post("/admin/trees", fd), () => api.post("/my/trees", fd)]
         : [() => api.post("/my/trees", fd)],
       shouldFallbackTreeWrite
     );
 
-    const payload = res?.data;
-    return payload?.data?.id ?? payload?.id ?? res?.id;
+    return data?.id;
   };
 
   const downloadTreeFile = async (tree: any, scope?: string) => {
@@ -892,13 +870,23 @@ export default function Trees() {
 
     const hasPeople = people.length > 0;
 
-    let title = String(treeForm.title || "").trim();
-    if (!title && selectedTree?.title) title = String(selectedTree.title).trim();
-    if (!title) title = "Arbre Généalogique Familial";
+    const title = String(treeForm.title || "").trim();
 
-    // Always save to database when save action is triggered
+    if (!title) {
+      setSaveError(t("legacy.tree_title_required", "Tree title is required."));
+
+      return;
+    }
+
     if (!treeForm.saveToDb) {
-      setTreeForm((prev) => ({ ...prev, saveToDb: true }));
+      setSaveError(
+        t(
+          "legacy.save_to_db_required",
+          'Please check "Save this tree to the database" before saving.',
+        ),
+      );
+
+      return;
     }
 
     if (!hasPeople && !isUpdateMode) {
