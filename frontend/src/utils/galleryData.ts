@@ -67,7 +67,20 @@ const normalizeBoolean = (value: unknown, fallback: boolean) => {
 export const localGalleryAssets: GalleryDataItem[] = Object.entries(
   localGalleryModules,
 )
-  .filter(([path]) => !path.includes("logo") && !path.includes("favicon") && !path.includes("opacity"))
+  .filter(([path]) => {
+    const lower = path.toLowerCase();
+    return (
+      !lower.includes("logo") &&
+      !lower.includes("favicon") &&
+      !lower.includes("opacity") &&
+      !lower.includes("galleryimage") &&
+      !lower.includes("abraham") &&
+      !lower.includes("egypt") &&
+      !lower.includes("cairo") &&
+      !lower.includes("pyramid") &&
+      !lower.includes("unnamed")
+    );
+  })
   .map(([path, src], index) => {
     const title = formatFilenameToTitle(path);
     const createdAt = new Date(Date.UTC(2026, 0, index + 1)).toISOString();

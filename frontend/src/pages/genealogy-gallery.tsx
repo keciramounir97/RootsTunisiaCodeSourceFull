@@ -18,7 +18,7 @@ import { useTranslation } from "../context/TranslationContext";
 import { PageHero, Section, SectionHeading } from "../components/site/Primitives";
 import { TreeCard, featuredTrees } from "../components/site/TreeCard";
 import TreesBuilder, { parseGedcom, parseGedcomX } from "../admin/components/TreesBuilder";
-import galleryImage from "../assets/galleryimage.png";
+import medinaImage from "../assets/medina-tunis.jpg";
 import ErrorBoundary from "../components/ErrorBoundary";
 import SEO from "../components/SEO";
 
