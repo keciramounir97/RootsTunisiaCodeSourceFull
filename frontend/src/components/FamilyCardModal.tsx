@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { X, GitBranch, Users, Layers, Download, FileCode, Sparkles, CheckCircle2, AlertCircle, User, ShieldCheck, Eye, Network, MapPin, Landmark, Clock, RefreshCcw } from "lucide-react";
+import { X, GitBranch, Users, Layers, Download, FileCode, Sparkles, CheckCircle2, AlertCircle, User, ShieldCheck, MapPin, Landmark, Clock, RefreshCcw, Briefcase, FileText } from "lucide-react";
 import { api } from "../api/client";
 import { useTranslation } from "../context/TranslationContext";
 import TreesBuilder, { parseGedcom, parseGedcomX } from "../admin/components/TreesBuilder";
@@ -20,8 +20,11 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
   const [fetchedPeople, setFetchedPeople] = useState<any[] | null>(null);
   const [loadingGedcom, setLoadingGedcom] = useState(false);
 
+  const isIndividualModal = Boolean(individual && !tree);
+
   // Extract Tree / Individual metadata
-  const title = tree?.name || tree?.title || (individual ? `${individual.first_name || individual.firstName || ''} ${individual.last_name || individual.lastName || individual.surname || ''}` : "Roots Tunisia Lineage");
+  const indName = individual ? `${individual.first_name || individual.firstName || ''} ${individual.last_name || individual.lastName || individual.surname || ''}`.trim() : "";
+  const title = tree?.name || tree?.title || indName || "Roots Tunisia Lineage";
   const governorate = tree?.governorate || tree?.region || individual?.birth_place || individual?.birthPlace || "Tunisia";
   const rawPeopleList = Array.isArray(tree?.people) ? tree.people : (individual ? [individual] : []);
   const membersCount = fetchedPeople?.length ?? tree?.people?.length ?? tree?.membersCount ?? (individual ? 1 : 0);
@@ -30,6 +33,7 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
 
   // Initial synchronous check if gedcom text is already attached to tree object
   useEffect(() => {
+    if (isIndividualModal) return;
     const rawContent = tree?.gedcom_text || tree?.content || tree?.gedcom_data || tree?.gedcom;
     if (typeof rawContent === "string" && rawContent.trim().length > 10) {
       try {
@@ -42,11 +46,12 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
         console.warn("Error parsing pre-loaded tree GEDCOM text:", e);
       }
     }
-  }, [tree?.id, tree?.gedcom_text, tree?.content, tree?.gedcom_data]);
+  }, [tree?.id, tree?.gedcom_text, tree?.content, tree?.gedcom_data, isIndividualModal]);
 
-  // Dynamically fetch exact GEDCOM data for DB trees & individuals so schema matches Tree Builder 100%
+  // Dynamically fetch exact GEDCOM data for DB trees so schema matches Tree Builder 100%
   useEffect(() => {
-    const targetTreeId = tree?.id || individual?.tree_id || individual?.treeId;
+    if (isIndividualModal) return;
+    const targetTreeId = tree?.id;
     if (!targetTreeId) return;
 
     let isMounted = true;
@@ -54,7 +59,6 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
 
     (async () => {
       try {
-        // First try getting tree metadata object which includes people array and gedcom_text
         try {
           const treeObjRes = await api.get(`/trees/${targetTreeId}`);
           const treeObj = treeObjRes?.data?.data || treeObjRes?.data;
@@ -79,7 +83,6 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
           // Ignore and proceed to raw GEDCOM endpoint
         }
 
-        // Try raw GEDCOM text endpoint
         let res: any;
         try {
           res = await api.get(`/trees/${targetTreeId}/gedcom`, { responseType: "text" });
@@ -112,7 +115,7 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
     return () => {
       isMounted = false;
     };
-  }, [tree?.id, tree?.data_format, individual?.tree_id, individual?.treeId]);
+  }, [tree?.id, tree?.data_format, isIndividualModal]);
 
   // Build fallback normalized schema nodes if direct GEDCOM text is not available
   const normalizedPeople = useMemo(() => {
@@ -144,74 +147,40 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
 
     let list = [...rawPeopleList];
 
-    // If individual view or single person, generate lineage graph so schema graph is rich
-    if (individual || list.length <= 1) {
-      const targetInd = individual || list[0] || {};
-      const indId = String(targetInd.id || "ind-1");
-      const fname = targetInd.first_name || targetInd.firstName || title || "Sidi Mohamed";
-      const lname = targetInd.last_name || targetInd.lastName || targetInd.surname || "Ben Tunis";
-      const fFather = `Sidi ${lname}`;
-      const fMother = `Lalla ${lname}`;
-
+    if (list.length === 0) {
       list = [
         {
-          id: indId,
-          firstName: fname,
-          lastName: lname,
-          names: { fr: `${fname} ${lname}`, en: `${fname} ${lname}` },
-          gender: (targetInd.gender || "M").toUpperCase().startsWith("F") ? "F" : "M",
-          birthDate: targetInd.birth_date || targetInd.birthDate || "1910",
-          birthPlace: targetInd.birth_place || targetInd.birthPlace || governorate,
-          deathDate: targetInd.death_date || targetInd.deathDate || "",
-          deathPlace: targetInd.death_place || targetInd.deathPlace || "",
-          occupation: targetInd.occupation || targetInd.profession || "Notable & Patrimoine",
-          father: "f-1",
-          mother: "m-1",
-          spouse: "sp-1",
-        },
-        {
-          id: "f-1",
-          firstName: fFather,
-          lastName: lname,
-          names: { fr: fFather, en: fFather },
+          id: "p1",
+          firstName: title,
+          lastName: "Patrimoine",
+          names: { fr: title, en: title },
           gender: "M",
           birthDate: "1880",
           birthPlace: governorate,
-          spouse: "m-1",
-          children: [indId],
+          spouse: "p2",
+          children: ["p3"],
         },
         {
-          id: "m-1",
-          firstName: fMother,
-          lastName: lname,
-          names: { fr: fMother, en: fMother },
+          id: "p2",
+          firstName: "Épouse Lignée",
+          lastName: title,
+          names: { fr: "Épouse Lignée", en: "Spouse Lineage" },
           gender: "F",
           birthDate: "1885",
           birthPlace: governorate,
-          spouse: "f-1",
-          children: [indId],
+          spouse: "p1",
+          children: ["p3"],
         },
         {
-          id: "sp-1",
-          firstName: `Lalla Salma`,
-          lastName: lname,
-          names: { fr: `Lalla Salma ${lname}`, en: `Lalla Salma ${lname}` },
-          gender: "F",
+          id: "p3",
+          firstName: "Descendant Répertorié",
+          lastName: title,
+          names: { fr: "Descendant Répertorié", en: "Registered Descendant" },
+          gender: "M",
           birthDate: "1915",
           birthPlace: governorate,
-          spouse: indId,
-          children: ["ch-1"],
-        },
-        {
-          id: "ch-1",
-          firstName: `Youssef`,
-          lastName: lname,
-          names: { fr: `Youssef ${lname}`, en: `Youssef ${lname}` },
-          gender: "M",
-          birthDate: "1940",
-          birthPlace: governorate,
-          father: indId,
-          mother: "sp-1",
+          father: "p1",
+          mother: "p2",
         },
       ];
     }
@@ -239,7 +208,7 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
         children: Array.isArray(p.children) ? p.children.map(String) : [],
       };
     });
-  }, [rawPeopleList, individual, title, governorate, fetchedPeople]);
+  }, [rawPeopleList, title, governorate, fetchedPeople]);
 
   const handleDownloadGedcom = async () => {
     if (!tree?.id) {
@@ -267,12 +236,12 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
       setRequestStatus("loading");
       setStatusMessage("");
       await api.post("/download-requests", {
-        item_type: "tree",
-        item_id: tree?.id || 1,
-        reason: requestReason.trim() || "Genealogical lineage research and GEDCOM verification.",
+        item_type: tree ? "tree" : "individual",
+        item_id: tree?.id || individual?.id || 1,
+        reason: requestReason.trim() || "Genealogical lineage research and record verification.",
       });
       setRequestStatus("success");
-      setStatusMessage("Demande d'accès au fichier GEDCOM transmise aux archivistes !");
+      setStatusMessage("Demande transmise aux archivistes généalogistes !");
     } catch (err: any) {
       setRequestStatus("error");
       setStatusMessage(err?.response?.data?.message || "La demande est en cours de traitement.");
@@ -285,7 +254,7 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
       onClick={onClose}
     >
       <div
-        className="surface-card frame-gold relative w-full max-w-5xl overflow-hidden rounded-2xl bg-[var(--card)] p-5 sm:p-7 shadow-2xl space-y-5 max-h-[94vh] overflow-y-auto border-2 border-[var(--gold)]/60"
+        className="surface-card frame-gold relative w-full max-w-4xl overflow-hidden rounded-2xl bg-[var(--card)] p-5 sm:p-7 shadow-2xl space-y-5 max-h-[94vh] overflow-y-auto border-2 border-[var(--gold)]/60"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Close Button */}
@@ -296,176 +265,217 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
           <X className="h-5 w-5" />
         </button>
 
-        {/* MODAL HEADER & TABS BAR */}
+        {/* MODAL HEADER */}
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--gold)]/30 pb-3 pr-10">
           <div>
             <span className="text-[0.68rem] font-bold uppercase tracking-[0.2em] text-[var(--gold)] flex items-center gap-1.5">
               <Landmark className="h-4 w-4 text-[var(--gold)]" />
-              <span>Carte Généalogique Patrimoniale</span>
+              <span>{isIndividualModal ? "Fiche Individuelle Patrimoniale" : "Carte Généalogique Patrimoniale"}</span>
             </span>
             <h2 className="text-xl sm:text-2xl font-serif font-bold text-[var(--foreground)] tracking-wide">
               {title}
             </h2>
           </div>
 
-          {/* Tab Selection Switches */}
-          <div className="flex items-center gap-1 bg-[var(--background)] p-1 rounded-xl border border-[var(--gold)]/40">
-            <button
-              onClick={() => setActiveTab("schema")}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
-                activeTab === "schema"
-                  ? "bg-[var(--gold)] text-black shadow-md font-bold"
-                  : "text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
-              }`}
-            >
-              <Network className="h-4 w-4" />
-              <span>Schéma Graphique de l'Arbre</span>
-            </button>
+          {/* Tab Switches (Tree Modal Only) */}
+          {!isIndividualModal && (
+            <div className="flex items-center gap-1 bg-[var(--background)] p-1 rounded-xl border border-[var(--gold)]/40">
+              <button
+                onClick={() => setActiveTab("schema")}
+                className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
+                  activeTab === "schema"
+                    ? "bg-[var(--gold)] text-black shadow-md font-bold"
+                    : "text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
+                }`}
+              >
+                <GitBranch className="h-4 w-4" />
+                <span>Schéma Graphique de l'Arbre</span>
+              </button>
 
-            <button
-              onClick={() => setActiveTab("details")}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
-                activeTab === "details"
-                  ? "bg-[var(--gold)] text-black shadow-md font-bold"
-                  : "text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
-              }`}
-            >
-              <FileCode className="h-4 w-4" />
-              <span>Fiche & GEDCOM</span>
-            </button>
-          </div>
+              <button
+                onClick={() => setActiveTab("details")}
+                className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
+                  activeTab === "details"
+                    ? "bg-[var(--gold)] text-black shadow-md font-bold"
+                    : "text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
+                }`}
+              >
+                <FileCode className="h-4 w-4" />
+                <span>Fiche & GEDCOM</span>
+              </button>
+            </div>
+          )}
         </div>
 
-        {/* TAB 1: EXACT TREE BUILDER INTERACTIVE VISUAL D3 SCHEMA */}
-        {activeTab === "schema" && (
-          <div className="space-y-3">
-            <div className="flex items-center justify-between text-xs text-[var(--muted-foreground)] font-mono px-1">
-              <span className="flex items-center gap-1.5">
-                <GitBranch className="h-4 w-4 text-[var(--gold)]" />
-                <span>Schéma interactif d'arborescence (Molette pour Zoom, Glisser pour Pan)</span>
-              </span>
-              <div className="flex items-center gap-2">
-                {loadingGedcom && (
-                  <span className="text-[0.68rem] text-[var(--gold)] animate-pulse flex items-center gap-1">
-                    <RefreshCcw className="h-3 w-3 animate-spin" /> Chargement GEDCOM...
-                  </span>
-                )}
-                <span className="bg-[var(--gold)]/10 text-[var(--gold)] px-2.5 py-0.5 rounded-full font-bold">
-                  {normalizedPeople.length} Membre(s) Graphique(s)
-                </span>
-              </div>
-            </div>
-
-            <div className="h-[540px] sm:h-[600px] w-full rounded-xl overflow-hidden border-2 border-[var(--gold)]/60 relative bg-[#0b1726] shadow-2xl">
-              <TreesBuilder
-                people={normalizedPeople}
-                rawPeople={normalizedPeople}
-                readOnly={true}
-                canDownloadDirectly={true}
-              />
-            </div>
-          </div>
-        )}
-
-        {/* TAB 2: DETAILED CARD & GEDCOM ACCESS FORM */}
-        {activeTab === "details" && (
-          <div className="space-y-5 animate-in fade-in duration-150">
-            {/* 3D HERITAGE CARD HERO */}
+        {/* ======================================================== */}
+        {/* CASE 1: INDIVIDUAL MODAL (SINGLE 3D PATRIMONIAL CARD)    */}
+        {/* ======================================================== */}
+        {isIndividualModal ? (
+          <div className="space-y-5 animate-in fade-in duration-200">
+            {/* 3D INDIVIDUAL PATRIMONIAL CARD */}
             <div className="perspective-1000">
-              <div className="transform-gpu transition-all duration-500 rounded-xl bg-gradient-to-br from-[#1e293b] via-[#0f172a] to-[#020617] p-6 text-white border-2 border-[var(--gold)]/70 shadow-2xl relative overflow-hidden">
+              <div className="transform-gpu transition-all duration-500 rounded-xl bg-gradient-to-br from-[#1e293b] via-[#0f172a] to-[#020617] p-6 text-white border-2 border-[var(--gold)]/80 shadow-2xl relative overflow-hidden space-y-4">
                 <div className="absolute -right-8 -bottom-8 opacity-10 pointer-events-none font-serif text-9xl font-bold text-[var(--gold)]">
                   جذور
                 </div>
 
                 <div className="flex items-center justify-between border-b border-[var(--gold)]/30 pb-3">
-                  <span className="text-[0.68rem] font-bold uppercase tracking-[0.2em] text-[var(--gold)] flex items-center gap-1">
-                    <MapPin className="h-3.5 w-3.5 text-[var(--gold)]" />
-                    <span>{governorate}</span>
+                  <span className="text-[0.68rem] font-bold uppercase tracking-[0.2em] text-[var(--gold)] flex items-center gap-1.5">
+                    <User className="h-4 w-4 text-[var(--gold)]" />
+                    <span>Fiche Individuelle Répertoriée</span>
                   </span>
-                  <span className="px-3 py-0.5 rounded-full text-[0.65rem] font-mono font-bold bg-[var(--gold)]/20 text-[var(--gold)] border border-[var(--gold)]/40">
-                    GEDCOM 5.5.1 UTF-8
+                  <span className="px-3 py-0.5 rounded-full text-[0.68rem] font-mono font-bold bg-[var(--gold)]/20 text-[var(--gold)] border border-[var(--gold)]/40">
+                    {governorate}
                   </span>
                 </div>
 
-                <div className="mt-4 space-y-3">
-                  <h3 className="text-2xl font-serif font-bold text-amber-100 tracking-wide">
-                    {title}
-                  </h3>
-                  <p className="text-xs text-slate-300 leading-relaxed font-light">
-                    {description}
-                  </p>
-
-                  <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-3 font-mono text-xs">
-                    <div className="p-2.5 rounded-lg bg-black/40 border border-[var(--gold)]/30 flex items-center gap-2">
-                      <Layers className="h-4 w-4 text-[var(--gold)]" />
-                      <div>
-                        <span className="text-[0.65rem] text-slate-400 block uppercase">Générations</span>
-                        <strong className="text-sm text-white">{generations}</strong>
-                      </div>
-                    </div>
-
-                    <div className="p-2.5 rounded-lg bg-black/40 border border-[var(--gold)]/30 flex items-center gap-2">
-                      <Users className="h-4 w-4 text-[var(--gold)]" />
-                      <div>
-                        <span className="text-[0.65rem] text-slate-400 block uppercase">Personnes</span>
-                        <strong className="text-sm text-white">{membersCount}</strong>
-                      </div>
-                    </div>
-
-                    <div className="p-2.5 rounded-lg bg-black/40 border border-[var(--gold)]/30 flex items-center gap-2 col-span-2 sm:col-span-1">
-                      <FileCode className="h-4 w-4 text-teal-400" />
-                      <div>
-                        <span className="text-[0.65rem] text-slate-400 block uppercase">Registre</span>
-                        <strong className="text-xs text-teal-300">Archives Tunisiennes</strong>
-                      </div>
-                    </div>
+                {/* INDIVIDUAL IDENTITY HERO */}
+                <div className="flex items-start gap-4 pt-1">
+                  <div className="h-16 w-16 rounded-2xl bg-[var(--gold)]/20 border-2 border-[var(--gold)]/60 flex items-center justify-center shrink-0 shadow-lg text-[var(--gold)] font-bold text-2xl font-serif">
+                    {individual.gender === "F" ? "♀" : "♂"}
+                  </div>
+                  <div className="space-y-1">
+                    <h3 className="text-2xl font-serif font-bold text-amber-100 tracking-wide">
+                      {indName}
+                    </h3>
+                    <p className="text-xs text-slate-300 font-light flex items-center gap-2">
+                      <Briefcase className="h-3.5 w-3.5 text-[var(--gold)]" />
+                      <span>{individual.occupation || individual.profession || "Notable & Personnalité Patrimoniale"}</span>
+                    </p>
                   </div>
                 </div>
-              </div>
-            </div>
 
-            {/* INDIVIDUAL DETAILS SECTION */}
-            {individual && (
-              <div className="space-y-3 rounded-xl bg-[var(--background)] p-4 border border-[var(--border)]">
-                <h3 className="font-semibold text-sm text-[var(--foreground)] uppercase tracking-wider flex items-center gap-2">
-                  <User className="h-4 w-4 text-[var(--gold)]" />
-                  <span>Fiche Individuelle : {individual.first_name || individual.firstName} {individual.last_name || individual.lastName || individual.surname}</span>
-                </h3>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                  <div className="p-2.5 rounded bg-[var(--card)] border border-[var(--border)] space-y-1">
-                    <span className="text-[0.68rem] text-[var(--muted-foreground)] uppercase block font-mono">Naissance & Origine</span>
-                    <p className="font-bold text-[var(--foreground)] flex items-center gap-1.5">
-                      <Sparkles className="h-3.5 w-3.5 text-amber-400" />
-                      <span>{individual.birth_date || individual.birthDate || "Date non spécifiée"}</span>
+                {/* METADATA GRID */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 font-mono text-xs">
+                  <div className="p-3 rounded-lg bg-black/40 border border-[var(--gold)]/30 space-y-1.5">
+                    <span className="text-[0.65rem] text-slate-400 uppercase block font-semibold">Naissance & Origine</span>
+                    <p className="font-bold text-white text-sm flex items-center gap-1.5">
+                      <Sparkles className="h-4 w-4 text-amber-400" />
+                      <span>{individual.birth_date || individual.birthDate || "Année non spécifiée"}</span>
                     </p>
-                    <p className="text-[0.72rem] text-[var(--muted-foreground)] flex items-center gap-1.5">
+                    <p className="text-xs text-slate-300 flex items-center gap-1.5">
                       <MapPin className="h-3.5 w-3.5 text-[var(--gold)]" />
                       <span>{individual.birth_place || individual.birthPlace || governorate}</span>
                     </p>
                   </div>
 
-                  <div className="p-2.5 rounded bg-[var(--card)] border border-[var(--border)] space-y-1">
-                    <span className="text-[0.68rem] text-[var(--muted-foreground)] uppercase block font-mono">Statut Vital & Décès</span>
-                    <p className="font-bold text-[var(--foreground)] flex items-center gap-1.5">
-                      <Clock className="h-3.5 w-3.5 text-[var(--muted-foreground)]" />
-                      <span>{individual.death_date || individual.deathDate || "Vivant ou non enregistré"}</span>
+                  <div className="p-3 rounded-lg bg-black/40 border border-[var(--gold)]/30 space-y-1.5">
+                    <span className="text-[0.65rem] text-slate-400 uppercase block font-semibold">Statut Vital & Décès</span>
+                    <p className="font-bold text-white text-sm flex items-center gap-1.5">
+                      <Clock className="h-4 w-4 text-slate-400" />
+                      <span>{individual.death_date || individual.deathDate || "Vivant ou non répertorié"}</span>
                     </p>
-                    <p className="text-[0.72rem] text-[var(--muted-foreground)] flex items-center gap-1.5">
+                    <p className="text-xs text-slate-300 flex items-center gap-1.5">
                       <MapPin className="h-3.5 w-3.5 text-[var(--gold)]" />
-                      <span>{individual.death_place || individual.deathPlace || "N/A"}</span>
+                      <span>{individual.death_place || individual.deathPlace || "Archives Nationales"}</span>
                     </p>
                   </div>
                 </div>
 
-                {individual.occupation && (
-                  <p className="text-xs text-[var(--foreground)]">
-                    <strong>Profession / Activité :</strong> {individual.occupation}
-                  </p>
-                )}
+                {/* ARCHIVES / PROVENANCE NOTICE */}
+                <div className="p-3 rounded-lg bg-black/30 border border-[var(--gold)]/20 text-xs text-slate-300 leading-relaxed font-light flex items-start gap-2">
+                  <FileText className="h-4 w-4 text-[var(--gold)] shrink-0 mt-0.5" />
+                  <span>
+                    Notice enregistrée au catalogue officiel des individus de Tunisie. Document d'archive certifié conservé sous la référence administrative patrimoniale.
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : (
+          /* ======================================================== */
+          /* CASE 2: TREE MODAL (LINKED D3 CARDS SCHEMA & DETAILS)    */
+          /* ======================================================== */
+          <>
+            {/* TAB 1: INTERACTIVE D3 LINKED CARDS SCHEMA */}
+            {activeTab === "schema" && (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between text-xs text-[var(--muted-foreground)] font-mono px-1">
+                  <span className="flex items-center gap-1.5">
+                    <GitBranch className="h-4 w-4 text-[var(--gold)]" />
+                    <span>Schéma interactif d'arborescence (Molette pour Zoom, Glisser pour Pan)</span>
+                  </span>
+                  <div className="flex items-center gap-2">
+                    {loadingGedcom && (
+                      <span className="text-[0.68rem] text-[var(--gold)] animate-pulse flex items-center gap-1">
+                        <RefreshCcw className="h-3 w-3 animate-spin" /> Chargement GEDCOM...
+                      </span>
+                    )}
+                    <span className="bg-[var(--gold)]/10 text-[var(--gold)] px-2.5 py-0.5 rounded-full font-bold">
+                      {normalizedPeople.length} Cartes Liées
+                    </span>
+                  </div>
+                </div>
+
+                <div className="h-[540px] sm:h-[600px] w-full rounded-xl overflow-hidden border-2 border-[var(--gold)]/60 relative bg-[#0b1726] shadow-2xl">
+                  <TreesBuilder
+                    people={normalizedPeople}
+                    rawPeople={normalizedPeople}
+                    readOnly={true}
+                    canDownloadDirectly={true}
+                  />
+                </div>
               </div>
             )}
-          </div>
+
+            {/* TAB 2: TREE FICHE & GEDCOM ACCESS */}
+            {activeTab === "details" && (
+              <div className="space-y-5 animate-in fade-in duration-150">
+                <div className="perspective-1000">
+                  <div className="transform-gpu transition-all duration-500 rounded-xl bg-gradient-to-br from-[#1e293b] via-[#0f172a] to-[#020617] p-6 text-white border-2 border-[var(--gold)]/70 shadow-2xl relative overflow-hidden">
+                    <div className="absolute -right-8 -bottom-8 opacity-10 pointer-events-none font-serif text-9xl font-bold text-[var(--gold)]">
+                      جذور
+                    </div>
+
+                    <div className="flex items-center justify-between border-b border-[var(--gold)]/30 pb-3">
+                      <span className="text-[0.68rem] font-bold uppercase tracking-[0.2em] text-[var(--gold)] flex items-center gap-1">
+                        <MapPin className="h-3.5 w-3.5 text-[var(--gold)]" />
+                        <span>{governorate}</span>
+                      </span>
+                      <span className="px-3 py-0.5 rounded-full text-[0.65rem] font-mono font-bold bg-[var(--gold)]/20 text-[var(--gold)] border border-[var(--gold)]/40">
+                        GEDCOM 5.5.1 UTF-8
+                      </span>
+                    </div>
+
+                    <div className="mt-4 space-y-3">
+                      <h3 className="text-2xl font-serif font-bold text-amber-100 tracking-wide">
+                        {title}
+                      </h3>
+                      <p className="text-xs text-slate-300 leading-relaxed font-light">
+                        {description}
+                      </p>
+
+                      <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-3 font-mono text-xs">
+                        <div className="p-2.5 rounded-lg bg-black/40 border border-[var(--gold)]/30 flex items-center gap-2">
+                          <Layers className="h-4 w-4 text-[var(--gold)]" />
+                          <div>
+                            <span className="text-[0.65rem] text-slate-400 block uppercase">Générations</span>
+                            <strong className="text-sm text-white">{generations}</strong>
+                          </div>
+                        </div>
+
+                        <div className="p-2.5 rounded-lg bg-black/40 border border-[var(--gold)]/30 flex items-center gap-2">
+                          <Users className="h-4 w-4 text-[var(--gold)]" />
+                          <div>
+                            <span className="text-[0.65rem] text-slate-400 block uppercase">Personnes</span>
+                            <strong className="text-sm text-white">{membersCount}</strong>
+                          </div>
+                        </div>
+
+                        <div className="p-2.5 rounded-lg bg-black/40 border border-[var(--gold)]/30 flex items-center gap-2 col-span-2 sm:col-span-1">
+                          <FileCode className="h-4 w-4 text-teal-400" />
+                          <div>
+                            <span className="text-[0.65rem] text-slate-400 block uppercase">Registre</span>
+                            <strong className="text-xs text-teal-300">Archives Tunisiennes</strong>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </>
         )}
 
         {/* GEDCOM REQUEST FORM */}
@@ -473,7 +483,7 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
           <form onSubmit={handleSubmitDownloadRequest} className="space-y-3 p-4 rounded-xl bg-[var(--background)] border border-[var(--gold)]/40 animate-in fade-in">
             <h4 className="font-semibold text-xs text-[var(--foreground)] flex items-center gap-2">
               <ShieldCheck className="h-4 w-4 text-[var(--gold)]" />
-              <span>Demande d'Accès au Fichier GEDCOM</span>
+              <span>Demande d'Accès aux Archives ({isIndividualModal ? "Individu" : "Arbre"})</span>
             </h4>
             <textarea
               value={requestReason}
@@ -488,7 +498,7 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
               className="btn-base btn-gold text-xs py-2 px-4 w-full flex items-center justify-center gap-2 cursor-pointer"
             >
               <Download className="h-3.5 w-3.5" />
-              <span>Envoyer la Demande de Téléchargement GEDCOM</span>
+              <span>Envoyer la Demande d'Accès</span>
             </button>
           </form>
         )}
@@ -507,7 +517,7 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
             className="btn-base btn-gold text-xs py-2.5 px-4 flex items-center gap-2 cursor-pointer"
           >
             <Download className="h-4 w-4" />
-            <span>Télécharger / Demander GEDCOM</span>
+            <span>{isIndividualModal ? "Télécharger Fiche / Extrait" : "Télécharger / Demander GEDCOM"}</span>
           </button>
 
           <button
