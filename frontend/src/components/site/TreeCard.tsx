@@ -1,5 +1,6 @@
-import { Link } from "react-router-dom";
-import { Download, GitBranch, Layers, Users } from "lucide-react";
+import { useState } from "react";
+import { Download, GitBranch, Layers, Users, Eye } from "lucide-react";
+import FamilyCardModal from "../FamilyCardModal";
 
 export interface TreeRecord {
   id: number | string;
@@ -20,6 +21,8 @@ export interface TreeRecord {
 }
 
 export function TreeCard({ tree }: { tree: TreeRecord }) {
+  const [showModal, setShowModal] = useState(false);
+
   const titleStr = tree.name || tree.title || `Arbre Familial #${tree.id}`;
   const ownerStr = typeof tree.owner === "string" ? tree.owner : (tree.owner?.full_name || "Recherche Patrimoniale");
   const summaryStr = tree.description || tree.notes || tree.provenance || tree.summary || "Arbre généalogique numérisé et documenté.";
@@ -28,40 +31,49 @@ export function TreeCard({ tree }: { tree: TreeRecord }) {
   const gens = tree.generations ?? (members > 0 ? Math.ceil(Math.log2(members + 1)) : 1);
 
   return (
-    <article className="surface-card frame-gold flex flex-col p-6 transition-transform hover:-translate-y-1 rounded-lg">
-      <div className="flex items-center justify-between">
-        <p className="eyebrow text-[var(--gold)]">Famille & Lignée</p>
-        <span className="rounded-sm border border-[var(--gold)]/50 px-2 py-0.5 text-[0.6rem] font-bold uppercase tracking-[0.18em] text-[var(--gold)] bg-[var(--gold)]/10">
-          📍 {locationStr}
-        </span>
-      </div>
-      <h3 className="mt-3 font-serif text-xl font-bold leading-snug text-[var(--foreground)]">{titleStr}</h3>
-      <p className="mt-1 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--muted-foreground)]">
-        Par {ownerStr}
-      </p>
-      <p className="mt-3 flex-1 text-xs leading-relaxed text-[var(--foreground)]/80 line-clamp-3">{summaryStr}</p>
-      
-      <div className="mt-4 grid grid-cols-2 gap-2 border-t border-[var(--border)] pt-4 text-xs font-mono">
-        <div className="flex items-center gap-1.5 text-[var(--foreground)]">
-          <Layers className="h-3.5 w-3.5 text-[var(--gold)]" />
-          <span><strong>Générations:</strong> {gens}</span>
+    <>
+      <article className="surface-card frame-gold flex flex-col p-6 transition-transform hover:-translate-y-1 rounded-lg">
+        <div className="flex items-center justify-between">
+          <p className="eyebrow text-[var(--gold)]">Famille & Lignée</p>
+          <span className="rounded-sm border border-[var(--gold)]/50 px-2 py-0.5 text-[0.6rem] font-bold uppercase tracking-[0.18em] text-[var(--gold)] bg-[var(--gold)]/10">
+            📍 {locationStr}
+          </span>
         </div>
-        <div className="flex items-center gap-1.5 text-[var(--foreground)]">
-          <Users className="h-3.5 w-3.5 text-[var(--gold)]" />
-          <span><strong>Individus:</strong> {members}</span>
+        <h3 className="mt-3 font-serif text-xl font-bold leading-snug text-[var(--foreground)]">{titleStr}</h3>
+        <p className="mt-1 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--muted-foreground)]">
+          Par {ownerStr}
+        </p>
+        <p className="mt-3 flex-1 text-xs leading-relaxed text-[var(--foreground)]/80 line-clamp-3">{summaryStr}</p>
+        
+        <div className="mt-4 grid grid-cols-2 gap-2 border-t border-[var(--border)] pt-4 text-xs font-mono">
+          <div className="flex items-center gap-1.5 text-[var(--foreground)]">
+            <Layers className="h-3.5 w-3.5 text-[var(--gold)]" />
+            <span><strong>Générations:</strong> {gens}</span>
+          </div>
+          <div className="flex items-center gap-1.5 text-[var(--foreground)]">
+            <Users className="h-3.5 w-3.5 text-[var(--gold)]" />
+            <span><strong>Individus:</strong> {members}</span>
+          </div>
         </div>
-      </div>
 
-      <p className="mt-3 text-[0.68rem] text-[var(--muted-foreground)] font-mono">Standard GEDCOM 5.5.1 UTF-8</p>
+        <p className="mt-3 text-[0.68rem] text-[var(--muted-foreground)] font-mono">Standard GEDCOM 5.5.1 UTF-8</p>
 
-      <div className="mt-4 flex flex-wrap gap-2">
-        <Link to="/gallery/trees" className="btn-base btn-gold px-4 py-2 text-[0.65rem] flex items-center gap-1.5">
-          <GitBranch className="h-3.5 w-3.5" /> Explorer l'Arbre
-        </Link>
-        <Link to="/admin/trees" className="btn-base btn-outline-ink px-4 py-2 text-[0.65rem]">
-          Ouvrir Tree Builder
-        </Link>
-      </div>
-    </article>
+        <div className="mt-4 flex flex-wrap gap-2">
+          <button
+            onClick={() => setShowModal(true)}
+            className="btn-base btn-gold px-4 py-2 text-[0.65rem] flex items-center gap-1.5 cursor-pointer w-full justify-center"
+          >
+            <Eye className="h-3.5 w-3.5" /> Afficher la Carte 3D & GEDCOM
+          </button>
+        </div>
+      </article>
+
+      {showModal && (
+        <FamilyCardModal
+          tree={tree}
+          onClose={() => setShowModal(false)}
+        />
+      )}
+    </>
   );
 }

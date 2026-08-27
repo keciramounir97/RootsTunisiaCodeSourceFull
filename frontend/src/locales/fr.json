@@ -12,7 +12,6 @@
   "nav_photos": "Galerie photographique",
   "nav_library": "Bibliothèque & Manuscrits",
   "nav_audios": "Histoires orales",
-  "nav_articles": "Articles & Recherches",
   "nav_contact": "Contact",
   "nav_search_placeholder": "Rechercher des actes, noms, villes…",
   "nav_login": "Connexion",
@@ -77,5 +76,49 @@
   "filter_all": "Tous",
   "loading": "Chargement des archives…",
   "no_results": "Aucun document trouvé pour cette recherche.",
-  "error_generic": "Une erreur inattendue est survenue. Veuillez réessayer."
+  "error_generic": "Une erreur inattendue est survenue. Veuillez réessayer.",
+
+  "tree_builder_title": "Éditeur d'Arbres Généalogiques (Tree Builder)",
+  "tree_builder_desc": "Construisez, modifiez, exportez et sauvegardez vos arbres généalogiques familiaux au format GEDCOM 5.5.1.",
+  "save_tree": "Sauvegarder l'Arbre de Famille",
+  "export_gedcom": "Exporter en GEDCOM 5.5.1",
+  "import_gedcom": "Importer un fichier GEDCOM",
+  "add_person": "Ajouter un membre",
+  "edit_person": "Modifier le membre",
+  "delete_person": "Supprimer le membre",
+  "first_name": "Prénom",
+  "last_name": "Nom de famille / Surnom",
+  "gender": "Genre",
+  "male": "Homme (♂)",
+  "female": "Femme (♀)",
+  "birth_date": "Date de naissance",
+  "birth_place": "Lieu de naissance",
+  "death_date": "Date de décès",
+  "death_place": "Lieu de décès",
+  "occupation": "Profession / Titre",
+  "notes": "Notes & Références d'archives",
+  "father": "Père",
+  "mother": "Mère",
+  "spouse": "Conjoint(e)",
+  "child": "Enfant",
+
+  "individuals_title": "Registre des Individus & Fiches Généalogiques",
+  "search_individuals_placeholder": "Rechercher un individu par prénom, nom, ville...",
+  "add_individual": "Nouveau membre",
+
+  "gallery_title": "Galerie Photographique & Archives Visuelles",
+  "search_photos_placeholder": "Rechercher des photographies par ville, sujet, période...",
+  "upload_photo": "Téléverser une photo",
+
+  "library_title": "Bibliothèque & Manuscrits Historiques",
+  "search_books_placeholder": "Rechercher des livres, manuscrits, registres...",
+  "upload_book": "Ajouter un document / livre",
+
+  "audios_title": "Histoires Orales & Témoignages Vocaux",
+  "search_audios_placeholder": "Rechercher des témoignages oraux, récits...",
+  "upload_audio": "Téléverser un enregistrement audio",
+
+  "terms_of_service": "Conditions d'Utilisation",
+  "privacy_policy": "Politique de Confidentialité",
+  "cookie_policy": "Gestion des Cookies"
 }

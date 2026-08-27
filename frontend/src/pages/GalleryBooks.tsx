@@ -18,7 +18,7 @@ import { api } from "../api/client";
 import { useTranslation } from "../context/TranslationContext";
 import { useTheme } from "../context/ThemeContext";
 import RootsPageShell from "../components/RootsPageShell";
-import manuscriptImage from "../assets/manuscript.jpg";
+import manuscriptImage from "../assets/family-archive.jpg";
 
 interface BookItem {
   id: number | string;

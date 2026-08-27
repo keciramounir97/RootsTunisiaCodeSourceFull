@@ -11,7 +11,7 @@ import {
 import carthage from "../assets/slider-carthage.jpg";
 import kairouan from "../assets/slider-kairouan.jpg";
 import sidiBouSaid from "../assets/slider-sidibousaid.jpg";
-import manuscript from "../assets/manuscript.jpg";
+import manuscript from "../assets/family-archive.jpg";
 import medina from "../assets/medina-tunis.jpg";
 import eljem from "../assets/eljem.jpg";
 import djerba from "../assets/djerba.jpg";

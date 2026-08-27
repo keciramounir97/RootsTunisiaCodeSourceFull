@@ -13,7 +13,7 @@ import eljem from "../assets/eljem.jpg";
 import djerba from "../assets/djerba.jpg";
 import carthage from "../assets/slider-carthage.jpg";
 import kairouan from "../assets/slider-kairouan.jpg";
-import manuscript from "../assets/manuscript.jpg";
+import manuscript from "../assets/family-archive.jpg";
 import SEO from "../components/SEO";
 
 // High-fidelity seeded archive photos

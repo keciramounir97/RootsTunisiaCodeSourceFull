@@ -4,7 +4,7 @@ import { BookOpen, Download, Search, FileText, ExternalLink } from "lucide-react
 import { api } from "../api/client";
 import { getApiRoot } from "../api/helpers";
 import { PageHero, Section, SectionHeading } from "../components/site/Primitives";
-import manuscript from "../assets/manuscript.jpg";
+import manuscript from "../assets/family-archive.jpg";
 import SEO from "../components/SEO";
 import { useTranslation } from "../context/TranslationContext";
 

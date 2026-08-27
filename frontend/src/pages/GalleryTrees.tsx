@@ -14,6 +14,7 @@ import { api } from "../api/client";
 import { useTranslation } from "../context/TranslationContext";
 import RootsPageShell from "../components/RootsPageShell";
 import { Link } from "react-router-dom";
+import FamilyCardModal from "../components/FamilyCardModal";
 
 interface TreeItem {
   id: number | string;
@@ -220,88 +221,12 @@ export default function GalleryTrees() {
           </div>
         )}
 
-        {/* Tree Details Drawer/Modal */}
+        {/* 3D Family Card Preview & GEDCOM Request Modal */}
         {activeTree && (
-          <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4">
-            <div className="surface-card frame-gold p-6 rounded-lg max-w-xl w-full space-y-5 bg-[var(--card)] shadow-2xl max-h-[90vh] overflow-y-auto">
-              <div className="flex items-center justify-between border-b border-[var(--border)] pb-3">
-                <div>
-                  <span className="text-[0.65rem] font-bold uppercase text-[var(--gold)]">
-                    📍 {activeTree.governorate || activeTree.region || "Gouvernorat de Tunisie"}
-                  </span>
-                  <h3 className="text-xl font-serif font-bold text-[var(--foreground)]">
-                    {activeTree.name || activeTree.title || `Arbre Familial #${activeTree.id}`}
-                  </h3>
-                </div>
-                <button
-                  onClick={() => setActiveTree(null)}
-                  className="text-[var(--muted-foreground)] hover:text-[var(--foreground)] cursor-pointer"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-
-              <div className="space-y-4 text-xs text-[var(--foreground)]">
-                <p className="leading-relaxed text-sm text-[var(--foreground)]/90">
-                  {activeTree.description || activeTree.notes || activeTree.provenance || "Arbre généalogique documenté conservé dans la base des archives tunisiennes."}
-                </p>
-
-                <div className="p-4 rounded-sm bg-[var(--background)] border border-[var(--border)] space-y-2 font-mono text-[0.72rem]">
-                  <div><strong>Membres Enregistrés:</strong> {activeTree.people?.length ?? activeTree.membersCount ?? 0} personnes</div>
-                  <div><strong>Proposé par:</strong> {activeTree.owner?.full_name || activeTree.creator || "Recherche Patrimoniale"}</div>
-                  <div><strong>Standard d'Exportation:</strong> GEDCOM 5.5.1 UTF-8</div>
-                </div>
-
-                {/* People / Individuals List inside tree card modal */}
-                {Array.isArray(activeTree.people) && activeTree.people.length > 0 && (
-                  <div className="space-y-2 pt-2">
-                    <h4 className="font-semibold text-xs text-[var(--foreground)] uppercase tracking-wider flex items-center gap-1.5">
-                      <Users className="w-4 h-4 text-[var(--gold)]" />
-                      <span>Membres de la Famille ({activeTree.people.length})</span>
-                    </h4>
-                    <div className="max-h-48 overflow-y-auto space-y-1.5 pe-1">
-                      {activeTree.people.map((person: any, idx: number) => (
-                        <div
-                          key={person.id || idx}
-                          className="p-2.5 rounded bg-[var(--background)] border border-[var(--border)] flex items-center justify-between text-xs"
-                        >
-                          <div>
-                            <span className="font-bold text-[var(--foreground)]">
-                              {person.first_name || person.firstName} {person.last_name || person.lastName || person.surname}
-                            </span>
-                            {(person.birth_date || person.birth_place) && (
-                              <p className="text-[0.68rem] text-[var(--muted-foreground)]">
-                                ✳️ {person.birth_date || "Date inconnue"} {person.birth_place ? `• ${person.birth_place}` : ""}
-                              </p>
-                            )}
-                          </div>
-                          <span className="text-[0.65rem] px-2 py-0.5 rounded bg-[var(--gold)]/10 text-[var(--gold)] font-mono">
-                            {person.gender === 'F' ? '♀ Femme' : '♂ Homme'}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <div className="flex justify-end gap-2 pt-3 border-t border-[var(--border)]">
-                <button
-                  onClick={() => setActiveTree(null)}
-                  className="btn-base btn-outline-ink text-xs px-4 py-2 cursor-pointer"
-                >
-                  Fermer
-                </button>
-                <Link
-                  to="/admin/trees"
-                  className="btn-base btn-gold text-xs px-5 py-2 flex items-center gap-1.5 cursor-pointer"
-                >
-                  <GitBranch className="w-3.5 h-3.5" />
-                  <span>Ouvrir dans l'Éditeur d'Arbres</span>
-                </Link>
-              </div>
-            </div>
-          </div>
+          <FamilyCardModal
+            tree={activeTree}
+            onClose={() => setActiveTree(null)}
+          />
         )}
       </div>
     </RootsPageShell>

@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { Search, BookOpen, GitBranch, Users, FileText, Download, X } from "lucide-react";
 import { api } from "../api/client";
 import { PageHero, Section, SectionHeading } from "../components/site/Primitives";
-import manuscript from "../assets/manuscript.jpg";
+import manuscript from "../assets/family-archive.jpg";
 import TreesBuilder, { parseGedcom, parseGedcomX } from "../admin/components/TreesBuilder";
 import ErrorBoundary from "../components/ErrorBoundary";
 import SEO from "../components/SEO";
