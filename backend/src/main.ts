@@ -199,6 +199,8 @@ async function ensureCriticalSchema(knex: Knex) {
                 t.increments('id');
                 t.string('title', 255).notNullable();
                 t.text('description').nullable();
+                t.string('category', 100).nullable();
+                t.string('governorate', 100).nullable();
                 t.string('image_path', 500).notNullable();
                 t.specificType('image_data', 'LONGBLOB').nullable();
                 t.string('image_mime_type', 120).nullable();
@@ -215,11 +217,24 @@ async function ensureCriticalSchema(knex: Knex) {
                 t.timestamp('updated_at').defaultTo(knex.fn.now());
             });
             console.log('🟡 Schema patch: created gallery table');
-        } else if (!(await knex.schema.hasColumn('gallery', 'category'))) {
-            await knex.schema.alterTable('gallery', (t) => {
-                t.string('category', 100).nullable();
-            });
-            console.log('🟡 Schema patch: added gallery.category');
+        } else {
+            const galleryCols = [
+                { name: 'category', type: (t: any) => t.string('category', 100).nullable() },
+                { name: 'governorate', type: (t: any) => t.string('governorate', 100).nullable() },
+                { name: 'location', type: (t: any) => t.string('location', 255).nullable() },
+                { name: 'year', type: (t: any) => t.string('year', 50).nullable() },
+                { name: 'photographer', type: (t: any) => t.string('photographer', 255).nullable() },
+                { name: 'seed_key', type: (t: any) => t.string('seed_key', 120).nullable() },
+                { name: 'show_details', type: (t: any) => t.boolean('show_details').defaultTo(true).nullable() },
+                { name: 'archive_source', type: (t: any) => t.string('archive_source', 255).nullable() },
+                { name: 'document_code', type: (t: any) => t.string('document_code', 100).nullable() },
+            ];
+            for (const c of galleryCols) {
+                if (!(await knex.schema.hasColumn('gallery', c.name))) {
+                    await knex.schema.alterTable('gallery', c.type);
+                    console.log(`🟡 Schema patch: added gallery.${c.name}`);
+                }
+            }
         }
 
         // 7) audios table
@@ -577,35 +592,28 @@ async function seedInitialData(knex: Knex) {
 
         // 3) Seed Gallery records from uploaded assets so admin can edit / delete / update them freely
         if (await knex.schema.hasTable('gallery')) {
-            const existingCount = await knex('gallery').count('* as count').first();
-            if (Number(existingCount?.count || (existingCount as any)?.['count(*)'] || 0) >= 15) {
-                return;
+            try {
+                await knex('gallery')
+                    .where('image_path', 'like', '%galleryimage%')
+                    .orWhere('image_path', 'like', '%abraham%')
+                    .orWhere('image_path', 'like', '%egypt%')
+                    .orWhere('title', 'like', '%abraham%')
+                    .orWhere('title', 'like', '%pyramid%')
+                    .delete();
+            } catch (e) {
+                console.warn('Gallery cleanup warning:', e);
             }
-            const firstAdmin = await knex('users').where({ role_id: 3 }).orderBy('id', 'asc').first();
-            const uploaderId = firstAdmin?.id || 1;
 
             const galleryItems = [
-                { filename: 'galleryimage.png', title: 'Beldi Patrician Palace Arches & Door', category: 'Architecture & Landscapes', location: 'Tunis Medina', year: '1918', description: 'Ornate studded door and traditional courtyard architecture in Tunis Medina.' },
-                { filename: 'galleryimage2.png', title: 'Historic Tunis Court & Notarial Archive', category: 'Documents & Sijillat', location: 'Tunis', year: '1895', description: 'Arabic legal calligraphy and notarial certifications from the charaïque court of Tunis.' },
-                { filename: 'galleryimage3.png', title: 'Kairouan Scholars & Manuscript Study', category: 'Historical Documents', location: 'Kairouan', year: '1905', description: 'Religious scholars consulting Islamic jurisprudential nasab chains in the Great Mosque library.' },
-                { filename: 'galleryimage4.png', title: 'Sidi Bou Saïd Maritime View & Village', category: 'Architecture & Landscapes', location: 'Sidi Bou Saïd', year: '1922', description: 'Panoramic cliffside view of the Andalusian village and the Gulf of Tunis.' },
-                { filename: 'galleryimage5.png', title: 'Carthage Excavation & Punic Stelae', category: 'Historical Documents', location: 'Carthage', year: '1910', description: 'Archaeological documentation of Punic votive inscriptions and funerary monuments.' },
-                { filename: 'galleryimage6.png', title: 'Djerba Traditional Oases & Menzel', category: 'Architecture & Landscapes', location: 'Houmt Souk, Djerba', year: '1928', description: 'Fortified island menzel architecture, palm groves, and community irrigation wells.' },
-                { filename: 'galleryimage7.png', title: 'El Jem Amphitheatre & Sahelian Plains', category: 'Architecture & Landscapes', location: 'El Jem', year: '1915', description: 'Monumental Roman colosseum rising above the Sahel olive orchards.' },
-                { filename: 'galleryimage8.png', title: 'Tunisian Civil Status & Habous Deeds', category: 'Documents & Sijillat', location: 'Tunis', year: '1932', description: 'Original state property registry and waqf endowment contracts.' },
-                { filename: 'galleryimage9.png', title: 'Sfax Medina Ramparts & Olive Port', category: 'Architecture & Landscapes', location: 'Sfax', year: '1920', description: 'Historic battlements, bab diwan gate, and mercantile trading quarters.' },
-                { filename: 'galleryimage10.png', title: 'Zitouna Mosque Library & Minbar', category: 'Historical Documents', location: 'Tunis Medina', year: '1908', description: 'Historic university lecture halls and theological manuscript archives.' },
-                { filename: 'galleryimage11.png', title: 'Bizerte Old Port & Canal Panorama', category: 'Architecture & Landscapes', location: 'Bizerte', year: '1925', description: 'Mediterranean port fortifications and fishing quays.' },
-                { filename: 'galleryimage12.png', title: 'Matmata Berber Dwellings & Sahara', category: 'Architecture & Landscapes', location: 'Matmata', year: '1935', description: 'Troglodyte underground courtyards carved into the southern sandstone mountains.' },
-                { filename: 'galleryimage13.png', title: 'Tozeur Palm Groves & Brick Architecture', category: 'Architecture & Landscapes', location: 'Tozeur', year: '1924', description: 'Intricate decorative brickwork and oasis canal network in the Djérid.' },
-                { filename: 'galleryimage14.png', title: 'Nabeul Pottery Workshops & Artisan Guilds', category: 'Historical Documents', location: 'Nabeul', year: '1912', description: 'Ceramic artisans decorating traditional polychrome glazed tiles and jars.' },
-                { filename: 'galleryimage15.png', title: 'Tabarka Genoese Fort & Coral Fishery', category: 'Architecture & Landscapes', location: 'Tabarka', year: '1930', description: 'Island fortress overlooking the northwest coral coast.' },
-                { filename: 'tunisia-sidibousaid.jpg', title: 'Sidi Bou Saïd Andalusian Village', category: 'Architecture & Landscapes', location: 'Sidi Bou Saïd', year: '1925', description: 'Whitewashed walls and moucharabieh balconies above Cap Carthage.' },
-                { filename: 'tunisia-carthage.jpg', title: 'Carthage Byrsa Hill Archaeological Site', category: 'Architecture & Landscapes', location: 'Carthage', year: '1920', description: 'Punic foundations and Roman Africa proconsularis ruins.' },
-                { filename: 'tunisia-eljem.jpg', title: 'Roman Colosseum of Thysdrus (El Jem)', category: 'Architecture & Landscapes', location: 'El Jem', year: '1915', description: 'Colossal amphitheatre of Roman Africa in the Sahel.' },
-                { filename: 'tunisia-medina.jpg', title: 'Rue de la Kasbah & Covered Souks', category: 'Architecture & Landscapes', location: 'Tunis Medina', year: '1905', description: 'Historic covered souk arcade and traditional guild shops in Tunis.' },
-                { filename: '16_Medina_Ornate_Door_Blue_Grille.jpg', title: 'Medina of Tunis Ornate Studded Door & Blue Grille', category: 'Architecture & Landscapes', location: 'Tunis', year: '1918', description: 'Historic studded wooden door with wrought-iron grille in Tunis Medina.' }
+                { filename: 'tunisia-sidibousaid.jpg', title: 'Sidi Bou Saïd Andalusian Village', category: 'Architecture & Landscapes', governorate: 'Tunis', location: 'Sidi Bou Saïd', year: '1925', description: 'Whitewashed walls and moucharabieh balconies above Cap Carthage.' },
+                { filename: 'tunisia-carthage.jpg', title: 'Carthage Byrsa Hill Archaeological Site', category: 'Architecture & Landscapes', governorate: 'Tunis', location: 'Carthage', year: '1920', description: 'Punic foundations and Roman Africa proconsularis ruins.' },
+                { filename: 'tunisia-eljem.jpg', title: 'Roman Colosseum of Thysdrus (El Jem)', category: 'Architecture & Landscapes', governorate: 'Mahdia', location: 'El Jem', year: '1915', description: 'Colossal amphitheatre of Roman Africa in the Sahel.' },
+                { filename: 'tunisia-medina.jpg', title: 'Rue de la Kasbah & Covered Souks', category: 'Architecture & Landscapes', governorate: 'Tunis', location: 'Tunis Medina', year: '1905', description: 'Historic covered souk arcade and traditional guild shops in Tunis.' },
+                { filename: '16_Medina_Ornate_Door_Blue_Grille.jpg', title: 'Medina of Tunis Ornate Studded Door & Blue Grille', category: 'Architecture & Landscapes', governorate: 'Tunis', location: 'Tunis Medina', year: '1918', description: 'Historic studded wooden door with wrought-iron grille in Tunis Medina.' }
             ];
+
+            const firstAdmin = await knex('users').where({ role_id: 3 }).orderBy('id', 'asc').first();
+            const uploaderId = firstAdmin?.id || 1;
 
             const uploadsDir = path.join(process.cwd(), 'uploads');
             const defaultsDir = path.join(process.cwd(), 'public', 'defaults');
