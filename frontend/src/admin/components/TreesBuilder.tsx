@@ -3945,61 +3945,47 @@ export default function TreesBuilder({
     const zoom = zoomRef.current;
     const wrapEl = wrapRef.current;
     const svgEl = svgRef.current;
-    const gEl = gRef.current;
     const nodes = nodesRef.current || [];
 
     if (!zoom || !wrapEl || !svgEl || nodes.length === 0) return;
 
+    // 1. Measure exact visible container dimensions
     const rect = wrapEl.getBoundingClientRect();
-    const width = Math.max(300, rect.width || wrapEl.clientWidth || 0);
-    const height = Math.max(300, rect.height || wrapEl.clientHeight || 0);
+    const visibleWidth = Math.max(300, rect.width || wrapEl.clientWidth || 0);
+    const visibleHeight = Math.max(300, rect.height || wrapEl.clientHeight || 0);
 
-    let midX = 0;
-    let midY = 0;
-    let boundsWidth = 0;
-    let boundsHeight = 0;
+    // 2. Compute exact tree bounding box from nodes' positions & card sizes
+    const nodeLefts = nodes.map((n: any) => Number(n.x) - CARD_W / 2).filter(Number.isFinite);
+    const nodeRights = nodes.map((n: any) => Number(n.x) + CARD_W / 2).filter(Number.isFinite);
+    const nodeTops = nodes.map((n: any) => Number(n.y) - CARD_H / 2).filter(Number.isFinite);
+    const nodeBottoms = nodes.map((n: any) => Number(n.y) + CARD_H / 2).filter(Number.isFinite);
 
-    // 1. Primary: Calculate exact SVG Bounding Box of all rendered node cards & links
-    try {
-      const domG = gEl ? (gEl.node ? gEl.node() : gEl) : svgEl.querySelector("g");
-      if (domG && typeof domG.getBBox === "function") {
-        const bbox = domG.getBBox();
-        if (bbox && bbox.width > 20 && bbox.height > 20 && Number.isFinite(bbox.x) && Number.isFinite(bbox.y)) {
-          midX = bbox.x + bbox.width / 2;
-          midY = bbox.y + bbox.height / 2;
-          boundsWidth = bbox.width + 100;
-          boundsHeight = bbox.height + 100;
-        }
-      }
-    } catch (e) {
-      console.warn("BBox calculation fallback:", e);
-    }
+    if (!nodeLefts.length || !nodeTops.length) return;
 
-    // 2. Fallback: Compute bounding box from nodes array x/y
-    if (!boundsWidth || !boundsHeight) {
-      const xs = nodes.map((n: any) => Number(n.x)).filter((v) => Number.isFinite(v));
-      const ys = nodes.map((n: any) => Number(n.y)).filter((v) => Number.isFinite(v));
-      if (!xs.length || !ys.length) return;
+    const minX = Math.min(...nodeLefts);
+    const maxX = Math.max(...nodeRights);
+    const minY = Math.min(...nodeTops);
+    const maxY = Math.max(...nodeBottoms);
 
-      const minX = Math.min(...xs) - CARD_W / 2;
-      const maxX = Math.max(...xs) + CARD_W / 2;
-      const minY = Math.min(...ys) - CARD_H / 2;
-      const maxY = Math.max(...ys) + CARD_H / 2;
+    const treeWidth = Math.max(maxX - minX, CARD_W);
+    const treeHeight = Math.max(maxY - minY, CARD_H);
 
-      midX = (minX + maxX) / 2;
-      midY = (minY + maxY) / 2;
-      boundsWidth = Math.max(maxX - minX + 80, CARD_W + 80);
-      boundsHeight = Math.max(maxY - minY + 80, CARD_H + 80);
-    }
+    const midX = (minX + maxX) / 2;
+    const midY = (minY + maxY) / 2;
 
-    // Compute exact fit scale & center translation
-    const scaleX = width / boundsWidth;
-    const scaleY = height / boundsHeight;
-    const scale = Math.min(scaleX, scaleY);
-    const clampedScale = Math.max(0.25, Math.min(scale * 0.88, 1.4));
+    // 3. Compute scale to fit comfortably inside visible canvas
+    const padding = 36;
+    const availWidth = Math.max(200, visibleWidth - padding * 2);
+    const availHeight = Math.max(200, visibleHeight - padding * 2);
 
-    const tx = width / 2 - midX * clampedScale;
-    const ty = height / 2 - midY * clampedScale;
+    const scaleX = availWidth / treeWidth;
+    const scaleY = availHeight / treeHeight;
+    const fitScale = Math.min(scaleX, scaleY);
+    const clampedScale = Math.max(0.25, Math.min(fitScale, 1.15));
+
+    // 4. Compute translation to place (midX, midY) directly at (visibleWidth / 2, visibleHeight / 2)
+    const tx = visibleWidth / 2 - midX * clampedScale;
+    const ty = visibleHeight / 2 - midY * clampedScale;
 
     const transform = d3.zoomIdentity
       .translate(tx, ty)
@@ -4008,7 +3994,7 @@ export default function TreesBuilder({
     const sel = d3.select(svgEl).interrupt();
     if (animate) {
       sel.transition()
-        .duration(500)
+        .duration(450)
         .ease(d3.easeCubicOut)
         .call(zoom.transform, transform);
     } else {
