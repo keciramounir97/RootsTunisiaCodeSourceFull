@@ -28,9 +28,10 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
   const generations = tree?.generations ?? (membersCount > 0 ? Math.ceil(Math.log2(membersCount + 1)) : 1);
   const description = tree?.description || tree?.notes || tree?.provenance || "Notice généalogique documentée conservée dans le catalogue des archives de Tunisie.";
 
-  // Dynamically fetch exact GEDCOM data for DB trees so schema matches Tree Builder 100%
+  // Dynamically fetch exact GEDCOM data for DB trees & individuals so schema matches Tree Builder 100%
   useEffect(() => {
-    if (!tree?.id) return;
+    const targetTreeId = tree?.id || individual?.tree_id || individual?.treeId;
+    if (!targetTreeId) return;
 
     let isMounted = true;
     setLoadingGedcom(true);
@@ -39,12 +40,12 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
       try {
         let res: any;
         try {
-          res = await api.get(`/trees/${tree.id}/gedcom`, { responseType: "text" });
+          res = await api.get(`/trees/${targetTreeId}/gedcom`, { responseType: "text" });
         } catch {
           try {
-            res = await api.get(`/my/trees/${tree.id}/gedcom`, { responseType: "text" });
+            res = await api.get(`/my/trees/${targetTreeId}/gedcom`, { responseType: "text" });
           } catch {
-            res = await api.get(`/admin/trees/${tree.id}/gedcom`, { responseType: "text" });
+            res = await api.get(`/admin/trees/${targetTreeId}/gedcom`, { responseType: "text" });
           }
         }
 
@@ -53,14 +54,14 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
           : (res?.data && (res.data as any).data != null ? String((res.data as any).data) : "");
 
         if (rawText && rawText.trim().length > 10 && isMounted) {
-          const isGedcomX = tree.data_format === "gedcomx" || /^\s*(\{|\<\?xml)/.test(rawText);
+          const isGedcomX = (tree?.data_format || "gedcom") === "gedcomx" || /^\s*(\{|\<\?xml)/.test(rawText);
           const parsed = isGedcomX ? parseGedcomX(rawText) : parseGedcom(rawText);
           if (Array.isArray(parsed) && parsed.length > 0) {
             setFetchedPeople(parsed);
           }
         }
       } catch (err) {
-        console.warn("Could not fetch GEDCOM schema for tree modal:", err);
+        console.warn("Could not fetch GEDCOM schema for modal:", err);
       } finally {
         if (isMounted) setLoadingGedcom(false);
       }
@@ -69,7 +70,7 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
     return () => {
       isMounted = false;
     };
-  }, [tree?.id, tree?.data_format]);
+  }, [tree?.id, tree?.data_format, individual?.tree_id, individual?.treeId]);
 
   // Build fallback normalized schema nodes if direct GEDCOM text is not available
   const normalizedPeople = useMemo(() => {
