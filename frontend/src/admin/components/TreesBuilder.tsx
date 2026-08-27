@@ -1975,6 +1975,8 @@ export default function TreesBuilder({
 
   const zoomRef = useRef(null);
 
+  const gRef = useRef(null);
+
   const nodesRef = useRef([]);
 
   const detailPointerRef = useRef({ x: 0, y: 0, active: false });
@@ -2437,6 +2439,7 @@ export default function TreesBuilder({
           .attr("fill", "transparent");
 
         const g = svg.append("g");
+        gRef.current = g;
 
         const zoom = d3
 
@@ -3923,44 +3926,70 @@ export default function TreesBuilder({
     const zoom = zoomRef.current;
     const wrapEl = wrapRef.current;
     const svgEl = svgRef.current;
+    const gEl = gRef.current;
     const nodes = nodesRef.current || [];
 
     if (!zoom || !wrapEl || !svgEl || nodes.length === 0) return;
 
     const rect = wrapEl.getBoundingClientRect();
-    const width = Math.max(320, rect.width || wrapEl.clientWidth || 0);
-    const height = Math.max(400, rect.height || wrapEl.clientHeight || 0);
+    const width = Math.max(300, rect.width || wrapEl.clientWidth || 0);
+    const height = Math.max(300, rect.height || wrapEl.clientHeight || 0);
 
-    const xs = nodes.map((n: any) => Number(n.x)).filter((v) => Number.isFinite(v));
-    const ys = nodes.map((n: any) => Number(n.y)).filter((v) => Number.isFinite(v));
+    let midX = 0;
+    let midY = 0;
+    let boundsWidth = 0;
+    let boundsHeight = 0;
 
-    if (!xs.length || !ys.length) return;
+    // 1. Primary: Calculate exact SVG Bounding Box of all rendered node cards & links
+    try {
+      const domG = gEl ? (gEl.node ? gEl.node() : gEl) : svgEl.querySelector("g");
+      if (domG && typeof domG.getBBox === "function") {
+        const bbox = domG.getBBox();
+        if (bbox && bbox.width > 20 && bbox.height > 20 && Number.isFinite(bbox.x) && Number.isFinite(bbox.y)) {
+          midX = bbox.x + bbox.width / 2;
+          midY = bbox.y + bbox.height / 2;
+          boundsWidth = bbox.width + 80;
+          boundsHeight = bbox.height + 80;
+        }
+      }
+    } catch (e) {
+      console.warn("BBox calculation fallback:", e);
+    }
 
-    const minX = Math.min(...xs) - CARD_W / 2 - 30;
-    const maxX = Math.max(...xs) + CARD_W / 2 + 30;
-    const minY = Math.min(...ys) - CARD_H / 2 - 30;
-    const maxY = Math.max(...ys) + CARD_H / 2 + 30;
+    // 2. Fallback: Compute bounding box from nodes array x/y
+    if (!boundsWidth || !boundsHeight) {
+      const xs = nodes.map((n: any) => Number(n.x)).filter((v) => Number.isFinite(v));
+      const ys = nodes.map((n: any) => Number(n.y)).filter((v) => Number.isFinite(v));
+      if (!xs.length || !ys.length) return;
 
-    const boundsWidth = Math.max(maxX - minX, CARD_W + 60);
-    const boundsHeight = Math.max(maxY - minY, CARD_H + 60);
+      const minX = Math.min(...xs) - CARD_W / 2;
+      const maxX = Math.max(...xs) + CARD_W / 2;
+      const minY = Math.min(...ys) - CARD_H / 2;
+      const maxY = Math.max(...ys) + CARD_H / 2;
 
+      midX = (minX + maxX) / 2;
+      midY = (minY + maxY) / 2;
+      boundsWidth = Math.max(maxX - minX + 60, CARD_W + 60);
+      boundsHeight = Math.max(maxY - minY + 60, CARD_H + 60);
+    }
+
+    // Compute exact fit scale & center translation
     const scaleX = width / boundsWidth;
     const scaleY = height / boundsHeight;
     const scale = Math.min(scaleX, scaleY);
-    const clampedScale = Math.max(0.3, Math.min(scale * 0.88, 1.8));
+    const clampedScale = Math.max(0.25, Math.min(scale * 0.88, 1.4));
 
-    const midX = (minX + maxX) / 2;
-    const midY = (minY + maxY) / 2;
+    const tx = width / 2 - midX * clampedScale;
+    const ty = height / 2 - midY * clampedScale;
 
     const transform = d3.zoomIdentity
-      .translate(width / 2, height / 2)
-      .scale(clampedScale)
-      .translate(-midX, -midY);
+      .translate(tx, ty)
+      .scale(clampedScale);
 
     d3.select(svgEl)
       .interrupt()
       .transition()
-      .duration(550)
+      .duration(500)
       .ease(d3.easeCubicOut)
       .call(zoom.transform, transform);
   }, []);
@@ -4302,7 +4331,7 @@ export default function TreesBuilder({
           <div
             ref={wrapRef}
             data-format={dataFormat}
-            className={`relative h-[70vh] min-h-[400px] w-full border-b ${border} overflow-hidden shrink-0
+            className={`relative h-full min-h-[450px] w-full border-b ${border} overflow-hidden flex-1 shrink-0
             ${isDark ? "bg-[#0d1b2a]/30" : "bg-[#f8f5ef]/30"}
             ${dataFormat === "gedcomx" || dataFormat === "gedcom7" ? "ring-1 ring-inset ring-[#0c4a6e]/30 dark:ring-[#0d9488]/30" : ""}`}
           >
