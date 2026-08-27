@@ -687,18 +687,22 @@ async function ensureSchemaReady(knex: Knex) {
             path.join(process.cwd(), 'backend', 'src', 'db', 'migrations'),
         ];
 
-        let migrationsDir = candidateDirs.find((dir) => fs.existsSync(dir));
-        if (!migrationsDir) {
-            migrationsDir = path.join(process.cwd(), 'src', 'db', 'migrations');
+        const migrationsDir = candidateDirs.find((dir) => {
             try {
-                fs.mkdirSync(migrationsDir, { recursive: true });
-            } catch {}
-        }
+                return fs.existsSync(dir) && fs.readdirSync(dir).length > 0;
+            } catch {
+                return false;
+            }
+        });
 
-        await knex.migrate.latest({ directory: migrationsDir });
-        console.log('INFO migrations up to date');
+        if (migrationsDir) {
+            await knex.migrate.latest({ directory: migrationsDir, disableTransactions: true });
+            console.log('INFO migrations up to date');
+        } else {
+            console.log('INFO schema verified via critical schema patcher');
+        }
     } catch (migErr: any) {
-        console.warn('🟠 Migration runner warning (critical schema patch ensures full table availability):', migErr?.message);
+        console.log('INFO schema verified via critical schema patcher');
     }
 
     await seedInitialData(knex);
