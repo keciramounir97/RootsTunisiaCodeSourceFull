@@ -1,8 +1,8 @@
-import React, { useState, useMemo } from "react";
-import { X, GitBranch, Users, Layers, Download, FileCode, Sparkles, CheckCircle2, AlertCircle, User, ShieldCheck, Eye, Network, MapPin, Landmark, Clock } from "lucide-react";
+import React, { useState, useMemo, useEffect } from "react";
+import { X, GitBranch, Users, Layers, Download, FileCode, Sparkles, CheckCircle2, AlertCircle, User, ShieldCheck, Eye, Network, MapPin, Landmark, Clock, RefreshCcw } from "lucide-react";
 import { api } from "../api/client";
 import { useTranslation } from "../context/TranslationContext";
-import TreesBuilder from "../admin/components/TreesBuilder";
+import TreesBuilder, { parseGedcom, parseGedcomX } from "../admin/components/TreesBuilder";
 
 interface FamilyCardModalProps {
   tree?: any;
@@ -17,17 +17,66 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
   const [statusMessage, setStatusMessage] = useState("");
   const [requestReason, setRequestReason] = useState("");
   const [showRequestForm, setShowRequestForm] = useState(false);
+  const [fetchedPeople, setFetchedPeople] = useState<any[] | null>(null);
+  const [loadingGedcom, setLoadingGedcom] = useState(false);
 
-  // Extract Tree / Individual details
+  // Extract Tree / Individual metadata
   const title = tree?.name || tree?.title || (individual ? `${individual.first_name || individual.firstName || ''} ${individual.last_name || individual.lastName || individual.surname || ''}` : "Roots Tunisia Lineage");
   const governorate = tree?.governorate || tree?.region || individual?.birth_place || individual?.birthPlace || "Tunisia";
   const rawPeopleList = Array.isArray(tree?.people) ? tree.people : (individual ? [individual] : []);
-  const membersCount = tree?.people?.length ?? tree?.membersCount ?? (individual ? 1 : 0);
+  const membersCount = fetchedPeople?.length ?? tree?.people?.length ?? tree?.membersCount ?? (individual ? 1 : 0);
   const generations = tree?.generations ?? (membersCount > 0 ? Math.ceil(Math.log2(membersCount + 1)) : 1);
   const description = tree?.description || tree?.notes || tree?.provenance || "Notice généalogique documentée conservée dans le catalogue des archives de Tunisie.";
 
-  // Build normalized schema nodes for visual TreesBuilder
+  // Dynamically fetch exact GEDCOM data for DB trees so schema matches Tree Builder 100%
+  useEffect(() => {
+    if (!tree?.id) return;
+
+    let isMounted = true;
+    setLoadingGedcom(true);
+
+    (async () => {
+      try {
+        let res: any;
+        try {
+          res = await api.get(`/trees/${tree.id}/gedcom`, { responseType: "text" });
+        } catch {
+          try {
+            res = await api.get(`/my/trees/${tree.id}/gedcom`, { responseType: "text" });
+          } catch {
+            res = await api.get(`/admin/trees/${tree.id}/gedcom`, { responseType: "text" });
+          }
+        }
+
+        const rawText = typeof res?.data === "string"
+          ? res.data
+          : (res?.data && (res.data as any).data != null ? String((res.data as any).data) : "");
+
+        if (rawText && rawText.trim().length > 10 && isMounted) {
+          const isGedcomX = tree.data_format === "gedcomx" || /^\s*(\{|\<\?xml)/.test(rawText);
+          const parsed = isGedcomX ? parseGedcomX(rawText) : parseGedcom(rawText);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setFetchedPeople(parsed);
+          }
+        }
+      } catch (err) {
+        console.warn("Could not fetch GEDCOM schema for tree modal:", err);
+      } finally {
+        if (isMounted) setLoadingGedcom(false);
+      }
+    })();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [tree?.id, tree?.data_format]);
+
+  // Build fallback normalized schema nodes if direct GEDCOM text is not available
   const normalizedPeople = useMemo(() => {
+    if (fetchedPeople && fetchedPeople.length > 0) {
+      return fetchedPeople;
+    }
+
     let list = [...rawPeopleList];
 
     // If individual view or single person, generate parent/lineage nodes so schema graph is rich
@@ -138,7 +187,7 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
         children: Array.isArray(p.children) ? p.children : [],
       };
     });
-  }, [rawPeopleList, individual, title, governorate]);
+  }, [rawPeopleList, individual, title, governorate, fetchedPeople]);
 
   const handleDownloadGedcom = async () => {
     if (!tree?.id) {
@@ -243,12 +292,19 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                 <GitBranch className="h-4 w-4 text-[var(--gold)]" />
                 <span>Schéma interactif d'arborescence (Molette pour Zoom, Glisser pour Pan)</span>
               </span>
-              <span className="bg-[var(--gold)]/10 text-[var(--gold)] px-2.5 py-0.5 rounded-full font-bold">
-                {normalizedPeople.length} Membre(s) Graphique(s)
-              </span>
+              <div className="flex items-center gap-2">
+                {loadingGedcom && (
+                  <span className="text-[0.68rem] text-[var(--gold)] animate-pulse flex items-center gap-1">
+                    <RefreshCcw className="h-3 w-3 animate-spin" /> Chargement GEDCOM...
+                  </span>
+                )}
+                <span className="bg-[var(--gold)]/10 text-[var(--gold)] px-2.5 py-0.5 rounded-full font-bold">
+                  {normalizedPeople.length} Membre(s) Graphique(s)
+                </span>
+              </div>
             </div>
 
-            <div className="h-[460px] sm:h-[500px] w-full rounded-xl overflow-hidden border-2 border-[var(--gold)]/50 relative bg-[#090d16] shadow-inner">
+            <div className="h-[520px] sm:h-[580px] w-full rounded-xl overflow-hidden border-2 border-[var(--gold)]/50 relative bg-[#090d16] shadow-inner">
               <TreesBuilder
                 rawPeople={normalizedPeople}
                 readOnly={true}
