@@ -2915,6 +2915,17 @@ export default function TreesBuilder({
           return `M${startX},${startY}V${midY}H${endX}V${endY}`;
         };
 
+        // Synchronously run simulation ticks so positions settle immediately before first render
+        for (let i = 0; i < 120; i++) {
+          sim.tick();
+        }
+
+        coupleOuter.attr("d", couplePath);
+        coupleInner.attr("d", couplePath);
+        childLinks.attr("d", childPath);
+        node.attr("transform", (d) => `translate(${d.x},${d.y})`);
+        nodesRef.current = nodes;
+
         sim.on("tick", () => {
           coupleOuter.attr("d", couplePath);
           coupleInner.attr("d", couplePath);
@@ -2923,6 +2934,14 @@ export default function TreesBuilder({
           node.attr("transform", (d) => `translate(${d.x},${d.y})`);
 
           nodesRef.current = nodes;
+        });
+
+        // Instantly position tree in the center of the canvas on mount
+        requestAnimationFrame(() => {
+          centerTree(false);
+          requestAnimationFrame(() => {
+            centerTree(false);
+          });
         });
 
         cleanupSim = () => {
@@ -2960,8 +2979,8 @@ export default function TreesBuilder({
     draw();
 
     const autoCenterTimer = setTimeout(() => {
-      centerTree();
-    }, 400);
+      centerTree(false);
+    }, 150);
 
     return () => {
       clearTimeout(autoCenterTimer);
@@ -3922,7 +3941,7 @@ export default function TreesBuilder({
     t,
   ]);
 
-  const centerTree = useCallback(() => {
+  const centerTree = useCallback((animate = true) => {
     const zoom = zoomRef.current;
     const wrapEl = wrapRef.current;
     const svgEl = svgRef.current;
@@ -3948,8 +3967,8 @@ export default function TreesBuilder({
         if (bbox && bbox.width > 20 && bbox.height > 20 && Number.isFinite(bbox.x) && Number.isFinite(bbox.y)) {
           midX = bbox.x + bbox.width / 2;
           midY = bbox.y + bbox.height / 2;
-          boundsWidth = bbox.width + 80;
-          boundsHeight = bbox.height + 80;
+          boundsWidth = bbox.width + 100;
+          boundsHeight = bbox.height + 100;
         }
       }
     } catch (e) {
@@ -3969,8 +3988,8 @@ export default function TreesBuilder({
 
       midX = (minX + maxX) / 2;
       midY = (minY + maxY) / 2;
-      boundsWidth = Math.max(maxX - minX + 60, CARD_W + 60);
-      boundsHeight = Math.max(maxY - minY + 60, CARD_H + 60);
+      boundsWidth = Math.max(maxX - minX + 80, CARD_W + 80);
+      boundsHeight = Math.max(maxY - minY + 80, CARD_H + 80);
     }
 
     // Compute exact fit scale & center translation
@@ -3986,12 +4005,15 @@ export default function TreesBuilder({
       .translate(tx, ty)
       .scale(clampedScale);
 
-    d3.select(svgEl)
-      .interrupt()
-      .transition()
-      .duration(500)
-      .ease(d3.easeCubicOut)
-      .call(zoom.transform, transform);
+    const sel = d3.select(svgEl).interrupt();
+    if (animate) {
+      sel.transition()
+        .duration(500)
+        .ease(d3.easeCubicOut)
+        .call(zoom.transform, transform);
+    } else {
+      sel.call(zoom.transform, transform);
+    }
   }, []);
 
   // Which GEDCOM standard this tree's data is stored in — surfaced on the
@@ -4079,7 +4101,7 @@ export default function TreesBuilder({
             <button
               type="button"
               className="interactive-btn btn-neu ml-2 inline-flex items-center gap-2 !px-4 !py-2 !text-xs"
-              onClick={centerTree}
+              onClick={() => centerTree(true)}
             >
               <LocateFixed className="w-4 h-4" />
               {t("legacy.center", "Center")}
