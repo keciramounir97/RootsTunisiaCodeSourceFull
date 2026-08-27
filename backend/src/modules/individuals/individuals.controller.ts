@@ -70,26 +70,18 @@ export class IndividualsController {
   @UseGuards(JwtAuthGuard)
   async createIndividual(@Body() body: any, @Request() req: ExpressRequest) {
     const userId = (req.user as any)?.id || null;
-    const givenName = body.given || body.first_name || '';
-    const familyName = body.surname || body.last_name || '';
-    const fullName = body.name || [givenName, familyName].filter(Boolean).join(' ') || 'Sans Nom';
-    const birthYear = body.birthYear || body.birth_year || body.birth_date || '';
-
     const payload = {
       user_id: userId,
-      name: fullName,
-      given: givenName,
-      surname: familyName,
-      first_name: givenName,
-      last_name: familyName,
+      name: body.name || 'Sans Nom',
+      given: body.given || '',
+      surname: body.surname || '',
       gender: body.gender || '',
-      birth_year: birthYear,
-      birth_date: body.birth_date || birthYear,
-      birth_place: body.birthPlace || body.birth_place || '',
-      death_date: body.deathDate || body.death_date || '',
-      death_place: body.deathPlace || body.death_place || '',
+      birth_year: body.birthYear || '',
+      birth_place: body.birthPlace || '',
+      death_date: body.deathDate || '',
+      death_place: body.deathPlace || '',
       profession: body.profession || '',
-      details: body.details || body.notes || '',
+      details: body.details || '',
       custom_fields: JSON.stringify(body.customFields || []),
       source_links: JSON.stringify(body.sourceLinks || []),
       gedcom_text: body.gedcomText || '',

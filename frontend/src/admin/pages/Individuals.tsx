@@ -8,7 +8,7 @@ const SOURCE_HOST_LABELS: Array<[string, string]> = [
   ["archives.gov", "National Archives (US)"],
   ["archive.org", "Internet Archive"],
   ["nationalarchives.gov.uk", "National Archives (UK)"],
-  ["archives.gov.ma", "National Archives of Tunisia"],
+  ["archives.nat.tn", "Archives Nationales de Tunisie"],
 ];
 
 export function isDomainOrHostString(str: string): boolean {
@@ -16,7 +16,7 @@ export function isDomainOrHostString(str: string): boolean {
   const s = String(str).trim().toLowerCase();
   if (
     s.includes("api.roots") ||
-    s.includes("RootsTunisia") ||
+    s.includes("rootstunisia") ||
     s === "localhost" ||
     s.startsWith("localhost:") ||
     s.startsWith("http://") ||

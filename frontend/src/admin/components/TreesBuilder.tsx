@@ -16,7 +16,7 @@ export function isDomainOrHostString(str: string): boolean {
   const s = String(str).trim().toLowerCase();
   if (
     s.includes("api.roots") ||
-    s.includes("RootsTunisia") ||
+    s.includes("rootstunisia") ||
     s === "localhost" ||
     s.startsWith("localhost:") ||
     s.startsWith("http://") ||
@@ -5199,7 +5199,7 @@ export default function TreesBuilder({
                                   }))
                                 }
                                 placeholder={t("legacy.example_location",
-                                  "e.g. Tunis, Sfax or Tunis",
+                                  "e.g. Tunis, Algiers or Casablanca",
                                 )}
                                 className={`w-full px-3 py-2 rounded-lg border ${border} ${inputBg} ${inputText}`}
                               />
