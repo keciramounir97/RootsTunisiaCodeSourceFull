@@ -2464,12 +2464,8 @@ export default function TreesBuilder({
           return {
             ...p,
             gen: gVal,
-            x: Number.isFinite(p.x)
-              ? p.x
-              : width / 2 + (Math.random() - 0.5) * 50,
-            y: Number.isFinite(p.y)
-              ? p.y
-              : (gVal - midGen) * 180 + height / 2,
+            x: (Math.random() - 0.5) * 60,
+            y: (gVal - midGen) * 160,
           };
         });
 
@@ -2616,11 +2612,11 @@ export default function TreesBuilder({
 
         const sim = d3
           .forceSimulation(nodes)
-          .force("charge", d3.forceManyBody().strength(simLinks.length > 0 ? -1300 : -350))
-          .force("center", d3.forceCenter(width / 2, height / 2))
-          .force("collision", d3.forceCollide().radius(CARD_W * 0.58))
-          .force("y", d3.forceY((d) => ((d.gen ?? 0) - midGen) * 180 + height / 2).strength(1.0))
-          .force("x", d3.forceX(width / 2).strength(simLinks.length > 0 ? 0.08 : 0.4))
+          .force("charge", d3.forceManyBody().strength(simLinks.length > 0 ? -1200 : -350))
+          .force("center", d3.forceCenter(0, 0))
+          .force("collision", d3.forceCollide().radius(CARD_W * 0.55))
+          .force("y", d3.forceY((d) => ((d.gen ?? 0) - midGen) * 160).strength(1.2))
+          .force("x", d3.forceX(0).strength(simLinks.length > 0 ? 0.08 : 0.4))
           .force(
             "link",
             d3
@@ -3971,7 +3967,7 @@ export default function TreesBuilder({
         : "GEDCOM 5.5.1";
 
   return (
-    <div dir={dir} className="relative">
+    <div dir={dir} className="relative w-full h-[550px] sm:h-[640px] flex flex-col overflow-hidden rounded-xl bg-inherit">
       {personStatus.message ? (
         <div
           className={`fixed top-24 z-[60] rtl:left-6 rtl:right-auto ltr:right-6 rounded-lg border px-4 py-3 shadow-xl ${
