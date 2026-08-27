@@ -1,74 +1,282 @@
-import { useState } from "react";
+/* eslint-disable no-unused-vars */
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Menu, Search, User, LogOut, ExternalLink, PanelLeft, PanelLeftClose } from "lucide-react";
+import { Menu, Search, ExternalLink, ChevronDown, LogOut, Settings } from "lucide-react";
+import { useThemeStore } from "../../store/theme";
+import { api } from "../../api/client";
 import { useTranslation } from "../../context/TranslationContext";
 import { useAuth } from "./AuthContext";
-import LanguageMenu from "../../components/LanguageMenu";
 
-export default function AdminHeader({
-  sidebarOpen,
-  onToggleSidebar,
-}: {
-  sidebarOpen: boolean;
-  onToggleSidebar: () => void;
-}) {
+export default function AdminHeader({ sidebarOpen, onToggleSidebar }: { sidebarOpen: boolean; onToggleSidebar: () => void }) {
+  const { theme } = useThemeStore();
   const { t } = useTranslation();
   const { user, logout } = useAuth();
   const [search, setSearch] = useState("");
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const [suggestions, setSuggestions] = useState<{ trees: any[]; people: any[] }>({ trees: [], people: [] });
+  const [suggestOpen, setSuggestOpen] = useState(false);
+  const [suggestLoading, setSuggestLoading] = useState(false);
+  const [suggestError, setSuggestError] = useState("");
+  const suggestTimerRef = useRef<any>(null);
+  const latestQueryRef = useRef("");
   const navigate = useNavigate();
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (!search.trim()) return;
-    navigate(`/gallery?q=${encodeURIComponent(search.trim())}`);
+    setSuggestOpen(false);
+    navigate(`/library?q=${encodeURIComponent(search)}`);
+  };
+
+  const isDark = theme === "dark";
+
+  // Dynamic Theme Classes
+  // Use a glass/translucent background for a modern feel, but tinted with theme colors
+  const headerBg = isDark
+    ? "bg-[#0f172a]/80 backdrop-blur-md border-b border-white/5"
+    : "bg-white/80 backdrop-blur-md border-b border-[#5d4037]/10";
+
+  const textColor = isDark ? "text-white" : "text-[#2c1810]";
+
+  const searchBg = isDark
+    ? "bg-white/5 border-white/10 focus-within:bg-white/10 focus-within:border-[#C39637]/50"
+    : "bg-[#f8f5ef] border-[#134E4A]/10 focus-within:bg-white focus-within:border-[#C39637]";
+
+  const searchInputText = isDark
+    ? "text-white placeholder:text-gray-500"
+    : "text-[#2c1810] placeholder:text-[#5d4037]/40";
+
+  useEffect(() => {
+    const q = String(search || "").trim();
+    latestQueryRef.current = q;
+
+    if (suggestTimerRef.current) {
+      clearTimeout(suggestTimerRef.current);
+    }
+
+    if (q.length < 2) {
+      setSuggestions({ trees: [], people: [] });
+      setSuggestOpen(false);
+      setSuggestLoading(false);
+      setSuggestError("");
+      return;
+    }
+
+    suggestTimerRef.current = setTimeout(async () => {
+      setSuggestLoading(true);
+      setSuggestError("");
+      try {
+        const { data } = await api.get(
+          `/search/suggest?q=${encodeURIComponent(q)}`
+        );
+        if (latestQueryRef.current !== q) return;
+        setSuggestions({
+          trees: Array.isArray(data?.trees) ? data.trees : [],
+          people: Array.isArray(data?.people) ? data.people : [],
+        });
+        setSuggestOpen(true);
+      } catch (err: any) {
+        if (latestQueryRef.current !== q) return;
+        setSuggestError(
+          err.response?.data?.message || t("suggestions_load_failed", "Failed to load suggestions")
+        );
+        setSuggestions({ trees: [], people: [] });
+      } finally {
+        if (latestQueryRef.current === q) {
+          setSuggestLoading(false);
+        }
+      }
+    }, 300);
+
+    return () => {
+      if (suggestTimerRef.current) {
+        clearTimeout(suggestTimerRef.current);
+      }
+    };
+  }, [search]);
+
+  const handleSuggestFocus = () => {
+    if (String(search || "").trim().length >= 2) {
+      setSuggestOpen(true);
+    }
+  };
+
+  const handleSuggestBlur = () => {
+    window.setTimeout(() => setSuggestOpen(false), 200);
+  };
+
+  const handlePickSuggestion = (value: string) => {
+    if (!value) return;
+    setSearch(value);
+    setSuggestOpen(false);
+    navigate(`/library?q=${encodeURIComponent(value)}`);
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setUserMenuOpen(false);
+      }
+    };
+    if (userMenuOpen) document.addEventListener("click", handleClickOutside);
+    return () => document.removeEventListener("click", handleClickOutside);
+  }, [userMenuOpen]);
+
+  const handleLogout = async () => {
+    setUserMenuOpen(false);
+    await logout();
+    navigate("/login");
   };
 
   return (
-    <header className="fixed top-0 right-0 left-0 z-30 flex h-16 items-center justify-between border-b border-[var(--gold)]/30 bg-[var(--card)]/95 px-4 backdrop-blur shadow-sm transition-all sm:px-6">
-      <div className="flex items-center gap-3">
-        <button
-          onClick={onToggleSidebar}
-          aria-label="Toggle sidebar"
-          title={sidebarOpen ? t("close_sidebar", "Close Sidebar") : t("open_sidebar", "Open Sidebar")}
-          className="rounded p-2 text-[var(--foreground)] hover:bg-[var(--gold)]/15 transition-colors cursor-pointer"
-        >
-          {sidebarOpen ? <PanelLeftClose className="h-5 w-5 text-[var(--gold)]" /> : <PanelLeft className="h-5 w-5" />}
-        </button>
+    <header className={`fixed top-0 right-0 z-40 transition-all duration-300 ${headerBg} shadow-sm ${sidebarOpen ? "lg:left-72 left-0" : "left-0"}`}>
+      <div className="h-20 px-6 flex items-center justify-between gap-6">
 
-        <form onSubmit={handleSearch} className="hidden sm:flex items-center gap-2 rounded border border-[var(--border)] bg-[var(--background)]/60 px-3 py-1.5">
-          <Search className="h-3.5 w-3.5 text-[var(--muted-foreground)]" />
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder={t("nav_search_placeholder", "Search records or trees…")}
-            className="w-48 bg-transparent text-xs text-[var(--foreground)] outline-none placeholder:text-[var(--muted-foreground)]"
-          />
-        </form>
-      </div>
-
-      <div className="flex items-center gap-3">
-        <Link
-          to="/"
-          target="_blank"
-          className="hidden md:inline-flex items-center gap-1 text-xs font-bold uppercase tracking-[0.14em] text-[var(--gold)] hover:underline"
-        >
-          <span>{t("view_public_site", "View Public Site")}</span>
-          <ExternalLink className="h-3 w-3" />
-        </Link>
-
-        <LanguageMenu />
-
-        <div className="flex items-center gap-2 pl-2 border-l border-[var(--gold)]/25">
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--primary)] text-xs font-bold text-white uppercase">
-            {user?.name ? user.name.charAt(0) : "U"}
-          </div>
+        {/* Left: Sidebar Toggle (all screen sizes) */}
+        <div className="flex items-center gap-4">
           <button
-            onClick={() => logout()}
-            title={t("nav_signout", "Sign Out")}
-            className="p-1.5 text-[var(--muted-foreground)] hover:text-red-500 rounded hover:bg-red-500/10 cursor-pointer"
+            onClick={onToggleSidebar}
+            className={`admin-icon-btn p-2 rounded-xl transition-all ${isDark ? "hover:bg-white/10 text-white" : "hover:bg-[#5d4037]/10 text-[#2c1810]"}`}
+            aria-label={sidebarOpen ? t("close_sidebar", "Close sidebar") : t("open_sidebar", "Open sidebar")}
+            title={sidebarOpen ? t("close_sidebar", "Close sidebar") : t("open_sidebar", "Open sidebar")}
           >
-            <LogOut className="h-4 w-4" />
+            <Menu className="w-6 h-6" />
           </button>
+
+          {/* Breadcrumb Placeholder or Welcome Text */}
+          <div className="hidden md:flex flex-col">
+            <span className={`text-xs uppercase tracking-widest font-bold opacity-50 ${isDark ? "text-gray-400" : "text-[#5d4037]"}`}>
+              Dashboard
+            </span>
+            <span className={`text-sm font-medium ${textColor}`}>
+              {t("welcome_back_prefix", "Welcome back")}, {user?.fullName?.split(" ")[0] || t("user", "User")}
+            </span>
+          </div>
+        </div>
+
+        {/* Center: Search Bar */}
+        <div className="flex-1 max-w-xl mx-auto hidden md:block relative z-50">
+          <form onSubmit={handleSearch} className={`relative group rounded-full border transition-all duration-300 shadow-sm hover:shadow-md ${searchBg}`}>
+            <Search className={`w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 transition-colors ${isDark ? "text-gray-500 group-focus-within:text-[#C39637]" : "text-[#134E4A]/40 group-focus-within:text-[#C39637]"}`} />
+            <input
+              type="search"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              onFocus={handleSuggestFocus}
+              onBlur={handleSuggestBlur}
+              className={`admin-search-input w-full bg-transparent border-none outline-none py-3 pl-12 pr-4 text-sm rounded-full transition-colors ${searchInputText}`}
+              placeholder={t("search_placeholder", "Search archives, families, or books...")}
+            />
+          </form>
+
+          {/* Suggestions Dropdown */}
+          {suggestOpen && (
+            <div className={`absolute top-full mt-2 left-0 right-0 rounded-2xl border shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 ${isDark ? "bg-[#1e293b] border-white/10" : "bg-white border-[#5d4037]/10"}`}>
+              {/* Search Results */}
+              {suggestLoading ? (
+                <div className="p-4 text-sm opacity-50 text-center">{t("loading", "Loading...")}</div>
+              ) : suggestError ? (
+                <div className="p-4 text-sm text-red-500 text-center">{suggestError}</div>
+              ) : suggestions.trees.length || suggestions.people.length ? (
+                <div className="max-h-[60vh] overflow-y-auto scrollbar-thin">
+
+                  {suggestions.trees.length > 0 && (
+                    <div className={`px-4 py-2 text-[10px] uppercase tracking-wider font-bold opacity-50 ${isDark ? "bg-white/5" : "bg-gray-50"}`}>
+                      Trees
+                    </div>
+                  )}
+                  {suggestions.trees.map((item: any) => (
+                    <button
+                      key={`tree-${item.id}`}
+                      onMouseDown={() => handlePickSuggestion(item.title)}
+                      className={`w-full text-left px-4 py-3 flex items-center justify-between group transition-colors border-b last:border-0 ${isDark ? "hover:bg-white/5 border-white/5 text-gray-200" : "hover:bg-[#5d4037]/5 border-[#5d4037]/5 text-[#2c1810]"}`}
+                    >
+                      <span className="font-medium text-sm group-hover:text-[#d4af37] transition-colors">{item.title}</span>
+                    </button>
+                  ))}
+
+                  {suggestions.people.length > 0 && (
+                    <div className={`px-4 py-2 text-[10px] uppercase tracking-wider font-bold opacity-50 ${isDark ? "bg-white/5" : "bg-gray-50"}`}>
+                      People
+                    </div>
+                  )}
+                  {suggestions.people.map((item: any) => (
+                    <button
+                      key={`person-${item.id}`}
+                      onMouseDown={() => handlePickSuggestion(item.name)}
+                      className={`w-full text-left px-4 py-3 flex flex-col transition-colors border-b last:border-0 ${isDark ? "hover:bg-white/5 border-white/5 text-gray-200" : "hover:bg-[#5d4037]/5 border-[#5d4037]/5 text-[#2c1810]"}`}
+                    >
+                      <span className="font-medium text-sm group-hover:text-[#d4af37] transition-colors">{item.name || "Unknown"}</span>
+                      <span className="text-xs opacity-50 mt-0.5">{item.tree_title ? `in ${item.tree_title}` : "Person Record"}</span>
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <div className="p-6 text-sm opacity-50 text-center flex flex-col items-center">
+                  <Search className="w-8 h-8 mb-2 opacity-20" />
+                  No results found
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Right: Actions */}
+        <div className="flex items-center gap-2 md:gap-4">
+          <Link
+            to="/"
+            target="_blank"
+            className={`hidden lg:flex items-center gap-2 text-xs font-bold uppercase tracking-wider px-4 py-2.5 rounded-full transition-all ${isDark ? "hover:bg-white/10 text-gray-400 hover:text-white" : "hover:bg-[#5d4037]/5 text-[#5d4037]/70 hover:text-[#2c1810]"}`}
+          >
+            <span>{t("live_site", "Live Site")}</span>
+            <ExternalLink className="w-3 h-3 mb-0.5" />
+          </Link>
+
+          <div className="h-6 w-px bg-current opacity-10 hidden md:block"></div>
+
+          <div className="relative" ref={dropdownRef}>
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); setUserMenuOpen((o) => !o); }}
+              className={`pl-1.5 pr-2 py-1.5 rounded-full border flex items-center gap-3 transition-all cursor-pointer hover:shadow-md ${isDark ? "bg-[#1e293b] border-white/10" : "bg-white border-[#5d4037]/10"}`}
+            >
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#d4af37] to-[#b38f2d] flex items-center justify-center text-[#2c1810] font-bold text-sm shadow-inner">
+                {user?.fullName?.charAt(0) || "A"}
+              </div>
+              <div className="hidden sm:flex flex-col text-left mr-1">
+                <span className={`text-xs font-bold leading-none ${textColor}`}>
+                  {user?.fullName?.split(" ")[0] || "Admin"}
+                </span>
+              </div>
+              <ChevronDown className={`w-3 h-3 opacity-50 mr-1 ${textColor} transition-transform ${userMenuOpen ? "rotate-180" : ""}`} />
+            </button>
+
+            {userMenuOpen && (
+              <div className={`absolute right-0 top-full mt-2 py-1 min-w-[180px] rounded-xl border shadow-xl z-50 ${isDark ? "bg-[#1e293b] border-white/10" : "bg-white border-[#5d4037]/10"}`}>
+                <div className="px-4 py-2 border-b border-current/10">
+                  <p className={`text-sm font-medium ${textColor}`}>{user?.fullName || "User"}</p>
+                  <p className="text-xs opacity-60 truncate">{user?.email}</p>
+                </div>
+                <Link
+                  to="/admin/settings"
+                  onClick={() => setUserMenuOpen(false)}
+                  className={`flex items-center gap-2 px-4 py-2.5 text-sm transition-colors ${isDark ? "hover:bg-white/10 text-gray-200" : "hover:bg-[#5d4037]/5 text-[#2c1810]"}`}
+                >
+                  <Settings className="w-4 h-4" />
+                  {t("settings", "Settings")}
+                </Link>
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className={`w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-500 transition-colors ${isDark ? "hover:bg-white/10" : "hover:bg-red-50"}`}
+                >
+                  <LogOut className="w-4 h-4" />
+                  {t("logout", "Log out")}
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </header>

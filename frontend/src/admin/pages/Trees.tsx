@@ -43,7 +43,26 @@ import { useAuth } from "../components/AuthContext";
 
 const MAX_GEDCOM_BYTES = 50 * 1024 * 1024;
 
-const buildMockTrees = () => [];
+const buildMockTrees = () => [
+  {
+    id: "smoke-tree-5links-maghreb",
+    title: "Arbre Généalogique Smoke Test Maghreb (5 Sources)",
+    description: "Arbre de démonstration Smoke Test incluant 5 sources multimédias (1 Image, 1 Audio, 1 Document, 2 Liens Externes) sur l'ancêtre principal.",
+    owner: "RootsTunisia Admin",
+    isPublic: true,
+    hasGedcom: true,
+    createdAt: new Date().toISOString(),
+  },
+  ...Array.from({ length: 9 }).map((_, i) => ({
+    id: `mock-tree-${i + 1}`,
+    title: `RootsTunisia Sample Family ${i + 1}`,
+    description: `A sample Maghrebian family tree for testing the genealogy panel.`,
+    owner: "RootsTunisia Admin",
+    isPublic: i % 2 === 0,
+    hasGedcom: true,
+    createdAt: new Date().toISOString(),
+  })),
+];
 
 export default function Trees() {
   const { theme } = useThemeStore();
@@ -134,8 +153,11 @@ export default function Trees() {
     setTreesError("");
     setSaveError("");
 
-    const isMock = false;
-    const mockTrees = [];
+    const isMock =
+      import.meta.env.DEV &&
+      localStorage.getItem("mockupDataActive") === "true";
+
+    const mockTrees = isMock ? buildMockTrees() : [];
 
     const mergeById = (list: any[]) => {
       const map = new Map();
@@ -418,7 +440,7 @@ export default function Trees() {
     }
 
       if (String(tree.id).startsWith("mock-")) {
-        // Generate sample Tunisian family members for local mock mode.
+        // Generate sample Maghrebian family members for local mock mode.
 
         const familyName = tree.title.split(" ").pop() || "El-Masry";
 
@@ -874,6 +896,7 @@ export default function Trees() {
     if (!title && selectedTree?.title) title = String(selectedTree.title).trim();
     if (!title) title = "Arbre Généalogique Familial";
 
+    // Always save to database when save action is triggered
     if (!treeForm.saveToDb) {
       setTreeForm((prev) => ({ ...prev, saveToDb: true }));
     }

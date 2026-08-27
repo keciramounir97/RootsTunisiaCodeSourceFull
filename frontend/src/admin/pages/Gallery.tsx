@@ -632,7 +632,7 @@ export default function AdminGallery() {
                       setForm({ ...form, archiveSource: e.target.value })
                     }
                     className={`w-full px-3 py-2 rounded-lg border ${border} ${inputBg} ${textColor} focus:outline-none focus:ring-2 focus:ring-[#d9a441] text-sm`}
-                    placeholder={t("legacy.archive_source_placeholder", "e.g. Archives Nationales de Tunisie")}
+                    placeholder={t("legacy.archive_source_placeholder", "e.g. National Archives of Algeria")}
                   />
                 </div>
 

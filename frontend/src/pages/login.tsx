@@ -1,19 +1,27 @@
-import { Link, useNavigate } from "react-router-dom";
+import { useThemeStore } from "../store/theme";
+import { NavLink, useNavigate } from "react-router-dom";
+import {
+  Lock,
+  Mail,
+  Eye,
+  EyeOff,
+  ArrowRight,
+  LogIn,
+} from "lucide-react";
+import AOS from "aos";
 import { useEffect, useState } from "react";
 import { useAuth } from "../admin/components/AuthContext";
 import { useTranslation } from "../context/TranslationContext";
+import MaghrebTribesMap from "../components/MaghrebTribesMap";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { loginSchema } from "../api/validation";
 import { z } from "zod";
-import carthage from "../assets/slider-carthage.jpg";
-import { Logo } from "../components/site/Logo";
-import SEO from "../components/SEO";
-import { Eye, EyeOff, Lock, Mail, AlertCircle } from "lucide-react";
 
 type LoginFormData = z.infer<typeof loginSchema>;
 
 export default function Login() {
+  const { theme } = useThemeStore();
   const { login, user } = useAuth();
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -35,10 +43,13 @@ export default function Login() {
   });
 
   useEffect(() => {
+    AOS.init({ duration: 900, once: true });
     if (user) {
       navigate("/admin", { replace: true });
     }
   }, [user, navigate]);
+
+  const isDark = theme === "dark";
 
   const onSubmit = async (data: LoginFormData) => {
     setError("");
@@ -62,111 +73,142 @@ export default function Login() {
   };
 
   return (
-    <div className="bg-[var(--background)] text-[var(--foreground)] min-h-[85vh] py-8 sm:py-12">
-      <SEO
-        title="Login — Roots Tunisia"
-        description="Sign in to your Roots Tunisia account to continue your Tunisian family research."
-        keywords={["Login Roots Tunisia", "Tunisian genealogy account"]}
-      />
+    <div className="min-h-screen flex items-stretch pt-24 sm:pt-28 pb-8">
+      <div className="w-full max-w-[var(--content-max)] mx-auto flex flex-col lg:flex-row rounded-2xl overflow-hidden shadow-2xl border border-[var(--border-color)] bg-[var(--paper-color)]">
+        {/* Left side — map */}
+        <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden min-h-[500px]">
+          <MaghrebTribesMap />
+          <div className="absolute inset-y-0 right-0 w-16 pointer-events-none bg-gradient-to-r from-transparent to-[var(--paper-color)]" />
+        </div>
 
-      <div className="mx-auto max-w-7xl px-3 sm:px-5">
-        <div className="surface-card grid lg:grid-cols-2 rounded-lg border border-[var(--gold)]/40 overflow-hidden shadow-2xl min-h-[620px]">
-          {/* Left Photo Part */}
-          <div className="relative hidden lg:block overflow-hidden min-h-[600px]">
-            <img
-              src={carthage}
-              alt="Ruins of Carthage overlooking the Mediterranean"
-              width={1600}
-              height={1000}
-              className="h-full w-full object-cover"
-            />
-            <div className="hero-scrim absolute inset-0" />
-            <div className="absolute bottom-12 left-12 right-12 max-w-md z-10">
-              <p className="eyebrow text-[var(--gold)]">Roots Tunisia</p>
-              <p className="mt-3 font-display text-3xl text-white font-semibold leading-snug">
-                Your lineage is waiting in the registers.
-              </p>
-              <p className="mt-2 text-xs text-white/80 leading-relaxed">
-                Connect ancestors across Ottoman sijillat, central état civil, and Mediterranean archival collections.
+        {/* Right side — form */}
+        <div className={`flex-1 flex items-center justify-center p-6 sm:p-10 transition-colors duration-300 ${
+          isDark ? "bg-[var(--teal-dark)]" : "bg-[var(--paper-color)]"
+        }`}>
+          <div className="w-full max-w-md" data-aos="fade-left">
+            <div className="mb-8 text-center lg:text-left">
+              <h1 className={`text-3xl font-bold mb-2 tracking-wide font-cinzel ${
+                isDark ? "text-[var(--gold-light)]" : "text-[var(--brand-teal)]"
+              }`}>
+                {t("welcome_back", "Welcome Back")}
+              </h1>
+              <p className={`text-base font-body ${
+                isDark ? "text-[var(--gold-light)]/60" : "text-[var(--brand-teal)]/60"
+              }`}>
+                {t("login_subtitle", "Sign in to your account")}
               </p>
             </div>
-          </div>
 
-          {/* Right Form Part */}
-          <div className="flex items-center justify-center p-8 sm:p-12 lg:p-16 bg-[var(--card)]">
-            <form className="w-full max-w-md" onSubmit={handleSubmit(onSubmit)}>
-              <Logo />
-              <h1 className="display-lg mt-8 text-[var(--foreground)]">Welcome back</h1>
-              <p className="mt-2 text-sm text-[var(--muted-foreground)]">
-                Sign in to continue building your Tunisian family tree.
-              </p>
+            <form className="space-y-5" onSubmit={handleSubmit(onSubmit)}>
+              <div>
+                <label className={`text-sm font-medium mb-2 block font-body ${
+                  isDark ? "text-[var(--gold-light)]/80" : "text-[var(--brand-teal)]/80"
+                }`}>
+                  {t("email", "Email")}
+                </label>
+                <div className={`flex items-center gap-3 px-4 py-3.5 rounded-2xl border-2 transition-all focus-within:border-[var(--brand-gold)] focus-within:shadow-lg focus-within:shadow-[var(--brand-gold)]/10 ${
+                  errors.email ? "border-red-500/50 animate-pulse border-2" : isDark ? "bg-white/5 border-white/10" : "bg-white border-[var(--border-color)]"
+                }`}>
+                  <Mail className="w-5 h-5 text-[var(--brand-gold)] shrink-0" />
+                  <input
+                    type="email"
+                    {...register("email")}
+                    placeholder={t("email_placeholder", "example@email.com")}
+                    className={`bg-transparent outline-none flex-1 text-base font-body ${
+                      isDark ? "text-white placeholder:text-white/30" : "text-[var(--brand-teal)] placeholder:text-[var(--brand-teal)]/30"
+                    }`}
+                  />
+                </div>
+                {errors.email && (
+                  <p className="text-red-500 text-xs mt-1 font-medium font-body">
+                    {errors.email.message}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label className={`text-sm font-medium mb-2 block font-body ${
+                  isDark ? "text-[var(--gold-light)]/80" : "text-[var(--brand-teal)]/80"
+                }`}>
+                  {t("password", "Password")}
+                </label>
+                <div className={`flex items-center gap-3 px-4 py-3.5 rounded-2xl border-2 transition-all focus-within:border-[var(--brand-gold)] focus-within:shadow-lg focus-within:shadow-[var(--brand-gold)]/10 ${
+                  errors.password ? "border-red-500/50 animate-pulse border-2" : isDark ? "bg-white/5 border-white/10" : "bg-white border-[var(--border-color)]"
+                }`}>
+                  <Lock className="w-5 h-5 text-[var(--brand-gold)] shrink-0" />
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    {...register("password")}
+                    placeholder="••••••••"
+                    className={`bg-transparent outline-none flex-1 text-base font-body ${
+                      isDark ? "text-white placeholder:text-white/30" : "text-[var(--brand-teal)] placeholder:text-[var(--brand-teal)]/30"
+                    }`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="text-[var(--brand-gold)]/60 hover:text-[var(--brand-gold)] transition-colors"
+                  >
+                    {showPassword ? (
+                      <EyeOff className="w-5 h-5" />
+                    ) : (
+                      <Eye className="w-5 h-5" />
+                    )}
+                  </button>
+                </div>
+                {errors.password && (
+                  <p className="text-red-500 text-xs mt-1 font-medium font-body">
+                    {errors.password.message}
+                  </p>
+                )}
+              </div>
+
+              <div className="flex justify-end">
+                <NavLink
+                  to="/resetpassword"
+                  className="text-sm text-[var(--teal-light)] hover:text-[var(--brand-gold)] transition-colors font-medium font-body"
+                >
+                  {t("forgot_password", "Forgot password?")}
+                </NavLink>
+              </div>
 
               {error && (
-                <div className="mt-4 p-4 rounded text-sm bg-red-100 text-red-800 border border-red-300 dark:bg-red-950 dark:text-red-200 flex items-center gap-2">
-                  <AlertCircle className="h-5 w-5 shrink-0" />
-                  <span>{error}</span>
+                <div className="p-4 rounded-2xl bg-red-500/10 border border-red-500/20">
+                  <p className="text-red-500 text-sm text-center font-medium font-body">
+                    {error}
+                  </p>
                 </div>
               )}
 
-              <div className="mt-8 grid gap-5">
-                <label className="grid gap-2">
-                  <span className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
-                    Email
-                  </span>
-                  <div className="relative">
-                    <input
-                      {...register("email")}
-                      type="email"
-                      required
-                      className="w-full rounded-sm border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm text-[var(--foreground)] outline-none focus:border-[var(--gold)]"
-                      placeholder="you@example.tn"
-                    />
-                    <Mail className="absolute right-3 top-3.5 h-4 w-4 text-[var(--muted-foreground)] pointer-events-none" />
-                  </div>
-                  {errors.email && <p className="text-xs text-red-500">{errors.email.message}</p>}
-                </label>
+              <button
+                type="submit"
+                disabled={loading}
+                className="group w-full py-4 rounded-2xl text-white font-bold text-base shadow-xl bg-gradient-to-r from-[var(--teal-dark)] via-[var(--brand-teal)] to-[var(--brand-gold)] hover:shadow-2xl hover:shadow-[var(--brand-gold)]/20 transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 font-body"
+              >
+                {loading ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    {t("please_wait", "Please wait...")}
+                  </>
+                ) : (
+                  <>
+                    <LogIn className="w-5 h-5" />
+                    {t("login", "Login")}
+                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  </>
+                )}
+              </button>
 
-                <label className="grid gap-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
-                      Password
-                    </span>
-                    <Link
-                      to="/reset-password"
-                      className="text-xs font-semibold text-[var(--gold)] hover:underline"
-                    >
-                      Forgot password?
-                    </Link>
-                  </div>
-                  <div className="relative">
-                    <input
-                      {...register("password")}
-                      type={showPassword ? "text" : "password"}
-                      required
-                      className="w-full rounded-sm border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm text-[var(--foreground)] outline-none focus:border-[var(--gold)]"
-                      placeholder="••••••••"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-3.5 text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
-                    >
-                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    </button>
-                  </div>
-                  {errors.password && <p className="text-xs text-red-500">{errors.password.message}</p>}
-                </label>
-
-                <button type="submit" disabled={loading} className="btn-base btn-red w-full mt-2">
-                  {loading ? "Signing in…" : "Sign in to account"}
-                </button>
-              </div>
-
-              <p className="mt-8 text-sm text-[var(--muted-foreground)] text-center">
-                New to Roots Tunisia?{" "}
-                <Link to="/signup" className="font-semibold text-[var(--gold)] hover:underline">
-                  Create an account
-                </Link>
+              <p className={`text-center text-sm pt-2 font-body ${
+                isDark ? "text-[var(--gold-light)]/50" : "text-[var(--brand-teal)]/50"
+              }`}>
+                {t("no_account_yet", "Don't have an account?")}{" "}
+                <NavLink
+                  to="/signup"
+                  className="text-[var(--teal-light)] font-bold hover:text-[var(--brand-gold)] transition-colors"
+                >
+                  {t("create_account", "Create account")}
+                </NavLink>
               </p>
             </form>
           </div>
