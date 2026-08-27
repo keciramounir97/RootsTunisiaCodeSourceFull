@@ -9,6 +9,7 @@ import {
   X,
   FileCode,
   Layers,
+  MapPin,
 } from "lucide-react";
 import { api } from "../api/client";
 import { useTranslation } from "../context/TranslationContext";
@@ -172,8 +173,9 @@ export default function GalleryTrees() {
                 >
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className="px-2.5 py-0.5 rounded-sm text-[0.65rem] font-bold uppercase tracking-wider bg-[var(--gold)]/15 text-[var(--gold)] border border-[var(--gold)]/30">
-                        📍 {govStr}
+                      <span className="px-2.5 py-0.5 rounded-sm text-[0.65rem] font-bold uppercase tracking-wider bg-[var(--gold)]/15 text-[var(--gold)] border border-[var(--gold)]/30 flex items-center gap-1">
+                        <MapPin className="w-3 h-3 text-[var(--gold)]" />
+                        <span>{govStr}</span>
                       </span>
                       <span className="flex items-center gap-1 text-[0.65rem] font-mono text-[var(--primary)] font-bold">
                         <FileCode className="w-3.5 h-3.5" />

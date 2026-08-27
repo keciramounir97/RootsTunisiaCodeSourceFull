@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import { X, GitBranch, Users, Layers, Download, FileCode, Sparkles, CheckCircle2, AlertCircle, User, ShieldCheck, Eye, Network } from "lucide-react";
+import { X, GitBranch, Users, Layers, Download, FileCode, Sparkles, CheckCircle2, AlertCircle, User, ShieldCheck, Eye, Network, MapPin, Landmark, Clock } from "lucide-react";
 import { api } from "../api/client";
 import { useTranslation } from "../context/TranslationContext";
 import TreesBuilder from "../admin/components/TreesBuilder";
@@ -199,8 +199,8 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--gold)]/30 pb-3 pr-10">
           <div>
             <span className="text-[0.68rem] font-bold uppercase tracking-[0.2em] text-[var(--gold)] flex items-center gap-1.5">
-              <span className="h-2.5 w-2.5 rounded-full bg-[var(--gold)] animate-pulse" />
-              🏛️ Carte Généalogique Patrimoniale
+              <Landmark className="h-4 w-4 text-[var(--gold)]" />
+              <span>Carte Généalogique Patrimoniale</span>
             </span>
             <h2 className="text-xl sm:text-2xl font-serif font-bold text-[var(--foreground)] tracking-wide">
               {title}
@@ -269,8 +269,9 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                 </div>
 
                 <div className="flex items-center justify-between border-b border-[var(--gold)]/30 pb-3">
-                  <span className="text-[0.68rem] font-bold uppercase tracking-[0.2em] text-[var(--gold)]">
-                    📍 {governorate}
+                  <span className="text-[0.68rem] font-bold uppercase tracking-[0.2em] text-[var(--gold)] flex items-center gap-1">
+                    <MapPin className="h-3.5 w-3.5 text-[var(--gold)]" />
+                    <span>{governorate}</span>
                   </span>
                   <span className="px-3 py-0.5 rounded-full text-[0.65rem] font-mono font-bold bg-[var(--gold)]/20 text-[var(--gold)] border border-[var(--gold)]/40">
                     GEDCOM 5.5.1 UTF-8
@@ -325,21 +326,25 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                   <div className="p-2.5 rounded bg-[var(--card)] border border-[var(--border)] space-y-1">
                     <span className="text-[0.68rem] text-[var(--muted-foreground)] uppercase block font-mono">Naissance & Origine</span>
-                    <p className="font-bold text-[var(--foreground)]">
-                      ✳️ {individual.birth_date || individual.birthDate || "Date non spécifiée"}
+                    <p className="font-bold text-[var(--foreground)] flex items-center gap-1.5">
+                      <Sparkles className="h-3.5 w-3.5 text-amber-400" />
+                      <span>{individual.birth_date || individual.birthDate || "Date non spécifiée"}</span>
                     </p>
-                    <p className="text-[0.72rem] text-[var(--muted-foreground)]">
-                      📍 {individual.birth_place || individual.birthPlace || governorate}
+                    <p className="text-[0.72rem] text-[var(--muted-foreground)] flex items-center gap-1.5">
+                      <MapPin className="h-3.5 w-3.5 text-[var(--gold)]" />
+                      <span>{individual.birth_place || individual.birthPlace || governorate}</span>
                     </p>
                   </div>
 
                   <div className="p-2.5 rounded bg-[var(--card)] border border-[var(--border)] space-y-1">
                     <span className="text-[0.68rem] text-[var(--muted-foreground)] uppercase block font-mono">Statut Vital & Décès</span>
-                    <p className="font-bold text-[var(--foreground)]">
-                      ✝️ {individual.death_date || individual.deathDate || "Vivant ou non enregistré"}
+                    <p className="font-bold text-[var(--foreground)] flex items-center gap-1.5">
+                      <Clock className="h-3.5 w-3.5 text-[var(--muted-foreground)]" />
+                      <span>{individual.death_date || individual.deathDate || "Vivant ou non enregistré"}</span>
                     </p>
-                    <p className="text-[0.72rem] text-[var(--muted-foreground)]">
-                      📍 {individual.death_place || individual.deathPlace || "N/A"}
+                    <p className="text-[0.72rem] text-[var(--muted-foreground)] flex items-center gap-1.5">
+                      <MapPin className="h-3.5 w-3.5 text-[var(--gold)]" />
+                      <span>{individual.death_place || individual.deathPlace || "N/A"}</span>
                     </p>
                   </div>
                 </div>

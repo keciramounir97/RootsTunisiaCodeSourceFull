@@ -9,6 +9,9 @@ import {
   Landmark,
   User,
   Eye,
+  MapPin,
+  Sparkles,
+  Clock,
 } from "lucide-react";
 import carthage from "../assets/slider-carthage.jpg";
 import kairouan from "../assets/slider-kairouan.jpg";
@@ -470,11 +473,13 @@ export default function Home() {
               >
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="px-2.5 py-0.5 rounded-sm text-[0.65rem] font-bold uppercase tracking-wider bg-[var(--gold)]/15 text-[var(--gold)] border border-[var(--gold)]/30">
-                      📍 {person.birth_place || person.birthPlace || "Tunisie"}
+                    <span className="px-2.5 py-0.5 rounded-sm text-[0.65rem] font-bold uppercase tracking-wider bg-[var(--gold)]/15 text-[var(--gold)] border border-[var(--gold)]/30 flex items-center gap-1">
+                      <MapPin className="h-3 w-3 text-[var(--gold)]" />
+                      <span>{person.birth_place || person.birthPlace || "Tunisie"}</span>
                     </span>
-                    <span className="text-[0.65rem] px-2.5 py-0.5 rounded-full bg-[var(--gold)]/10 text-[var(--gold)] font-mono font-bold">
-                      {person.gender === 'F' ? '♀ Femme' : '♂ Homme'}
+                    <span className="text-[0.65rem] px-2 py-0.5 rounded-full bg-[var(--gold)]/10 text-[var(--gold)] font-mono font-bold flex items-center gap-1">
+                      <User className="h-3 w-3 text-[var(--gold)]" />
+                      <span>{person.gender === 'F' ? 'Femme' : 'Homme'}</span>
                     </span>
                   </div>
 
@@ -489,8 +494,8 @@ export default function Home() {
                   )}
 
                   <div className="text-xs text-[var(--muted-foreground)] space-y-1 font-mono pt-1">
-                    <p>✳️ Nais.: {person.birth_date || person.birthDate || "Inconnue"} {person.birth_place ? `• ${person.birth_place}` : ""}</p>
-                    <p>✝️ Décès: {person.death_date || person.deathDate || "N/A"}</p>
+                    <p className="flex items-center gap-1.5"><Sparkles className="h-3 w-3 text-amber-400" /> Nais.: {person.birth_date || person.birthDate || "Inconnue"} {person.birth_place ? `• ${person.birth_place}` : ""}</p>
+                    <p className="flex items-center gap-1.5"><Clock className="h-3 w-3 text-[var(--muted-foreground)]" /> Décès: {person.death_date || person.deathDate || "N/A"}</p>
                   </div>
                 </div>
 

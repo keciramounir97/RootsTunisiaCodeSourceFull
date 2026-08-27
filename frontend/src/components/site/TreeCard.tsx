@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Download, GitBranch, Layers, Users, Eye } from "lucide-react";
+import { Download, GitBranch, Layers, Users, Eye, MapPin } from "lucide-react";
 import FamilyCardModal from "../FamilyCardModal";
 
 export interface TreeRecord {
@@ -35,8 +35,9 @@ export function TreeCard({ tree }: { tree: TreeRecord }) {
       <article className="surface-card frame-gold flex flex-col p-6 transition-transform hover:-translate-y-1 rounded-lg">
         <div className="flex items-center justify-between">
           <p className="eyebrow text-[var(--gold)]">Famille & Lignée</p>
-          <span className="rounded-sm border border-[var(--gold)]/50 px-2 py-0.5 text-[0.6rem] font-bold uppercase tracking-[0.18em] text-[var(--gold)] bg-[var(--gold)]/10">
-            📍 {locationStr}
+          <span className="rounded-sm border border-[var(--gold)]/50 px-2 py-0.5 text-[0.6rem] font-bold uppercase tracking-[0.18em] text-[var(--gold)] bg-[var(--gold)]/10 flex items-center gap-1">
+            <MapPin className="h-3 w-3 text-[var(--gold)]" />
+            <span>{locationStr}</span>
           </span>
         </div>
         <h3 className="mt-3 font-serif text-xl font-bold leading-snug text-[var(--foreground)]">{titleStr}</h3>
