@@ -280,20 +280,51 @@ async function ensureCriticalSchema(knex: Knex) {
         if (!(await knex.schema.hasTable('individuals'))) {
             await knex.schema.createTable('individuals', (t) => {
                 t.increments('id');
+                t.integer('user_id').unsigned().references('id').inTable('users').onDelete('SET NULL');
                 t.integer('tree_id').unsigned().references('id').inTable('family_trees').onDelete('CASCADE');
                 t.string('gedcom_id', 100).nullable();
+                t.string('name', 255).notNullable().defaultTo('Sans Nom');
                 t.string('first_name', 255).nullable();
                 t.string('last_name', 255).nullable();
+                t.string('given', 255).nullable();
+                t.string('surname', 255).nullable();
                 t.string('gender', 20).nullable();
                 t.string('birth_date', 100).nullable();
+                t.string('birth_year', 100).nullable();
                 t.string('birth_place', 255).nullable();
                 t.string('death_date', 100).nullable();
                 t.string('death_place', 255).nullable();
+                t.string('profession', 255).nullable();
+                t.text('details').nullable();
+                t.text('custom_fields').nullable();
+                t.text('source_links').nullable();
                 t.text('gedcom_text', 'longtext').nullable();
+                t.boolean('is_backed_up').defaultTo(true);
+                t.boolean('is_public').defaultTo(true);
                 t.timestamp('created_at').defaultTo(knex.fn.now());
                 t.timestamp('updated_at').defaultTo(knex.fn.now());
             });
             console.log('🟡 Schema patch: created individuals table');
+        } else {
+            const colsToAdd = [
+                { name: 'user_id', type: (t: any) => t.integer('user_id').unsigned().nullable() },
+                { name: 'name', type: (t: any) => t.string('name', 255).notNullable().defaultTo('Sans Nom') },
+                { name: 'given', type: (t: any) => t.string('given', 255).nullable() },
+                { name: 'surname', type: (t: any) => t.string('surname', 255).nullable() },
+                { name: 'birth_year', type: (t: any) => t.string('birth_year', 100).nullable() },
+                { name: 'profession', type: (t: any) => t.string('profession', 255).nullable() },
+                { name: 'details', type: (t: any) => t.text('details').nullable() },
+                { name: 'custom_fields', type: (t: any) => t.text('custom_fields').nullable() },
+                { name: 'source_links', type: (t: any) => t.text('source_links').nullable() },
+                { name: 'is_backed_up', type: (t: any) => t.boolean('is_backed_up').defaultTo(true) },
+                { name: 'is_public', type: (t: any) => t.boolean('is_public').defaultTo(true) },
+            ];
+            for (const c of colsToAdd) {
+                if (!(await knex.schema.hasColumn('individuals', c.name))) {
+                    await knex.schema.alterTable('individuals', c.type);
+                    console.log(`🟡 Schema patch: added individuals.${c.name}`);
+                }
+            }
         }
 
         // 11) subscriptions & subscription_tiers tables
