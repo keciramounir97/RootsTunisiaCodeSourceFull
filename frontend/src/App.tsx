@@ -83,7 +83,6 @@ const Backups = lazy(() => import("./admin/pages/Backups"));
 const AdminSuggestions = lazy(() => import("./admin/pages/Suggestions"));
 const LegalContent = lazy(() => import("./admin/pages/LegalContent"));
 const DownloadRequests = lazy(() => import("./admin/pages/DownloadRequests"));
-const TierFeatures = lazy(() => import("./admin/pages/TierFeatures"));
 const UserUpgrade = lazy(() => import("./admin/pages/UserUpgrade"));
 
 /** Pages where WhatsApp button should appear */
@@ -501,16 +500,6 @@ function AppRoutes() {
             <Suspense fallback={<AdminLoadingFallback />}>
               <ProtectedRoute roles={[3]}>
                 <LegalContent />
-              </ProtectedRoute>
-            </Suspense>
-          }
-        />
-        <Route
-          path="tier-features"
-          element={
-            <Suspense fallback={<AdminLoadingFallback />}>
-              <ProtectedRoute roles={[3]}>
-                <TierFeatures />
               </ProtectedRoute>
             </Suspense>
           }

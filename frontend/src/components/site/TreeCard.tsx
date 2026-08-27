@@ -1,110 +1,65 @@
 import { Link } from "react-router-dom";
-import { Download, GitBranch } from "lucide-react";
+import { Download, GitBranch, Layers, Users } from "lucide-react";
 
 export interface TreeRecord {
-  id: number;
-  title: string;
-  owner: string;
-  summary: string;
-  archive: string;
-  code: string;
-  region: string;
+  id: number | string;
+  title?: string;
+  name?: string;
+  owner?: string | { full_name?: string };
+  summary?: string;
+  description?: string;
+  notes?: string;
+  provenance?: string;
+  archive?: string;
+  code?: string;
+  region?: string;
+  governorate?: string;
+  people?: any[];
+  membersCount?: number;
+  generations?: number;
 }
 
-export const featuredTrees: TreeRecord[] = [
-  {
-    id: 301,
-    title: "La famille Ben Ayed de Tunis : Reconstitution généalogique (1780–1930)",
-    owner: "Karim Admin",
-    summary:
-      "Marchands et caïds du Souk El Attarine : chronique d'une famille beldi entre le Bardo et la Medina.",
-    archive: "Archives Nationales de Tunisie · Série Beylicale",
-    code: "ANT-BEY-1147",
-    region: "Tunis",
-  },
-  {
-    id: 302,
-    title: "Le lignage Bouazizi de Sidi Bouzid : terres, tribu et registres habous",
-    owner: "Amel Trabelsi",
-    summary:
-      "Une lignée de fellahs du centre tunisien reconstituée à partir des registres habous et de la mémoire tribale.",
-    archive: "Registres Habous · Jemmal",
-    code: "HAB-SB-0421",
-    region: "Sidi Bouzid",
-  },
-  {
-    id: 303,
-    title: "The Cohen-Guetta family of Djerba (1810–1965)",
-    owner: "Sami Guetta",
-    summary:
-      "A Djerbian Jewish lineage traced through Hara Sghira registers, ketubot, and migration papers to Marseille.",
-    archive: "Djerba Community Registers",
-    code: "DJ-CG-0092",
-    region: "Djerba",
-  },
-  {
-    id: 304,
-    title: "Famille El Materi de Kairouan : oulémas et fondations pieuses",
-    owner: "Nadia Ben Salah",
-    summary:
-      "Chaîne de savants attachés à la Grande Mosquée de Kairouan, documentée par les sijillat du tribunal charaïque.",
-    archive: "Tribunal Charaïque de Kairouan",
-    code: "KR-CHA-0378",
-    region: "Kairouan",
-  },
-  {
-    id: 305,
-    title: "Les Zarrouk de Sfax : oléiculture et commerce méditerranéen",
-    owner: "Hichem Zarrouk",
-    summary:
-      "Actes notariés, registres de port et photographies de studio retraçant six générations sfaxiennes.",
-    archive: "Archives Municipales de Sfax",
-    code: "SFX-MUN-2211",
-    region: "Sfax",
-  },
-  {
-    id: 306,
-    title: "Branche Ben Hassine de Nefta : oasis, palmeraie et nomadisme",
-    owner: "Mongi Ben Hassine",
-    summary:
-      "Reconstitution d'une lignée du Djérid croisant recensements coloniaux et généalogies orales.",
-    archive: "Recensements du Protectorat · Tozeur",
-    code: "PRO-TZR-0765",
-    region: "Nefta",
-  },
-];
-
 export function TreeCard({ tree }: { tree: TreeRecord }) {
+  const titleStr = tree.name || tree.title || `Arbre Familial #${tree.id}`;
+  const ownerStr = typeof tree.owner === "string" ? tree.owner : (tree.owner?.full_name || "Recherche Patrimoniale");
+  const summaryStr = tree.description || tree.notes || tree.provenance || tree.summary || "Arbre généalogique numérisé et documenté.";
+  const locationStr = tree.governorate || tree.region || "Tunisie";
+  const members = tree.people?.length ?? tree.membersCount ?? 0;
+  const gens = tree.generations ?? (members > 0 ? Math.ceil(Math.log2(members + 1)) : 1);
+
   return (
-    <article className="surface-card flex flex-col p-6 transition-transform hover:-translate-y-1">
+    <article className="surface-card frame-gold flex flex-col p-6 transition-transform hover:-translate-y-1 rounded-lg">
       <div className="flex items-center justify-between">
-        <p className="eyebrow">Family Trees</p>
-        <span className="rounded-sm border border-[var(--gold)]/50 px-2 py-0.5 text-[0.6rem] font-bold uppercase tracking-[0.18em] text-[var(--gold)]">
-          Public
+        <p className="eyebrow text-[var(--gold)]">Famille & Lignée</p>
+        <span className="rounded-sm border border-[var(--gold)]/50 px-2 py-0.5 text-[0.6rem] font-bold uppercase tracking-[0.18em] text-[var(--gold)] bg-[var(--gold)]/10">
+          📍 {locationStr}
         </span>
       </div>
-      <h3 className="mt-3 font-display text-xl leading-snug text-[var(--foreground)]">{tree.title}</h3>
+      <h3 className="mt-3 font-serif text-xl font-bold leading-snug text-[var(--foreground)]">{titleStr}</h3>
       <p className="mt-1 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--muted-foreground)]">
-        {tree.owner} · {tree.region}
+        Par {ownerStr}
       </p>
-      <p className="mt-3 flex-1 text-sm leading-relaxed text-[var(--muted-foreground)]">{tree.summary}</p>
-      <dl className="mt-5 grid grid-cols-2 gap-3 border-t border-[var(--gold)]/25 pt-4 text-xs">
-        <div>
-          <dt className="font-bold uppercase tracking-[0.14em] text-[var(--gold)]">Archive Source</dt>
-          <dd className="mt-1 text-[var(--muted-foreground)]">{tree.archive}</dd>
+      <p className="mt-3 flex-1 text-xs leading-relaxed text-[var(--foreground)]/80 line-clamp-3">{summaryStr}</p>
+      
+      <div className="mt-4 grid grid-cols-2 gap-2 border-t border-[var(--border)] pt-4 text-xs font-mono">
+        <div className="flex items-center gap-1.5 text-[var(--foreground)]">
+          <Layers className="h-3.5 w-3.5 text-[var(--gold)]" />
+          <span><strong>Générations:</strong> {gens}</span>
         </div>
-        <div>
-          <dt className="font-bold uppercase tracking-[0.14em] text-[var(--gold)]">Document Code</dt>
-          <dd className="mt-1 text-[var(--muted-foreground)]">{tree.code}</dd>
+        <div className="flex items-center gap-1.5 text-[var(--foreground)]">
+          <Users className="h-3.5 w-3.5 text-[var(--gold)]" />
+          <span><strong>Individus:</strong> {members}</span>
         </div>
-      </dl>
-      <p className="mt-4 text-xs text-[var(--muted-foreground)]">Saved with GEDCOM 5.5.1</p>
+      </div>
+
+      <p className="mt-3 text-[0.68rem] text-[var(--muted-foreground)] font-mono">Standard GEDCOM 5.5.1 UTF-8</p>
+
       <div className="mt-4 flex flex-wrap gap-2">
-        <Link to="/gallery/trees" className="btn-base btn-red px-4 py-2 text-[0.65rem]">
-          <GitBranch className="h-3.5 w-3.5" /> View Tree
+        <Link to="/gallery/trees" className="btn-base btn-gold px-4 py-2 text-[0.65rem] flex items-center gap-1.5">
+          <GitBranch className="h-3.5 w-3.5" /> Explorer l'Arbre
         </Link>
-        <Link to="/subscriptions" className="btn-base btn-outline-ink px-4 py-2 text-[0.65rem]">
-          <Download className="h-3.5 w-3.5" /> Request Download
+        <Link to="/admin/trees" className="btn-base btn-outline-ink px-4 py-2 text-[0.65rem]">
+          Ouvrir Tree Builder
         </Link>
       </div>
     </article>

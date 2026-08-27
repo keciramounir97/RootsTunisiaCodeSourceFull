@@ -26,10 +26,11 @@ import sidiBouSaidCourtyard from "../assets/12_Sidi_Bou_Said_Blue_Gate_Courtyard
 import kairouanMinaret from "../assets/13_Kairouan_Minaret_Night_Illuminated.jpg";
 import fortressPalms from "../assets/17_Fortress_Aerial_Courtyard_Palms.jpg";
 import { Section, SectionHeading, InfoCard } from "../components/site/Primitives";
-import { TreeCard, featuredTrees } from "../components/site/TreeCard";
+import { TreeCard } from "../components/site/TreeCard";
 import TunisiaGovernoratesMap from "../components/TunisiaGovernoratesMap";
 import SEO from "../components/SEO";
 import { useTranslation } from "../context/TranslationContext";
+import { api } from "../api/client";
 
 const slides = [
   { image: carthageRuins, label: "Carthage Ancient Ruins" },
@@ -71,12 +72,6 @@ const tools = [
     title: "Oral Histories",
     body: "Record elders, malouf songs, dialect memories, tribal poetry and migration stories from the diaspora.",
     to: "/gallery/audios",
-  },
-  {
-    icon: FileText,
-    title: "Articles & Stories",
-    body: "Publish family narratives, archive guides and local Tunisian history for the Roots Tunisia community.",
-    to: "/gallery/articles",
   },
   {
     icon: Landmark,
@@ -131,10 +126,23 @@ const gallery = [
 export default function Home() {
   const { t } = useTranslation();
   const [active, setActive] = useState(0);
+  const [dbTrees, setDbTrees] = useState<any[]>([]);
 
   useEffect(() => {
     const id = setInterval(() => setActive((i) => (i + 1) % slides.length), 6000);
     return () => clearInterval(id);
+  }, []);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const { data } = await api.get("/trees");
+        const items = Array.isArray(data?.data) ? data.data : Array.isArray(data) ? data : [];
+        setDbTrees(items);
+      } catch {
+        setDbTrees([]);
+      }
+    })();
   }, []);
 
   return (
@@ -402,11 +410,20 @@ export default function Home() {
           title="Featured Tunisian Family Trees"
           intro="Explore public family lineages documented with archival references, historical documents, and GEDCOM verification."
         />
-        <div className="mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {featuredTrees.map((tree) => (
-            <TreeCard key={tree.id} tree={tree} />
-          ))}
-        </div>
+        {dbTrees.length > 0 ? (
+          <div className="mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {dbTrees.slice(0, 6).map((tree) => (
+              <TreeCard key={tree.id} tree={tree} />
+            ))}
+          </div>
+        ) : (
+          <div className="mt-8 p-8 rounded-lg surface-card text-center border border-[var(--border)] max-w-lg mx-auto">
+            <GitBranch className="w-10 h-10 text-[var(--gold)] mx-auto mb-2 opacity-80" />
+            <p className="text-sm text-[var(--muted-foreground)]">
+              Aucun arbre généalogique publié pour le moment. Créez votre premier arbre dans l'Éditeur d'Arbres !
+            </p>
+          </div>
+        )}
         <div className="mt-10 text-center">
           <Link to="/gallery/trees" className="btn-base btn-gold">
             Browse All Family Trees

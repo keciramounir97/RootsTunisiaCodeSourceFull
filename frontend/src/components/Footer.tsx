@@ -190,8 +190,21 @@ export default function Footer({ data }: FooterProps) {
 
       <div className="gold-rule" />
 
-      <div className="mx-auto flex max-w-7xl flex-col gap-2 px-5 py-5 text-xs text-[var(--muted-foreground)] sm:flex-row sm:items-center sm:justify-between">
+      <div className="mx-auto flex max-w-7xl flex-col md:flex-row items-center justify-between gap-4 px-5 py-5 text-xs text-[var(--muted-foreground)]">
         <p>{footer.fineprint || `© ${new Date().getFullYear()} Roots Tunisia. All rights reserved.`}</p>
+        <div className="flex items-center gap-4 text-xs">
+          <Link to="/terms" className="hover:text-[var(--gold)] transition-colors font-medium">
+            {t("terms_of_service", "Conditions d'Utilisation")}
+          </Link>
+          <span className="opacity-40">•</span>
+          <Link to="/privacy" className="hover:text-[var(--gold)] transition-colors font-medium">
+            {t("privacy_policy", "Politique de Confidentialité")}
+          </Link>
+          <span className="opacity-40">•</span>
+          <Link to="/cookies" className="hover:text-[var(--gold)] transition-colors font-medium">
+            {t("cookie_policy", "Gestion des Cookies")}
+          </Link>
+        </div>
         <p className="font-display text-sm tracking-wide text-[var(--gold)]">
           جذور تونس · Preserving Tunisian lineage
         </p>

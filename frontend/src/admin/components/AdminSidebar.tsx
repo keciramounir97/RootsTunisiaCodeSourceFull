@@ -53,7 +53,6 @@ const links = [
   { to: "/admin/admins", labelKey: "admins", Icon: Shield },
   { to: "/admin/subscriptions", labelKey: "subscriptions", Icon: Crown },
   { to: "/admin/subscription-payments", labelKey: "subscription_payments", Icon: Crown },
-  { to: "/admin/tier-features", labelKey: "tier_features_title", Icon: ListChecks },
   { to: "/admin/user-upgrade", labelKey: "user_upgrade", Icon: ArrowUpCircle },
   { to: "/admin/payment-settings", labelKey: "payment_settings", Icon: Wallet },
   { to: "/admin/tasks", labelKey: "tasks", Icon: ListChecks },

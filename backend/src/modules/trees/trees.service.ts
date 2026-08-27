@@ -80,10 +80,10 @@ export class TreesService implements OnModuleInit {
     async listPublic() {
         const rows = await Tree.query(this.knex)
             .select(this.backupFlagSelect())
-            .where('is_public', true)
+            .where((builder: any) => builder.where('is_public', true).orWhereNull('is_public'))
             .orderBy('created_at', 'desc')
-            .withGraphFetched('owner')
-            .modifyGraph('owner', (builder) => builder.select('id', 'full_name'));
+            .withGraphFetched('[owner, people]')
+            .modifyGraph('owner', (builder: any) => builder.select('id', 'full_name'));
         return rows.map((r: any) => this.stripGedcomText(r));
     }
 
@@ -91,9 +91,9 @@ export class TreesService implements OnModuleInit {
         const tree = await Tree.query(this.knex)
             .findById(id)
             .select(this.backupFlagSelect())
-            .where('is_public', true)
-            .withGraphFetched('owner')
-            .modifyGraph('owner', (builder) => builder.select('id', 'full_name'));
+            .where((builder: any) => builder.where('is_public', true).orWhereNull('is_public'))
+            .withGraphFetched('[owner, people]')
+            .modifyGraph('owner', (builder: any) => builder.select('id', 'full_name'));
 
         if (!tree) throw new NotFoundException('Tree not found');
         return this.stripGedcomText(tree);
