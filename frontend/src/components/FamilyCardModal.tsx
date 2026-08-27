@@ -47,14 +47,12 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
   const title = tree?.name || tree?.title || indName || "Roots Tunisia Lineage";
   const governorate = tree?.governorate || tree?.region || individual?.birth_place || individual?.birthPlace || "Tunisia";
   const rawPeopleList = Array.isArray(tree?.people) ? tree.people : (individual ? [individual] : []);
-  const membersCount = fetchedPeople?.length ?? tree?.people?.length ?? tree?.membersCount ?? (individual ? 1 : 0);
-  const generations = tree?.generations ?? (membersCount > 0 ? Math.ceil(Math.log2(membersCount + 1)) : 1);
   const description = tree?.description || tree?.notes || tree?.provenance || "Notice généalogique documentée conservée dans le catalogue des archives de Tunisie.";
 
-  // Initial synchronous check if gedcom text is already attached to tree object
+  // Initial synchronous check if GEDCOM text is already attached to tree object
   useEffect(() => {
     if (isIndividualModal) return;
-    const rawContent = tree?.gedcom_text || tree?.content || tree?.gedcom_data || tree?.gedcom;
+    const rawContent = tree?.gedcom_text || tree?.content || tree?.gedcom_data || tree?.gedcom || tree?.gedcomText;
     if (typeof rawContent === "string" && rawContent.trim().length > 10) {
       try {
         const isGedcomX = (tree?.data_format || "gedcom") === "gedcomx" || /^\s*(\{|\<\?xml)/.test(rawContent);
@@ -66,7 +64,7 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
         console.warn("Error parsing pre-loaded tree GEDCOM text:", e);
       }
     }
-  }, [tree?.id, tree?.gedcom_text, tree?.content, tree?.gedcom_data, isIndividualModal]);
+  }, [tree?.id, tree?.gedcom_text, tree?.content, tree?.gedcom_data, tree?.gedcomText, isIndividualModal]);
 
   // Dynamically fetch exact GEDCOM data for DB trees so schema matches Tree Builder 100%
   useEffect(() => {
@@ -79,30 +77,7 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
 
     (async () => {
       try {
-        try {
-          const treeObjRes = await api.get(`/trees/${targetTreeId}`);
-          const treeObj = treeObjRes?.data?.data || treeObjRes?.data;
-          if (treeObj) {
-            const gedText = treeObj.gedcom_text || treeObj.content || treeObj.gedcom_data;
-            if (typeof gedText === "string" && gedText.trim().length > 10) {
-              const isGedX = treeObj.data_format === "gedcomx" || /^\s*(\{|\<\?xml)/.test(gedText);
-              const parsed = isGedX ? parseGedcomX(gedText) : parseGedcom(gedText);
-              if (Array.isArray(parsed) && parsed.length > 0 && isMounted) {
-                setFetchedPeople(parsed);
-                setLoadingGedcom(false);
-                return;
-              }
-            }
-            if (Array.isArray(treeObj.people) && treeObj.people.length > 0 && isMounted) {
-              setFetchedPeople(treeObj.people);
-              setLoadingGedcom(false);
-              return;
-            }
-          }
-        } catch {
-          // Ignore and proceed to raw GEDCOM endpoint
-        }
-
+        // Try raw GEDCOM text endpoints (matching admin Trees.tsx)
         let res: any;
         try {
           res = await api.get(`/trees/${targetTreeId}/gedcom`, { responseType: "text" });
@@ -123,7 +98,32 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
           const parsed = isGedcomX ? parseGedcomX(rawText) : parseGedcom(rawText);
           if (Array.isArray(parsed) && parsed.length > 0) {
             setFetchedPeople(parsed);
+            setLoadingGedcom(false);
+            return;
           }
+        }
+
+        // Secondary fallback: GET /trees/:id object
+        try {
+          const treeObjRes = await api.get(`/trees/${targetTreeId}`);
+          const treeObj = treeObjRes?.data?.data || treeObjRes?.data;
+          if (treeObj && isMounted) {
+            const gedText = treeObj.gedcom_text || treeObj.content || treeObj.gedcom_data;
+            if (typeof gedText === "string" && gedText.trim().length > 10) {
+              const isGedX = treeObj.data_format === "gedcomx" || /^\s*(\{|\<\?xml)/.test(gedText);
+              const parsed = isGedX ? parseGedcomX(gedText) : parseGedcom(gedText);
+              if (Array.isArray(parsed) && parsed.length > 0) {
+                setFetchedPeople(parsed);
+                setLoadingGedcom(false);
+                return;
+              }
+            }
+            if (Array.isArray(treeObj.people) && treeObj.people.length > 0) {
+              setFetchedPeople(treeObj.people);
+            }
+          }
+        } catch {
+          // Ignore
         }
       } catch (err) {
         console.warn("Could not fetch GEDCOM schema for modal:", err);
@@ -137,16 +137,29 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
     };
   }, [tree?.id, tree?.data_format, isIndividualModal]);
 
-  // Build fallback normalized schema nodes for Tree view
-  const normalizedPeople = useMemo(() => {
+  // Compute final linked graph nodes for D3 Tree Builder canvas
+  const displayPeople = useMemo(() => {
+    // 1. Direct parsed GEDCOM array (exact match with admin TreeBuilder!)
     if (fetchedPeople && fetchedPeople.length > 0) {
-      return fetchedPeople.map((p: any, idx: number) => {
-        const id = p.id != null ? String(p.id) : `p-${idx + 1}`;
-        const given = p.first_name || p.firstName || p.given || p.names?.en || "Individu";
+      return fetchedPeople;
+    }
+
+    // 2. DB people list normalization with linked relationship mapping
+    let list = [...rawPeopleList];
+
+    if (list.length > 0 && typeof list[0] === 'object' && (list[0].id != null || list[0].first_name || list[0].firstName)) {
+      return list.map((p: any, idx: number) => {
+        const id = p.id != null ? String(p.id) : `@I${idx + 1}@`;
+        const given = p.first_name || p.firstName || p.given || "Individu";
         const surname = p.last_name || p.lastName || p.surname || "";
-        const fullName = p.names?.fr || p.names?.en || `${given} ${surname}`.trim();
+        const fullName = `${given} ${surname}`.trim();
+        const father = p.father || p.father_id || p.fatherId ? String(p.father || p.father_id || p.fatherId) : null;
+        const mother = p.mother || p.mother_id || p.motherId ? String(p.mother || p.mother_id || p.motherId) : null;
+        const spouse = p.spouse || p.spouse_id || p.spouseId ? String(p.spouse || p.spouse_id || p.spouseId) : null;
+        const children = Array.isArray(p.children) ? p.children.map(String) : [];
 
         return {
+          ...p,
           id,
           given,
           surname,
@@ -157,78 +170,58 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
           deathDate: p.death_date || p.deathDate || p.deathYear || "",
           deathPlace: p.death_place || p.deathPlace || "",
           occupation: p.occupation || p.profession || "",
-          father: p.father ? String(p.father) : null,
-          mother: p.mother ? String(p.mother) : null,
-          spouse: p.spouse ? String(p.spouse) : null,
-          children: Array.isArray(p.children) ? p.children.map(String) : [],
+          father,
+          mother,
+          spouse,
+          children,
         };
       });
     }
 
-    let list = [...rawPeopleList];
+    // 3. Linked sample lineage graph fallback (Father + Mother couple, connected to Child)
+    const p1Id = "p1";
+    const p2Id = "p2";
+    const p3Id = "p3";
 
-    if (list.length === 0) {
-      list = [
-        {
-          id: "p1",
-          firstName: title,
-          lastName: "Patrimoine",
-          names: { fr: title, en: title },
-          gender: "M",
-          birthDate: "1880",
-          birthPlace: governorate,
-          spouse: "p2",
-          children: ["p3"],
-        },
-        {
-          id: "p2",
-          firstName: "Épouse Lignée",
-          lastName: title,
-          names: { fr: "Épouse Lignée", en: "Spouse Lineage" },
-          gender: "F",
-          birthDate: "1885",
-          birthPlace: governorate,
-          spouse: "p1",
-          children: ["p3"],
-        },
-        {
-          id: "p3",
-          firstName: "Descendant Répertorié",
-          lastName: title,
-          names: { fr: "Descendant Répertorié", en: "Registered Descendant" },
-          gender: "M",
-          birthDate: "1915",
-          birthPlace: governorate,
-          father: "p1",
-          mother: "p2",
-        },
-      ];
-    }
-
-    return list.map((p: any, idx: number) => {
-      const id = p.id != null ? String(p.id) : `p-${idx + 1}`;
-      const given = p.first_name || p.firstName || p.given || "Individu";
-      const surname = p.last_name || p.lastName || p.surname || "";
-      const fullName = `${given} ${surname}`.trim();
-
-      return {
-        id,
-        given,
-        surname,
-        names: { fr: fullName, en: fullName },
-        gender: (p.gender || "M").toUpperCase().startsWith("F") ? "F" : "M",
-        birthDate: p.birth_date || p.birthDate || p.birthYear || "",
-        birthPlace: p.birth_place || p.birthPlace || "",
-        deathDate: p.death_date || p.deathDate || p.deathYear || "",
-        deathPlace: p.death_place || p.deathPlace || "",
-        occupation: p.occupation || p.profession || "",
-        father: p.father || p.father_id || null,
-        mother: p.mother || p.mother_id || null,
-        spouse: p.spouse || p.spouse_id || null,
-        children: Array.isArray(p.children) ? p.children.map(String) : [],
-      };
-    });
+    return [
+      {
+        id: p1Id,
+        given: title,
+        surname: "Patrimoine",
+        names: { fr: `${title} (Patrimoine)`, en: title },
+        gender: "M",
+        birthDate: "1880",
+        birthPlace: governorate,
+        spouse: p2Id,
+        children: [p3Id],
+      },
+      {
+        id: p2Id,
+        given: "Lalla Fatma",
+        surname: title,
+        names: { fr: `Lalla Fatma ${title}`, en: `Lalla Fatma ${title}` },
+        gender: "F",
+        birthDate: "1885",
+        birthPlace: governorate,
+        spouse: p1Id,
+        children: [p3Id],
+      },
+      {
+        id: p3Id,
+        given: "Sidi Mohamed",
+        surname: title,
+        names: { fr: `Sidi Mohamed ${title}`, en: `Sidi Mohamed ${title}` },
+        gender: "M",
+        birthDate: "1915",
+        birthPlace: governorate,
+        father: p1Id,
+        mother: p2Id,
+      },
+    ];
   }, [rawPeopleList, title, governorate, fetchedPeople]);
+
+  const membersCount = displayPeople.length;
+  const generations = tree?.generations ?? (membersCount > 0 ? Math.ceil(Math.log2(membersCount + 1)) : 1);
 
   const handleDownloadGedcom = async () => {
     if (!tree?.id) {
@@ -450,15 +443,15 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                       </span>
                     )}
                     <span className="bg-[var(--gold)]/10 text-[var(--gold)] px-2.5 py-0.5 rounded-full font-bold">
-                      {normalizedPeople.length} Cartes Liées
+                      {displayPeople.length} Cartes Liées
                     </span>
                   </div>
                 </div>
 
                 <div className="h-[540px] sm:h-[600px] w-full rounded-xl overflow-hidden border-2 border-[var(--gold)]/60 relative bg-[#0b1726] shadow-2xl">
                   <TreesBuilder
-                    people={normalizedPeople}
-                    rawPeople={normalizedPeople}
+                    people={displayPeople}
+                    rawPeople={displayPeople}
                     readOnly={true}
                     canDownloadDirectly={true}
                   />

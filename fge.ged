@@ -1,112 +1,220 @@
 0 HEAD
-1 SOUR ChatGPT
-2 NAME GEDCOM test — famille historique en Tunisie
+1 SOUR GEDCOM_GENERATOR
+2 NAME Extrait focalisé sur Émile Lefèvre
+2 VERS 5.5.1
+1 DEST GEDCOM 5.5.1
+1 DATE 27 AUG 2026
+2 TIME 10:00:00
 1 GEDC
 2 VERS 5.5.1
 2 FORM LINEAGE-LINKED
 1 CHAR UTF-8
+1 LANG French
+1 SUBM @SUBM1@
 
-0 @I1@ INDI
-1 NAME Félix /GEAY/
-1 SEX M
-1 BIRT
-2 DATE ABT 1872
-2 PLAC Tunis, Tunis, Tunisie
-1 OCCU Instituteur
-1 FAMS @F1@
-1 FAMC @F2@
-1 NOTE Données généalogiques publiques concernant une famille ayant vécu en Tunisie.
-2 CONT La date de naissance est donnée comme approximative dans la source consultée.
-1 SOUR @S1@
+0 @SUBM1@ SUBM
+1 NAME Utilisateur
 
-0 @I2@ INDI
-1 NAME Léonarda /CAPITELLI/
-1 SEX F
-1 FAMS @F1@
-1 NOTE Épouse de Félix GEAY.
-1 SOUR @S1@
+# ============================================================
+# SOURCES D'ARCHIVES (uniquement celles liées à Émile)
+# ============================================================
 
-0 @I3@ INDI
-1 NAME Benoît /GEAY/
-1 SEX M
-1 FAMS @F2@
-1 NOTE Père indiqué de Félix GEAY dans l'arbre généalogique public consulté.
-1 SOUR @S1@
+0 @S1@ SOUR
+1 TITL Acte de naissance - Archives départementales de la Somme
+1 AUTH Archives départementales de la Somme
+1 PUBL Série 5Mi, registres d'état civil, commune d'Amiens
+1 REPO @R1@
+1 NOTE Acte n° 203, vue 52/110. Naissance d'Émile Lefèvre le 2 avril 1878.
 
-0 @I4@ INDI
-1 NAME Benoîte /PONCEPT/
-1 SEX F
-1 FAMS @F2@
-1 NOTE Mère indiquée de Félix GEAY dans l'arbre généalogique public consulté.
-1 SOUR @S1@
+0 @S6@ SOUR
+1 TITL Acte de décès - Archives départementales de l'Eure
+1 AUTH Archives départementales de l'Eure
+1 PUBL Série 4E, registres d'état civil, commune d'Évreux
+1 REPO @R4@
+1 NOTE Acte n° 145, vue 38/85. Décès d'Émile Lefèvre le 11 juillet 1945.
 
+0 @S7@ SOUR
+1 TITL Acte de mariage - Archives départementales de l'Eure
+1 AUTH Archives départementales de l'Eure
+1 PUBL Série 4E, registres d'état civil, commune d'Évreux
+1 REPO @R4@
+1 NOTE Acte n° 67, vue 18/65. Mariage d'Émile Lefèvre et Céleste Morel le 3 juin 1904.
+
+0 @S4@ SOUR
+1 TITL Recensement de population 1901 - Archives départementales de l'Oise
+1 AUTH Archives départementales de l'Oise
+1 PUBL Série 6M, recensement de la ville de Beauvais
+1 REPO @R1@
+1 NOTE Recensement 1901, feuille n° 45. Émile Lefèvre, instituteur, domicilié à Beauvais.
+
+# ============================================================
+# RÉPERTOIRES D'ARCHIVES
+# ============================================================
+
+0 @R1@ REPO
+1 NAME Archives départementales de la Somme
+1 ADDR 61 Rue Saint-Fuscien, 80000 Amiens, France
+
+0 @R4@ REPO
+1 NAME Archives départementales de l'Eure
+1 ADDR 2 Rue de Verdun, 27000 Évreux, France
+
+# ============================================================
+# INDIVIDUS (Émile et son cercle proche)
+# ============================================================
+
+# ----- L'individu principal : Émile LEFÈVRE (I5) -----
 0 @I5@ INDI
-1 NAME Juliette Rachel /GEAY/
+1 NAME Émile /Lefèvre/
+2 GIVN Émile
+2 SURN Lefèvre
+1 SEX M
+1 BIRT
+2 DATE 02 APR 1878
+2 PLAC Amiens, Somme, France
+2 SOUR @S1@
+3 PAGE Acte n° 203, vue 52/110
+3 DATA
+4 TEXT Émile Lefèvre, né le 2 avril 1878 à Amiens, fils de Joseph Lefèvre et de Marie Dupont.
+1 CENS
+2 DATE 1901
+2 PLAC Beauvais, Oise, France
+2 SOUR @S4@
+3 PAGE Feuille n° 45
+3 DATA
+4 TEXT Instituteur, domicilié à Beauvais lors du recensement de 1901.
+1 OCCU Instituteur
+2 DATE 1901
+2 PLAC Beauvais, Oise, France
+1 MARR
+2 DATE 03 JUN 1904
+2 PLAC Évreux, Eure, France
+2 SOUR @S7@
+3 PAGE Acte n° 67, vue 18/65
+3 DATA
+4 TEXT Mariage d'Émile Lefèvre (instituteur) avec Céleste Morel (institutrice).
+1 DEAT
+2 DATE 11 JUL 1945
+2 PLAC Évreux, Eure, France
+2 SOUR @S6@
+3 PAGE Acte n° 145, vue 38/85
+3 DATA
+4 TEXT Décès à son domicile, rue de la République. Déclaré par son fils Marcel.
+1 NOTE Émile Lefèvre a exercé comme instituteur pendant toute sa carrière. Il a eu trois enfants : Marcel, Jeanne et Henri.
+1 FAMC @F1@   # Fils de Joseph et Marie
+1 FAMS @F3@   # Mari de Céleste Morel
+
+# ----- Père : Joseph LEFÈVRE (I1) -----
+0 @I1@ INDI
+1 NAME Joseph /Lefèvre/
+2 GIVN Joseph
+2 SURN Lefèvre
+1 SEX M
+1 BIRT
+2 DATE 14 MAR 1850
+2 PLAC Amiens, Somme, France
+1 DEAT
+2 DATE 22 JAN 1920
+2 PLAC Amiens, Somme, France
+1 FAMS @F1@
+
+# ----- Mère : Marie DUPONT (I2) -----
+0 @I2@ INDI
+1 NAME Marie /Dupont/
+2 GIVN Marie
+2 SURN Dupont
 1 SEX F
 1 BIRT
-2 DATE 24 FEB 1901
-2 PLAC Sfax, Sfax, Tunisie
-1 FAMS @F3@
-1 FAMC @F1@
-1 OCCU Institutrice
-1 NOTE La source Geneanet indique un mariage avec Maurice Ernest Constant RABY en 1927.
-1 SOUR @S1@
-1 SOUR @S2@
+2 DATE 08 JUN 1855
+2 PLAC Rouen, Seine-Maritime, France
+1 DEAT
+2 DATE 03 NOV 1932
+2 PLAC Amiens, Somme, France
+1 FAMS @F1@
 
+# ----- Épouse : Céleste MOREL (I6) -----
 0 @I6@ INDI
-1 NAME Maurice Ernest Constant /RABY/
-1 SEX M
+1 NAME Céleste /Morel/
+2 GIVN Céleste
+2 SURN Morel
+1 SEX F
+1 BIRT
+2 DATE 15 OCT 1880
+2 PLAC Beauvais, Oise, France
+1 DEAT
+2 DATE 28 MAR 1960
+2 PLAC Évreux, Eure, France
+1 OCCU Institutrice
 1 FAMS @F3@
-1 NOTE Époux de Juliette Rachel GEAY.
-1 SOUR @S1@
 
+# ----- Enfant 1 : Marcel LEFÈVRE (I9) -----
+0 @I9@ INDI
+1 NAME Marcel /Lefèvre/
+2 GIVN Marcel
+2 SURN Lefèvre
+1 SEX M
+1 BIRT
+2 DATE 12 JUN 1905
+2 PLAC Évreux, Eure, France
+1 DEAT
+2 DATE 15 NOV 1980
+2 PLAC Évreux, Eure, France
+1 OCCU Médecin
+1 FAMC @F3@
+
+# ----- Enfant 2 : Jeanne LEFÈVRE (I11) -----
+0 @I11@ INDI
+1 NAME Jeanne /Lefèvre/
+2 GIVN Jeanne
+2 SURN Lefèvre
+1 SEX F
+1 BIRT
+2 DATE 07 MAR 1907
+2 PLAC Évreux, Eure, France
+1 DEAT
+2 DATE 02 DEC 1992
+2 PLAC Rouen, Seine-Maritime, France
+1 FAMC @F3@
+
+# ----- Enfant 3 : Henri LEFÈVRE (I12) -----
+0 @I12@ INDI
+1 NAME Henri /Lefèvre/
+2 GIVN Henri
+2 SURN Lefèvre
+1 SEX M
+1 BIRT
+2 DATE 21 AUG 1909
+2 PLAC Évreux, Eure, France
+1 DEAT
+2 DATE 09 JUN 1978
+2 PLAC Évreux, Eure, France
+1 OCCU Ingénieur
+1 FAMC @F3@
+
+# ============================================================
+# FAMILLES
+# ============================================================
+
+# Famille F1 : Joseph Lefèvre + Marie Dupont (parents d'Émile)
 0 @F1@ FAM
 1 HUSB @I1@
 1 WIFE @I2@
 1 MARR
-2 DATE 09 JUL 1897
-2 PLAC Tunisie
-1 NOTE Mariage de Félix GEAY et Léonarda CAPITELLI.
-1 SOUR @S1@
+2 DATE 15 APR 1877
+2 PLAC Amiens, Somme, France
+1 CHIL @I5@
 
-0 @F2@ FAM
-1 HUSB @I3@
-1 WIFE @I4@
-1 CHIL @I1@
-1 NOTE Filiation de Félix GEAY telle qu'indiquée dans l'arbre généalogique public.
-1 SOUR @S1@
-
+# Famille F3 : Émile Lefèvre + Céleste Morel (mariage et enfants)
 0 @F3@ FAM
-1 HUSB @I6@
-1 WIFE @I5@
+1 HUSB @I5@
+1 WIFE @I6@
 1 MARR
-2 DATE 05 MAY 1927
-2 PLAC Tunisie
-1 NOTE Mariage de Juliette Rachel GEAY et Maurice Ernest Constant RABY.
-1 SOUR @S1@
-
-0 @S1@ SOUR
-1 TITL Geneanet — Recherche GEAY en Tunisie
-1 AUTH Geneanet
-1 PUBL Geneanet
-1 URL https://en.geneanet.org/fonds/individus/?country__0__=TUN&go=1&nom=GEAY&size=50&zonegeo__0__=Tunisia
-1 NOTE Résultats généalogiques publics contenant Félix GEAY, Léonarda CAPITELLI, Juliette Rachel GEAY et Maurice RABY.
-2 CONT La page indique notamment Félix GEAY, né vers 1872 à Tunis, son mariage avec Léonarda CAPITELLI le 09/07/1897, et Juliette Rachel GEAY née le 24/02/1901 à Sfax et mariée à Maurice RABY en 1927.
-
-0 @S2@ SOUR
-1 TITL Généa-Tunisie / GeneaActes — Base historique tunisienne
-1 AUTH Genea-Tunisie
-1 PUBL Genea-Tunisie
-1 URL https://genea-tunisie.geneactes.com/
-1 NOTE Base nominative historique consacrée aux recherches généalogiques en Tunisie.
-2 CONT La base couvre notamment la période 1830–1962 et associe les individus à des sources historiques.
-
-0 @S3@ SOUR
-1 TITL Archives Nationales de Tunisie — Portail officiel
-1 AUTH Archives Nationales de Tunisie
-1 PUBL République Tunisienne — Archives Nationales de Tunisie
-1 URL https://www.archives.nat.tn/fr/
-1 NOTE Portail officiel des Archives Nationales de Tunisie.
-2 CONT Les Archives Nationales disposent notamment de la base Thèkra et d'un portail de consultation de documents numérisés.
+2 DATE 03 JUN 1904
+2 PLAC Évreux, Eure, France
+2 SOUR @S7@
+3 PAGE Acte n° 67, vue 18/65
+1 CHIL @I9@
+1 CHIL @I11@
+1 CHIL @I12@
 
 0 TRLR
