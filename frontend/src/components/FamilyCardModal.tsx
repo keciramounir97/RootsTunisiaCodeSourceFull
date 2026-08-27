@@ -1,5 +1,5 @@
-import React, { useState, useMemo, useEffect } from "react";
-import { X, GitBranch, Users, Layers, Download, FileCode, Sparkles, CheckCircle2, AlertCircle, User, ShieldCheck, MapPin, Landmark, Clock, RefreshCcw, Briefcase, FileText } from "lucide-react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
+import { X, GitBranch, Users, Layers, Download, FileCode, Sparkles, CheckCircle2, AlertCircle, User, ShieldCheck, MapPin, Landmark, Clock, RefreshCcw, Briefcase, FileText, Link2, ExternalLink } from "lucide-react";
 import { api } from "../api/client";
 import { useTranslation } from "../context/TranslationContext";
 import TreesBuilder, { parseGedcom, parseGedcomX } from "../admin/components/TreesBuilder";
@@ -19,6 +19,26 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
   const [showRequestForm, setShowRequestForm] = useState(false);
   const [fetchedPeople, setFetchedPeople] = useState<any[] | null>(null);
   const [loadingGedcom, setLoadingGedcom] = useState(false);
+
+  // 3D Card Tilt State for Individual Modal (matching admin page Individuals.tsx)
+  const [previewTilt, setPreviewTilt] = useState({ x: 0, y: 0, active: false });
+  const previewSurfaceRef = useRef<HTMLDivElement | null>(null);
+
+  const updatePreviewTilt = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!previewSurfaceRef.current) return;
+    const rect = previewSurfaceRef.current.getBoundingClientRect();
+    const px = (e.clientX - rect.left) / rect.width;
+    const py = (e.clientY - rect.top) / rect.height;
+    setPreviewTilt({
+      x: Math.max(-12, Math.min(12, (px - 0.5) * 24)),
+      y: Math.max(-12, Math.min(12, (0.5 - py) * 24)),
+      active: true,
+    });
+  };
+
+  const resetPreviewTilt = () => {
+    setPreviewTilt({ x: 0, y: 0, active: false });
+  };
 
   const isIndividualModal = Boolean(individual && !tree);
 
@@ -117,7 +137,7 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
     };
   }, [tree?.id, tree?.data_format, isIndividualModal]);
 
-  // Build fallback normalized schema nodes if direct GEDCOM text is not available
+  // Build fallback normalized schema nodes for Tree view
   const normalizedPeople = useMemo(() => {
     if (fetchedPeople && fetchedPeople.length > 0) {
       return fetchedPeople.map((p: any, idx: number) => {
@@ -270,7 +290,7 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
           <div>
             <span className="text-[0.68rem] font-bold uppercase tracking-[0.2em] text-[var(--gold)] flex items-center gap-1.5">
               <Landmark className="h-4 w-4 text-[var(--gold)]" />
-              <span>{isIndividualModal ? "Fiche Individuelle Patrimoniale" : "Carte Généalogique Patrimoniale"}</span>
+              <span>{isIndividualModal ? "Carte Fiche Individuelle" : "Carte Généalogique Patrimoniale"}</span>
             </span>
             <h2 className="text-xl sm:text-2xl font-serif font-bold text-[var(--foreground)] tracking-wide">
               {title}
@@ -308,76 +328,104 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
         </div>
 
         {/* ======================================================== */}
-        {/* CASE 1: INDIVIDUAL MODAL (SINGLE 3D PATRIMONIAL CARD)    */}
+        {/* CASE 1: INDIVIDUAL MODAL (EXACT MATCH WITH ADMIN PAGE)  */}
         {/* ======================================================== */}
         {isIndividualModal ? (
           <div className="space-y-5 animate-in fade-in duration-200">
-            {/* 3D INDIVIDUAL PATRIMONIAL CARD */}
-            <div className="perspective-1000">
-              <div className="transform-gpu transition-all duration-500 rounded-xl bg-gradient-to-br from-[#1e293b] via-[#0f172a] to-[#020617] p-6 text-white border-2 border-[var(--gold)]/80 shadow-2xl relative overflow-hidden space-y-4">
-                <div className="absolute -right-8 -bottom-8 opacity-10 pointer-events-none font-serif text-9xl font-bold text-[var(--gold)]">
+            {/* CARD HERO IDENTICAL TO ADMIN PAGE INDIVIDUALS.TSX */}
+            <div className="p-5 rounded-2xl border border-[var(--gold)]/40 bg-gradient-to-br from-[var(--background)] via-[var(--card)] to-[var(--background)] shadow-xl relative overflow-hidden space-y-4">
+              <div className="flex items-center justify-between border-b border-[var(--gold)]/20 pb-3">
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`w-14 h-14 rounded-full flex items-center justify-center text-xl font-serif font-bold text-white shadow-md border-2 border-[var(--gold)]/60 ${
+                      individual.gender === "F" ? "bg-rose-600" : "bg-[#0d9488]"
+                    }`}
+                  >
+                    {indName ? indName.charAt(0).toUpperCase() : "P"}
+                  </div>
+                  <div>
+                    <h3 className="font-serif text-xl font-bold text-[var(--foreground)]">
+                      {indName}
+                    </h3>
+                    {(individual.profession || individual.occupation) && (
+                      <p className="text-xs text-[var(--gold)] font-semibold mt-0.5 flex items-center gap-1.5">
+                        <Briefcase className="h-3.5 w-3.5" />
+                        <span>{individual.profession || individual.occupation}</span>
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                <span className="px-3 py-1 rounded-full text-xs font-mono font-bold bg-[var(--gold)]/10 text-[var(--gold)] border border-[var(--gold)]/30">
+                  {governorate}
+                </span>
+              </div>
+
+              {/* 3D TILT CARD SURFACE */}
+              <div
+                ref={previewSurfaceRef}
+                onMouseMove={updatePreviewTilt}
+                onMouseLeave={resetPreviewTilt}
+                className="space-y-3 p-5 rounded-xl border border-[var(--gold)]/30 bg-gradient-to-br from-[#1e293b] via-[#0f172a] to-[#020617] text-white transition-transform duration-200 shadow-2xl relative overflow-hidden"
+                style={{
+                  transform: `perspective(1000px) rotateX(${previewTilt.y}deg) rotateY(${previewTilt.x}deg) scale(${previewTilt.active ? 1.01 : 1})`,
+                  transformStyle: "preserve-3d",
+                }}
+              >
+                <div className="absolute -right-6 -bottom-6 opacity-10 pointer-events-none font-serif text-8xl font-bold text-[var(--gold)]">
                   جذور
                 </div>
 
-                <div className="flex items-center justify-between border-b border-[var(--gold)]/30 pb-3">
-                  <span className="text-[0.68rem] font-bold uppercase tracking-[0.2em] text-[var(--gold)] flex items-center gap-1.5">
-                    <User className="h-4 w-4 text-[var(--gold)]" />
-                    <span>Fiche Individuelle Répertoriée</span>
+                <div className="flex items-center justify-between text-xs border-b border-[var(--gold)]/20 pb-2">
+                  <span className="font-mono text-[0.68rem] uppercase tracking-wider text-[var(--gold)] flex items-center gap-1">
+                    <User className="h-3.5 w-3.5" />
+                    <span>Carte Individuelle 3D</span>
                   </span>
-                  <span className="px-3 py-0.5 rounded-full text-[0.68rem] font-mono font-bold bg-[var(--gold)]/20 text-[var(--gold)] border border-[var(--gold)]/40">
-                    {governorate}
+                  <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-semibold text-[0.65rem] flex items-center gap-1">
+                    <ShieldCheck className="w-3 h-3" />
+                    <span>Document Registré</span>
                   </span>
                 </div>
 
-                {/* INDIVIDUAL IDENTITY HERO */}
-                <div className="flex items-start gap-4 pt-1">
-                  <div className="h-16 w-16 rounded-2xl bg-[var(--gold)]/20 border-2 border-[var(--gold)]/60 flex items-center justify-center shrink-0 shadow-lg text-[var(--gold)] font-bold text-2xl font-serif">
-                    {individual.gender === "F" ? "♀" : "♂"}
-                  </div>
-                  <div className="space-y-1">
-                    <h3 className="text-2xl font-serif font-bold text-amber-100 tracking-wide">
-                      {indName}
-                    </h3>
-                    <p className="text-xs text-slate-300 font-light flex items-center gap-2">
-                      <Briefcase className="h-3.5 w-3.5 text-[var(--gold)]" />
-                      <span>{individual.occupation || individual.profession || "Notable & Personnalité Patrimoniale"}</span>
-                    </p>
-                  </div>
-                </div>
-
-                {/* METADATA GRID */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 font-mono text-xs">
-                  <div className="p-3 rounded-lg bg-black/40 border border-[var(--gold)]/30 space-y-1.5">
-                    <span className="text-[0.65rem] text-slate-400 uppercase block font-semibold">Naissance & Origine</span>
-                    <p className="font-bold text-white text-sm flex items-center gap-1.5">
-                      <Sparkles className="h-4 w-4 text-amber-400" />
-                      <span>{individual.birth_date || individual.birthDate || "Année non spécifiée"}</span>
-                    </p>
-                    <p className="text-xs text-slate-300 flex items-center gap-1.5">
-                      <MapPin className="h-3.5 w-3.5 text-[var(--gold)]" />
+                {/* VITAL INFORMATION GRID */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs pt-1 font-mono">
+                  <div className="p-3 rounded-lg bg-black/40 border border-[var(--gold)]/30 space-y-1">
+                    <span className="text-[0.65rem] text-slate-400 block uppercase font-bold">Naissance</span>
+                    <span className="font-bold text-white block flex items-center gap-1.5">
+                      <Sparkles className="h-3.5 w-3.5 text-amber-400" />
+                      <span>{individual.birth_date || individual.birthDate || "Date inconnue"}</span>
+                    </span>
+                    <span className="text-slate-300 block text-[11px] flex items-center gap-1">
+                      <MapPin className="h-3 w-3 text-[var(--gold)]" />
                       <span>{individual.birth_place || individual.birthPlace || governorate}</span>
-                    </p>
+                    </span>
                   </div>
 
-                  <div className="p-3 rounded-lg bg-black/40 border border-[var(--gold)]/30 space-y-1.5">
-                    <span className="text-[0.65rem] text-slate-400 uppercase block font-semibold">Statut Vital & Décès</span>
-                    <p className="font-bold text-white text-sm flex items-center gap-1.5">
-                      <Clock className="h-4 w-4 text-slate-400" />
-                      <span>{individual.death_date || individual.deathDate || "Vivant ou non répertorié"}</span>
-                    </p>
-                    <p className="text-xs text-slate-300 flex items-center gap-1.5">
-                      <MapPin className="h-3.5 w-3.5 text-[var(--gold)]" />
-                      <span>{individual.death_place || individual.deathPlace || "Archives Nationales"}</span>
-                    </p>
+                  <div className="p-3 rounded-lg bg-black/40 border border-[var(--gold)]/30 space-y-1">
+                    <span className="text-[0.65rem] text-slate-400 block uppercase font-bold">Décès</span>
+                    <span className="font-bold text-white block flex items-center gap-1.5">
+                      <Clock className="h-3.5 w-3.5 text-slate-400" />
+                      <span>{individual.death_date || individual.deathDate || "Vivant / Non répertorié"}</span>
+                    </span>
+                    <span className="text-slate-300 block text-[11px] flex items-center gap-1">
+                      <MapPin className="h-3 w-3 text-[var(--gold)]" />
+                      <span>{individual.death_place || individual.deathPlace || "N/A"}</span>
+                    </span>
                   </div>
                 </div>
 
-                {/* ARCHIVES / PROVENANCE NOTICE */}
-                <div className="p-3 rounded-lg bg-black/30 border border-[var(--gold)]/20 text-xs text-slate-300 leading-relaxed font-light flex items-start gap-2">
-                  <FileText className="h-4 w-4 text-[var(--gold)] shrink-0 mt-0.5" />
-                  <span>
-                    Notice enregistrée au catalogue officiel des individus de Tunisie. Document d'archive certifié conservé sous la référence administrative patrimoniale.
-                  </span>
+                {/* NOTES / DETAILS */}
+                {individual.details && (
+                  <div className="pt-1">
+                    <span className="text-[0.65rem] text-slate-400 uppercase font-bold block mb-1">Notice & Détails</span>
+                    <p className="text-xs text-slate-300 bg-black/30 p-2.5 rounded-lg border border-[var(--gold)]/20 leading-relaxed font-light">
+                      {individual.details}
+                    </p>
+                  </div>
+                )}
+
+                <div className="text-[10px] uppercase tracking-[0.2em] text-center text-slate-400 pt-1">
+                  Survolez la carte avec la souris pour faire pivoter en 3D
                 </div>
               </div>
             </div>
@@ -478,7 +526,7 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
           </>
         )}
 
-        {/* GEDCOM REQUEST FORM */}
+        {/* GEDCOM / ACCESS REQUEST FORM */}
         {showRequestForm && (
           <form onSubmit={handleSubmitDownloadRequest} className="space-y-3 p-4 rounded-xl bg-[var(--background)] border border-[var(--gold)]/40 animate-in fade-in">
             <h4 className="font-semibold text-xs text-[var(--foreground)] flex items-center gap-2">
