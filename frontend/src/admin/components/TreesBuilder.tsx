@@ -2454,20 +2454,24 @@ export default function TreesBuilder({
         svg.call(zoom);
 
         const gens = computeGenerations(people, links);
+        const genValues = Array.from(gens.values());
+        const minGen = genValues.length ? Math.min(...genValues) : 0;
+        const maxGen = genValues.length ? Math.max(...genValues) : 0;
+        const midGen = (minGen + maxGen) / 2;
 
-        const nodes = people.map((p) => ({
-          ...p,
-
-          gen: gens.get(String(p.id)) || 0,
-
-          x: Number.isFinite(p.x)
-            ? p.x
-            : width / 2 + (Math.random() - 0.5) * 50,
-
-          y: Number.isFinite(p.y)
-            ? p.y
-            : height / 2 + (Math.random() - 0.5) * 50,
-        }));
+        const nodes = people.map((p) => {
+          const gVal = gens.get(String(p.id)) ?? 0;
+          return {
+            ...p,
+            gen: gVal,
+            x: Number.isFinite(p.x)
+              ? p.x
+              : width / 2 + (Math.random() - 0.5) * 50,
+            y: Number.isFinite(p.y)
+              ? p.y
+              : (gVal - midGen) * 180 + height / 2,
+          };
+        });
 
         nodesRef.current = nodes;
 
@@ -2615,7 +2619,7 @@ export default function TreesBuilder({
           .force("charge", d3.forceManyBody().strength(simLinks.length > 0 ? -1300 : -350))
           .force("center", d3.forceCenter(width / 2, height / 2))
           .force("collision", d3.forceCollide().radius(CARD_W * 0.58))
-          .force("y", d3.forceY((d) => (d.gen || 0) * 180 + height / 2).strength(1.0))
+          .force("y", d3.forceY((d) => ((d.gen ?? 0) - midGen) * 180 + height / 2).strength(1.0))
           .force("x", d3.forceX(width / 2).strength(simLinks.length > 0 ? 0.08 : 0.4))
           .force(
             "link",
