@@ -103,14 +103,12 @@ function pickFirstDefined(...values: Array<string | number | undefined | null>):
                 // Exact Easypanel candidate hosts from user credentials
                 const candidateHosts = process.env.NODE_ENV === 'production'
                     ? [primaryHost, 'rootstunisia_rootstunisiadb', '2.24.71.239', '127.0.0.1', 'localhost']
-                    : [primaryHost, '2.24.71.239', '127.0.0.1', 'localhost', 'rootstunisia_rootstunisiadb'];
+                    : [primaryHost, '2.24.71.239', '127.0.0.1', 'localhost'];
                 const uniqueHosts = [...new Set(candidateHosts.filter(Boolean))];
 
                 const candidateUsers = [
                     { u: user, p: password },
                     { u: 'karim', p: '636363' },
-                    { u: 'root', p: '636363' },
-                    { u: 'root', p: '' },
                 ];
 
                 for (const h of uniqueHosts) {
@@ -124,15 +122,15 @@ function pickFirstDefined(...values: Array<string | number | undefined | null>):
                                 password: cred.p,
                                 database,
                                 charset: 'utf8mb4',
-                                connectTimeout: 2500,
+                                connectTimeout: 3000,
                             },
                             pool: {
-                                min: 0,
-                                max: 5,
-                                acquireTimeoutMillis: 30000,
-                                createTimeoutMillis: 30000,
+                                min: 2,
+                                max: 20,
+                                acquireTimeoutMillis: 10000,
+                                createTimeoutMillis: 10000,
                                 destroyTimeoutMillis: 5000,
-                                idleTimeoutMillis: 30000,
+                                idleTimeoutMillis: 300000,
                                 afterCreate: (conn: any, done: any) => {
                                     conn.on('error', (err: any) => {
                                         console.warn('⚠️ MySQL connection dropped/reset safely:', err?.message || err);

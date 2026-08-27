@@ -105,7 +105,7 @@ export default function Trees() {
 
     isPublic: isAdmin,
 
-    saveToDb: false,
+    saveToDb: true,
   });
 
   const [saving, setSaving] = useState(false);
@@ -172,14 +172,13 @@ export default function Trees() {
       ]);
 
       if (mineRes.status === "fulfilled") {
-        const mine = mineRes.value?.data;
-        const liveMine = Array.isArray(mine)
-          ? mine.map((t) =>
-              normalizeTree(t, {
-                isPublic: !!t?.is_public || !!t?.isPublic,
-              }),
-            )
-          : [];
+        const rawMine = mineRes.value?.data;
+        const mineList = Array.isArray(rawMine) ? rawMine : Array.isArray(rawMine?.data) ? rawMine.data : [];
+        const liveMine = mineList.map((t: any) =>
+          normalizeTree(t, {
+            isPublic: !!t?.is_public || !!t?.isPublic,
+          }),
+        );
 
         const myList = mergeById([...liveMine, ...mockTrees]);
 
@@ -191,14 +190,13 @@ export default function Trees() {
       }
 
       if (pubRes.status === "fulfilled") {
-        const pub = pubRes.value?.data;
-        const livePublic = Array.isArray(pub)
-          ? pub.map((t) => normalizeTree(t, { isPublic: true }))
-          : [];
+        const rawPub = pubRes.value?.data;
+        const pubList = Array.isArray(rawPub) ? rawPub : Array.isArray(rawPub?.data) ? rawPub.data : [];
+        const livePublic = pubList.map((t: any) => normalizeTree(t, { isPublic: true }));
 
         const publicList = mergeById([
           ...livePublic,
-          ...mockTrees.filter((t) => t.isPublic),
+          ...mockTrees.filter((t: any) => t.isPublic),
         ]);
 
         setPublicTrees(publicList);
@@ -680,7 +678,7 @@ export default function Trees() {
     }
 
     if (treeId) {
-      await requestWithFallback(
+      const res = await requestWithFallback(
         isAdmin
           ? [
               () => api.put(`/admin/trees/${treeId}`, fd),
@@ -694,17 +692,19 @@ export default function Trees() {
             ],
         shouldFallbackTreeWrite
       );
-      return treeId;
+      const payload = res?.data;
+      return payload?.data?.id ?? payload?.id ?? treeId;
     }
 
-    const { data } = await requestWithFallback(
+    const res = await requestWithFallback(
       isAdmin
         ? [() => api.post("/admin/trees", fd), () => api.post("/my/trees", fd)]
         : [() => api.post("/my/trees", fd)],
       shouldFallbackTreeWrite
     );
 
-    return data?.id;
+    const payload = res?.data;
+    return payload?.data?.id ?? payload?.id ?? res?.id;
   };
 
   const downloadTreeFile = async (tree: any, scope?: string) => {
@@ -870,23 +870,12 @@ export default function Trees() {
 
     const hasPeople = people.length > 0;
 
-    const title = String(treeForm.title || "").trim();
-
-    if (!title) {
-      setSaveError(t("legacy.tree_title_required", "Tree title is required."));
-
-      return;
-    }
+    let title = String(treeForm.title || "").trim();
+    if (!title && selectedTree?.title) title = String(selectedTree.title).trim();
+    if (!title) title = "Arbre Généalogique Familial";
 
     if (!treeForm.saveToDb) {
-      setSaveError(
-        t(
-          "legacy.save_to_db_required",
-          'Please check "Save this tree to the database" before saving.',
-        ),
-      );
-
-      return;
+      setTreeForm((prev) => ({ ...prev, saveToDb: true }));
     }
 
     if (!hasPeople && !isUpdateMode) {
