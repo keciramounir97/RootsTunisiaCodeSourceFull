@@ -13,10 +13,7 @@ RUN npm ci --legacy-peer-deps
 # Copy source code and build
 COPY . .
 ARG VITE_API_URL=https://server.rootstunisia.com
-ARG VITE_SITE_URL=https://rootstunisia.com
-
 ENV VITE_API_URL=$VITE_API_URL
-ENV VITE_SITE_URL=$VITE_SITE_URL
 
 RUN npm run build
 
