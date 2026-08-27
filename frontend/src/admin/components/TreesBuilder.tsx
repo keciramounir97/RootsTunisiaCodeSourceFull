@@ -3945,61 +3945,36 @@ export default function TreesBuilder({
     const zoom = zoomRef.current;
     const wrapEl = wrapRef.current;
     const svgEl = svgRef.current;
-    const gEl = gRef.current;
     const nodes = nodesRef.current || [];
 
-    if (!zoom || !wrapEl || !svgEl) return;
+    if (!zoom || !wrapEl || !svgEl || !nodes.length) return;
 
     // 1. Measure exact visible container dimensions
     const rect = wrapEl.getBoundingClientRect();
     const visibleWidth = Math.max(300, rect.width || wrapEl.clientWidth || 0);
     const visibleHeight = Math.max(300, rect.height || wrapEl.clientHeight || 0);
 
-    let midX = 0;
-    let midY = 0;
-    let treeWidth = 0;
-    let treeHeight = 0;
+    // 2. Compute exact tree bounding box from nodes' positions & card sizes
+    const nodeLefts = nodes.map((n: any) => Number(n.x) - CARD_W / 2).filter(Number.isFinite);
+    const nodeRights = nodes.map((n: any) => Number(n.x) + CARD_W / 2).filter(Number.isFinite);
+    const nodeTops = nodes.map((n: any) => Number(n.y) - CARD_H / 2).filter(Number.isFinite);
+    const nodeBottoms = nodes.map((n: any) => Number(n.y) + CARD_H / 2).filter(Number.isFinite);
 
-    // Method A: Try exact SVG DOM Bounding Box
-    try {
-      const domG = gEl ? (gEl.node ? gEl.node() : gEl) : svgEl.querySelector("g");
-      if (domG && typeof domG.getBBox === "function") {
-        const bbox = domG.getBBox();
-        if (bbox && bbox.width > 20 && bbox.height > 20 && Number.isFinite(bbox.x) && Number.isFinite(bbox.y)) {
-          midX = bbox.x + bbox.width / 2;
-          midY = bbox.y + bbox.height / 2;
-          treeWidth = bbox.width;
-          treeHeight = bbox.height;
-        }
-      }
-    } catch (e) {
-      console.warn("SVG getBBox error:", e);
-    }
+    if (!nodeLefts.length || !nodeTops.length) return;
 
-    // Method B: Compute bounding box from nodes array if BBox unavailable
-    if (!treeWidth || !treeHeight) {
-      if (!nodes.length) return;
-      const nodeLefts = nodes.map((n: any) => Number(n.x) - CARD_W / 2).filter(Number.isFinite);
-      const nodeRights = nodes.map((n: any) => Number(n.x) + CARD_W / 2).filter(Number.isFinite);
-      const nodeTops = nodes.map((n: any) => Number(n.y) - CARD_H / 2).filter(Number.isFinite);
-      const nodeBottoms = nodes.map((n: any) => Number(n.y) + CARD_H / 2).filter(Number.isFinite);
+    const minX = Math.min(...nodeLefts);
+    const maxX = Math.max(...nodeRights);
+    const minY = Math.min(...nodeTops);
+    const maxY = Math.max(...nodeBottoms);
 
-      if (!nodeLefts.length || !nodeTops.length) return;
+    const treeWidth = Math.max(maxX - minX, CARD_W);
+    const treeHeight = Math.max(maxY - minY, CARD_H);
 
-      const minX = Math.min(...nodeLefts);
-      const maxX = Math.max(...nodeRights);
-      const minY = Math.min(...nodeTops);
-      const maxY = Math.max(...nodeBottoms);
-
-      treeWidth = Math.max(maxX - minX, CARD_W);
-      treeHeight = Math.max(maxY - minY, CARD_H);
-
-      midX = (minX + maxX) / 2;
-      midY = (minY + maxY) / 2;
-    }
+    const midX = (minX + maxX) / 2;
+    const midY = (minY + maxY) / 2;
 
     // 3. Compute scale to fit comfortably inside visible canvas
-    const padding = 40;
+    const padding = 36;
     const availWidth = Math.max(200, visibleWidth - padding * 2);
     const availHeight = Math.max(200, visibleHeight - padding * 2);
 
