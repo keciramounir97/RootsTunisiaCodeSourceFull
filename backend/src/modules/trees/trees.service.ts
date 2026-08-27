@@ -388,13 +388,40 @@ export class TreesService implements OnModuleInit {
 
     private parseGedcomPeople(text: string) {
         const lines = String(text || '').split(/\r\n|\n|\r/);
-        const people = [];
-        let current = null;
+        const people: any[] = [];
+        let current: any = null;
+        let lastEventTag = '';
 
         const flush = () => {
             if (!current) return;
-            let name = current.name || [this.normalizeGedcomName(current.given), this.normalizeGedcomName(current.surname)].filter(Boolean).join(' ').trim() || null;
-            if (name) people.push({ name });
+            let given = this.normalizeGedcomName(current.given) || '';
+            let surname = this.normalizeGedcomName(current.surname) || '';
+            let name = current.name || [given, surname].filter(Boolean).join(' ').trim() || null;
+            if (name) {
+                if (!given || !surname) {
+                    const parts = name.split(' ');
+                    if (parts.length > 1) {
+                        given = given || parts[0];
+                        surname = surname || parts.slice(1).join(' ');
+                    } else {
+                        given = given || name;
+                    }
+                }
+                people.push({
+                    gedcomId: current.gedcomId || null,
+                    name,
+                    given,
+                    surname,
+                    gender: current.gender || '',
+                    birthDate: current.birthDate || '',
+                    birthYear: current.birthDate || current.birthYear || '',
+                    birthPlace: current.birthPlace || '',
+                    deathDate: current.deathDate || '',
+                    deathPlace: current.deathPlace || '',
+                    profession: current.profession || '',
+                    details: current.notes ? current.notes.join('\n') : '',
+                });
+            }
             current = null;
         };
 
@@ -406,10 +433,13 @@ export class TreesService implements OnModuleInit {
             if (parts[0] === '0') {
                 if (/^0\s+@[^@]+@\s+INDI\b/i.test(line) || /^0\s+INDI\b/i.test(line)) {
                     flush();
-                    current = { name: null, given: '', surname: '' };
+                    const idMatch = line.match(/^0\s+(@[^@]+@)\s+INDI/i);
+                    current = { gedcomId: idMatch ? idMatch[1] : '', name: null, given: '', surname: '', gender: '', birthYear: '', birthDate: '', birthPlace: '', deathDate: '', deathPlace: '', profession: '', notes: [] };
+                    lastEventTag = '';
                 } else {
                     flush();
                     current = null;
+                    lastEventTag = '';
                 }
                 continue;
             }
@@ -419,9 +449,34 @@ export class TreesService implements OnModuleInit {
             const tag = String(parts[1] || '').toUpperCase();
             const value = parts.slice(2).join(' ').trim();
 
-            if (tag === 'NAME') current.name = this.normalizeGedcomName(value);
+            if (tag === 'BIRT' || tag === 'DEAT') {
+                lastEventTag = tag;
+                continue;
+            }
+
+            if (tag === 'NAME') {
+                current.name = this.normalizeGedcomName(value);
+                const slashMatch = value.match(/([^/]+)?\s*\/([^/]+)\//);
+                if (slashMatch) {
+                    if (slashMatch[1]) current.given = slashMatch[1].trim();
+                    if (slashMatch[2]) current.surname = slashMatch[2].trim();
+                }
+            }
             if (tag === 'GIVN') current.given = value;
             if (tag === 'SURN') current.surname = value;
+            if (tag === 'SEX') current.gender = value;
+            if (tag === 'OCCU') current.profession = value;
+            if (tag === 'NOTE') current.notes.push(value);
+            if (tag === 'CONT' && current.notes.length) current.notes[current.notes.length - 1] += ' ' + value;
+
+            if (tag === 'DATE') {
+                if (lastEventTag === 'BIRT') current.birthDate = value;
+                else if (lastEventTag === 'DEAT') current.deathDate = value;
+            }
+            if (tag === 'PLAC') {
+                if (lastEventTag === 'BIRT') current.birthPlace = value;
+                else if (lastEventTag === 'DEAT') current.deathPlace = value;
+            }
         }
         flush();
         return people;
@@ -437,19 +492,18 @@ export class TreesService implements OnModuleInit {
                 content = fs.readFileSync(filePath, 'utf8');
                 sourceName = path.basename(filePath);
             } else {
-                // Disk file missing (e.g. wiped by a redeploy) — fall back to the
-                // database copy so cached people can still be rebuilt.
                 const stored = await Tree.query(this.knex).findById(treeId).select('gedcom_text');
                 content = typeof (stored as any)?.gedcom_text === 'string' ? (stored as any).gedcom_text : '';
                 sourceName = gedcomPath ? path.basename(gedcomPath) : 'tree.ged';
                 if (!content.trim()) {
                     await Person.query(this.knex).delete().where('tree_id', treeId);
+                    await this.knex('individuals').delete().where('tree_id', treeId);
                     return;
                 }
             }
 
             const format = detectGedcomXFormat(content, sourceName);
-            let people: { name?: string }[] = [];
+            let people: any[] = [];
 
             if (format === 'json') {
                 try {
@@ -457,6 +511,9 @@ export class TreesService implements OnModuleInit {
                     const parsed = parseGedcomXFromJson(data);
                     people = parsed.map((p) => ({
                         name: (p.names && (p.names as any).en) || [p.given, p.surname].filter(Boolean).join(' ') || 'Unknown',
+                        given: p.given || '',
+                        surname: p.surname || '',
+                        gender: p.gender || '',
                     }));
                 } catch (e) {
                     console.warn('GEDCOM X JSON parse failed:', (e as Error)?.message);
@@ -467,6 +524,9 @@ export class TreesService implements OnModuleInit {
                     const parsed = parseGedcomXFromXml(content);
                     people = parsed.map((p) => ({
                         name: (p.names && (p.names as any).en) || [p.given, p.surname].filter(Boolean).join(' ') || 'Unknown',
+                        given: p.given || '',
+                        surname: p.surname || '',
+                        gender: p.gender || '',
                     }));
                 } catch (e) {
                     console.warn('GEDCOM X XML parse failed:', (e as Error)?.message);
@@ -482,12 +542,44 @@ export class TreesService implements OnModuleInit {
             }
 
             await Person.query(this.knex).delete().where('tree_id', treeId);
+            await this.knex('individuals').delete().where('tree_id', treeId);
             if (!people.length) return;
+
+            const tree = await Tree.query(this.knex).findById(treeId).select('user_id', 'is_public');
+            const userId = (tree as any)?.user_id || null;
+            const isPublic = (tree as any)?.is_public !== undefined ? Boolean((tree as any).is_public) : true;
 
             const chunkSize = 500;
             for (let i = 0; i < people.length; i += chunkSize) {
-                const chunk = people.slice(i, i + chunkSize).map(p => ({ tree_id: treeId, name: p.name }));
-                await this.knex('persons').insert(chunk);
+                const chunk = people.slice(i, i + chunkSize);
+
+                const personsInsert = chunk.map(p => ({
+                    tree_id: treeId,
+                    name: p.name
+                }));
+                await this.knex('persons').insert(personsInsert);
+
+                const individualsInsert = chunk.map(p => ({
+                    user_id: userId,
+                    tree_id: treeId,
+                    gedcom_id: p.gedcomId || null,
+                    name: p.name,
+                    given: p.given || '',
+                    surname: p.surname || '',
+                    first_name: p.given || '',
+                    last_name: p.surname || '',
+                    gender: p.gender || '',
+                    birth_year: p.birthYear || p.birthDate || '',
+                    birth_date: p.birthDate || '',
+                    birth_place: p.birthPlace || '',
+                    death_date: p.deathDate || '',
+                    death_place: p.deathPlace || '',
+                    profession: p.profession || '',
+                    details: p.details || '',
+                    is_backed_up: true,
+                    is_public: isPublic
+                }));
+                await this.knex('individuals').insert(individualsInsert);
             }
         } catch (err) {
             console.error('Failed to rebuild tree people', (err as Error)?.message);

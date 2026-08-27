@@ -1,0 +1,112 @@
+0 HEAD
+1 SOUR ChatGPT
+2 NAME GEDCOM test — famille historique en Tunisie
+1 GEDC
+2 VERS 5.5.1
+2 FORM LINEAGE-LINKED
+1 CHAR UTF-8
+
+0 @I1@ INDI
+1 NAME Félix /GEAY/
+1 SEX M
+1 BIRT
+2 DATE ABT 1872
+2 PLAC Tunis, Tunis, Tunisie
+1 OCCU Instituteur
+1 FAMS @F1@
+1 FAMC @F2@
+1 NOTE Données généalogiques publiques concernant une famille ayant vécu en Tunisie.
+2 CONT La date de naissance est donnée comme approximative dans la source consultée.
+1 SOUR @S1@
+
+0 @I2@ INDI
+1 NAME Léonarda /CAPITELLI/
+1 SEX F
+1 FAMS @F1@
+1 NOTE Épouse de Félix GEAY.
+1 SOUR @S1@
+
+0 @I3@ INDI
+1 NAME Benoît /GEAY/
+1 SEX M
+1 FAMS @F2@
+1 NOTE Père indiqué de Félix GEAY dans l'arbre généalogique public consulté.
+1 SOUR @S1@
+
+0 @I4@ INDI
+1 NAME Benoîte /PONCEPT/
+1 SEX F
+1 FAMS @F2@
+1 NOTE Mère indiquée de Félix GEAY dans l'arbre généalogique public consulté.
+1 SOUR @S1@
+
+0 @I5@ INDI
+1 NAME Juliette Rachel /GEAY/
+1 SEX F
+1 BIRT
+2 DATE 24 FEB 1901
+2 PLAC Sfax, Sfax, Tunisie
+1 FAMS @F3@
+1 FAMC @F1@
+1 OCCU Institutrice
+1 NOTE La source Geneanet indique un mariage avec Maurice Ernest Constant RABY en 1927.
+1 SOUR @S1@
+1 SOUR @S2@
+
+0 @I6@ INDI
+1 NAME Maurice Ernest Constant /RABY/
+1 SEX M
+1 FAMS @F3@
+1 NOTE Époux de Juliette Rachel GEAY.
+1 SOUR @S1@
+
+0 @F1@ FAM
+1 HUSB @I1@
+1 WIFE @I2@
+1 MARR
+2 DATE 09 JUL 1897
+2 PLAC Tunisie
+1 NOTE Mariage de Félix GEAY et Léonarda CAPITELLI.
+1 SOUR @S1@
+
+0 @F2@ FAM
+1 HUSB @I3@
+1 WIFE @I4@
+1 CHIL @I1@
+1 NOTE Filiation de Félix GEAY telle qu'indiquée dans l'arbre généalogique public.
+1 SOUR @S1@
+
+0 @F3@ FAM
+1 HUSB @I6@
+1 WIFE @I5@
+1 MARR
+2 DATE 05 MAY 1927
+2 PLAC Tunisie
+1 NOTE Mariage de Juliette Rachel GEAY et Maurice Ernest Constant RABY.
+1 SOUR @S1@
+
+0 @S1@ SOUR
+1 TITL Geneanet — Recherche GEAY en Tunisie
+1 AUTH Geneanet
+1 PUBL Geneanet
+1 URL https://en.geneanet.org/fonds/individus/?country__0__=TUN&go=1&nom=GEAY&size=50&zonegeo__0__=Tunisia
+1 NOTE Résultats généalogiques publics contenant Félix GEAY, Léonarda CAPITELLI, Juliette Rachel GEAY et Maurice RABY.
+2 CONT La page indique notamment Félix GEAY, né vers 1872 à Tunis, son mariage avec Léonarda CAPITELLI le 09/07/1897, et Juliette Rachel GEAY née le 24/02/1901 à Sfax et mariée à Maurice RABY en 1927.
+
+0 @S2@ SOUR
+1 TITL Généa-Tunisie / GeneaActes — Base historique tunisienne
+1 AUTH Genea-Tunisie
+1 PUBL Genea-Tunisie
+1 URL https://genea-tunisie.geneactes.com/
+1 NOTE Base nominative historique consacrée aux recherches généalogiques en Tunisie.
+2 CONT La base couvre notamment la période 1830–1962 et associe les individus à des sources historiques.
+
+0 @S3@ SOUR
+1 TITL Archives Nationales de Tunisie — Portail officiel
+1 AUTH Archives Nationales de Tunisie
+1 PUBL République Tunisienne — Archives Nationales de Tunisie
+1 URL https://www.archives.nat.tn/fr/
+1 NOTE Portail officiel des Archives Nationales de Tunisie.
+2 CONT Les Archives Nationales disposent notamment de la base Thèkra et d'un portail de consultation de documents numérisés.
+
+0 TRLR
