@@ -199,29 +199,28 @@ export default function GalleryTrees() {
     }
 
     try {
-      if (!tree.hasGedcom || !tree.gedcomUrl) {
-        setViewPeople(SMOKE_TEST_TREE_PEOPLE);
-        setViewLoading(false);
-        return;
+      let text = "";
+      try {
+        const res = await api.get(`/trees/${tree.id}/gedcom`, { responseType: "text" });
+        text = typeof res.data === "string" ? res.data : (res.data && (res.data as any).data != null ? String((res.data as any).data) : "");
+      } catch {
+        if (tree.gedcomUrl) {
+          const res = await fetch(fileUrl(tree.gedcomUrl));
+          if (res.ok) text = await res.text();
+        }
       }
 
-      const gedcomUrl = fileUrl(tree.gedcomUrl);
-      const response = await fetch(gedcomUrl);
-      if (!response.ok) {
-        setViewPeople(SMOKE_TEST_TREE_PEOPLE);
-        setViewLoading(false);
-        return;
+      if (text && text.trim()) {
+        const isGedcomX = /^\s*(\{|\<\?xml)/.test(text);
+        const people = isGedcomX ? parseGedcomX(text) : parseGedcom(text);
+        const list = Array.isArray(people) ? people : [];
+        if (list.length) {
+          setViewPeople(list);
+          return;
+        }
       }
-      const text = await response.text();
-      const isGedcomX = /^\s*(\{|\<\?xml)/.test(text);
-      const people = isGedcomX ? parseGedcomX(text) : parseGedcom(text);
-      const list = Array.isArray(people) ? people : [];
-      if (list.length) {
-        setViewPeople(list);
-      } else {
-        setViewPeople(SMOKE_TEST_TREE_PEOPLE);
-      }
-    } catch (err) {
+      setViewPeople(SMOKE_TEST_TREE_PEOPLE);
+    } catch {
       setViewPeople(SMOKE_TEST_TREE_PEOPLE);
     } finally {
       setViewLoading(false);

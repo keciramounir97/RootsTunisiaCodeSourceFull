@@ -124,7 +124,7 @@ export default function Trees() {
 
     isPublic: isAdmin,
 
-    saveToDb: false,
+    saveToDb: true,
   });
 
   const [saving, setSaving] = useState(false);
@@ -900,15 +900,9 @@ export default function Trees() {
       return;
     }
 
+    // Always save to database when save action is triggered
     if (!treeForm.saveToDb) {
-      setSaveError(
-        t(
-          "legacy.save_to_db_required",
-          'Please check "Save this tree to the database" before saving.',
-        ),
-      );
-
-      return;
+      setTreeForm((prev) => ({ ...prev, saveToDb: true }));
     }
 
     if (!hasPeople && !isUpdateMode) {
