@@ -679,7 +679,22 @@ async function ensureSchemaReady(knex: Knex) {
     await ensureCriticalSchema(knex);
 
     try {
-        const migrationsDir = path.join(process.cwd(), 'src', 'db', 'migrations');
+        const candidateDirs = [
+            path.join(process.cwd(), 'src', 'db', 'migrations'),
+            path.join(process.cwd(), 'dist', 'db', 'migrations'),
+            path.join(__dirname, 'db', 'migrations'),
+            path.join(__dirname, '..', 'src', 'db', 'migrations'),
+            path.join(process.cwd(), 'backend', 'src', 'db', 'migrations'),
+        ];
+
+        let migrationsDir = candidateDirs.find((dir) => fs.existsSync(dir));
+        if (!migrationsDir) {
+            migrationsDir = path.join(process.cwd(), 'src', 'db', 'migrations');
+            try {
+                fs.mkdirSync(migrationsDir, { recursive: true });
+            } catch {}
+        }
+
         await knex.migrate.latest({ directory: migrationsDir });
         console.log('INFO migrations up to date');
     } catch (migErr: any) {
