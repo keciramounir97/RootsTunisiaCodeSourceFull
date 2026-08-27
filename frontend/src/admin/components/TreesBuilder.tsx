@@ -2908,9 +2908,10 @@ export default function TreesBuilder({
         };
 
         // Synchronously run simulation ticks so positions settle immediately before first render
-        for (let i = 0; i < 120; i++) {
+        for (let i = 0; i < 140; i++) {
           sim.tick();
         }
+        sim.stop();
 
         coupleOuter.attr("d", couplePath);
         coupleInner.attr("d", couplePath);
@@ -2918,27 +2919,10 @@ export default function TreesBuilder({
         node.attr("transform", (d) => `translate(${d.x},${d.y})`);
         nodesRef.current = nodes;
 
-        sim.on("tick", () => {
-          coupleOuter.attr("d", couplePath);
-          coupleInner.attr("d", couplePath);
-          childLinks.attr("d", childPath);
-
-          node.attr("transform", (d) => `translate(${d.x},${d.y})`);
-
-          nodesRef.current = nodes;
-        });
-
-        // Instantly position tree in the center of the canvas on mount
-        requestAnimationFrame(() => {
-          centerTree(false);
-          requestAnimationFrame(() => {
-            centerTree(false);
-          });
-        });
+        centerTree(false);
 
         cleanupSim = () => {
           sim.stop();
-
           tooltip.remove();
         };
       } catch (err) {
@@ -2948,41 +2932,16 @@ export default function TreesBuilder({
       }
     };
 
-    let resizeCleanup = null;
-    ro = null;
-
-    const handleResize = () => {
-      if (!wrapRef.current || !svgRef.current) return;
-      const rect = wrapRef.current.getBoundingClientRect();
-      const w = Math.max(320, rect.width || wrapRef.current.clientWidth || 0);
-      const h = Math.max(450, rect.height || wrapRef.current.clientHeight || 0);
-      d3.select(svgRef.current).attr("width", w).attr("height", h);
+    const onResize = () => {
       centerTree(false);
     };
-
-    if (typeof ResizeObserver !== "undefined") {
-      ro = new ResizeObserver(handleResize);
-      ro.observe(wrapRef.current);
-    } else if (typeof window !== "undefined") {
-      window.addEventListener("resize", handleResize);
-      resizeCleanup = () => window.removeEventListener("resize", handleResize);
-    }
+    window.addEventListener("resize", onResize);
 
     draw();
 
-    const t1 = setTimeout(() => centerTree(false), 50);
-    const t2 = setTimeout(() => centerTree(false), 200);
-    const t3 = setTimeout(() => centerTree(false), 450);
-    const t4 = setTimeout(() => centerTree(false), 800);
-
     return () => {
-      clearTimeout(t1);
-      clearTimeout(t2);
-      clearTimeout(t3);
-      clearTimeout(t4);
+      window.removeEventListener("resize", onResize);
       if (cleanupSim) cleanupSim();
-      if (ro) ro.disconnect();
-      if (resizeCleanup) resizeCleanup();
     };
   }, [people, links, locale, isDark, t, nameOf, relationName, displayGender]);
 
