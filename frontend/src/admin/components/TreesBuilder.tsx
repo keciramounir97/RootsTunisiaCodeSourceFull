@@ -2611,30 +2611,18 @@ export default function TreesBuilder({
         }
 
         const sim = d3
-
           .forceSimulation(nodes)
-
-          .force("charge", d3.forceManyBody().strength(-1500))
-
+          .force("charge", d3.forceManyBody().strength(simLinks.length > 0 ? -1300 : -350))
           .force("center", d3.forceCenter(width / 2, height / 2))
-
-          .force("collision", d3.forceCollide().radius(CARD_W * 0.6))
-
-          .force("y", d3.forceY((d) => d.gen * 200).strength(1.2))
-
-          .force("x", d3.forceX().strength(0.05))
-
+          .force("collision", d3.forceCollide().radius(CARD_W * 0.58))
+          .force("y", d3.forceY((d) => (d.gen || 0) * 180 + height / 2).strength(1.0))
+          .force("x", d3.forceX(width / 2).strength(simLinks.length > 0 ? 0.08 : 0.4))
           .force(
             "link",
-
             d3
-
               .forceLink(simLinks)
-
               .id((d) => String(d.id))
-
               .distance((d) => (d.type === "couple" ? 150 : 240))
-
               .strength((d) => (d.type === "couple" ? 0.6 : 0.85))
           );
 
@@ -3954,11 +3942,15 @@ export default function TreesBuilder({
     const visibleWidth = Math.max(300, rect.width || wrapEl.clientWidth || 0);
     const visibleHeight = Math.max(300, rect.height || wrapEl.clientHeight || 0);
 
+    // Filter valid nodes that have finite x and y coordinates
+    const validNodes = nodes.filter((n: any) => Number.isFinite(n.x) && Number.isFinite(n.y));
+    if (!validNodes.length) return;
+
     // 2. Compute exact tree bounding box from nodes' positions & card sizes
-    const nodeLefts = nodes.map((n: any) => Number(n.x) - CARD_W / 2).filter(Number.isFinite);
-    const nodeRights = nodes.map((n: any) => Number(n.x) + CARD_W / 2).filter(Number.isFinite);
-    const nodeTops = nodes.map((n: any) => Number(n.y) - CARD_H / 2).filter(Number.isFinite);
-    const nodeBottoms = nodes.map((n: any) => Number(n.y) + CARD_H / 2).filter(Number.isFinite);
+    const nodeLefts = validNodes.map((n: any) => Number(n.x) - CARD_W / 2);
+    const nodeRights = validNodes.map((n: any) => Number(n.x) + CARD_W / 2);
+    const nodeTops = validNodes.map((n: any) => Number(n.y) - CARD_H / 2);
+    const nodeBottoms = validNodes.map((n: any) => Number(n.y) + CARD_H / 2);
 
     if (!nodeLefts.length || !nodeTops.length) return;
 
