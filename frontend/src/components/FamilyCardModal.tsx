@@ -448,8 +448,9 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                   </div>
                 </div>
 
-                <div className="h-[540px] sm:h-[600px] w-full rounded-xl overflow-hidden border-2 border-[var(--gold)]/60 relative bg-[#0b1726] shadow-2xl">
+                <div className="h-[540px] sm:h-[600px] w-full rounded-xl overflow-hidden border-2 border-[var(--gold)]/60 relative bg-[#0b1726] shadow-2xl flex flex-col">
                   <TreesBuilder
+                    key={tree?.id ? `tree-builder-${tree.id}-${displayPeople.length}` : "tree-builder"}
                     people={displayPeople}
                     rawPeople={displayPeople}
                     readOnly={true}
