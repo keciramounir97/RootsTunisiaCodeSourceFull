@@ -9,6 +9,8 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ActivityModule } from '../activity/activity.module';
 import { MailerModule } from '../../common/mailer/mailer.module';
 
+const JWT_SECRET = process.env.JWT_SECRET || '136d782478b4f564799d6bf639daa785289afe05307ada92a90a45870c726038';
+
 @Module({
     imports: [
         UsersModule,
@@ -18,8 +20,8 @@ import { MailerModule } from '../../common/mailer/mailer.module';
         JwtModule.registerAsync({
             imports: [ConfigModule],
             useFactory: async (configService: ConfigService) => ({
-                secret: configService.get<string>('JWT_SECRET') || 'fallback_secret',
-                signOptions: { expiresIn: configService.get<string>('JWT_EXPIRES_IN') || '1d' },
+                secret: configService.get<string>('JWT_SECRET') || JWT_SECRET,
+                signOptions: { expiresIn: configService.get<string>('JWT_EXPIRES_IN') || '7d' },
             }),
             inject: [ConfigService],
         }),
