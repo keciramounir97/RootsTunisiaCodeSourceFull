@@ -73,8 +73,6 @@ const AdminNotes = lazy(() => import("./admin/pages/AdminNotes"));
 
 // ===== NEW FEATURE PAGES (redesign parity) =====
 const GalleryDocuments = lazy(() => import("./pages/GalleryDocuments"));
-const GalleryArticles = lazy(() => import("./pages/GalleryArticles"));
-const ArticlesPage = lazy(() => import("./pages/articles"));
 const AudioPage = lazy(() => import("./pages/audio"));
 const MyDownloadRequests = lazy(() => import("./pages/MyDownloadRequests"));
 const HelpCenter = lazy(() => import("./pages/HelpCenter"));
@@ -82,7 +80,6 @@ const HelpCenter = lazy(() => import("./pages/HelpCenter"));
 // ===== NEW ADMIN PAGES (redesign parity) =====
 const PaymentSettings = lazy(() => import("./admin/pages/PaymentSettings"));
 const Backups = lazy(() => import("./admin/pages/Backups"));
-const AdminArticles = lazy(() => import("./admin/pages/Articles"));
 const AdminSuggestions = lazy(() => import("./admin/pages/Suggestions"));
 const LegalContent = lazy(() => import("./admin/pages/LegalContent"));
 const DownloadRequests = lazy(() => import("./admin/pages/DownloadRequests"));
@@ -173,9 +170,7 @@ function AppRoutes() {
       <Route path="/gallery/books" element={<GalleryBooks />} />
       <Route path="/gallery/audios" element={<GalleryAudios />} />
       <Route path="/gallery/documents" element={<GalleryDocuments />} />
-      <Route path="/gallery/articles" element={<GalleryArticles />} />
       <Route path="/audio" element={<AudioPage />} />
-      <Route path="/articles" element={<ArticlesPage />} />
       <Route path="/my-download-requests" element={<MyDownloadRequests />} />
       <Route path="/help-center" element={<HelpCenter />} />
       <Route path="/library" element={<GalleryPage />} />
@@ -476,16 +471,6 @@ function AppRoutes() {
             <Suspense fallback={<AdminLoadingFallback />}>
               <ProtectedRoute privileges={["notes"]}>
                 <AdminNotes />
-              </ProtectedRoute>
-            </Suspense>
-          }
-        />
-        <Route
-          path="articles"
-          element={
-            <Suspense fallback={<AdminLoadingFallback />}>
-              <ProtectedRoute privileges={["articles"]}>
-                <AdminArticles />
               </ProtectedRoute>
             </Suspense>
           }

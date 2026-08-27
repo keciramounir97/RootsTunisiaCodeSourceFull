@@ -54,7 +54,6 @@ export function Navbar() {
     { to: "/gallery", label: t("nav_photos", "Photo & Visual Gallery") },
     { to: "/library", label: t("nav_library", "Manuscripts & Books") },
     { to: "/audio", label: t("nav_audios", "Oral Histories & Audio") },
-    { to: "/articles", label: t("nav_articles", "Genealogical Articles") },
   ];
 
   const isExploreActive = ["/periods", "/sources", "/archives", "/subscriptions"].includes(
@@ -66,7 +65,6 @@ export function Navbar() {
     "/gallery/images",
     "/library",
     "/audio",
-    "/articles",
   ].some((path) => location.pathname.startsWith(path));
 
   return (

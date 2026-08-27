@@ -45,7 +45,6 @@ const links = [
   { to: "/admin/audios", labelKey: "audios", Icon: Music },
   { to: "/admin/documents", labelKey: "documents", Icon: FileText },
   { to: "/admin/books", labelKey: "books", Icon: BookOpen },
-  { to: "/admin/articles", labelKey: "articles", Icon: Newspaper },
   { to: "/admin/users", labelKey: "users", Icon: Users },
   { to: "/admin/contact-messages", labelKey: "contact_messages", Icon: MessageSquare },
   { to: "/admin/newsletter", labelKey: "newsletter", Icon: Mail },

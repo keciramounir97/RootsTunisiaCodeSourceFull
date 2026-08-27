@@ -9,10 +9,11 @@ import {
   Scale,
   Shield,
   Trash2,
+  Loader2,
+  FileCode,
 } from "lucide-react";
 import { api } from "../../api/client";
 import { getApiErrorMessage } from "../../api/helpers";
-import { useThemeStore } from "../../store/theme";
 import { useTranslation } from "../../context/TranslationContext";
 import { notifyAdminSaved } from "../utils/notifications";
 
@@ -28,49 +29,39 @@ type LegalDocument = {
 };
 
 const SLUGS: { slug: string; labelKey: string; label: string; Icon: typeof FileText }[] = [
-  { slug: "terms", labelKey: "terms_of_service", label: "Terms of Service", Icon: Scale },
-  { slug: "privacy", labelKey: "privacy_policy", label: "Privacy Policy", Icon: Lock },
-  { slug: "cookies", labelKey: "cookie_policy", label: "Cookie Policy", Icon: Shield },
+  { slug: "terms", labelKey: "terms_of_service", label: "Conditions d'Utilisation", Icon: Scale },
+  { slug: "privacy", labelKey: "privacy_policy", label: "Politique de Confidentialité", Icon: Lock },
+  { slug: "cookies", labelKey: "cookie_policy", label: "Gestion des Cookies", Icon: Shield },
 ];
 
 const LOCALES: { value: string; label: string }[] = [
-  { value: "en", label: "English" },
   { value: "fr", label: "Français" },
+  { value: "en", label: "English" },
   { value: "ar", label: "العربية" },
-  { value: "he", label: "עברית" },
+  { value: "it", label: "Italiano" },
+  { value: "es", label: "Español" },
 ];
 
 export default function LegalContent() {
-  const { theme } = useThemeStore();
   const { t } = useTranslation();
-  const isDark = theme === "dark";
 
   const [slug, setSlug] = useState("terms");
-  const [locale, setLocale] = useState("en");
+  const [locale, setLocale] = useState("fr");
   const [doc, setDoc] = useState<LegalDocument | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
 
-  const pageBg = isDark ? "bg-[#071827] text-[#f5f1e8]" : "bg-[#f5f1e8] text-[#162238]";
-  const panel = isDark ? "bg-[#0f1f33] border-white/10" : "bg-white border-[#24766f]/15";
-  const subtlePanel = isDark ? "bg-white/5 border-white/10" : "bg-[#f8f5ef] border-[#24766f]/10";
-  const inputClass = `w-full rounded-md border px-3 py-2 text-sm outline-none transition ${
-    isDark
-      ? "bg-[#071827] border-white/15 text-white placeholder-white/35 focus:border-[#d9a441]"
-      : "bg-white border-[#24766f]/20 text-[#162238] placeholder-[#162238]/45 focus:border-[#24766f]"
-  } focus:ring-2 focus:ring-[#d9a441]/20`;
-  const labelClass = `text-xs font-semibold uppercase tracking-wide ${isDark ? "text-[#d9a441]" : "text-[#24766f]"}`;
-
   const loadDocument = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
       const { data } = await api.get(`/admin/legal/${slug}`, { params: { locale } });
-      setDoc(data);
+      const docData = data?.data || data;
+      setDoc(docData);
     } catch (err) {
-      setError(getApiErrorMessage(err, t("legal_content_load_failed", "Failed to load legal document")));
+      setError(getApiErrorMessage(err, t("legal_content_load_failed", "Échec du chargement du document légal.")));
       setDoc(null);
     } finally {
       setLoading(false);
@@ -92,12 +83,12 @@ export default function LegalContent() {
         intro: doc.intro,
         sections: doc.sections,
       });
-      setDoc(data);
+      setDoc(data?.data || data);
       setSaved(true);
-      notifyAdminSaved(t("settings_saved", "Saved."));
+      notifyAdminSaved(t("settings_saved", "Modifications enregistrées."));
       setTimeout(() => setSaved(false), 2500);
     } catch (err) {
-      setError(getApiErrorMessage(err, t("legal_content_save_failed", "Failed to save legal document")));
+      setError(getApiErrorMessage(err, t("legal_content_save_failed", "Échec de la sauvegarde")));
     } finally {
       setSaving(false);
     }
@@ -127,175 +118,183 @@ export default function LegalContent() {
   };
 
   return (
-    <div className={`min-h-screen p-4 md:p-6 ${pageBg}`}>
-      <div className="mx-auto max-w-5xl space-y-6">
-        <div className={`rounded-lg border ${panel} p-5 shadow-sm`}>
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <div>
-              <p className={labelClass}>{t("admin", "Admin")}</p>
-              <h1 className="mt-1 text-2xl font-bold">
-                {t("legal_content", "Legal Content")}
-              </h1>
-              <p className="mt-2 max-w-2xl text-sm opacity-70">
-                {t(
-                  "legal_content_desc",
-                  "Edit the Terms of Service, Privacy Policy, and Cookie Policy shown on the public site, per language.",
-                )}
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={handleSave}
-              disabled={saving || loading || !doc}
-              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-[#d9a441] px-5 text-sm font-semibold text-[#071827] shadow-sm transition hover:bg-[#c4932e] disabled:opacity-50"
-            >
-              {saved ? <CheckCircle className="h-4 w-4" /> : <Save className="h-4 w-4" />}
-              {saved
-                ? t("settings_saved", "Saved")
-                : saving
-                  ? t("saving", "Saving...")
-                  : t("save_settings", "Save Settings")}
-            </button>
-          </div>
-        </div>
-
-        <div className={`rounded-lg border ${panel} p-4 shadow-sm flex flex-wrap items-start gap-3`}>
-          <AlertTriangle className="h-5 w-5 shrink-0 text-amber-500 mt-0.5" />
-          <p className="text-sm opacity-80">
+    <div className="p-6 space-y-6">
+      {/* HEADER SECTION */}
+      <div className="neu-card p-5 rounded-2xl border border-[#0d9488]/20 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#0d9488] block mb-1">
+            {t("admin", "Administration")}
+          </span>
+          <h1 className="font-cinzel text-2xl font-bold text-[#0c4a6e] dark:text-[#0d9488]">
+            {t("legal_content", "Gestion des Textes Légaux")}
+          </h1>
+          <p className="text-xs text-stone-500 dark:text-stone-400 max-w-2xl mt-1">
             {t(
-              "legal_content_disclaimer",
-              "This starting content is a general template covering common EU (GDPR) and US (CCPA/CPRA) concepts. It is not a substitute for legal advice — have qualified counsel review it before relying on it for your jurisdiction.",
+              "legal_content_desc",
+              "Éditez les conditions d'utilisation, politiques de confidentialité et règles de cookies affichées sur le site public.",
             )}
           </p>
         </div>
+        <button
+          type="button"
+          onClick={handleSave}
+          disabled={saving || loading || !doc}
+          className="interactive-btn btn-neu btn-neu--primary px-6 py-2.5 text-xs flex items-center gap-2 disabled:opacity-50"
+        >
+          {saved ? <CheckCircle className="w-4 h-4 text-emerald-400" /> : saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+          {saved
+            ? t("settings_saved", "Enregistré")
+            : saving
+              ? t("saving", "Enregistrement...")
+              : t("save_settings", "Enregistrer")}
+        </button>
+      </div>
 
-        <div className={`rounded-lg border ${panel} p-4 shadow-sm flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between`}>
-          <div className="flex flex-wrap gap-2">
-            {SLUGS.map(({ slug: s, label, Icon }) => (
-              <button
-                key={s}
-                type="button"
-                onClick={() => setSlug(s)}
-                className={`inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-semibold transition ${
-                  slug === s
-                    ? "bg-[#24766f] text-white"
-                    : isDark
-                      ? "bg-white/10 text-white/70 hover:bg-white/15"
-                      : "bg-black/5 text-[#162238]/70 hover:bg-black/10"
-                }`}
-              >
-                <Icon className="h-4 w-4" />
-                {t(SLUGS.find((item) => item.slug === s)!.labelKey, label)}
-              </button>
-            ))}
-          </div>
+      {/* DISCLAIMER BANNER */}
+      <div className="neu-inset p-4 rounded-xl flex items-start gap-3 text-xs text-stone-600 dark:text-stone-300">
+        <AlertTriangle className="w-5 h-5 shrink-0 text-amber-500 mt-0.5" />
+        <p>
+          {t(
+            "legal_content_disclaimer",
+            "Ces textes servent de modèles de référence (conformes RGPD/CCPA). Assurez-vous d'adapter ces informations selon vos exigences juridiques spécifiques.",
+          )}
+        </p>
+      </div>
 
-          <select
-            value={locale}
-            onChange={(event) => setLocale(event.target.value)}
-            className={`${inputClass} sm:w-40`}
-          >
-            {LOCALES.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
+      {/* SLUG & LOCALE SELECTOR */}
+      <div className="neu-card p-4 rounded-xl border border-[#0d9488]/20 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="flex flex-wrap gap-2">
+          {SLUGS.map(({ slug: s, label, Icon }) => (
+            <button
+              key={s}
+              type="button"
+              onClick={() => setSlug(s)}
+              className={`interactive-btn btn-neu px-4 py-2 text-xs flex items-center gap-2 ${
+                slug === s ? "btn-neu--primary font-bold" : ""
+              }`}
+            >
+              <Icon className="w-4 h-4" />
+              {t(SLUGS.find((item) => item.slug === s)!.labelKey, label)}
+            </button>
+          ))}
         </div>
 
-        {error ? (
-          <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-500">
-            {error}
-          </div>
-        ) : null}
+        <select
+          value={locale}
+          onChange={(event) => setLocale(event.target.value)}
+          className="neu-field px-4 py-2 text-xs rounded-lg cursor-pointer"
+        >
+          {LOCALES.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+      </div>
 
-        {doc && doc.translated === false ? (
-          <div className={`rounded-lg border ${subtlePanel} p-4 text-sm opacity-80`}>
-            {t(
-              "legal_content_not_translated",
-              "No content saved yet for this language — showing the English version as a starting point. Edit and save to create the translation.",
-            )}
-          </div>
-        ) : null}
+      {error ? (
+        <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-xs font-semibold text-red-500">
+          {error}
+        </div>
+      ) : null}
 
-        {loading ? (
-          <div className={`rounded-lg border ${panel} p-10 text-center text-sm opacity-70`}>
-            {t("loading", "Loading...")}
-          </div>
-        ) : doc ? (
-          <div className={`rounded-lg border ${panel} p-5 shadow-sm space-y-5`}>
-            <label className="block space-y-2">
-              <span className={labelClass}>{t("legal_content_title", "Title")}</span>
-              <input
-                type="text"
-                value={doc.title}
-                onChange={(event) => setDoc((prev) => (prev ? { ...prev, title: event.target.value } : prev))}
-                className={inputClass}
-              />
+      {doc && doc.translated === false ? (
+        <div className="neu-inset p-3.5 rounded-xl text-xs italic text-stone-500 dark:text-stone-400">
+          {t(
+            "legal_content_not_translated",
+            "Aucun contenu traduit trouvé pour cette langue — affichage de la version par défaut.",
+          )}
+        </div>
+      ) : null}
+
+      {loading ? (
+        <div className="neu-card p-16 rounded-2xl text-center text-xs">
+          <Loader2 className="w-8 h-8 mx-auto animate-spin text-[#0d9488] mb-2" />
+          {t("loading", "Chargement en cours...")}
+        </div>
+      ) : doc ? (
+        <div className="neu-card p-6 rounded-2xl border border-[#0d9488]/20 space-y-6">
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold uppercase tracking-widest text-[#0c4a6e] dark:text-[#0d9488] block">
+              {t("legal_content_title", "Titre du Document")}
             </label>
+            <input
+              type="text"
+              value={doc.title}
+              onChange={(event) => setDoc((prev) => (prev ? { ...prev, title: event.target.value } : prev))}
+              className="neu-field w-full px-4 py-2.5 text-xs font-bold"
+            />
+          </div>
 
-            <label className="block space-y-2">
-              <span className={labelClass}>{t("legal_content_intro", "Introduction")}</span>
-              <textarea
-                value={doc.intro}
-                onChange={(event) => setDoc((prev) => (prev ? { ...prev, intro: event.target.value } : prev))}
-                rows={3}
-                className={inputClass}
-              />
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold uppercase tracking-widest text-[#0c4a6e] dark:text-[#0d9488] block">
+              {t("legal_content_intro", "Introduction / Préambule")}
             </label>
+            <textarea
+              value={doc.intro}
+              onChange={(event) => setDoc((prev) => (prev ? { ...prev, intro: event.target.value } : prev))}
+              rows={3}
+              className="neu-field w-full px-4 py-2.5 text-xs"
+            />
+          </div>
+
+          {/* SECTIONS */}
+          <div className="space-y-4 pt-2">
+            <div className="flex items-center justify-between border-b border-[#0d9488]/30 pb-2">
+              <span className="text-xs font-bold uppercase tracking-widest text-[#0c4a6e] dark:text-[#0d9488]">
+                {t("legal_content_sections", "Articles & Sections Légales")}
+              </span>
+              <button
+                type="button"
+                onClick={addSection}
+                className="interactive-btn btn-neu text-xs !px-3 !py-1 text-[#0d9488] font-bold flex items-center gap-1"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                {t("add_section", "Ajouter une section")}
+              </button>
+            </div>
 
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className={labelClass}>{t("legal_content_sections", "Sections")}</span>
-                <button
-                  type="button"
-                  onClick={addSection}
-                  className="inline-flex items-center gap-2 rounded-md bg-[#24766f] px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-[#1f625d]"
-                >
-                  <Plus className="h-3.5 w-3.5" />
-                  {t("legal_content_add_section", "Add Section")}
-                </button>
-              </div>
-
               {doc.sections.map((section, index) => (
-                <div key={index} className={`rounded-md border ${subtlePanel} p-4 space-y-3`}>
-                  <div className="flex items-start gap-3">
-                    <input
-                      type="text"
-                      value={section.heading}
-                      onChange={(event) => updateSection(index, { heading: event.target.value })}
-                      placeholder={t("legal_content_section_heading", "Section heading")}
-                      className={`${inputClass} font-semibold`}
-                    />
+                <div
+                  key={index}
+                  className="neu-inset p-4 rounded-xl border border-[#0d9488]/15 space-y-3"
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-xs font-extrabold text-[#0d9488]">
+                      Article #{index + 1}
+                    </span>
                     <button
                       type="button"
                       onClick={() => removeSection(index)}
-                      className="shrink-0 rounded-md p-2 text-red-500 transition hover:bg-red-500/10"
-                      title={t("remove", "Remove")}
-                      aria-label={t("remove", "Remove")}
+                      className="p-1 rounded text-red-500 hover:bg-red-500/10 transition"
+                      title={t("delete", "Supprimer")}
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
+
+                  <input
+                    type="text"
+                    value={section.heading}
+                    onChange={(event) => updateSection(index, { heading: event.target.value })}
+                    placeholder={t("section_heading_placeholder", "Intitulé du chapitre (ex. Collecte des données)")}
+                    className="neu-field w-full px-3.5 py-2 text-xs font-semibold"
+                  />
+
                   <textarea
                     value={section.body}
                     onChange={(event) => updateSection(index, { body: event.target.value })}
+                    placeholder={t("section_body_placeholder", "Texte détaillé du chapitre...")}
                     rows={4}
-                    placeholder={t("legal_content_section_body", "Section body text")}
-                    className={inputClass}
+                    className="neu-field w-full px-3.5 py-2 text-xs"
                   />
                 </div>
               ))}
-
-              {doc.sections.length === 0 ? (
-                <div className={`rounded-md border ${subtlePanel} p-8 text-center text-sm opacity-70`}>
-                  {t("legal_content_no_sections", "No sections yet.")}
-                </div>
-              ) : null}
             </div>
           </div>
-        ) : null}
-      </div>
+        </div>
+      ) : null}
     </div>
   );
 }

@@ -162,12 +162,6 @@ export default function Gallery() {
           >
             📜 {t("nav_documents", "Documents & Sijillat")}
           </Link>
-          <Link
-            to="/gallery/articles"
-            className="px-4 py-2 rounded-md text-xs font-bold uppercase tracking-wider bg-[var(--card)] text-[var(--foreground)] border border-[var(--border)] hover:border-[var(--gold)] transition-colors"
-          >
-            📰 {t("nav_articles", "Heritage Articles")}
-          </Link>
         </div>
       </div>
 

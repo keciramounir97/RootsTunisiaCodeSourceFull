@@ -3,14 +3,14 @@ import { useTranslation } from "../../context/TranslationContext";
 import { api } from "../../api/client";
 import { getApiErrorMessage } from "../../api/helpers";
 import { notifyAdmin } from "../utils/notifications";
-import { ListChecks, Loader2, Plus, RefreshCw, Trash2 } from "lucide-react";
+import { ListChecks, Loader2, Plus, RefreshCw, Trash2, ShieldCheck, Layers } from "lucide-react";
 
 type Tier = { id: number; slug: string; name: string };
 
 type FeatureRow = {
   featureKey: string;
   label: string;
-  tiers: Record<string, { enabled: boolean; tierSlug: string; tierName: string }>;
+  tiers: Record<string, { enabled: boolean; tierSlug?: string; tierName?: string }>;
 };
 
 export default function TierFeatures() {
@@ -32,10 +32,12 @@ export default function TierFeatures() {
         api.get("/admin/subscription-tiers"),
         api.get("/admin/subscription-tier-features"),
       ]);
-      setTiers(Array.isArray(tiersRes.data) ? tiersRes.data : []);
-      setFeatures(Array.isArray(featuresRes.data) ? featuresRes.data : []);
+      const rawTiers = Array.isArray(tiersRes.data) ? tiersRes.data : tiersRes.data?.data || [];
+      const rawFeatures = Array.isArray(featuresRes.data) ? featuresRes.data : featuresRes.data?.data || [];
+      setTiers(rawTiers);
+      setFeatures(rawFeatures);
     } catch (err) {
-      setError(getApiErrorMessage(err, t("tier_features_failed", "Failed to load feature flags")));
+      setError(getApiErrorMessage(err, t("tier_features_failed", "Impossible de charger la matrice des fonctionnalités.")));
     } finally {
       setLoading(false);
     }
@@ -50,9 +52,11 @@ export default function TierFeatures() {
     setBusyCell(cellKey);
     try {
       const { data } = await api.put(`/admin/subscription-tier-features/${tierId}/${featureKey}`, { enabled });
-      setFeatures(Array.isArray(data) ? data : features);
+      const nextFeatures = Array.isArray(data) ? data : data?.data || features;
+      setFeatures(nextFeatures);
+      notifyAdmin(t("tier_feature_updated", "Mise à jour effectuée."));
     } catch (err) {
-      notifyAdmin(getApiErrorMessage(err, t("tier_feature_update_failed", "Failed to update feature flag")), "error");
+      notifyAdmin(getApiErrorMessage(err, t("tier_feature_update_failed", "Échec de la mise à jour")), "error");
     } finally {
       setBusyCell(null);
     }
@@ -66,144 +70,160 @@ export default function TierFeatures() {
         featureKey: newKey.trim(),
         label: newLabel.trim(),
       });
-      setFeatures(Array.isArray(data) ? data : features);
+      const nextFeatures = Array.isArray(data) ? data : data?.data || features;
+      setFeatures(nextFeatures);
       setNewKey("");
       setNewLabel("");
-      notifyAdmin(t("feature_added", "Feature added."));
+      notifyAdmin(t("feature_added", "Fonctionnalité ajoutée avec succès."));
     } catch (err) {
-      notifyAdmin(getApiErrorMessage(err, t("feature_add_failed", "Failed to add feature")), "error");
+      notifyAdmin(getApiErrorMessage(err, t("feature_add_failed", "Échec de l'ajout de la fonctionnalité")), "error");
     } finally {
       setCreating(false);
     }
   };
 
   const removeFeature = async (featureKey: string) => {
+    if (!window.confirm(t("confirm_delete_feature", "Voulez-vous supprimer cette fonctionnalité ?"))) return;
     try {
       const { data } = await api.delete(`/admin/subscription-tier-features/${featureKey}`);
-      setFeatures(Array.isArray(data) ? data : features);
+      const nextFeatures = Array.isArray(data) ? data : data?.data || features;
+      setFeatures(nextFeatures);
+      notifyAdmin(t("feature_removed", "Fonctionnalité supprimée."));
     } catch (err) {
-      notifyAdmin(getApiErrorMessage(err, t("feature_remove_failed", "Failed to remove feature")), "error");
+      notifyAdmin(getApiErrorMessage(err, t("feature_remove_failed", "Échec de la suppression")), "error");
     }
   };
 
   return (
-    <div className="p-6">
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <ListChecks className="w-8 h-8 text-[#d9a441]" />
+    <div className="p-6 space-y-6">
+      {/* HEADER SECTION */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#0d9488]/20 pb-5">
+        <div className="flex items-center gap-3.5">
+          <div className="w-12 h-12 rounded-xl bg-[#0d9488]/15 border border-[#0d9488]/30 flex items-center justify-center text-[#0d9488]">
+            <ListChecks className="w-6 h-6" />
+          </div>
           <div>
-            <h1 className="text-2xl font-bold text-[var(--text-color)]">
-              {t("tier_features_title", "Tier Features")}
+            <h1 className="font-cinzel text-2xl font-bold text-[#0c4a6e] dark:text-[#0d9488]">
+              {t("tier_features_title", "Gestion des Fonctionnalités par Offre")}
             </h1>
-            <p className="text-sm opacity-60 max-w-xl">
+            <p className="text-xs text-stone-500 dark:text-stone-400 max-w-2xl mt-0.5">
               {t(
                 "tier_features_desc",
-                "Toggle which features and pages each subscription tier unlocks. Only \"Download files without a request\" is currently wired to real behavior — other flags are stored for future use.",
+                "Configurez les droits et fonctionnalités débloqués pour chaque niveau d'abonnement (Gratuit, Premium, Pro, etc.).",
               )}
             </p>
           </div>
         </div>
         <button
           onClick={() => void load()}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-[var(--border-color)] text-sm text-[var(--text-color)] hover:bg-[var(--paper-color)] transition-colors"
+          className="interactive-btn btn-neu px-4 py-2 text-xs flex items-center gap-2"
         >
-          <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
-          {t("refresh", "Refresh")}
+          <RefreshCw className={`w-3.5 h-3.5 text-[#0d9488] ${loading ? "animate-spin" : ""}`} />
+          {t("refresh", "Actualiser")}
         </button>
       </div>
 
       {error ? (
-        <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-4 text-red-500 mb-4">{error}</div>
+        <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-red-600 text-xs font-semibold">
+          {error}
+        </div>
       ) : null}
 
-      <div className="rounded-2xl border border-[var(--border-color)] bg-white dark:bg-[#1a2e2d] p-5 mb-6">
-        <p className="text-xs font-semibold uppercase tracking-wide text-[#24766f] dark:text-[#d9a441] mb-3">
-          {t("add_feature", "Add Feature")}
-        </p>
+      {/* CREATE FEATURE CARD */}
+      <div className="neu-card p-5 rounded-2xl border border-[#0d9488]/20 space-y-3">
+        <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[#0c4a6e] dark:text-[#0d9488]">
+          <Plus className="w-4 h-4 text-[#0d9488]" />
+          <span>{t("add_feature", "Ajouter une nouvelle fonctionnalité")}</span>
+        </div>
         <div className="flex flex-wrap gap-3">
           <input
             value={newKey}
             onChange={(e) => setNewKey(e.target.value)}
-            placeholder={t("feature_key_placeholder", "feature_key (e.g. priority_support)")}
-            className="flex-1 min-w-[200px] px-3 py-2 rounded-lg border border-[var(--border-color)] bg-gray-50 dark:bg-[#0d2220] text-sm text-gray-900 dark:text-white"
+            placeholder={t("feature_key_placeholder", "clé (ex. priority_download)")}
+            className="neu-field flex-1 min-w-[200px] px-3.5 py-2 text-xs"
           />
           <input
             value={newLabel}
             onChange={(e) => setNewLabel(e.target.value)}
-            placeholder={t("feature_label_placeholder", "Display label")}
-            className="flex-1 min-w-[200px] px-3 py-2 rounded-lg border border-[var(--border-color)] bg-gray-50 dark:bg-[#0d2220] text-sm text-gray-900 dark:text-white"
+            placeholder={t("feature_label_placeholder", "Libellé d'affichage (ex. Téléchargement prioritaire)")}
+            className="neu-field flex-1 min-w-[220px] px-3.5 py-2 text-xs"
           />
           <button
             onClick={() => void addFeature()}
             disabled={creating || !newKey.trim() || !newLabel.trim()}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#d9a441] text-white text-sm font-semibold disabled:opacity-50"
+            className="interactive-btn btn-neu btn-neu--primary px-5 py-2 text-xs flex items-center gap-1.5 disabled:opacity-50"
           >
-            <Plus className="w-4 h-4" />
-            {t("add", "Add")}
+            {creating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
+            {t("add", "Ajouter")}
           </button>
         </div>
       </div>
 
+      {/* MATRIX TABLE */}
       {loading ? (
-        <div className="flex justify-center py-16">
-          <Loader2 className="w-8 h-8 animate-spin text-[#d9a441]" />
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="w-8 h-8 animate-spin text-[#0d9488]" />
         </div>
       ) : features.length === 0 ? (
-        <div className="rounded-2xl border border-[var(--border-color)] p-10 text-center text-sm opacity-60">
-          {t("no_features_yet", "No feature flags yet.")}
+        <div className="neu-inset p-12 rounded-2xl text-center text-xs italic text-stone-500 dark:text-stone-400">
+          <Layers className="w-10 h-10 mx-auto text-[#0d9488] opacity-40 mb-2" />
+          {t("no_features_yet", "Aucune fonctionnalité configurée pour le moment.")}
         </div>
       ) : (
-        <div className="rounded-2xl border border-[var(--border-color)] overflow-hidden shadow-sm">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="bg-[#24766f] border-b border-white/20">
-                <th className="text-left px-4 py-3.5 font-semibold text-white">{t("feature", "Feature")}</th>
-                {tiers.map((tier) => (
-                  <th key={tier.id} className="text-center px-4 py-3.5 font-semibold text-white">
-                    {tier.name}
-                  </th>
-                ))}
-                <th className="px-4 py-3.5" />
-              </tr>
-            </thead>
-            <tbody>
-              {features.map((feature) => (
-                <tr
-                  key={feature.featureKey}
-                  className="border-b border-[var(--border-color)] bg-white dark:bg-[#1a2e2d] hover:bg-[#f5f1e8] dark:hover:bg-[#1f3836] transition-colors"
-                >
-                  <td className="px-4 py-3">
-                    <div className="font-semibold text-gray-900 dark:text-white">{feature.label}</div>
-                    <div className="text-xs opacity-50 font-mono">{feature.featureKey}</div>
-                  </td>
-                  {tiers.map((tier) => {
-                    const cell = feature.tiers[tier.id];
-                    const cellKey = `${tier.id}-${feature.featureKey}`;
-                    return (
-                      <td key={tier.id} className="px-4 py-3 text-center">
-                        <input
-                          type="checkbox"
-                          checked={Boolean(cell?.enabled)}
-                          disabled={busyCell === cellKey}
-                          onChange={(e) => void toggle(tier.id, feature.featureKey, e.target.checked)}
-                          className="w-4 h-4 accent-[#d9a441]"
-                        />
-                      </td>
-                    );
-                  })}
-                  <td className="px-4 py-3">
-                    <button
-                      onClick={() => void removeFeature(feature.featureKey)}
-                      className="p-1.5 rounded-lg bg-red-100 text-red-500 dark:bg-red-900/30 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors"
-                      title={t("delete", "Delete")}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </td>
+        <div className="neu-card rounded-2xl border border-[#0d9488]/20 overflow-hidden shadow-sm">
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="bg-[#0c4a6e] text-white border-b border-[#0d9488]/30">
+                  <th className="text-left px-4 py-3.5 font-bold uppercase tracking-wider">{t("feature", "Fonctionnalité")}</th>
+                  {tiers.map((tier) => (
+                    <th key={tier.id} className="text-center px-4 py-3.5 font-bold uppercase tracking-wider">
+                      {tier.name}
+                    </th>
+                  ))}
+                  <th className="px-4 py-3.5 w-16" />
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-[#0d9488]/15">
+                {features.map((feature) => (
+                  <tr
+                    key={feature.featureKey}
+                    className="hover:bg-[#0d9488]/5 transition-colors"
+                  >
+                    <td className="px-4 py-3">
+                      <div className="font-bold text-[#0c4a6e] dark:text-[#0d9488]">{feature.label}</div>
+                      <div className="text-[10px] font-mono opacity-60 mt-0.5">{feature.featureKey}</div>
+                    </td>
+                    {tiers.map((tier) => {
+                      const cell = feature.tiers?.[tier.id] || feature.tiers?.[String(tier.id)];
+                      const cellKey = `${tier.id}-${feature.featureKey}`;
+                      const isBusy = busyCell === cellKey;
+                      return (
+                        <td key={tier.id} className="px-4 py-3 text-center">
+                          <input
+                            type="checkbox"
+                            checked={Boolean(cell?.enabled)}
+                            disabled={isBusy}
+                            onChange={(e) => void toggle(tier.id, feature.featureKey, e.target.checked)}
+                            className="w-4 h-4 accent-[#0d9488] cursor-pointer disabled:opacity-40"
+                          />
+                        </td>
+                      );
+                    })}
+                    <td className="px-4 py-3 text-right">
+                      <button
+                        onClick={() => void removeFeature(feature.featureKey)}
+                        className="p-1.5 rounded-lg text-red-500 hover:bg-red-500/15 transition-colors"
+                        title={t("delete", "Supprimer")}
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>

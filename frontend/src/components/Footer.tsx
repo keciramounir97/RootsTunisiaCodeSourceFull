@@ -19,7 +19,6 @@ const explore = [
   { to: "/gallery", label: "Photo Gallery" },
   { to: "/library", label: "Library" },
   { to: "/gallery/audios", label: "Oral Histories" },
-  { to: "/gallery/articles", label: "Articles" },
 ];
 
 const research = [
