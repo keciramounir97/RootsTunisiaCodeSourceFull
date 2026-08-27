@@ -2945,33 +2945,37 @@ export default function TreesBuilder({
     };
 
     let resizeCleanup = null;
-    let drawTicking = false;
-    const scheduleDraw = () => {
-      if (drawTicking) return;
-      drawTicking = true;
-      requestAnimationFrame(() => {
-        drawTicking = false;
-        draw();
-      });
+    ro = null;
+
+    const handleResize = () => {
+      if (!wrapRef.current || !svgRef.current) return;
+      const rect = wrapRef.current.getBoundingClientRect();
+      const w = Math.max(320, rect.width || wrapRef.current.clientWidth || 0);
+      const h = Math.max(450, rect.height || wrapRef.current.clientHeight || 0);
+      d3.select(svgRef.current).attr("width", w).attr("height", h);
+      centerTree(false);
     };
 
     if (typeof ResizeObserver !== "undefined") {
-      ro = new ResizeObserver(scheduleDraw);
+      ro = new ResizeObserver(handleResize);
       ro.observe(wrapRef.current);
     } else if (typeof window !== "undefined") {
-      const onResize = scheduleDraw;
-      window.addEventListener("resize", onResize);
-      resizeCleanup = () => window.removeEventListener("resize", onResize);
+      window.addEventListener("resize", handleResize);
+      resizeCleanup = () => window.removeEventListener("resize", handleResize);
     }
 
     draw();
 
-    const autoCenterTimer = setTimeout(() => {
-      centerTree(false);
-    }, 150);
+    const t1 = setTimeout(() => centerTree(false), 50);
+    const t2 = setTimeout(() => centerTree(false), 200);
+    const t3 = setTimeout(() => centerTree(false), 450);
+    const t4 = setTimeout(() => centerTree(false), 800);
 
     return () => {
-      clearTimeout(autoCenterTimer);
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
+      clearTimeout(t4);
       if (cleanupSim) cleanupSim();
       if (ro) ro.disconnect();
       if (resizeCleanup) resizeCleanup();
