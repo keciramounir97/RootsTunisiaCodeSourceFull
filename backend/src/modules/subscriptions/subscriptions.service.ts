@@ -340,8 +340,8 @@ export class SubscriptionsService {
             } else if (tier && tier[tierCol] !== null && tier[tierCol] !== undefined) {
                 limit = Number(tier[tierCol]);
             } else {
-                const defaults: Record<string, number> = { trees: 10, gallery: 10, audios: 10, documents: 10, individuals: 10, sources: 5, notes: 100, tasks: 100 };
-                limit = defaults[res] ?? 10;
+                const defaults: Record<string, number> = { trees: 25, gallery: 25, audios: 25, documents: 25, individuals: 25, sources: 25, notes: 25, tasks: 25 };
+                limit = defaults[res] ?? 25;
             }
 
             let currentCount = 0;

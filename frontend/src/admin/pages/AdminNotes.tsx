@@ -234,9 +234,9 @@ export default function AdminNotes() {
           <span className="font-bold text-gray-900 dark:text-white">
             Notes Created: <b className="text-[#d9a441]">{notesQuota.used}</b> / {notesQuota.max === -1 ? "∞" : notesQuota.max}
           </span>
-          {notesQuota.max === 100 && (
+          {notesQuota.max === 25 && (
             <span className="px-2 py-0.5 rounded-full bg-teal-500/15 text-[#0d9488] font-bold text-[10px]">
-              Free Tier (Limit: 100 Notes)
+              Free Tier (Limit: 25 Notes)
             </span>
           )}
         </div>

@@ -305,9 +305,9 @@ export default function AdminTasks() {
           <span className="font-bold text-gray-900 dark:text-white">
             Tasks Created: <b className="text-[#d9a441]">{tasksQuota.used}</b> / {tasksQuota.max === -1 ? "∞" : tasksQuota.max}
           </span>
-          {tasksQuota.max === 100 && (
+          {tasksQuota.max === 25 && (
             <span className="px-2 py-0.5 rounded-full bg-teal-500/15 text-[#0d9488] font-bold text-[10px]">
-              Free Tier (Limit: 100 Tasks)
+              Free Tier (Limit: 25 Tasks)
             </span>
           )}
         </div>

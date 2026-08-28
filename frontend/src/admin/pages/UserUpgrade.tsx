@@ -268,23 +268,35 @@ export default function UserUpgrade() {
                 <div className="border-t border-[var(--border-color)] pt-4 space-y-2.5 text-xs text-gray-700 dark:text-gray-300">
                   <div className="flex items-center gap-2">
                     <Check className="w-4 h-4 text-green-500 shrink-0" />
-                    <span>Max Trees: <b>{tier.max_trees === -1 ? "Unlimited" : tier.max_trees ?? 10}</b></span>
+                    <span>Max Trees: <b>{tier.max_trees === -1 ? "Unlimited" : tier.max_trees ?? (isFree ? 25 : tier.price === 9.99 ? 300 : 3000)}</b></span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Check className="w-4 h-4 text-green-500 shrink-0" />
-                    <span>Max Gallery Images: <b>{tier.max_gallery === -1 ? "Unlimited" : tier.max_gallery ?? 10}</b></span>
+                    <span>Max Individuals: <b>{tier.max_individuals === -1 ? "Unlimited" : tier.max_individuals ?? (isFree ? 25 : tier.price === 9.99 ? 300 : 3000)}</b></span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Check className="w-4 h-4 text-green-500 shrink-0" />
-                    <span>Max Audio Files: <b>{tier.max_audios === -1 ? "Unlimited" : tier.max_audios ?? 10}</b></span>
+                    <span>Max Saved Sources: <b>{tier.max_sources === -1 ? "Unlimited" : tier.max_sources ?? (isFree ? 25 : tier.price === 9.99 ? 300 : 3000)}</b></span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Check className="w-4 h-4 text-green-500 shrink-0" />
-                    <span>Max Documents: <b>{tier.max_documents === -1 ? "Unlimited" : tier.max_documents ?? 10}</b></span>
+                    <span>Max Research Notes: <b>{tier.max_notes === -1 ? "Unlimited" : tier.max_notes ?? (isFree ? 25 : tier.price === 9.99 ? 300 : 3000)}</b></span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Check className="w-4 h-4 text-green-500 shrink-0" />
-                    <span>Max Individuals: <b>{tier.max_individuals === -1 ? "Unlimited" : tier.max_individuals ?? 10}</b></span>
+                    <span>Max Research Tasks: <b>{tier.max_tasks === -1 ? "Unlimited" : tier.max_tasks ?? (isFree ? 25 : tier.price === 9.99 ? 300 : 3000)}</b></span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Check className="w-4 h-4 text-green-500 shrink-0" />
+                    <span>Max Gallery Images: <b>{tier.max_gallery === -1 ? "Unlimited" : tier.max_gallery ?? (isFree ? 25 : tier.price === 9.99 ? 300 : 3000)}</b></span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Check className="w-4 h-4 text-green-500 shrink-0" />
+                    <span>Max Audio Files: <b>{tier.max_audios === -1 ? "Unlimited" : tier.max_audios ?? (isFree ? 25 : tier.price === 9.99 ? 300 : 3000)}</b></span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Check className="w-4 h-4 text-green-500 shrink-0" />
+                    <span>Max Documents: <b>{tier.max_documents === -1 ? "Unlimited" : tier.max_documents ?? (isFree ? 25 : tier.price === 9.99 ? 300 : 3000)}</b></span>
                   </div>
                 </div>
               </div>

@@ -384,34 +384,34 @@ async function ensureCriticalSchema(knex: Knex) {
                 });
             }
             await knex('subscription_tiers').where('id', 1).update({
-                max_trees: 10,
-                max_gallery: 10,
-                max_audios: 10,
-                max_documents: 10,
-                max_individuals: 10,
-                max_sources: 5,
-                max_notes: 100,
-                max_tasks: 100,
+                max_trees: 25,
+                max_gallery: 25,
+                max_audios: 25,
+                max_documents: 25,
+                max_individuals: 25,
+                max_sources: 25,
+                max_notes: 25,
+                max_tasks: 25,
             });
             await knex('subscription_tiers').where('id', 2).update({
-                max_trees: 50,
-                max_gallery: 100,
-                max_audios: 50,
-                max_documents: 100,
-                max_individuals: 500,
-                max_sources: 50,
-                max_notes: 500,
-                max_tasks: 500,
+                max_trees: 300,
+                max_gallery: 300,
+                max_audios: 300,
+                max_documents: 300,
+                max_individuals: 300,
+                max_sources: 300,
+                max_notes: 300,
+                max_tasks: 300,
             });
             await knex('subscription_tiers').where('id', 3).update({
-                max_trees: 1500,
-                max_gallery: 1500,
-                max_audios: 1500,
-                max_documents: 1500,
-                max_individuals: 1500,
-                max_sources: 1500,
-                max_notes: 1500,
-                max_tasks: 1500,
+                max_trees: 3000,
+                max_gallery: 3000,
+                max_audios: 3000,
+                max_documents: 3000,
+                max_individuals: 3000,
+                max_sources: 3000,
+                max_notes: 3000,
+                max_tasks: 3000,
             });
         }
 
