@@ -15,6 +15,12 @@ import {
   Shield,
   UserRound,
   Users,
+  Gauge,
+  Crown,
+  ArrowRight,
+  Power,
+  ListChecks,
+  StickyNote,
 } from "lucide-react";
 import { fetchStats, fetchRecentActivity } from "../utils/api";
 import { formatDate } from "../utils/helpers";
@@ -70,9 +76,31 @@ export default function Dashboard() {
     publicBooks: 0,
     events: 0,
   });
+  const [quotas, setQuotas] = useState<any>(null);
   const [activity, setActivity] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [loggingEnabled, setLoggingEnabled] = useState(true);
+  const [togglingLog, setTogglingLog] = useState(false);
+
+  useEffect(() => {
+    api.get("/my/activity-settings").then((res) => {
+      setLoggingEnabled(res.data?.enabled !== false);
+    }).catch(() => {});
+  }, []);
+
+  const handleToggleLogging = async () => {
+    setTogglingLog(true);
+    const nextState = !loggingEnabled;
+    try {
+      await api.patch("/my/activity-settings", { enabled: nextState });
+      setLoggingEnabled(nextState);
+    } catch {
+      // ignore
+    } finally {
+      setTogglingLog(false);
+    }
+  };
 
   useEffect(() => {
     let mounted = true;
@@ -81,6 +109,10 @@ export default function Dashboard() {
       try {
         setLoading(true);
         setError("");
+
+        api.get("/my/quotas").then((res) => {
+          if (mounted) setQuotas(res.data?.data || res.data);
+        }).catch(() => {});
 
         if (isAdmin) {
           const [s, a] = await Promise.all([
@@ -182,9 +214,21 @@ export default function Dashboard() {
       Icon: Music,
     },
     {
-      to: "/sourcesandarchives",
-      title: t("research_sources", "Archives"),
-      desc: t("research_sources_desc", "Open the public archive and source pathways."),
+      to: "/admin/notes",
+      title: t("research_notes", "Research Notes"),
+      desc: t("research_notes_desc", "Private notes attached to people, trees & historical events."),
+      Icon: StickyNote,
+    },
+    {
+      to: "/admin/tasks",
+      title: t("research_tasks", "Research Tasks"),
+      desc: t("research_tasks_desc", "Track tasks e.g. 'Find birth record', 'verify marriage'."),
+      Icon: ListChecks,
+    },
+    {
+      to: "/admin/sources-archives",
+      title: t("my_sources_archives", "My Sources & Archives"),
+      desc: t("my_sources_desc", "Saved reference sources with custom links & uploaded icons."),
       Icon: Archive,
     },
     {
@@ -230,6 +274,43 @@ export default function Dashboard() {
         ))}
       </section>
 
+      {/* Quotas & Tier Usage Summary Widget */}
+      {quotas && (
+        <section className="p-5 rounded-2xl border border-[var(--border-color)] bg-white dark:bg-[#1a2e2d] shadow-md flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="p-3 rounded-xl bg-[#d9a441]/15 text-[#d9a441]">
+              <Gauge className="w-6 h-6" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="font-bold text-base text-gray-900 dark:text-white">Account Quotas ({quotas.tierName || "Basic"} Plan)</h3>
+              </div>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Trees: <b>{quotas.limits?.trees?.used} / {quotas.limits?.trees?.max === -1 ? "∞" : quotas.limits?.trees?.max}</b> ·
+                Individuals: <b>{quotas.limits?.individuals?.used} / {quotas.limits?.individuals?.max === -1 ? "∞" : quotas.limits?.individuals?.max}</b> ·
+                Gallery: <b>{quotas.limits?.gallery?.used} / {quotas.limits?.gallery?.max === -1 ? "∞" : quotas.limits?.gallery?.max}</b>
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            <Link
+              to="/admin/usage"
+              className="px-4 py-2 rounded-xl border border-[var(--border-color)] text-xs font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+            >
+              View Full Quotas
+            </Link>
+            <Link
+              to="/admin/user-upgrade"
+              className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#d9a441] to-[#e8c377] text-[#092C2B] font-bold text-xs flex items-center gap-1 shadow hover:shadow-md transition-all"
+            >
+              <Crown className="w-3.5 h-3.5" />
+              <span>Upgrade</span>
+            </Link>
+          </div>
+        </section>
+      )}
+
       <section className="easy-two-column">
         <div className="easy-panel-card">
           <div className="easy-card-header">
@@ -246,22 +327,41 @@ export default function Dashboard() {
         </div>
 
         <div className="easy-panel-card">
-          <div className="easy-card-header">
+          <div className="easy-card-header flex items-center justify-between">
             <div>
               <p className="roots-eyebrow">{t("recent_activity", "Recent Activity")}</p>
-              <h2>{t("latest_updates", "Latest Updates")}</h2>
+              <h2>{t("latest_updates", "Tableau de Bord Activity")}</h2>
             </div>
-            <button
-              className="easy-icon-button"
-              onClick={() => window.location.reload()}
-              type="button"
-              aria-label={t("refresh", "Refresh")}
-            >
-              <RefreshCcw className="w-4 h-4" />
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleToggleLogging}
+                disabled={togglingLog}
+                type="button"
+                className={`px-3 py-1.5 rounded-xl text-[0.7rem] font-extrabold transition-all flex items-center gap-1.5 border shadow-sm ${
+                  loggingEnabled
+                    ? "bg-green-500 text-white border-green-600"
+                    : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-300 dark:border-gray-700"
+                }`}
+              >
+                <Power className="w-3.5 h-3.5" />
+                <span>Log: {loggingEnabled ? "ON" : "OFF"}</span>
+              </button>
+              <button
+                className="easy-icon-button"
+                onClick={() => window.location.reload()}
+                type="button"
+                aria-label={t("refresh", "Refresh")}
+              >
+                <RefreshCcw className="w-4 h-4" />
+              </button>
+            </div>
           </div>
 
-          {loading ? (
+          {!loggingEnabled ? (
+            <div className="easy-empty text-xs text-gray-500 py-8">
+              Activity logging is currently turned <b className="text-gray-800 dark:text-gray-200">OFF</b> for your account. Turn it ON to resume tracking.
+            </div>
+          ) : loading ? (
             <div className="easy-empty">{t("loading", "Loading...")}</div>
           ) : error ? (
             <div className="easy-empty text-red-500">{error}</div>
@@ -277,7 +377,7 @@ export default function Dashboard() {
                   <div>
                     <strong>{row.description || row.type}</strong>
                     <span>
-                      {row.user || t("system", "System")} · {formatDate(row.date)}
+                      {row.user || t("system", "System")} · {formatDate(row.date || row.created_at || row.createdAt)}
                     </span>
                   </div>
                 </div>

@@ -182,12 +182,19 @@ export class AuthService {
             console.warn('Could not persist refresh token or activity log:', err);
         }
 
-        // Fetch full user data for response
-        let fullUser = user;
-        try {
-            const fetched = await this.usersService.findOne(user.id);
-            if (fetched) fullUser = fetched;
-        } catch {}
+        // Use validated user data directly without redundant DB roundtrip
+        const fullUser = {
+            id: user.id,
+            email: user.email,
+            fullName: user.fullName || user.full_name,
+            phoneNumber: user.phone_number || user.phoneNumber || null,
+            roleId: user.role_id || user.roleId || 1,
+            role_id: user.role_id || user.roleId || 1,
+            roleName: user.roleName || ((user.role_id === 3 || user.roleId === 3) ? 'super_admin' : 'admin'),
+            status: user.status || 'active',
+            createdAt: user.created_at || user.createdAt,
+            lastLogin: user.last_login || user.lastLogin,
+        };
 
         return {
             token: accessToken,

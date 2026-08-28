@@ -42,7 +42,14 @@ export default function ProtectedRoute({
     return <Navigate to={redirectTo} replace />;
   }
 
+  const userAllowedPrivileges = ["usage", "trees", "gallery", "audios", "documents", "sources-archives", "tasks", "notes", "user-upgrade", "subscriptions", "support", "user-settings"];
+
   if (privileges.length > 0 && normalizedRole !== 3) {
+    if (normalizedRole === 2) {
+      const isAllowedForUser = privileges.some((p) => userAllowedPrivileges.includes(p));
+      if (isAllowedForUser) return children;
+      return <Navigate to="/admin/trees" replace />;
+    }
     if (privileges.includes("dashboard")) {
       return children;
     }

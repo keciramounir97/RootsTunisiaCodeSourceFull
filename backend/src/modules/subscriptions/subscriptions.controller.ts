@@ -44,6 +44,12 @@ export class SubscriptionsController {
 
     // ===== PAYMENT ENDPOINTS =====
 
+    @Get('payment-settings')
+    @UseGuards(JwtAuthGuard)
+    async getPaymentSettings() {
+        return this.service.getPaymentSettings();
+    }
+
     @Post('my/subscription/payment')
     @UseGuards(JwtAuthGuard)
     async submitPayment(@Body() body: { tier_id: number; amount: number; proof_url?: string; notes?: string }, @Request() req) {
@@ -133,5 +139,40 @@ export class SubscriptionsController {
         @Body() body: { enabled: boolean },
     ) {
         return this.service.setTierFeature(tierId, featureKey, body.enabled);
+    }
+
+    // ===== CREATION QUOTA LIMIT ENDPOINTS =====
+
+    @Get('my/quotas')
+    @UseGuards(JwtAuthGuard)
+    async getMyQuotas(@Request() req) {
+        return this.service.getUserQuotas(req.user.id);
+    }
+
+    @Get('admin/users/:userId/quotas')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(1, 3)
+    async getUserQuotasForAdmin(@Param('userId', ParseIntPipe) userId: number) {
+        return this.service.getUserQuotas(userId);
+    }
+
+    @Patch('admin/subscription-tiers/:id/limits')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(3)
+    async updateTierLimits(
+        @Param('id', ParseIntPipe) id: number,
+        @Body() body: { max_trees?: number; max_gallery?: number; max_audios?: number; max_documents?: number; max_individuals?: number },
+    ) {
+        return this.service.updateTierLimits(id, body);
+    }
+
+    @Patch('admin/users/:userId/limits')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(3)
+    async updateUserLimits(
+        @Param('userId', ParseIntPipe) userId: number,
+        @Body() body: { custom_max_trees?: number | null; custom_max_gallery?: number | null; custom_max_audios?: number | null; custom_max_documents?: number | null; custom_max_individuals?: number | null },
+    ) {
+        return this.service.updateUserLimits(userId, body);
     }
 }

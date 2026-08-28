@@ -5,11 +5,14 @@ import { resolveStoredFilePath, safeUnlink } from '../../common/utils/file.utils
 import * as path from 'path';
 import * as fs from 'fs';
 
+import { SubscriptionsService } from '../subscriptions/subscriptions.service';
+
 @Injectable()
 export class GalleryService implements OnModuleInit {
     constructor(
         @Inject('KnexConnection') private readonly knex,
         private readonly activityService: ActivityService,
+        private readonly subscriptionsService: SubscriptionsService,
     ) { }
 
     async onModuleInit() {
@@ -104,6 +107,7 @@ export class GalleryService implements OnModuleInit {
     }
 
     async create(data: any, userId: number, file: Express.Multer.File) {
+        await this.subscriptionsService.checkUserQuota(userId, 'gallery');
         if (!data.title || !file) {
             throw new BadRequestException('Title and image are required');
         }

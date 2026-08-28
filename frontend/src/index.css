@@ -3997,37 +3997,10 @@ p {
   stroke: #c1913e !important;
 }
 
-/* Global text shadows and colors for page headings */
-h1:not(.text-white),
-h2:not(.text-white),
-h3:not(.text-white),
-h4:not(.text-white),
-h5:not(.text-white),
-h6:not(.text-white) {
-  color: #111111 !important;
-  text-shadow:
-    -1.5px -1.5px 0 #FDFBF7,
-     1.5px -1.5px 0 #FDFBF7,
-    -1.5px  1.5px 0 #FDFBF7,
-     1.5px  1.5px 0 #FDFBF7,
-     0px 2px 5px rgba(253, 251, 247, 0.95),
-     0px 0px 8px rgba(253, 251, 247, 0.8) !important;
-}
-
-.dark h1,
-.dark h2,
-.dark h3,
-.dark h4,
-.dark h5,
-.dark h6 {
-  color: #FDFBF7 !important;
-  text-shadow:
-    -1.5px -1.5px 0 #111111,
-     1.5px -1.5px 0 #111111,
-    -1.5px  1.5px 0 #111111,
-     1.5px  1.5px 0 #111111,
-     0px 2px 5px rgba(17, 17, 17, 0.95),
-     0px 0px 8px rgba(17, 17, 17, 0.8) !important;
+/* Global text shadows and colors for page headings - Clean Single Text */
+h1, h2, h3, h4, h5, h6,
+.dark h1, .dark h2, .dark h3, .dark h4, .dark h5, .dark h6 {
+  text-shadow: none !important;
 }
 
 /* Reset headings inside naturally dark sections (hero, footer, heritage banner) to keep them highly readable */

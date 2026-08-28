@@ -24,7 +24,7 @@ export default function AdminHeader({
   };
 
   return (
-    <header className="fixed top-0 right-0 left-0 z-30 flex h-16 items-center justify-between border-b border-[var(--gold)]/30 bg-[var(--card)]/95 px-4 backdrop-blur shadow-sm transition-all sm:px-6">
+    <header className={`fixed top-0 right-0 z-30 flex h-16 items-center justify-between border-b border-[var(--gold)]/30 bg-[var(--card)]/95 px-4 backdrop-blur shadow-sm transition-all duration-300 sm:px-6 ${sidebarOpen ? "lg:left-64" : "left-0"}`}>
       <div className="flex items-center gap-3">
         <button
           onClick={onToggleSidebar}
@@ -34,14 +34,16 @@ export default function AdminHeader({
         >
           {sidebarOpen ? <PanelLeftClose className="h-5 w-5 text-[var(--gold)]" /> : <PanelLeft className="h-5 w-5" />}
         </button>
+      </div>
 
-        <form onSubmit={handleSearch} className="hidden sm:flex items-center gap-2 rounded border border-[var(--border)] bg-[var(--background)]/60 px-3 py-1.5">
-          <Search className="h-3.5 w-3.5 text-[var(--muted-foreground)]" />
+      <div className="flex-1 max-w-md mx-2 sm:mx-6 flex justify-center">
+        <form onSubmit={handleSearch} className="w-full max-w-sm flex items-center gap-2 rounded border border-[var(--border)] bg-[var(--background)]/60 px-3 py-1.5 focus-within:border-[var(--gold)] transition-colors">
+          <Search className="h-3.5 w-3.5 text-[var(--muted-foreground)] shrink-0" />
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={t("nav_search_placeholder", "Search records or trees…")}
-            className="w-48 bg-transparent text-xs text-[var(--foreground)] outline-none placeholder:text-[var(--muted-foreground)]"
+            className="w-full bg-transparent text-xs text-[var(--foreground)] outline-none placeholder:text-[var(--muted-foreground)]"
           />
         </form>
       </div>

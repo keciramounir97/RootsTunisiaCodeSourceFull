@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TasksService } from './tasks.service';
 import { TasksController } from './tasks.controller';
+import { SubscriptionsModule } from '../subscriptions/subscriptions.module';
 import { MulterModule } from '@nestjs/platform-express';
 import { GALLERY_UPLOADS_DIR } from '../../common/utils/file.utils';
 import * as multer from 'multer';
@@ -9,6 +10,7 @@ import * as crypto from 'crypto';
 
 @Module({
     imports: [
+        SubscriptionsModule,
         MulterModule.register({
             storage: multer.diskStorage({
                 destination: (req, file, cb) => {

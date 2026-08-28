@@ -82,15 +82,29 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks(id) {
+          if (id.includes("node_modules/d3")) {
+            return "d3-vendor";
+          }
+          if (id.includes("node_modules/jspdf") || id.includes("node_modules/pdfjs-dist")) {
+            return "pdf-vendor";
+          }
+          if (id.includes("node_modules/leaflet") || id.includes("node_modules/react-leaflet")) {
+            return "leaflet-vendor";
+          }
+          if (id.includes("node_modules/framer-motion") || id.includes("node_modules/gsap")) {
+            return "motion-vendor";
+          }
+          if (id.includes("node_modules/lucide-react")) {
+            return "icons-vendor";
+          }
           if (
             id.includes("node_modules/react/") ||
             id.includes("node_modules/react-dom/") ||
             id.includes("node_modules/react-router-dom/") ||
-            id.includes("node_modules/react-hook-form/") ||
-            id.includes("node_modules/@hookform/") ||
-            id.includes("node_modules/zod/")
+            id.includes("node_modules/@tanstack/") ||
+            id.includes("node_modules/zustand")
           ) {
-            return "vendor";
+            return "framework-vendor";
           }
         },
       },

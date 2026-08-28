@@ -5,6 +5,8 @@ import { resolveStoredFilePath, safeUnlink, UPLOADS_DIR } from '../../common/uti
 import * as path from 'path';
 import * as fs from 'fs';
 
+import { SubscriptionsService } from '../subscriptions/subscriptions.service';
+
 export const AUDIO_UPLOADS_DIR = path.join(UPLOADS_DIR, 'audios');
 
 @Injectable()
@@ -12,6 +14,7 @@ export class AudiosService implements OnModuleInit {
     constructor(
         @Inject('KnexConnection') private readonly knex,
         private readonly activityService: ActivityService,
+        private readonly subscriptionsService: SubscriptionsService,
     ) {}
 
     async onModuleInit() {
@@ -108,6 +111,7 @@ export class AudiosService implements OnModuleInit {
     }
 
     async create(data: any, userId: number, file?: Express.Multer.File) {
+        await this.subscriptionsService.checkUserQuota(userId, 'audios');
         const audioPath = file ? `/uploads/audios/${file.filename}` : null;
 
         const audio = await Audio.query(this.knex).insertAndFetch({

@@ -4,9 +4,14 @@ import { Individual } from '../../models/Individual';
 import { Knex } from 'knex';
 import { Request as ExpressRequest } from 'express';
 
+import { SubscriptionsService } from '../subscriptions/subscriptions.service';
+
 @Controller()
 export class IndividualsController {
-  constructor(@Inject('KnexConnection') private readonly knex: Knex) {}
+  constructor(
+    @Inject('KnexConnection') private readonly knex: Knex,
+    private readonly subscriptionsService: SubscriptionsService,
+  ) {}
 
   private resolveIndividualId(id: string) {
     const raw = String(id || '').trim();
@@ -49,10 +54,19 @@ export class IndividualsController {
     };
   }
 
+  // Standard columns for bulk listings (excluding heavy LONGTEXT gedcom_text)
+  private readonly summaryColumns = [
+    'id', 'user_id', 'tree_id', 'gedcom_id', 'name', 'first_name', 'last_name',
+    'given', 'surname', 'gender', 'birth_year', 'birth_date', 'birth_place',
+    'death_date', 'death_place', 'profession', 'details', 'custom_fields',
+    'source_links', 'is_backed_up', 'is_public', 'created_at', 'updated_at'
+  ];
+
   // Public Endpoint: list public individuals
   @Get('individuals')
   async listPublicIndividuals() {
     const list = await Individual.query(this.knex)
+      .select(this.summaryColumns)
       .where('is_public', true)
       .orderBy('id', 'desc');
     return list.map((item) => this.parseIndividual(item));
@@ -62,14 +76,28 @@ export class IndividualsController {
   @Get('admin/individuals')
   @UseGuards(JwtAuthGuard)
   async listAdminIndividuals() {
-    const list = await Individual.query(this.knex).orderBy('id', 'desc');
+    const list = await Individual.query(this.knex)
+      .select(this.summaryColumns)
+      .orderBy('id', 'desc');
     return list.map((item) => this.parseIndividual(item));
+  }
+
+  // GET single individual with full details including gedcom_text
+  @Get('individuals/:id')
+  async getIndividual(@Param('id') id: string) {
+    const resolvedId = this.resolveIndividualId(id);
+    const existing = await Individual.query(this.knex).findById(resolvedId);
+    if (!existing) throw new NotFoundException('Individual not found');
+    return this.parseIndividual(existing);
   }
 
   @Post('admin/individuals')
   @UseGuards(JwtAuthGuard)
   async createIndividual(@Body() body: any, @Request() req: ExpressRequest) {
     const userId = (req.user as any)?.id || null;
+    if (userId) {
+      await this.subscriptionsService.checkUserQuota(userId, 'individuals');
+    }
     const payload = {
       user_id: userId,
       name: body.name || 'Sans Nom',

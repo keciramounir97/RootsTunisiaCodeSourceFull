@@ -1,10 +1,14 @@
 import { Injectable, Inject, NotFoundException } from '@nestjs/common';
 import { Task } from '../../models/Task';
 import { TaskComment } from '../../models/TaskComment';
+import { SubscriptionsService } from '../subscriptions/subscriptions.service';
 
 @Injectable()
 export class TasksService {
-    constructor(@Inject('KnexConnection') private readonly knex) {}
+    constructor(
+        @Inject('KnexConnection') private readonly knex,
+        private readonly subscriptionsService: SubscriptionsService,
+    ) {}
 
     async listByUser(userId: number) {
         return Task.query(this.knex).where('user_id', userId).orderBy('created_at', 'desc');
@@ -19,6 +23,9 @@ export class TasksService {
     }
 
     async create(data: Partial<Task>) {
+        if (data.user_id) {
+            await this.subscriptionsService.checkUserQuota(data.user_id, 'tasks');
+        }
         return Task.query(this.knex).insertAndFetch(data);
     }
 

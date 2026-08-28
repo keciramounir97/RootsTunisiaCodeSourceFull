@@ -180,6 +180,40 @@ export class SubscriptionsService {
 
     // ===== PAYMENT ENDPOINTS =====
 
+    async getPaymentSettings() {
+        try {
+            const rows = await this.knex('app_settings').where('key', 'like', 'payment.%');
+            const settings: Record<string, any> = {
+                enabled: true,
+                method: "Bank Transfer",
+                beneficiary: "",
+                bank: "",
+                account: "",
+                reference: "",
+                currency: "USD",
+                instructions: "",
+                proofRequired: true
+            };
+            for (const row of rows) {
+                const cleanKey = row.key.replace('payment.', '');
+                settings[cleanKey] = row.value;
+            }
+            return settings;
+        } catch {
+            return {
+                enabled: true,
+                method: "Bank Transfer",
+                beneficiary: "Roots Tunisia Support",
+                bank: "BiAT Bank Tunisia",
+                account: "TN59 1000 1234 5678 9012 3456",
+                reference: "ROOTS-SUB",
+                currency: "USD",
+                instructions: "Please transfer the subscription fee to the bank account above and upload your receipt screenshot.",
+                proofRequired: true
+            };
+        }
+    }
+
     async submitPayment(data: {
         user_id: number;
         tier_id: number;
@@ -271,5 +305,151 @@ export class SubscriptionsService {
             return UserSubscription.query(this.knex).patchAndFetchById(existing.id, subData);
         }
         return UserSubscription.query(this.knex).insertAndFetch(subData);
+    }
+
+    // ===== CREATION QUOTA LIMITS SYSTEM =====
+
+    async getUserQuotas(userId: number) {
+        const user = await this.knex('users').where({ id: userId }).first();
+        if (!user) throw new NotFoundException('User not found');
+
+        const roleId = Number(user.role_id ?? user.roleId ?? 2);
+        const isSuperAdmin = roleId === 3;
+
+        const sub = await UserSubscription.query(this.knex)
+            .where({ user_id: userId, status: 'active' })
+            .orderBy('created_at', 'desc')
+            .first();
+        const tierId = sub ? (sub as any).tier_id : 1;
+        const tier = await this.knex('subscription_tiers').where({ id: tierId }).first();
+
+        const resources = ['trees', 'gallery', 'audios', 'documents', 'individuals', 'sources', 'notes', 'tasks'] as const;
+        const result: Record<string, { used: number; max: number; custom: boolean }> = {};
+
+        for (const res of resources) {
+            let limit = -1;
+            let isCustom = false;
+            const customCol = `custom_max_${res}`;
+            const tierCol = `max_${res}`;
+
+            if (user[customCol] !== null && user[customCol] !== undefined) {
+                limit = Number(user[customCol]);
+                isCustom = true;
+            } else if (tier && tier[tierCol] !== null && tier[tierCol] !== undefined) {
+                limit = Number(tier[tierCol]);
+            } else {
+                const defaults: Record<string, number> = { trees: 10, gallery: 10, audios: 10, documents: 10, individuals: 10, sources: 5, notes: 100, tasks: 100 };
+                limit = defaults[res] ?? 10;
+            }
+
+            let currentCount = 0;
+            if (res === 'trees') {
+                const treeQuery = this.knex('family_trees').where({ user_id: userId });
+                if (await this.knex.schema.hasColumn('family_trees', 'author_id')) {
+                    treeQuery.orWhere({ author_id: userId });
+                }
+                if (await this.knex.schema.hasColumn('family_trees', 'created_by')) {
+                    treeQuery.orWhere({ created_by: userId });
+                }
+                const row = await treeQuery.count('id as cnt').first();
+                currentCount = Number(row?.cnt || 0);
+            } else if (res === 'gallery') {
+                const row = await this.knex('gallery')
+                    .where({ uploaded_by: userId })
+                    .orWhere({ user_id: userId })
+                    .count('id as cnt').first();
+                currentCount = Number(row?.cnt || 0);
+            } else if (res === 'audios') {
+                const row = await this.knex('audios')
+                    .where({ uploaded_by: userId })
+                    .orWhere({ user_id: userId })
+                    .count('id as cnt').first();
+                currentCount = Number(row?.cnt || 0);
+            } else if (res === 'documents') {
+                const row = await this.knex('documents')
+                    .where({ uploaded_by: userId })
+                    .orWhere({ user_id: userId })
+                    .count('id as cnt').first();
+                currentCount = Number(row?.cnt || 0);
+            } else if (res === 'individuals') {
+                let cnt = 0;
+                if (await this.knex.schema.hasTable('individuals')) {
+                    const row = await this.knex('individuals')
+                        .where({ user_id: userId })
+                        .orWhere({ created_by: userId })
+                        .count('id as cnt').first();
+                    cnt += Number(row?.cnt || 0);
+                }
+                if (await this.knex.schema.hasTable('persons')) {
+                    const userTreeIds = (await this.knex('family_trees').where({ user_id: userId }).select('id')).map((t) => t.id);
+                    if (userTreeIds.length > 0) {
+                        const pRow = await this.knex('persons').whereIn('tree_id', userTreeIds).count('id as cnt').first();
+                        cnt += Number(pRow?.cnt || 0);
+                    }
+                }
+                currentCount = cnt;
+            } else if (res === 'sources') {
+                if (await this.knex.schema.hasTable('user_sources')) {
+                    const row = await this.knex('user_sources').where({ user_id: userId }).count('id as cnt').first();
+                    currentCount = Number(row?.cnt || 0);
+                }
+            } else if (res === 'notes') {
+                if (await this.knex.schema.hasTable('notes')) {
+                    const row = await this.knex('notes').where({ user_id: userId }).count('id as cnt').first();
+                    currentCount = Number(row?.cnt || 0);
+                }
+            } else if (res === 'tasks') {
+                if (await this.knex.schema.hasTable('tasks')) {
+                    const row = await this.knex('tasks').where({ user_id: userId }).count('id as cnt').first();
+                    currentCount = Number(row?.cnt || 0);
+                }
+            }
+
+            result[res] = { used: currentCount, max: limit, custom: isCustom };
+        }
+
+        return { userId, tierId, tierName: tier?.name || 'Basic', isSuperAdmin, limits: result };
+    }
+
+    async checkUserQuota(userId: number, resource: 'trees' | 'gallery' | 'audios' | 'documents' | 'individuals' | 'sources' | 'notes' | 'tasks') {
+        if (!userId) return;
+        const quotas = await this.getUserQuotas(userId);
+        if (quotas.isSuperAdmin) return; // Super admin unlimited
+
+        const quota = quotas.limits[resource];
+        if (!quota) return;
+
+        if (quota.max !== -1 && quota.used >= quota.max) {
+            throw new BadRequestException(
+                `Creation limit reached for your account (${quota.used}/${quota.max} ${resource}). Please upgrade your subscription to create more.`
+            );
+        }
+    }
+
+    async updateTierLimits(tierId: number, limits: { max_trees?: number; max_gallery?: number; max_audios?: number; max_documents?: number; max_individuals?: number }) {
+        await this.getTier(tierId);
+        const patch: any = {};
+        if (limits.max_trees !== undefined) patch.max_trees = limits.max_trees;
+        if (limits.max_gallery !== undefined) patch.max_gallery = limits.max_gallery;
+        if (limits.max_audios !== undefined) patch.max_audios = limits.max_audios;
+        if (limits.max_documents !== undefined) patch.max_documents = limits.max_documents;
+        if (limits.max_individuals !== undefined) patch.max_individuals = limits.max_individuals;
+
+        await this.knex('subscription_tiers').where({ id: tierId }).update(patch);
+        return this.knex('subscription_tiers').where({ id: tierId }).first();
+    }
+
+    async updateUserLimits(userId: number, limits: { custom_max_trees?: number | null; custom_max_gallery?: number | null; custom_max_audios?: number | null; custom_max_documents?: number | null; custom_max_individuals?: number | null }) {
+        const user = await this.knex('users').where({ id: userId }).first();
+        if (!user) throw new NotFoundException('User not found');
+        const patch: any = {};
+        if (limits.custom_max_trees !== undefined) patch.custom_max_trees = limits.custom_max_trees;
+        if (limits.custom_max_gallery !== undefined) patch.custom_max_gallery = limits.custom_max_gallery;
+        if (limits.custom_max_audios !== undefined) patch.custom_max_audios = limits.custom_max_audios;
+        if (limits.custom_max_documents !== undefined) patch.custom_max_documents = limits.custom_max_documents;
+        if (limits.custom_max_individuals !== undefined) patch.custom_max_individuals = limits.custom_max_individuals;
+
+        await this.knex('users').where({ id: userId }).update(patch);
+        return this.getUserQuotas(userId);
     }
 }

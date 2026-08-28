@@ -17,14 +17,35 @@ export class NotesController {
 
     @Post('my/notes')
     @UseGuards(JwtAuthGuard)
-    async createMy(@Body() body: any, @Request() req) {
-        return this.service.create({ ...body, user_id: req.user.id });
+    @UseInterceptors(FileInterceptor('image'))
+    async createMy(@Body() body: any, @Request() req, @UploadedFile() file?: Express.Multer.File) {
+        const data: any = {
+            title: body.title,
+            content: body.content,
+            user_id: req.user.id
+        };
+        if (file) {
+            data.image_url = `/uploads/gallery/${file.filename}`;
+        }
+        return this.service.create(data);
     }
 
     @Patch('my/notes/:id')
     @UseGuards(JwtAuthGuard)
-    async updateMy(@Param('id', ParseIntPipe) id: number, @Body() body: any, @Request() req) {
-        return this.service.update(id, body, req.user.id);
+    @UseInterceptors(FileInterceptor('image'))
+    async updateMy(
+        @Param('id', ParseIntPipe) id: number,
+        @Body() body: any,
+        @Request() req,
+        @UploadedFile() file?: Express.Multer.File
+    ) {
+        const updateData: any = {};
+        if (body.title !== undefined) updateData.title = body.title;
+        if (body.content !== undefined) updateData.content = body.content;
+        if (file) {
+            updateData.image_url = `/uploads/gallery/${file.filename}`;
+        }
+        return this.service.update(id, updateData, req.user.id);
     }
 
     @Delete('my/notes/:id')

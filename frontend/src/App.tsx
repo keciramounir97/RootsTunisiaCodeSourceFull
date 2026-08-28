@@ -43,6 +43,8 @@ const Cookies = lazy(() => import("./pages/cookies"));
 // ===== ADMIN ROUTE COMPONENTS =====
 const AdminLayout = lazy(() => import("./admin/AdminLayout"));
 const Dashboard = lazy(() => import("./admin/pages/Dashboard"));
+const Usage = lazy(() => import("./admin/pages/Usage"));
+const ContactSupport = lazy(() => import("./admin/pages/ContactSupport"));
 const Trees = lazy(() => import("./admin/pages/Trees"));
 const Individuals = lazy(() => import("./admin/pages/Individuals"));
 const AdminGallery = lazy(() => import("./admin/pages/Gallery"));
@@ -51,7 +53,7 @@ const UsersPage = lazy(() => import("./admin/pages/Users"));
 const Settings = lazy(() => import("./admin/pages/Settings"));
 const ActivityLog = lazy(() => import("./admin/pages/ActivityLog"));
 
-// New Admin Components copied from Roots Tunisia
+const AdminSourcesAndArchives = lazy(() => import("./admin/pages/SourcesAndArchives"));
 const AdminAudios = lazy(() => import("./admin/pages/Audios"));
 const AdminDocuments = lazy(() => import("./admin/pages/Documents"));
 const NewsletterSubscribers = lazy(() => import("./admin/pages/NewsletterSubscribers"));
@@ -68,6 +70,8 @@ const AccountDeletionRequests = lazy(() => import("./admin/pages/AccountDeletion
 const RoleDistribution = lazy(() => import("./admin/pages/RoleDistribution"));
 const SubscriptionsAdmin = lazy(() => import("./admin/pages/Subscriptions"));
 const SubscriptionPayments = lazy(() => import("./admin/pages/SubscriptionPayments"));
+const UserUpgrade = lazy(() => import("./admin/pages/UserUpgrade"));
+const UserSettings = lazy(() => import("./admin/pages/UserSettings"));
 const AdminTasks = lazy(() => import("./admin/pages/AdminTasks"));
 const AdminNotes = lazy(() => import("./admin/pages/AdminNotes"));
 
@@ -83,7 +87,6 @@ const Backups = lazy(() => import("./admin/pages/Backups"));
 const AdminSuggestions = lazy(() => import("./admin/pages/Suggestions"));
 const LegalContent = lazy(() => import("./admin/pages/LegalContent"));
 const DownloadRequests = lazy(() => import("./admin/pages/DownloadRequests"));
-const UserUpgrade = lazy(() => import("./admin/pages/UserUpgrade"));
 
 /** Pages where WhatsApp button should appear */
 const WHATSAPP_PAGES = ["/", "/contact", "/subscriptions", "/tasks", "/notes", "/reminders"];
@@ -219,6 +222,36 @@ function AppRoutes() {
             <Suspense fallback={<AdminLoadingFallback />}>
               <ProtectedRoute privileges={["dashboard"]}>
                 <Dashboard />
+              </ProtectedRoute>
+            </Suspense>
+          }
+        />
+        <Route
+          path="usage"
+          element={
+            <Suspense fallback={<AdminLoadingFallback />}>
+              <ProtectedRoute privileges={["usage"]}>
+                <Usage />
+              </ProtectedRoute>
+            </Suspense>
+          }
+        />
+        <Route
+          path="support"
+          element={
+            <Suspense fallback={<AdminLoadingFallback />}>
+              <ProtectedRoute privileges={["support"]}>
+                <ContactSupport />
+              </ProtectedRoute>
+            </Suspense>
+          }
+        />
+        <Route
+          path="sources-archives"
+          element={
+            <Suspense fallback={<AdminLoadingFallback />}>
+              <ProtectedRoute privileges={["sources-archives"]}>
+                <AdminSourcesAndArchives />
               </ProtectedRoute>
             </Suspense>
           }
@@ -449,6 +482,26 @@ function AppRoutes() {
             <Suspense fallback={<AdminLoadingFallback />}>
               <ProtectedRoute roles={[1, 3]}>
                 <SubscriptionPayments />
+              </ProtectedRoute>
+            </Suspense>
+          }
+        />
+        <Route
+          path="user-upgrade"
+          element={
+            <Suspense fallback={<AdminLoadingFallback />}>
+              <ProtectedRoute privileges={["user-upgrade"]}>
+                <UserUpgrade />
+              </ProtectedRoute>
+            </Suspense>
+          }
+        />
+        <Route
+          path="user-settings"
+          element={
+            <Suspense fallback={<AdminLoadingFallback />}>
+              <ProtectedRoute privileges={["user-settings"]}>
+                <UserSettings />
               </ProtectedRoute>
             </Suspense>
           }

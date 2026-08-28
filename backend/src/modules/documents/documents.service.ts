@@ -5,6 +5,8 @@ import { resolveStoredFilePath, safeUnlink, UPLOADS_DIR } from '../../common/uti
 import * as path from 'path';
 import * as fs from 'fs';
 
+import { SubscriptionsService } from '../subscriptions/subscriptions.service';
+
 export const DOCUMENT_UPLOADS_DIR = path.join(UPLOADS_DIR, 'documents');
 
 @Injectable()
@@ -12,6 +14,7 @@ export class DocumentsService implements OnModuleInit {
     constructor(
         @Inject('KnexConnection') private readonly knex,
         private readonly activityService: ActivityService,
+        private readonly subscriptionsService: SubscriptionsService,
     ) {}
 
     async onModuleInit() {
@@ -117,6 +120,7 @@ export class DocumentsService implements OnModuleInit {
     }
 
     async create(data: any, userId: number, file?: Express.Multer.File) {
+        await this.subscriptionsService.checkUserQuota(userId, 'documents');
         const filePath = file ? `/uploads/documents/${file.filename}` : null;
         const ext = file ? path.extname(file.originalname).replace('.', '').toUpperCase() : null;
 

@@ -374,6 +374,72 @@ async function ensureCriticalSchema(knex: Knex) {
             }
         }
 
+        // Ensure default tier quota limits
+        if (await knex.schema.hasColumn('subscription_tiers', 'max_trees')) {
+            if (!(await knex.schema.hasColumn('subscription_tiers', 'max_sources'))) {
+                await knex.schema.alterTable('subscription_tiers', (t) => {
+                    t.integer('max_sources').defaultTo(5);
+                    t.integer('max_notes').defaultTo(100);
+                    t.integer('max_tasks').defaultTo(100);
+                });
+            }
+            await knex('subscription_tiers').where('id', 1).update({
+                max_trees: 10,
+                max_gallery: 10,
+                max_audios: 10,
+                max_documents: 10,
+                max_individuals: 10,
+                max_sources: 5,
+                max_notes: 100,
+                max_tasks: 100,
+            });
+            await knex('subscription_tiers').where('id', 2).update({
+                max_trees: 50,
+                max_gallery: 100,
+                max_audios: 50,
+                max_documents: 100,
+                max_individuals: 500,
+                max_sources: 50,
+                max_notes: 500,
+                max_tasks: 500,
+            });
+            await knex('subscription_tiers').where('id', 3).update({
+                max_trees: 1500,
+                max_gallery: 1500,
+                max_audios: 1500,
+                max_documents: 1500,
+                max_individuals: 1500,
+                max_sources: 1500,
+                max_notes: 1500,
+                max_tasks: 1500,
+            });
+        }
+
+        if (await knex.schema.hasTable('users')) {
+            if (!(await knex.schema.hasColumn('users', 'custom_max_sources'))) {
+                await knex.schema.alterTable('users', (t) => {
+                    t.integer('custom_max_sources').nullable();
+                    t.integer('custom_max_notes').nullable();
+                    t.integer('custom_max_tasks').nullable();
+                });
+            }
+        }
+
+        // 16) user_sources table
+        if (!(await knex.schema.hasTable('user_sources'))) {
+            await knex.schema.createTable('user_sources', (t) => {
+                t.increments('id');
+                t.integer('user_id').unsigned().notNullable().references('id').inTable('users').onDelete('CASCADE');
+                t.string('title', 255).notNullable();
+                t.text('url').nullable();
+                t.text('description').nullable();
+                t.text('icon_url').nullable();
+                t.timestamp('created_at').defaultTo(knex.fn.now());
+                t.timestamp('updated_at').defaultTo(knex.fn.now());
+            });
+            console.log('🟡 Schema patch: created user_sources table');
+        }
+
         if (!(await knex.schema.hasTable('user_subscriptions'))) {
             await knex.schema.createTable('user_subscriptions', (t) => {
                 t.increments('id');
@@ -830,15 +896,33 @@ async function bootstrap() {
             next();
         });
 
-        // Static file serving for uploads & public assets
-        app.useStaticAssets(path.join(process.cwd(), 'uploads'), { prefix: '/uploads/' });
-        app.useStaticAssets(path.join(process.cwd(), 'public'), { prefix: '/public/' });
+        // Static file serving for uploads & public assets with maxAge caching
+        app.useStaticAssets(path.join(process.cwd(), 'uploads'), { prefix: '/uploads/', maxAge: '7d' });
+        app.useStaticAssets(path.join(process.cwd(), 'public'), { prefix: '/public/', maxAge: '7d' });
 
         // Compression
         app.use(compression());
 
         // API Prefix
         app.setGlobalPrefix('api');
+
+        // HTTP Cache-Control header middleware for public read endpoints
+        app.use((req: any, res: any, next: () => void) => {
+            if (req.method === 'GET') {
+                const url = req.path || req.url || '';
+                if (
+                    url.startsWith('/api/gallery') ||
+                    url.startsWith('/api/books') ||
+                    url.startsWith('/api/documents') ||
+                    url.startsWith('/api/audios') ||
+                    url.startsWith('/api/articles') ||
+                    url.startsWith('/api/trees')
+                ) {
+                    res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=600');
+                }
+            }
+            next();
+        });
 
         // Request ID for tracing
         app.use((req: any, _res, next) => {

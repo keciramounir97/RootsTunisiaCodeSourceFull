@@ -93,6 +93,7 @@ import {
   Trash2,
   Upload,
   UserRound,
+  UserPlus,
   FileCode2,
   Network,
   ChevronDown,
@@ -2056,6 +2057,7 @@ export default function TreesBuilder({
   const [peopleQuery, setPeopleQuery] = useState("");
 
   const [addForm, setAddForm] = useState(() => createEmptyForm());
+  const [personModalOpen, setPersonModalOpen] = useState(false);
 
   const applyPeopleUpdate = (updater) => {
     if (!canMutatePeople || readOnly) {
@@ -2206,6 +2208,7 @@ export default function TreesBuilder({
         children: Array.isArray(person.children) ? person.children : [],
         color: person.color || "#f5f1e8",
       });
+      setPersonModalOpen(true);
     },
     [nameOf, readOnly]
   );
@@ -3513,6 +3516,7 @@ export default function TreesBuilder({
     });
 
     resetAddForm();
+    setPersonModalOpen(false);
 
     notifyPerson(t("legacy.person_added", "Person added."));
   };
@@ -3557,6 +3561,7 @@ export default function TreesBuilder({
     if (selectedPerson?.id === id) {
       setSelectedPerson(null);
     }
+    setPersonModalOpen(false);
 
     notifyPerson(t("legacy.person_deleted", "Person deleted."));
   };
@@ -4298,7 +4303,7 @@ export default function TreesBuilder({
           <div
             ref={wrapRef}
             data-format={dataFormat}
-            className={`relative h-full min-h-[450px] w-full border-b ${border} overflow-hidden flex-1 shrink-0
+            className={`relative h-[calc(85vh-120px)] min-h-[720px] w-full border-b ${border} overflow-hidden flex-1 shrink-0
             ${isDark ? "bg-[#0d1b2a]/30" : "bg-[#f8f5ef]/30"}
             ${dataFormat === "gedcomx" || dataFormat === "gedcom7" ? "ring-1 ring-inset ring-[#0c4a6e]/30 dark:ring-[#0d9488]/30" : ""}`}
           >
@@ -4902,560 +4907,330 @@ export default function TreesBuilder({
               </div>,
               document.body
             ) : null}
-          </div>
-
-          <div className={`w-full p-4 ${inputText}`}>
-            {/* Sidebar/Editor Content - theme-aware colors */}
-            <div className="neu-panel flex flex-col gap-6 p-5 md:flex-row h-[calc(600px+2.5rem)] md:h-[min(78vh,780px)]">
-              {/* Search / List Column */}
+            {personModalOpen && !readOnly ? createPortal(
+            <div
+              className="fixed inset-0 z-[2500] flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-200"
+              role="dialog"
+              aria-modal="true"
+              onClick={() => setPersonModalOpen(false)}
+            >
               <div
-                className={`w-full md:w-1/3 flex flex-col gap-4 border-r pr-4 ${isDark ? "border-[#0d9488]/20" : "border-[#0d9488]/30"}`}
+                className={`flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl border ${border} ${card} ${inputText} shadow-2xl animate-in zoom-in-95 duration-200`}
+                onClick={(e) => e.stopPropagation()}
               >
+                {/* Modal Header */}
                 <div
-                  className={`flex items-center justify-between pb-2 border-b ${isDark ? "border-[#0d9488]/20" : "border-[#0d9488]/30"}`}
+                  className={`flex shrink-0 items-center justify-between gap-4 border-b ${border} px-6 py-4 ${isDark ? "bg-[#071827]/80" : "bg-[#f8f5ef]"}`}
                 >
-                  <span
-                    className={`font-cinzel font-bold text-lg ${isDark ? "text-[#0d9488]" : "text-[#0c4a6e]"}`}
+                  <div className="flex items-center gap-2">
+                    <UserRound className="w-5 h-5 text-[#0d9488]" />
+                    <h3 className="font-cinzel font-bold text-lg text-[#0c4a6e] dark:text-[#0d9488]">
+                      {addForm.id
+                        ? t("legacy.edit_tree_person", "Edit Tree / Person")
+                        : t("legacy.add_person", "Add Person to Family Tree")}
+                    </h3>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setPersonModalOpen(false)}
+                    className="p-1.5 rounded-lg text-stone-400 hover:bg-stone-500/10 hover:text-red-500 transition-colors"
                   >
-                    {t("legacy.people_list", "People List")}
-                  </span>
-                  <div className="neu-label text-xs font-serif italic">
-                    {people.length} {t("legacy.records", "records")}
-                  </div>
+                    <X className="w-5 h-5" />
+                  </button>
                 </div>
 
-                <div className="relative">
-                  <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 opacity-70 text-[#0c4a6e] dark:text-[#0d9488]" />
-                  <input
-                    value={peopleQuery}
-                    onChange={(e) => setPeopleQuery(e.target.value)}
-                    placeholder={t("legacy.search_people", "Search people...")}
-                    className="neu-field w-full pl-9 pr-3 py-2.5 text-sm"
-                  />
-                </div>
+                {/* Modal Body / Scrollable Form */}
+                <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
+                  <form
+                    onSubmit={(e) => {
+                      addPerson(e);
+                    }}
+                    className="space-y-6"
+                  >
+                    {/* SECTION: PERSONAL INFO */}
+                    <div className="space-y-4">
+                      <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[#0c4a6e] dark:text-[#0d9488] border-b border-[#0d9488]/30 pb-1">
+                        <UserRound className="w-4 h-4" />
+                        {t("legacy.personal_info", "Personal Info")}
+                      </label>
 
-                <div className="flex-1 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
-                  {peopleList.length ? (
-                    peopleList.map((item) => (
-                      <PersonListItem
-                        key={item.id}
-                        item={item}
-                        active={
-                          selectedPerson &&
-                          String(selectedPerson.id) === String(item.id)
-                        }
-                        onClick={() => selectPersonFromList(item.person)}
-                        inputText={inputText}
-                      />
-                    ))
-                  ) : (
-                    <div className="neu-label text-center py-8 italic font-serif">
-                      {t("legacy.no_results", "No results found")}
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Editor Column */}
-              <div className="w-full md:w-2/3 flex flex-col">
-                {!readOnly ? (
-                  <div className="h-full flex flex-col">
-                    <div className="neu-tabs inline-flex items-center gap-1 mb-4 self-start">
-                      <button
-                        onClick={() => {
-                          resetAddForm();
-                          setPanelTab("add");
-                        }}
-                        className={`neu-tab px-4 py-2 text-sm font-bold uppercase tracking-wider ${
-                          panelTab === "add" ? "neu-tab--active" : ""
-                        }`}
-                      >
-                        {t("legacy.add_person", "Add Person")}
-                      </button>
-                      <button
-                        onClick={() => startEdit(selectedPerson)}
-                        disabled={!selectedPerson}
-                        className={`neu-tab px-4 py-2 text-sm font-bold uppercase tracking-wider ${
-                          panelTab === "editor" ? "neu-tab--active" : ""
-                        }`}
-                      >
-                        {t("legacy.edit_person", "Edit Person")}
-                      </button>
-                    </div>
-
-                    {/* SCROLLABLE FORM AREA */}
-                    <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
-                      <form onSubmit={addPerson} className="space-y-6">
-                        {/* SECTION: PERSONAL INFO */}
-                        <div className="space-y-4">
-                          <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[#0c4a6e] dark:text-[#0d9488] border-b border-[#0d9488]/30 pb-1">
-                            <UserRound className="w-4 h-4" />
-                            {t("legacy.personal_info", "Personal Info")}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="col-span-2">
+                          <label className="text-xs font-bold text-[#0c4a6e] dark:text-[#0d9488] mb-1 block">
+                            {t("legacy.full_name", "Full Name")}
                           </label>
-
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="col-span-2">
-                              <label className="text-xs font-bold text-[#0c4a6e] dark:text-[#0d9488] mb-1 block">
-                                {t("legacy.full_name", "Full Name")}
-                              </label>
-                              <input
-                                value={addForm.name}
-                                onChange={(e) =>
-                                  setAddForm((s) => ({
-                                    ...s,
-                                    name: e.target.value,
-                                  }))
-                                }
-                                placeholder={t("legacy.name_placeholder",
-                                  "e.g. Ahmed Ben Mohamed",
-                                )}
-                                className={`w-full px-4 py-2.5 rounded-lg border ${border} ${inputBg} ${inputText} focus:ring-2 focus:ring-[#0d9488]/40`}
-                              />
-                            </div>
-
-                            <div>
-                              <label className="text-xs font-bold text-[#0c4a6e] dark:text-[#0d9488] mb-1 block">
-                                {t("legacy.gender", "Gender")}
-                              </label>
-                              <select
-                                value={addForm.gender}
-                                onChange={(e) =>
-                                  setAddForm((s) => ({
-                                    ...s,
-                                    gender: e.target.value,
-                                  }))
-                                }
-                                className={`w-full px-4 py-2.5 rounded-lg border ${border} ${inputBg} ${inputText} appearance-none cursor-pointer`}
-                              >
-                                <option value="">
-                                  {t("legacy.select_gender", "Select...")}
-                                </option>
-                                <option value="M">{t("legacy.male", "Male")}</option>
-                                <option value="F">
-                                  {t("legacy.female", "Female")}
-                                </option>
-                              </select>
-                            </div>
-
-                            <div className="col-span-2">
-                              <label className="text-xs font-bold text-[#0c4a6e] dark:text-[#0d9488] mb-2 block">
-                                {t("legacy.select_color", "Select a Color:")}
-                              </label>
-                              <div
-                                className={`flex gap-3 items-center p-3 rounded-lg border ${border} ${isDark ? "bg-white/5" : "bg-[#0c4a6e]/5"}`}
-                              >
-                                <input
-                                  type="color"
-                                  value={addForm.color || "#f5f1e8"}
-                                  onChange={(e) =>
-                                    setAddForm((s) => ({
-                                      ...s,
-                                      color: e.target.value,
-                                    }))
-                                  }
-                                  className="w-12 h-12 p-0.5 rounded-lg border-2 border-[#0d9488]/40 cursor-pointer shadow-md hover:scale-105 transition-transform"
-                                />
-                                <div className="flex-1">
-                                  <div
-                                    className={`text-xs font-semibold ${inputText}`}
-                                  >
-                                    {addForm.color || "#f5f1e8"}
-                                  </div>
-                                  <div
-                                    className={`text-[10px] opacity-60 mt-0.5 ${inputText}`}
-                                  >
-                                    {t("legacy.color_on_tree_hint",
-                                      "This color will appear on the family tree card",
-                                    )}
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-
-                            <div className="col-span-2">
-                              <label className="text-xs font-bold text-[#0c4a6e] dark:text-[#0d9488] mb-1 block">
-                                {t("legacy.details", "Details / Biography")}
-                              </label>
-                              <textarea
-                                value={addForm.details}
-                                onChange={(e) =>
-                                  setAddForm((s) => ({
-                                    ...s,
-                                    details: e.target.value,
-                                  }))
-                                }
-                                placeholder={t("legacy.details_placeholder",
-                                  "Additional notes...",
-                                )}
-                                rows={3}
-                                className={`w-full px-4 py-2.5 rounded-lg border ${border} ${inputBg} ${inputText} focus:ring-2 focus:ring-[#0d9488]/40`}
-                              />
-                            </div>
-
-                            <div className="col-span-2">
-                              <label className="text-xs font-bold text-[#0c4a6e] dark:text-[#0d9488] mb-1 block">
-                                {t("legacy.profession", "Profession")}
-                              </label>
-                              <input
-                                value={addForm.profession}
-                                onChange={(e) =>
-                                  setAddForm((s) => ({
-                                    ...s,
-                                    profession: e.target.value,
-                                  }))
-                                }
-                                placeholder={t("legacy.profession_placeholder",
-                                  "e.g. Doctor, Teacher, Engineer...",
-                                )}
-                                className={`w-full px-4 py-2.5 rounded-lg border ${border} ${inputBg} ${inputText} focus:ring-2 focus:ring-[#0d9488]/40`}
-                              />
-                            </div>
-
-                            <div className="col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
-                              <div className="space-y-1">
-                                <label className="text-xs font-bold text-[#0c4a6e] dark:text-[#0d9488] block">
-                                  {t("legacy.archive_source", "Archive Source")}
-                                </label>
-                                <div className="flex items-center gap-2">
-                                  <Archive className="w-4 h-4 text-[#0d9488]" />
-                                  <input
-                                    value={addForm.archiveSource}
-                                    onChange={(e) =>
-                                      setAddForm((s) => ({
-                                        ...s,
-                                        archiveSource: e.target.value,
-                                      }))
-                                    }
-                                    placeholder={t("legacy.archive_source_placeholder",
-                                      "e.g. National Archives",
-                                    )}
-                                    className={`w-full px-3 py-2 rounded-lg border ${border} ${inputBg} ${inputText}`}
-                                  />
-                                </div>
-                              </div>
-
-                              <div className="space-y-1">
-                                <label className="text-xs font-bold text-[#0c4a6e] dark:text-[#0d9488] block">
-                                  {t("legacy.document_code", "Document Code")}
-                                </label>
-                                <div className="flex items-center gap-2">
-                                  <FileText className="w-4 h-4 text-[#0d9488]" />
-                                  <input
-                                    value={addForm.documentCode}
-                                    onChange={(e) =>
-                                      setAddForm((s) => ({
-                                        ...s,
-                                        documentCode: e.target.value,
-                                      }))
-                                    }
-                                    placeholder={t("legacy.document_code_placeholder",
-                                      "e.g. ALG-1920-042",
-                                    )}
-                                    className={`w-full px-3 py-2 rounded-lg border ${border} ${inputBg} ${inputText} font-mono`}
-                                  />
-                                </div>
-                              </div>
-                            </div>
-                          </div>
+                          <input
+                            value={addForm.name}
+                            onChange={(e) =>
+                              setAddForm((s) => ({
+                                ...s,
+                                name: e.target.value,
+                              }))
+                            }
+                            placeholder={t("legacy.name_placeholder",
+                              "e.g. Ahmed Ben Mohamed",
+                            )}
+                            className={`w-full px-4 py-2.5 rounded-lg border ${border} ${inputBg} ${inputText} focus:ring-2 focus:ring-[#0d9488]/40`}
+                          />
                         </div>
 
-                        {/* SECTION: DATES & PLACES */}
-                        <div className="space-y-4">
-                          <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[#0c4a6e] dark:text-[#0d9488] border-b border-[#0d9488]/30 pb-1">
-                            <span className="w-4 h-4 text-center font-serif italic">
-                              i
-                            </span>
-                            {t("legacy.dates_places", "Dates & Places")}
+                        <div>
+                          <label className="text-xs font-bold text-[#0c4a6e] dark:text-[#0d9488] mb-1 block">
+                            {t("legacy.gender", "Gender")}
                           </label>
-
-                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                            <div className="space-y-1">
-                              <label className="text-xs font-bold text-[#0c4a6e] dark:text-[#0d9488] block">
-                                {t("legacy.year_of_birth", "Year of Birth")}
-                              </label>
-                              <input
-                                value={addForm.birthYear}
-                                onChange={(e) =>
-                                  setAddForm((s) => ({
-                                    ...s,
-                                    birthYear: e.target.value,
-                                  }))
-                                }
-                                placeholder="YYYY"
-                                className={`w-full px-3 py-2 rounded-lg border ${border} ${inputBg} ${inputText}`}
-                              />
-                            </div>
-                            <div className="space-y-1">
-                              <label className="text-xs font-bold text-[#0c4a6e] dark:text-[#0d9488] block">
-                                {t("legacy.city_country",
-                                  "City or Country (Optional)",
-                                )}
-                              </label>
-                              <input
-                                value={addForm.birthPlace}
-                                onChange={(e) =>
-                                  setAddForm((s) => ({
-                                    ...s,
-                                    birthPlace: e.target.value,
-                                  }))
-                                }
-                                placeholder={t("legacy.example_location",
-                                  "e.g. Tunis, Sfax or Tunis",
-                                )}
-                                className={`w-full px-3 py-2 rounded-lg border ${border} ${inputBg} ${inputText}`}
-                              />
-                            </div>
-                            <div className="space-y-1">
-                              <label className="text-xs font-bold text-[#0c4a6e] dark:text-[#0d9488] block">
-                                {t("legacy.year_of_death", "Year of Death (Optional)")}
-                              </label>
-                              <input
-                                value={addForm.deathDate}
-                                onChange={(e) =>
-                                  setAddForm((s) => ({
-                                    ...s,
-                                    deathDate: e.target.value,
-                                  }))
-                                }
-                                placeholder="YYYY"
-                                className={`w-full px-3 py-2 rounded-lg border ${border} ${inputBg} ${inputText}`}
-                              />
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* SECTION: FAMILY RELATIONS */}
-                        <div className="space-y-4">
-                          <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[#0c4a6e] dark:text-[#0d9488] border-b border-[#0d9488]/30 pb-1">
-                            <Network className="w-4 h-4" />
-                            {t("legacy.relations", "Family Relations")}
-                          </label>
-
-                          <div className="grid grid-cols-1 gap-4">
-                            {/* PARENTS & SPOUSE */}
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                              <div className="space-y-1">
-                                <label className="text-xs font-bold text-[#0c4a6e] dark:text-[#0d9488] block">
-                                  {t("legacy.father", "Father")}
-                                </label>
-                                <select
-                                  value={addForm.father || ""}
-                                  onChange={(e) =>
-                                    setAddForm((s) => ({
-                                      ...s,
-                                      father: e.target.value,
-                                    }))
-                                  }
-                                  className={`w-full px-3 py-2 rounded-lg border ${border} ${inputBg} ${inputText} text-sm`}
-                                >
-                                  <option value="">{t("legacy.none", "None")}</option>
-                                  {people
-                                    .filter(
-                                      (p) =>
-                                        String(p.id) !== String(addForm.id),
-                                    )
-                                    .map((p) => (
-                                      <option key={p.id} value={p.id}>
-                                        {nameOf(p)}
-                                      </option>
-                                    ))}
-                                </select>
-                              </div>
-                              <div className="space-y-1">
-                                <label className="text-xs font-bold text-[#0c4a6e] dark:text-[#0d9488] block">
-                                  {t("legacy.mother", "Mother")}
-                                </label>
-                                <select
-                                  value={addForm.mother || ""}
-                                  onChange={(e) =>
-                                    setAddForm((s) => ({
-                                      ...s,
-                                      mother: e.target.value,
-                                    }))
-                                  }
-                                  className={`w-full px-3 py-2 rounded-lg border ${border} ${inputBg} ${inputText} text-sm`}
-                                >
-                                  <option value="">{t("legacy.none", "None")}</option>
-                                  {people
-                                    .filter(
-                                      (p) =>
-                                        String(p.id) !== String(addForm.id),
-                                    )
-                                    .map((p) => (
-                                      <option key={p.id} value={p.id}>
-                                        {nameOf(p)}
-                                      </option>
-                                    ))}
-                                </select>
-                              </div>
-                              <div className="space-y-1">
-                                <label className="text-xs font-bold text-[#0c4a6e] dark:text-[#0d9488] block">
-                                  {t("legacy.spouse", "Spouse")}
-                                </label>
-                                <select
-                                  value={addForm.spouse || ""}
-                                  onChange={(e) =>
-                                    setAddForm((s) => ({
-                                      ...s,
-                                      spouse: e.target.value,
-                                    }))
-                                  }
-                                  className={`w-full px-3 py-2 rounded-lg border ${border} ${inputBg} ${inputText} text-sm`}
-                                >
-                                  <option value="">{t("legacy.none", "None")}</option>
-                                  {people
-                                    .filter(
-                                      (p) =>
-                                        String(p.id) !== String(addForm.id),
-                                    )
-                                    .map((p) => (
-                                      <option key={p.id} value={p.id}>
-                                        {nameOf(p)}
-                                      </option>
-                                    ))}
-                                </select>
-                              </div>
-                            </div>
-
-                            {/* CHILDREN SELECT */}
-                            <div className="space-y-2">
-                              <label className="text-xs font-bold text-[#0c4a6e] dark:text-[#0d9488] block">
-                                {t("legacy.children", "Children")}
-                                <span className="text-[10px] opacity-70 font-normal ml-2 lowercase normal-case">
-                                  ({t("legacy.children_select_hint",
-                                    "Click to select only one. Ctrl+Click/Cmd+Click to toggle multiple.",
-                                  )})
-                                </span>
-                              </label>
-                              <div
-                                className={`border ${border} rounded-lg h-48 overflow-y-auto p-2 bg-white/50 dark:bg-black/20 custom-scrollbar`}
-                              >
-                                {people.filter(
-                                  (p) => String(p.id) !== String(addForm.id),
-                                ).length === 0 && (
-                                  <div className="text-xs opacity-50 italic text-center py-4">
-                                    {t("legacy.no_other_people_available",
-                                      "No other people available",
-                                    )}
-                                  </div>
-                                )}
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                                  {people
-                                    .filter(
-                                      (p) =>
-                                        String(p.id) !== String(addForm.id),
-                                    )
-                                    .sort((a, b) =>
-                                      nameOf(a).localeCompare(nameOf(b)),
-                                    )
-                                    .map((p) => {
-                                      const isSelected = (
-                                        addForm.children || []
-                                      ).some((c) => String(c) === String(p.id));
-                                      return (
-                                        <button
-                                          key={p.id}
-                                          type="button"
-                                          onClick={(e) => {
-                                            e.preventDefault();
-                                            const pid = String(p.id);
-                                            setAddForm((s) => {
-                                              const current = new Set(
-                                                (s.children || []).map(String),
-                                              );
-                                              const isMulti =
-                                                e.ctrlKey || e.metaKey;
-
-                                              if (isMulti) {
-                                                if (current.has(pid))
-                                                  current.delete(pid);
-                                                else current.add(pid);
-                                              } else {
-                                                // Standard behavior: Click selects ONLY this one
-                                                if (
-                                                  current.has(pid) &&
-                                                  current.size === 1
-                                                ) {
-                                                  // Optionally allow deselect if clicking same? Standard list usually doesn't, but let's allow "deselect all" if clicking empty, but here we click item.
-                                                  // Let's stick to strict Select One logic.
-                                                  current.clear();
-                                                  current.add(pid);
-                                                } else {
-                                                  current.clear();
-                                                  current.add(pid);
-                                                }
-                                              }
-                                              return {
-                                                ...s,
-                                                children: Array.from(current),
-                                              };
-                                            });
-                                          }}
-                                          className={`text-left text-sm px-3 py-2 rounded-md transition-all flex items-center gap-2 ${
-                                            isSelected
-                                              ? "bg-[#0c4a6e] text-white shadow-sm"
-                                              : "hover:bg-[#0c4a6e]/10 text-[#0c4a6e] dark:text-[#0d9488]"
-                                          }`}
-                                        >
-                                          <div
-                                            className={`w-3 h-3 rounded-full border border-current flex items-center justify-center`}
-                                          >
-                                            {isSelected && (
-                                              <div className="w-1.5 h-1.5 rounded-full bg-current" />
-                                            )}
-                                          </div>
-                                          <span className="truncate">
-                                            {nameOf(p)}
-                                          </span>
-                                          <span className="text-xs opacity-60 ml-auto">
-                                            {p.birthYear}
-                                          </span>
-                                        </button>
-                                      );
-                                    })}
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="flex justify-end pt-4 border-t border-[#0d9488]/20">
-                          {panelTab === "editor" && (
-                            <button
-                              type="button"
-                              onClick={() => deletePerson(addForm.id)}
-                              className="mr-auto rounded-lg px-4 py-2 text-sm font-bold uppercase tracking-wider text-red-600 transition hover:bg-red-500/10 dark:text-red-400"
-                            >
-                              {t("legacy.delete", "Delete")}
-                            </button>
-                          )}
-                          <button
-                            type="submit"
-                            className="interactive-btn btn-neu btn-neu--primary !px-8 !py-3 !text-sm"
+                          <select
+                            value={addForm.gender}
+                            onChange={(e) =>
+                              setAddForm((s) => ({
+                                ...s,
+                                gender: e.target.value,
+                              }))
+                            }
+                            className={`w-full px-4 py-2.5 rounded-lg border ${border} ${inputBg} ${inputText} appearance-none cursor-pointer`}
                           >
-                            {panelTab === "add"
-                              ? t("legacy.add_person", "Add Person")
-                              : t("legacy.update_person", "Update Person")}
-                          </button>
+                            <option value="">
+                              {t("legacy.select_gender", "Select...")}
+                            </option>
+                            <option value="M">{t("legacy.male", "Male")}</option>
+                            <option value="F">
+                              {t("legacy.female", "Female")}
+                            </option>
+                          </select>
                         </div>
-                      </form>
+
+                        <div className="col-span-2">
+                          <label className="text-xs font-bold text-[#0c4a6e] dark:text-[#0d9488] mb-2 block">
+                            {t("legacy.select_color", "Select a Color:")}
+                          </label>
+                          <div
+                            className={`flex gap-3 items-center p-3 rounded-lg border ${border} ${isDark ? "bg-white/5" : "bg-[#0c4a6e]/5"}`}
+                          >
+                            <input
+                              type="color"
+                              value={addForm.color || "#f5f1e8"}
+                              onChange={(e) =>
+                                setAddForm((s) => ({
+                                  ...s,
+                                  color: e.target.value,
+                                }))
+                              }
+                              className="w-12 h-12 p-0.5 rounded-lg border-2 border-[#0d9488]/40 cursor-pointer shadow-md hover:scale-105 transition-transform"
+                            />
+                            <div className="flex-1">
+                              <div
+                                className={`text-xs font-semibold ${inputText}`}
+                              >
+                                {addForm.color || "#f5f1e8"}
+                              </div>
+                              <div
+                                className={`text-[10px] opacity-60 mt-0.5 ${inputText}`}
+                              >
+                                {t("legacy.color_on_tree_hint",
+                                  "This color will appear on the family tree card",
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="col-span-2">
+                          <label className="text-xs font-bold text-[#0c4a6e] dark:text-[#0d9488] mb-1 block">
+                            {t("legacy.details_biography", "Details / Biography")}
+                          </label>
+                          <textarea
+                            value={addForm.details}
+                            onChange={(e) =>
+                              setAddForm((s) => ({
+                                ...s,
+                                details: e.target.value,
+                              }))
+                            }
+                            placeholder={t("legacy.additional_notes",
+                              "Additional notes...",
+                            )}
+                            rows={3}
+                            className={`w-full px-4 py-2.5 rounded-lg border ${border} ${inputBg} ${inputText} focus:ring-2 focus:ring-[#0d9488]/40`}
+                          />
+                        </div>
+
+                        <div className="col-span-2">
+                          <label className="text-xs font-bold text-[#0c4a6e] dark:text-[#0d9488] mb-1 block">
+                            {t("legacy.profession", "Profession")}
+                          </label>
+                          <input
+                            value={addForm.profession}
+                            onChange={(e) =>
+                              setAddForm((s) => ({
+                                ...s,
+                                profession: e.target.value,
+                              }))
+                            }
+                            placeholder={t("legacy.profession_placeholder",
+                              "e.g. Doctor, Teacher, Engineer...",
+                            )}
+                            className={`w-full px-4 py-2.5 rounded-lg border ${border} ${inputBg} ${inputText} focus:ring-2 focus:ring-[#0d9488]/40`}
+                          />
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                ) : (
-                  <div className="h-full flex flex-col items-center justify-center opacity-50 space-y-4">
-                    <div className="w-16 h-16 rounded-full bg-[#0c4a6e]/10 flex items-center justify-center">
-                      <UserRound className="w-8 h-8 text-[#0c4a6e]" />
+
+                    {/* SECTION: DATES & PLACES */}
+                    <div className="space-y-4 pt-4 border-t border-[#0d9488]/20">
+                      <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[#0c4a6e] dark:text-[#0d9488] border-b border-[#0d9488]/30 pb-1">
+                        <Archive className="w-4 h-4" />
+                        {t("legacy.dates_places", "Dates & Places")}
+                      </label>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="text-xs font-bold text-[#0c4a6e] dark:text-[#0d9488] mb-1 block">
+                            {t("legacy.birth_year", "Birth Year")}
+                          </label>
+                          <input
+                            value={addForm.birthYear}
+                            onChange={(e) =>
+                              setAddForm((s) => ({
+                                ...s,
+                                birthYear: e.target.value,
+                              }))
+                            }
+                            placeholder={t("legacy.birth_year_placeholder", "e.g. 1950")}
+                            className={`w-full px-4 py-2.5 rounded-lg border ${border} ${inputBg} ${inputText}`}
+                          />
+                        </div>
+
+                        <div>
+                          <label className="text-xs font-bold text-[#0c4a6e] dark:text-[#0d9488] mb-1 block">
+                            {t("legacy.birth_place", "Birth Place")}
+                          </label>
+                          <input
+                            value={addForm.birthPlace}
+                            onChange={(e) =>
+                              setAddForm((s) => ({
+                                ...s,
+                                birthPlace: e.target.value,
+                              }))
+                            }
+                            placeholder={t("legacy.birth_place_placeholder", "e.g. Tunis")}
+                            className={`w-full px-4 py-2.5 rounded-lg border ${border} ${inputBg} ${inputText}`}
+                          />
+                        </div>
+
+                        <div>
+                          <label className="text-xs font-bold text-[#0c4a6e] dark:text-[#0d9488] mb-1 block">
+                            {t("legacy.death_date", "Death Date")}
+                          </label>
+                          <input
+                            value={addForm.deathDate}
+                            onChange={(e) =>
+                              setAddForm((s) => ({
+                                ...s,
+                                deathDate: e.target.value,
+                              }))
+                            }
+                            placeholder={t("legacy.death_date_placeholder", "e.g. 2010")}
+                            className={`w-full px-4 py-2.5 rounded-lg border ${border} ${inputBg} ${inputText}`}
+                          />
+                        </div>
+
+                        <div>
+                          <label className="text-xs font-bold text-[#0c4a6e] dark:text-[#0d9488] mb-1 block">
+                            {t("legacy.death_place", "Death Place")}
+                          </label>
+                          <input
+                            value={addForm.deathPlace}
+                            onChange={(e) =>
+                              setAddForm((s) => ({
+                                ...s,
+                                deathPlace: e.target.value,
+                              }))
+                            }
+                            placeholder={t("legacy.death_place_placeholder", "e.g. Sousse")}
+                            className={`w-full px-4 py-2.5 rounded-lg border ${border} ${inputBg} ${inputText}`}
+                          />
+                        </div>
+                      </div>
                     </div>
-                    <div className="text-lg font-serif italic">
-                      {t("legacy.read_only_mode", "View Only Mode - Sign in to Edit")}
+
+                    {/* SECTION: ARCHIVE & SOURCES */}
+                    <div className="space-y-4 pt-4 border-t border-[#0d9488]/20">
+                      <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[#0c4a6e] dark:text-[#0d9488] border-b border-[#0d9488]/30 pb-1">
+                        <BookOpen className="w-4 h-4" />
+                        {t("legacy.archive_source", "Archive & Source")}
+                      </label>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="text-xs font-bold text-[#0c4a6e] dark:text-[#0d9488] mb-1 block">
+                            {t("legacy.archive_source", "Archive Source")}
+                          </label>
+                          <input
+                            value={addForm.archiveSource}
+                            onChange={(e) =>
+                              setAddForm((s) => ({
+                                ...s,
+                                archiveSource: e.target.value,
+                              }))
+                            }
+                            placeholder={t("legacy.archive_source_placeholder", "e.g. Archives Nationales de Tunisie")}
+                            className={`w-full px-4 py-2.5 rounded-lg border ${border} ${inputBg} ${inputText}`}
+                          />
+                        </div>
+
+                        <div>
+                          <label className="text-xs font-bold text-[#0c4a6e] dark:text-[#0d9488] mb-1 block">
+                            {t("legacy.document_code", "Document Code")}
+                          </label>
+                          <input
+                            value={addForm.documentCode}
+                            onChange={(e) =>
+                              setAddForm((s) => ({
+                                ...s,
+                                documentCode: e.target.value,
+                              }))
+                            }
+                            placeholder={t("legacy.document_code_placeholder", "e.g. DOC-12345")}
+                            className={`w-full px-4 py-2.5 rounded-lg border ${border} ${inputBg} ${inputText}`}
+                          />
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                )}
+
+                    <div className="flex justify-end gap-3 pt-4 border-t border-[#0d9488]/20">
+                      {addForm.id && (
+                        <button
+                          type="button"
+                          onClick={() => deletePerson(addForm.id)}
+                          className="mr-auto rounded-lg px-4 py-2 text-sm font-bold uppercase tracking-wider text-red-600 transition hover:bg-red-500/10 dark:text-red-400"
+                        >
+                          {t("legacy.delete", "Delete")}
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => setPersonModalOpen(false)}
+                        className="interactive-btn btn-neu px-5 py-2.5 text-sm"
+                      >
+                        {t("legacy.cancel", "Cancel")}
+                      </button>
+                      <button
+                        type="submit"
+                        className="interactive-btn btn-neu btn-neu--primary !px-8 !py-2.5 !text-sm"
+                      >
+                        {addForm.id
+                          ? t("legacy.edit_tree_person", "Edit Tree / Person")
+                          : t("legacy.add_person", "Add Person")}
+                      </button>
+                    </div>
+                  </form>
+                </div>
               </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+            </div>,
+            document.body
+          ) : null}
+</div>
+</div>
+</div>
+</div>
+);
 }

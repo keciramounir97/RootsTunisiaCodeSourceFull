@@ -167,4 +167,38 @@ export class UsersService {
 
         return { message: 'User deleted' };
     }
+
+    async changePassword(userId: number, currentPass: string, newPass: string) {
+        if (!newPass || newPass.length < 6) {
+            throw new BadRequestException('New password must be at least 6 characters');
+        }
+        const user = await this.knex('users').where({ id: userId }).first();
+        if (!user) throw new NotFoundException('User not found');
+
+        if (user.password) {
+            const isValid = await bcrypt.compare(currentPass || '', user.password);
+            if (!isValid) throw new BadRequestException('Incorrect current password');
+        }
+
+        const hashedPassword = await bcrypt.hash(newPass, 10);
+        await this.knex('users').where({ id: userId }).update({ password: hashedPassword });
+        await this.activityService.log(userId, 'auth', 'Changed password');
+        return { message: 'Password updated successfully' };
+    }
+
+    async requestAccountDeletion(userId: number, reason?: string) {
+        const user = await this.knex('users').where({ id: userId }).first();
+        if (!user) throw new NotFoundException('User not found');
+
+        if (await this.knex.schema.hasTable('account_deletion_requests')) {
+            await this.knex('account_deletion_requests').insert({
+                user_id: userId,
+                reason: reason || 'Self requested deletion from user settings dashboard',
+                requested_at: new Date().toISOString().slice(0, 19).replace('T', ' '),
+                status: 'pending'
+            });
+        }
+        await this.activityService.log(userId, 'auth', 'Requested account deletion');
+        return { message: 'Account deletion request submitted to Super Admin.' };
+    }
 }

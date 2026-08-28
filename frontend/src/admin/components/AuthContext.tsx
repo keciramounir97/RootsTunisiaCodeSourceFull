@@ -25,7 +25,8 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   isAdmin: boolean;
-  signup: (fullName: string, phone: string | undefined, email: string, password: string) => Promise<any>;
+  signup: (fullName: string, param2?: string, param3?: string, param4?: string) => Promise<any>;
+  register: (fullName: string, param2?: string, param3?: string, param4?: string) => Promise<any>;
   login: (email: string, password: string) => Promise<User>;
   requestReset: (email: string) => Promise<any>;
   verifyReset: (email: string, code: string, newPassword: string) => Promise<any>;
@@ -106,14 +107,55 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  /* SIGNUP */
-  const signup = (fullName: string, phone: string | undefined, email: string, password: string) =>
-    api.post("/auth/signup", {
-      fullName: fullName?.trim(),
-      phone: phone?.trim(),
+  /* SIGNUP & REGISTER */
+  const signup = async (...args: any[]) => {
+    let fullName = "";
+    let email = "";
+    let password = "";
+    let phone: string | undefined;
+
+    if (args.length === 1 && typeof args[0] === "object" && args[0] !== null) {
+      const obj = args[0];
+      fullName = obj.fullName || obj.full_name || obj.name || "";
+      email = obj.email || "";
+      password = obj.password || "";
+      phone = obj.phone || obj.phoneNumber || obj.phone_number;
+    } else {
+      const strArgs = args.map((a) => (a != null ? String(a) : ""));
+      const emailIdx = strArgs.findIndex((a) => a.includes("@"));
+      if (emailIdx !== -1) {
+        email = strArgs[emailIdx];
+        if (emailIdx > 0) {
+          fullName = strArgs[0];
+        }
+        // Password is the non-email string parameter
+        const pwdCand = strArgs.find((a, idx) => idx !== emailIdx && a !== fullName && a.length > 0 && !/^\d+$/.test(a));
+        password = pwdCand || (emailIdx + 1 < strArgs.length ? strArgs[emailIdx + 1] : "");
+      } else {
+        fullName = strArgs[0] || "";
+        email = strArgs[1] || "";
+        password = strArgs[2] || "";
+      }
+    }
+
+    const res = await api.post("/auth/signup", {
+      fullName: String(fullName || "").trim(),
+      phone: phone ? String(phone).trim() : undefined,
       email: normalizeEmail(email),
-      password,
+      password: String(password || ""),
     });
+
+    const data = res.data.data || res.data;
+    if (data && data.token) {
+      localStorage.setItem("token", data.token);
+      if (data.refreshToken) {
+        localStorage.setItem("refreshToken", data.refreshToken);
+      }
+      const user = normalizeUser(data.user);
+      if (user) setUser(user);
+    }
+    return data;
+  };
 
   /* LOGIN */
   const login = async (email: string, password: string) => {
@@ -169,6 +211,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loading,
         isAdmin,
         signup,
+        register: signup,
         login,
         requestReset,
         verifyReset,

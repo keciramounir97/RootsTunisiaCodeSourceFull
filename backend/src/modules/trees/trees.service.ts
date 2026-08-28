@@ -2,6 +2,7 @@ import { Injectable, Inject, NotFoundException, ForbiddenException, BadRequestEx
 import { Tree } from '../../models/Tree';
 import { Person } from '../../models/Person';
 import { ActivityService } from '../activity/activity.service';
+import { SubscriptionsService } from '../subscriptions/subscriptions.service';
 import { resolveStoredFilePath, safeUnlink, safeMoveFile, PRIVATE_TREE_UPLOADS_DIR, TREE_UPLOADS_DIR } from '../../common/utils/file.utils';
 import { detectGedcomXFormat, parseGedcomXFromJson, parseGedcomXFromXml } from '../../common/utils/gedcomx.util';
 import * as path from 'path';
@@ -12,6 +13,7 @@ export class TreesService implements OnModuleInit {
     constructor(
         @Inject('KnexConnection') private readonly knex,
         private readonly activityService: ActivityService,
+        private readonly subscriptionsService: SubscriptionsService,
     ) { }
 
     async onModuleInit() {
@@ -80,9 +82,14 @@ export class TreesService implements OnModuleInit {
     async listPublic() {
         const rows = await Tree.query(this.knex)
             .select(this.backupFlagSelect())
+            .select(
+                this.knex.raw(
+                    '(SELECT COUNT(*) FROM persons WHERE persons.tree_id = family_trees.id) as people_count'
+                )
+            )
             .where((builder: any) => builder.where('is_public', true).orWhereNull('is_public'))
             .orderBy('created_at', 'desc')
-            .withGraphFetched('[owner, people]')
+            .withGraphFetched('owner')
             .modifyGraph('owner', (builder: any) => builder.select('id', 'full_name'));
         return rows.map((r: any) => this.stripGedcomText(r));
     }
@@ -102,17 +109,26 @@ export class TreesService implements OnModuleInit {
     async listByUser(userId: number) {
         const rows = await Tree.query(this.knex)
             .select(this.backupFlagSelect())
+            .select(
+                this.knex.raw(
+                    '(SELECT COUNT(*) FROM persons WHERE persons.tree_id = family_trees.id) as people_count'
+                )
+            )
             .where('user_id', userId)
             .orderBy('created_at', 'desc')
             .withGraphFetched('owner')
-            .modifyGraph('owner', (builder: any) => builder.select('id', 'full_name', 'email'))
-            .withGraphFetched('people');
+            .modifyGraph('owner', (builder: any) => builder.select('id', 'full_name', 'email'));
         return rows.map((r: any) => this.stripGedcomText(r));
     }
 
     async listAdmin() {
         const rows = await Tree.query(this.knex)
             .select(this.backupFlagSelect())
+            .select(
+                this.knex.raw(
+                    '(SELECT COUNT(*) FROM persons WHERE persons.tree_id = family_trees.id) as people_count'
+                )
+            )
             .orderBy('created_at', 'desc')
             .withGraphFetched('owner')
             .modifyGraph('owner', (builder: any) => builder.select('id', 'full_name', 'email'));
@@ -149,6 +165,7 @@ export class TreesService implements OnModuleInit {
     }
 
     async create(data: any, userId: number, file?: Express.Multer.File) {
+        await this.subscriptionsService.checkUserQuota(userId, 'trees');
         const title = data.title ?? data.name;
         if (!title) {
             throw new BadRequestException('Title is required');
@@ -541,46 +558,48 @@ export class TreesService implements OnModuleInit {
                 }
             }
 
-            await Person.query(this.knex).delete().where('tree_id', treeId);
-            await this.knex('individuals').delete().where('tree_id', treeId);
-            if (!people.length) return;
-
             const tree = await Tree.query(this.knex).findById(treeId).select('user_id', 'is_public');
             const userId = (tree as any)?.user_id || null;
             const isPublic = (tree as any)?.is_public !== undefined ? Boolean((tree as any).is_public) : true;
 
-            const chunkSize = 500;
-            for (let i = 0; i < people.length; i += chunkSize) {
-                const chunk = people.slice(i, i + chunkSize);
+            await this.knex.transaction(async (trx: any) => {
+                await trx('persons').where('tree_id', treeId).delete();
+                await trx('individuals').where('tree_id', treeId).delete();
+                if (!people.length) return;
 
-                const personsInsert = chunk.map(p => ({
-                    tree_id: treeId,
-                    name: p.name
-                }));
-                await this.knex('persons').insert(personsInsert);
+                const chunkSize = 500;
+                for (let i = 0; i < people.length; i += chunkSize) {
+                    const chunk = people.slice(i, i + chunkSize);
 
-                const individualsInsert = chunk.map(p => ({
-                    user_id: userId,
-                    tree_id: treeId,
-                    gedcom_id: p.gedcomId || null,
-                    name: p.name,
-                    given: p.given || '',
-                    surname: p.surname || '',
-                    first_name: p.given || '',
-                    last_name: p.surname || '',
-                    gender: p.gender || '',
-                    birth_year: p.birthYear || p.birthDate || '',
-                    birth_date: p.birthDate || '',
-                    birth_place: p.birthPlace || '',
-                    death_date: p.deathDate || '',
-                    death_place: p.deathPlace || '',
-                    profession: p.profession || '',
-                    details: p.details || '',
-                    is_backed_up: true,
-                    is_public: isPublic
-                }));
-                await this.knex('individuals').insert(individualsInsert);
-            }
+                    const personsInsert = chunk.map(p => ({
+                        tree_id: treeId,
+                        name: p.name
+                    }));
+                    await trx('persons').insert(personsInsert);
+
+                    const individualsInsert = chunk.map(p => ({
+                        user_id: userId,
+                        tree_id: treeId,
+                        gedcom_id: p.gedcomId || null,
+                        name: p.name,
+                        given: p.given || '',
+                        surname: p.surname || '',
+                        first_name: p.given || '',
+                        last_name: p.surname || '',
+                        gender: p.gender || '',
+                        birth_year: p.birthYear || p.birthDate || '',
+                        birth_date: p.birthDate || '',
+                        birth_place: p.birthPlace || '',
+                        death_date: p.deathDate || '',
+                        death_place: p.deathPlace || '',
+                        profession: p.profession || '',
+                        details: p.details || '',
+                        is_backed_up: true,
+                        is_public: isPublic
+                    }));
+                    await trx('individuals').insert(individualsInsert);
+                }
+            });
         } catch (err) {
             console.error('Failed to rebuild tree people', (err as Error)?.message);
         }

@@ -8,9 +8,12 @@ import * as multer from 'multer';
 import * as path from 'path';
 import * as crypto from 'crypto';
 
+import { SubscriptionsModule } from '../subscriptions/subscriptions.module';
+
 @Module({
     imports: [
         ActivityModule,
+        SubscriptionsModule,
         MulterModule.register({
             storage: multer.diskStorage({
                 destination: (req, file, cb) => {

@@ -32,19 +32,27 @@ import {
   Scale,
   Wallet,
   ArchiveRestore,
+  Archive,
   ArrowUpCircle,
   Globe,
+  Gauge,
+  Headphones,
 } from "lucide-react";
 
 // Navigation Config
 const links = [
   { to: "/admin", end: true, labelKey: "dashboard", Icon: LayoutDashboard },
+  { to: "/admin/usage", labelKey: "usage_quotas", Icon: Gauge },
   { to: "/admin/trees", labelKey: "trees", Icon: Network },
   { to: "/admin/individuals", labelKey: "individuals", Icon: UserRound, permissionKey: "trees" },
+  { to: "/admin/sources-archives", labelKey: "my_sources", Icon: Archive },
+  { to: "/admin/tasks", labelKey: "tasks", Icon: ListChecks },
+  { to: "/admin/notes", labelKey: "notes", Icon: StickyNote },
   { to: "/admin/gallery", labelKey: "gallery", Icon: Image },
   { to: "/admin/audios", labelKey: "audios", Icon: Music },
   { to: "/admin/documents", labelKey: "documents", Icon: FileText },
   { to: "/admin/books", labelKey: "books", Icon: BookOpen },
+  { to: "/admin/support", labelKey: "contact_support", Icon: Headphones },
   { to: "/admin/users", labelKey: "users", Icon: Users },
   { to: "/admin/contact-messages", labelKey: "contact_messages", Icon: MessageSquare },
   { to: "/admin/newsletter", labelKey: "newsletter", Icon: Mail },
@@ -54,9 +62,8 @@ const links = [
   { to: "/admin/subscriptions", labelKey: "subscriptions", Icon: Crown },
   { to: "/admin/subscription-payments", labelKey: "subscription_payments", Icon: Crown },
   { to: "/admin/user-upgrade", labelKey: "user_upgrade", Icon: ArrowUpCircle },
+  { to: "/admin/user-settings", labelKey: "user_settings", Icon: Settings },
   { to: "/admin/payment-settings", labelKey: "payment_settings", Icon: Wallet },
-  { to: "/admin/tasks", labelKey: "tasks", Icon: ListChecks },
-  { to: "/admin/notes", labelKey: "notes", Icon: StickyNote },
   { to: "/admin/activity", labelKey: "activity", Icon: Activity },
   { to: "/admin/legal-content", labelKey: "legal_content", Icon: Scale },
   { to: "/admin/backups", labelKey: "backups", Icon: ArchiveRestore },
@@ -66,6 +73,10 @@ const links = [
 
 const labelFallbacks: Record<string, string> = {
   individuals: "Individuals",
+  usage_quotas: "Usage & Quotas",
+  contact_support: "Contact Support",
+  user_settings: "User Settings",
+  my_sources: "My Sources",
 };
 
 export default function AdminSidebar({
@@ -85,9 +96,27 @@ export default function AdminSidebar({
   const normalizedRole = Number(user?.role);
   const isSuperAdmin = normalizedRole === 3;
 
+  const userAllowedRoutes = [
+    "/admin/usage",
+    "/admin/trees",
+    "/admin/individuals",
+    "/admin/sources-archives",
+    "/admin/tasks",
+    "/admin/notes",
+    "/admin/gallery",
+    "/admin/audios",
+    "/admin/documents",
+    "/admin/user-upgrade",
+    "/admin/support",
+    "/admin/user-settings",
+  ];
+
   const visibleLinks = links.filter((link) => {
     if (isSuperAdmin) return true;
-    if ((normalizedRole === 1 || normalizedRole === 3) && granted.length === 0) {
+    if (normalizedRole === 2) {
+      return userAllowedRoutes.includes(link.to);
+    }
+    if (normalizedRole === 1 && granted.length === 0) {
       return link.to !== "/admin/admins" && link.to !== "/admin/approvals";
     }
     if (link.to === "/admin/approvals" || link.to === "/admin/admins") return false;

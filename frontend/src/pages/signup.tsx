@@ -53,12 +53,11 @@ export default function SignUp() {
     setError("");
     setLoading(true);
     try {
-      await registerAuth(
-        data.name.trim(),
-        data.email.trim().toLowerCase(),
-        data.password,
-        data.role
-      );
+      await registerAuth({
+        fullName: data.name.trim(),
+        email: data.email.trim().toLowerCase(),
+        password: data.password,
+      });
       navigate("/admin", { replace: true });
     } catch (err: any) {
       const errorMessage =
@@ -145,21 +144,6 @@ export default function SignUp() {
                     placeholder="you@example.tn"
                   />
                   {errors.email && <p className="text-xs text-red-500">{errors.email.message}</p>}
-                </label>
-
-                <label className="grid gap-1.5">
-                  <span className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
-                    Ancestral Governorate / Region
-                  </span>
-                  <select
-                    className="rounded-sm border border-[var(--border)] bg-[var(--background)] px-4 py-2.5 text-sm text-[var(--foreground)] outline-none focus:border-[var(--gold)]"
-                  >
-                    {governorates.map((g) => (
-                      <option key={g} value={g} className="bg-[var(--card)] text-[var(--foreground)]">
-                        {g}
-                      </option>
-                    ))}
-                  </select>
                 </label>
 
                 <label className="grid gap-1.5">

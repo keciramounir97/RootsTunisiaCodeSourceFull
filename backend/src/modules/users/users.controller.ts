@@ -49,3 +49,19 @@ export class AdminRolesController {
         return this.knex('roles').select('id', 'name');
     }
 }
+
+@Controller('my')
+@UseGuards(JwtAuthGuard)
+export class MyProfileController {
+    constructor(private readonly usersService: UsersService) {}
+
+    @Post('change-password')
+    async changePassword(@Body() body: { currentPassword?: string; newPassword?: string }, @Request() req) {
+        return this.usersService.changePassword(req.user.id, body.currentPassword || '', body.newPassword || '');
+    }
+
+    @Post('account-deletion')
+    async requestAccountDeletion(@Body() body: { reason?: string }, @Request() req) {
+        return this.usersService.requestAccountDeletion(req.user.id, body.reason);
+    }
+}

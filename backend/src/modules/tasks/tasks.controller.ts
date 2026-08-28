@@ -17,14 +17,39 @@ export class TasksController {
 
     @Post('my/tasks')
     @UseGuards(JwtAuthGuard)
-    async createMy(@Body() body: any, @Request() req) {
-        return this.service.create({ ...body, user_id: req.user.id });
+    @UseInterceptors(FileInterceptor('image'))
+    async createMy(@Body() body: any, @Request() req, @UploadedFile() file?: Express.Multer.File) {
+        const data: any = {
+            title: body.title,
+            description: body.description || '',
+            user_id: req.user.id,
+            status: body.status || 'todo',
+            priority: body.priority || 'medium'
+        };
+        if (file) {
+            data.image_url = `/uploads/gallery/${file.filename}`;
+        }
+        return this.service.create(data);
     }
 
     @Patch('my/tasks/:id')
     @UseGuards(JwtAuthGuard)
-    async updateMy(@Param('id', ParseIntPipe) id: number, @Body() body: any, @Request() req) {
-        return this.service.update(id, body, req.user.id);
+    @UseInterceptors(FileInterceptor('image'))
+    async updateMy(
+        @Param('id', ParseIntPipe) id: number,
+        @Body() body: any,
+        @Request() req,
+        @UploadedFile() file?: Express.Multer.File
+    ) {
+        const updateData: any = {};
+        if (body.title !== undefined) updateData.title = body.title;
+        if (body.description !== undefined) updateData.description = body.description;
+        if (body.status !== undefined) updateData.status = body.status;
+        if (body.priority !== undefined) updateData.priority = body.priority;
+        if (file) {
+            updateData.image_url = `/uploads/gallery/${file.filename}`;
+        }
+        return this.service.update(id, updateData, req.user.id);
     }
 
     @Delete('my/tasks/:id')

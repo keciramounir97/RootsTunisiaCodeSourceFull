@@ -131,10 +131,10 @@ export const createQueryClient = (): QueryClient => {
           return failureCount < 2;
         },
         retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
-        // Refetch on window focus (good for fresh data)
-        refetchOnWindowFocus: true,
-        // Don't refetch on mount if data is fresh
-        refetchOnMount: "always",
+        // Refetch on window focus
+        refetchOnWindowFocus: false,
+        // Don't refetch on mount if data exists in cache
+        refetchOnMount: false,
         // Refetch on reconnect
         refetchOnReconnect: true,
         // Network mode

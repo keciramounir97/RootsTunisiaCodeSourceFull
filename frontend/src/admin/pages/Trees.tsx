@@ -1,11 +1,17 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 import {
   Archive,
   Download,
   Eye,
+  FileEdit,
   FileText,
+  FolderGit2,
+  GitBranch,
+  Lock,
   Network,
+  Plus,
   RefreshCcw,
   Save,
   Search,
@@ -43,17 +49,12 @@ import { useAuth } from "../components/AuthContext";
 
 const MAX_GEDCOM_BYTES = 50 * 1024 * 1024;
 
-const buildMockTrees = () => [];
-
 export default function Trees() {
   const { theme } = useThemeStore();
-
   const { language: locale, t } = useLanguage();
-
   const { user } = useAuth();
 
   const isDark = theme === "dark";
-
   const isAdmin = user?.role === 1 || user?.role === 3;
 
   const pageBg = isDark ? "bg-[#071827]" : "bg-[#f5f1e8]";
@@ -65,87 +66,59 @@ export default function Trees() {
     : "bg-[#24766f]/5 border-[#e8e4dc]";
 
   const hoverRow = isDark ? "hover:bg-white/5" : "hover:bg-black/[0.02]";
-
   const inputBg = isDark ? "bg-[#0f1f33]" : "bg-white";
   const inputText = isDark ? "text-[#f8f5ef]" : "text-[#162238]";
 
   const [tab, setTab] = useState("my"); // my | public
-
   const [q, setQ] = useState("");
-
   const [myTrees, setMyTrees] = useState<any[]>([]);
-
   const [publicTrees, setPublicTrees] = useState<any[]>([]);
-
   const [loadingTrees, setLoadingTrees] = useState(true);
-
   const [treesError, setTreesError] = useState("");
-
   const [selectedTree, setSelectedTree] = useState<any>(null);
-
   const [selectedScope, setSelectedScope] = useState<any>(null); // "my" | "public" | null
-
   const [loadingGedcom, setLoadingGedcom] = useState(false);
-
   const [gedcomError, setGedcomError] = useState("");
-
   const [people, setPeople] = useState<any[]>([]);
 
-  const [saveFormat, setSaveFormat] = useState("gedcom"); // 'gedcom' | 'gedcomx_json' | 'gedcomx_xml' | 'gedcomx_gedx'
+  // TWO INDEPENDENT RIGHT-SIDE SIDEBAR DRAWERS
+  const [treesListDrawerOpen, setTreesListDrawerOpen] = useState(false);
+  const [treeFormDrawerOpen, setTreeFormDrawerOpen] = useState(false);
+
+  const [saveFormat, setSaveFormat] = useState("gedcom");
   const [treeForm, setTreeForm] = useState({
     title: "",
-
     description: "",
-
     category: "",
-
     archiveSource: "",
-
     documentCode: "",
-
     isPublic: isAdmin,
-
     saveToDb: true,
   });
 
   const [saving, setSaving] = useState(false);
-
   const [saveError, setSaveError] = useState("");
-
   const [saveSuccess, setSaveSuccess] = useState("");
-
   const [autoSaveNotice, setAutoSaveNotice] = useState("");
-
   const [autoSaving, setAutoSaving] = useState(false);
-
   const [deletingTree, setDeletingTree] = useState(false);
 
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
   const autoSavePeopleRef = useRef<any[] | null>(null);
-
   const autoSaveInFlightRef = useRef(false);
-
   const peopleDirtyRef = useRef(false);
 
   const refreshLists = useCallback(async ({ notify = false } = {}) => {
     setLoadingTrees(true);
-
     setTreesError("");
     setSaveError("");
 
-    const isMock = false;
-    const mockTrees = [];
-
     const mergeById = (list: any[]) => {
       const map = new Map();
-
       list.forEach((t: any) => {
         if (!t) return;
-
         map.set(String(t.id), t);
       });
-
       return Array.from(map.values());
     };
 
@@ -179,33 +152,14 @@ export default function Trees() {
             isPublic: !!t?.is_public || !!t?.isPublic,
           }),
         );
-
-        const myList = mergeById([...liveMine, ...mockTrees]);
-
-        setMyTrees(myList);
-      } else if (isMock) {
-        setMyTrees((prev) =>
-          Array.isArray(prev) && prev.length ? prev : mockTrees
-        );
+        setMyTrees(mergeById(liveMine));
       }
 
       if (pubRes.status === "fulfilled") {
         const rawPub = pubRes.value?.data;
         const pubList = Array.isArray(rawPub) ? rawPub : Array.isArray(rawPub?.data) ? rawPub.data : [];
         const livePublic = pubList.map((t: any) => normalizeTree(t, { isPublic: true }));
-
-        const publicList = mergeById([
-          ...livePublic,
-          ...mockTrees.filter((t: any) => t.isPublic),
-        ]);
-
-        setPublicTrees(publicList);
-      } else if (isMock) {
-        setPublicTrees((prev) =>
-          Array.isArray(prev) && prev.length
-            ? prev
-            : mockTrees.filter((t) => t.isPublic)
-        );
+        setPublicTrees(mergeById(livePublic));
       }
 
       const err =
@@ -233,25 +187,19 @@ export default function Trees() {
 
   useEffect(() => {
     if (!saveSuccess) return;
-
     const timer = setTimeout(() => setSaveSuccess(""), 3500);
-
     return () => clearTimeout(timer);
   }, [saveSuccess]);
 
   useEffect(() => {
     if (!saveError) return;
-
     const timer = setTimeout(() => setSaveError(""), 5000);
-
     return () => clearTimeout(timer);
   }, [saveError]);
 
   useEffect(() => {
     if (!autoSaveNotice) return;
-
     const timer = setTimeout(() => setAutoSaveNotice(""), 2500);
-
     return () => clearTimeout(timer);
   }, [autoSaveNotice]);
 
@@ -274,66 +222,61 @@ export default function Trees() {
         isPublic: isAdmin,
         saveToDb: false,
       });
-
       setSelectedScope(null);
-
       return;
     }
 
     setTreeForm({
       title: selectedTree.title || "",
-
       description: selectedTree.description || "",
-
       category: selectedTree.category || "",
-
       archiveSource: selectedTree.archiveSource || "",
-
       documentCode: selectedTree.documentCode || "",
-
       isPublic: !!selectedTree.isPublic,
-
-      // Existing trees are already persisted, so the consent box starts checked.
       saveToDb: true,
     });
   }, [selectedTree, isAdmin]);
 
   useEffect(() => {
     autoSavePeopleRef.current = null;
-
     if (autoSaveTimerRef.current) {
       clearTimeout(autoSaveTimerRef.current);
-
       autoSaveTimerRef.current = null;
     }
-
     peopleDirtyRef.current = false;
   }, [selectedTree?.id, tab]);
 
   const trees = tab === "public" ? publicTrees : myTrees;
 
+  // STRICT TREE OWNERSHIP CHECK: A tree is updateable ONLY if the current user is the owner or an admin.
+  const isOwner = useMemo(() => {
+    if (!selectedTree || !user) return false;
+    if (selectedScope === "my") return true;
+    const treeOwnerId = selectedTree.owner_id || selectedTree.userId || selectedTree.user_id;
+    if (treeOwnerId && user.id && String(treeOwnerId) === String(user.id)) return true;
+    const treeOwnerEmail = typeof selectedTree.owner === "string" ? selectedTree.owner : selectedTree.owner?.email;
+    if (treeOwnerEmail && user.email && treeOwnerEmail.toLowerCase() === user.email.toLowerCase()) return true;
+    return false;
+  }, [selectedTree, user, selectedScope]);
+
   const canUpdateSelected =
     selectedTree &&
     !String(selectedTree.id).startsWith("mock-") &&
-    (selectedScope === "my" || isAdmin);
+    (isOwner || isAdmin);
 
   const builderReadOnly = !!selectedTree && !canUpdateSelected;
 
   const filteredTrees = useMemo(() => {
     const query = q.trim().toLowerCase();
-
     if (!query) return trees;
 
     return trees.filter((tree) => {
       const title = String(tree.title || "").toLowerCase();
-
       const ownerRaw = tree.owner ?? tree.owner_name ?? "";
-
       const ownerValue =
         ownerRaw && typeof ownerRaw === "object"
           ? ownerRaw.fullName || ownerRaw.email || ""
           : ownerRaw || "";
-
       const owner = String(ownerValue).toLowerCase();
 
       return title.includes(query) || owner.includes(query);
@@ -342,11 +285,8 @@ export default function Trees() {
 
   const upsertTree = (list: any[], patch: any) => {
     const id = String(patch?.id);
-
     const existing = list.find((t: any) => String(t?.id) === id) || null;
-
     const merged = existing ? { ...existing, ...patch } : patch;
-
     return [merged, ...list.filter((t: any) => String(t?.id) !== id)];
   };
 
@@ -378,53 +318,36 @@ export default function Trees() {
 
     setPublicTrees((prev: any[]) => {
       const without = prev.filter((t: any) => String(t.id) !== String(id));
-
       if (!isPublic) return without;
-
       const existing = prev.find((t: any) => String(t.id) === String(id)) || {};
-
       return upsertTree(without, { ...existing, ...patch });
     });
 
     setSelectedTree((prev: any) => {
       if (!prev) return prev;
-
       if (String(prev.id) !== String(id)) return prev;
-
       return { ...prev, ...patch };
     });
   };
 
   const openTree = async (tree: any) => {
     setSelectedScope(tab);
-
     setSelectedTree(tree);
-
     peopleDirtyRef.current = false;
-
     setGedcomError("");
-
     setLoadingGedcom(true);
 
     try {
-    if (!tree?.hasGedcom) {
-      setPeople([]);
-
-      peopleDirtyRef.current = false;
-
-      setSaveSuccess(t("legacy.tree_loaded", "Tree loaded."));
-
-      return;
-    }
+      if (!tree?.hasGedcom) {
+        setPeople([]);
+        peopleDirtyRef.current = false;
+        setSaveSuccess(t("legacy.tree_loaded", "Tree loaded."));
+        return;
+      }
 
       if (String(tree.id).startsWith("mock-")) {
-        // Generate sample Tunisian family members for local mock mode.
-
         const familyName = tree.title.split(" ").pop() || "El-Masry";
-
         const mockPeople = [
-          // Grandfather (Gen 0)
-
           {
             id: "m1",
             names: { en: `Mohamed ${familyName}`, ar: `محمد ${familyName}` },
@@ -435,7 +358,6 @@ export default function Trees() {
             children: ["m3", "m4"],
             spouse: "m2",
           },
-
           {
             id: "m2",
             names: { en: `Amina ${familyName}`, ar: `أمينة ${familyName}` },
@@ -446,9 +368,6 @@ export default function Trees() {
             children: ["m3", "m4"],
             spouse: "m1",
           },
-
-          // Children (Gen 1)
-
           {
             id: "m3",
             names: { en: `Ahmed ${familyName}`, ar: `أحمد ${familyName}` },
@@ -461,7 +380,6 @@ export default function Trees() {
             children: ["m5", "m6"],
             spouse: "s1",
           },
-
           {
             id: "m4",
             names: { en: `Fatima ${familyName}`, ar: `فاطمة ${familyName}` },
@@ -474,75 +392,12 @@ export default function Trees() {
             children: ["m7"],
             spouse: "s2",
           },
-
-          // Spouses (Gen 1)
-
-          {
-            id: "s1",
-            names: { en: "Nadia Hassan", ar: "نادية حسن" },
-            gender: "Female",
-            birthYear: "1952",
-            details: "Spouse of Eli.",
-            color: "#f8f5ef",
-            spouse: "m3",
-            children: ["m5", "m6"],
-          },
-
-          {
-            id: "s2",
-            names: { en: "Youssef Mansour", ar: "يوسف منصور" },
-            gender: "Male",
-            birthYear: "1950",
-            details: "Spouse of Rachel.",
-            color: "#f8f5ef",
-            spouse: "m4",
-            children: ["m7"],
-          },
-
-          // Grandchildren (Gen 2)
-
-          {
-            id: "m5",
-            names: { en: `Omar ${familyName}`, ar: `عمر ${familyName}` },
-            gender: "Male",
-            birthYear: "1980",
-            details: "Grandson.",
-            color: "#f8f5ef",
-            father: "m3",
-            mother: "s1",
-          },
-
-          {
-            id: "m6",
-            names: { en: `Salma ${familyName}`, ar: `سلمى ${familyName}` },
-            gender: "Female",
-            birthYear: "1985",
-            details: "Granddaughter.",
-            color: "#f8f5ef",
-            father: "m3",
-            mother: "s1",
-          },
-
-          {
-            id: "m7",
-            names: { en: "Karim Mansour", ar: "كريم منصور" },
-            gender: "Male",
-            birthYear: "1982",
-            details: "Grandson.",
-            color: "#f8f5ef",
-            father: "s2",
-            mother: "m4",
-          },
         ];
 
         setPeople(mockPeople);
-
         peopleDirtyRef.current = false;
-
         setSaveSuccess(t("legacy.tree_loaded", "Tree loaded."));
-
         setLoadingGedcom(false);
-
         return;
       }
 
@@ -555,15 +410,13 @@ export default function Trees() {
       const res = await api.get(endpoint, { responseType: "text" });
 
       const raw = typeof res?.data === "string" ? res.data : (res?.data && (res.data as any).data != null ? String((res.data as any).data) : "");
-      const isGedcomX = tree.data_format === "gedcomx" || /^\s*(\{|\<\?xml)/.test(raw);
+      const isGedcomX = tree.data_format === "gedcomx" || /^s*({|<?xml)/.test(raw);
       setPeople(isGedcomX ? parseGedcomX(raw) : parseGedcom(raw));
 
       peopleDirtyRef.current = false;
-
       setSaveSuccess(t("legacy.tree_loaded", "Tree loaded."));
     } catch (err: any) {
       setPeople([]);
-
       const gedcomMessage = getGedcomLoadErrorMessage(
         err?.response?.status,
         typeof err?.response?.data === "string"
@@ -573,7 +426,6 @@ export default function Trees() {
       );
 
       setGedcomError(gedcomMessage);
-
       peopleDirtyRef.current = false;
       setSaveError(gedcomMessage);
     } finally {
@@ -588,31 +440,20 @@ export default function Trees() {
 
   const submitTree = async ({
     treeId,
-
     title,
-
     description,
-
     category,
-
     archiveSource,
-
     documentCode,
-
     isPublic,
-
     people = [],
-
     includeFile = true,
   }: any) => {
     const safeTitle = String(title || "").trim();
-
     if (!safeTitle) throw new Error("Title is required");
 
     const fd = new FormData();
-
     fd.append("title", safeTitle);
-
     fd.append("description", String(description || ""));
 
     const categoryValue = String(category || "").trim();
@@ -746,19 +587,14 @@ export default function Trees() {
 
   const runAutoSave = async () => {
     if (!canUpdateSelected) return;
-
     const pending = autoSavePeopleRef.current;
-
     if (!Array.isArray(pending)) return;
-
     if (autoSaveInFlightRef.current || saving) return;
 
     const tree = selectedTree;
-
     if (!tree) return;
 
     const nextTitle = String(treeForm.title || tree.title || "").trim();
-
     if (!nextTitle) return;
 
     const nextDescription =
@@ -772,9 +608,7 @@ export default function Trees() {
         : !!tree.isPublic;
 
     autoSaveInFlightRef.current = true;
-
     setAutoSaving(true);
-
     setSaveError("");
 
     try {
@@ -787,21 +621,13 @@ export default function Trees() {
 
       const treeId = await submitTree({
         treeId: tree.id,
-
         title: nextTitle,
-
         description: nextDescription,
-
         category: treeForm.category || "",
-
         archiveSource: treeForm.archiveSource || "",
-
         documentCode: treeForm.documentCode || "",
-
         isPublic: nextIsPublic,
-
         people: pending,
-
         includeFile: true,
       });
 
@@ -819,31 +645,23 @@ export default function Trees() {
         });
 
         setAutoSaveNotice(t("legacy.auto_saved", "Auto-saved."));
-
         peopleDirtyRef.current = false;
-
         autoSavePeopleRef.current = null;
-
         refreshLists();
       }
     } catch (err) {
       setSaveError(getApiErrorMessage(err, "Auto-save failed"));
     } finally {
       autoSaveInFlightRef.current = false;
-
       setAutoSaving(false);
     }
   };
 
   const scheduleAutoSave = (nextPeople: any[]) => {
     if (!canUpdateSelected) return;
-
     peopleDirtyRef.current = true;
-
     autoSavePeopleRef.current = nextPeople;
-
     if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
-
     autoSaveTimerRef.current = setTimeout(() => {
       void runAutoSave();
     }, 800);
@@ -851,23 +669,27 @@ export default function Trees() {
 
   const clearCanvas = () => {
     setSelectedTree(null);
-
     setSelectedScope(null);
-
     setPeople([]);
-
     setGedcomError("");
-
     peopleDirtyRef.current = false;
   };
 
+  const openNewTreeForm = () => {
+    clearCanvas();
+    setTreeFormDrawerOpen(true);
+    setTreesListDrawerOpen(false);
+  };
+
   const saveCurrentAsTree = async () => {
+    if (selectedTree && !canUpdateSelected) {
+      setSaveError(t("legacy.cannot_edit_others_tree", "You cannot edit a tree that is not yours."));
+      return;
+    }
+
     setSaveError("");
-
     setSaveSuccess("");
-
     const isUpdateMode = Boolean(canUpdateSelected && selectedTree?.id);
-
     const hasPeople = people.length > 0;
 
     let title = String(treeForm.title || "").trim();
@@ -882,19 +704,16 @@ export default function Trees() {
       const confirmed = window.confirm(
         t("legacy.save_empty_tree_confirm", "Save this tree without any people yet?")
       );
-
       if (!confirmed) return;
     }
 
     const description = String(treeForm.description || "");
-
     const isPublic = !!treeForm.isPublic;
 
     setSaving(true);
 
     try {
       const includeFile = isUpdateMode ? peopleDirtyRef.current : hasPeople;
-
       const nextHasGedcom = includeFile
         ? true
         : isUpdateMode
@@ -903,21 +722,13 @@ export default function Trees() {
 
       const treeId = await submitTree({
         treeId: canUpdateSelected ? selectedTree?.id : null,
-
         title,
-
         description,
-
         category: treeForm.category || "",
-
         archiveSource: treeForm.archiveSource || "",
-
         documentCode: treeForm.documentCode || "",
-
         isPublic,
-
         people,
-
         includeFile,
       });
 
@@ -938,11 +749,9 @@ export default function Trees() {
         });
 
         setTab("my");
-
         setSaveSuccess(
           t(
             isUpdateMode ? "tree_updated" : "tree_saved",
-
             isUpdateMode ? "Tree updated." : "Tree saved."
           )
         );
@@ -964,10 +773,9 @@ export default function Trees() {
           });
           setSelectedScope("my");
         }
-
         peopleDirtyRef.current = false;
+        setTreeFormDrawerOpen(false);
       }
-
       await refreshLists();
     } catch (err) {
       setSaveError(getApiErrorMessage(err, "Save failed"));
@@ -977,23 +785,19 @@ export default function Trees() {
   };
 
   const deleteTree = async () => {
-    if (!canUpdateSelected || !selectedTree) return;
+    if (!canUpdateSelected || !selectedTree) {
+      setSaveError(t("legacy.cannot_delete_others_tree", "You cannot delete a tree that is not yours."));
+      return;
+    }
 
     const shouldDelete = window.confirm(
-      t("legacy.confirm_delete_tree",
-
-        "Delete this tree? This action cannot be undone."
-      )
+      t("legacy.confirm_delete_tree", "Delete this tree? This action cannot be undone.")
     );
-
     if (!shouldDelete) return;
 
     const deletedId = selectedTree.id;
-
     setDeletingTree(true);
-
     setSaveError("");
-
     setSaveSuccess("");
 
     try {
@@ -1005,43 +809,27 @@ export default function Trees() {
         (e) => e?.response?.status === 403 || e?.response?.status === 404
       );
 
-      setMyTrees((prev) =>
-        prev.filter((t) => String(t.id) !== String(deletedId))
-      );
-
-      setPublicTrees((prev) =>
-        prev.filter((t) => String(t.id) !== String(deletedId))
-      );
-
+      setMyTrees((prev) => prev.filter((t) => String(t.id) !== String(deletedId)));
+      setPublicTrees((prev) => prev.filter((t) => String(t.id) !== String(deletedId)));
       setSelectedTree(null);
-
       setSelectedScope(null);
-
       setPeople([]);
-
       peopleDirtyRef.current = false;
-
       await refreshLists();
-
       setTab("my");
-
+      setTreeFormDrawerOpen(false);
       setSaveSuccess(t("legacy.tree_deleted", "Tree deleted."));
     } catch (err: any) {
       if (err?.response?.status === 404) {
-        setMyTrees((prev) =>
-          prev.filter((t) => String(t.id) !== String(deletedId))
-        );
-
-        setPublicTrees((prev) =>
-          prev.filter((t) => String(t.id) !== String(deletedId))
-        );
-
+        setMyTrees((prev) => prev.filter((t) => String(t.id) !== String(deletedId)));
+        setPublicTrees((prev) => prev.filter((t) => String(t.id) !== String(deletedId)));
         setSelectedTree(null);
         setSelectedScope(null);
         setPeople([]);
         peopleDirtyRef.current = false;
         await refreshLists();
         setTab("my");
+        setTreeFormDrawerOpen(false);
         setSaveSuccess(t("legacy.tree_deleted", "Tree deleted."));
         return;
       }
@@ -1054,28 +842,26 @@ export default function Trees() {
   };
 
   const saveToast = saveError || saveSuccess;
-
   const saveToastTone = saveError ? "error" : "success";
 
   return (
-    <div className={`p-4 min-h-screen ${pageBg} ${text} heritage-page-root`}>
+    <div className={`p-4 min-h-screen ${pageBg} ${text} heritage-page-root relative`}>
       <Toast message={saveToast} tone={saveToastTone} />
 
+      {/* TOP HEADER / ACTION BAR */}
       <div
-        className={`rounded-lg p-5 mb-6 border ${border}
-
-        bg-gradient-to-r from-[#0f2742]/10 to-[#24766f]/10 heritage-panel heritage-panel--accent`}
+        className={`rounded-xl p-5 mb-5 border ${border} bg-gradient-to-r from-[#0f2742]/15 to-[#24766f]/15 heritage-panel heritage-panel--accent shadow-md`}
       >
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div className="flex items-center gap-3">
-            <Network className="w-6 h-6 text-[#24766f]" />
-
+            <div className="p-3 rounded-xl bg-[#24766f]/20 border border-[#24766f]/30">
+              <Network className="w-6 h-6 text-[#0d9488]" />
+            </div>
             <div>
-              <h3 className="text-2xl font-bold">
+              <h3 className="text-2xl font-bold font-cinzel text-[#0c4a6e] dark:text-[#0d9488]">
                 {t("legacy.trees_builder", "Family Tree Builder")}
               </h3>
-
-              <p className="opacity-70">
+              <p className="opacity-75 text-xs sm:text-sm">
                 {t("legacy.trees_builder_desc",
                   "Public trees are visible to everyone; private trees are only for you.",
                 )}
@@ -1083,599 +869,524 @@ export default function Trees() {
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-3">
+            {/* BUTTON 1: SEE MY TREES (Opens Trees List Sidebar Drawer) */}
             <button
               type="button"
-              className={`px-4 py-2 rounded-md border ${border} hover:opacity-90 inline-flex items-center gap-2`}
+              onClick={() => {
+                setTreesListDrawerOpen((o) => !o);
+                setTreeFormDrawerOpen(false);
+              }}
+              className="interactive-btn btn-neu btn-neu--primary px-4 py-2.5 text-xs font-bold inline-flex items-center gap-2 shadow-lg hover:scale-105 transition-all"
+              title={t("legacy.see_my_trees", "See My Trees")}
+            >
+              <Eye className="w-4 h-4 text-white" />
+              <span>{t("legacy.see_my_trees", "See My Trees")}</span>
+              <span className="ml-1 px-2 py-0.5 rounded-full text-[10px] bg-white/20 text-white font-extrabold">
+                {myTrees.length}
+              </span>
+            </button>
+
+            {/* BUTTON 2: PERMANENT "+ ADD TREE" BUTTON (Opens Tree Form Sidebar Drawer for New Tree) */}
+            <button
+              type="button"
+              onClick={openNewTreeForm}
+              className="interactive-btn btn-neu px-4 py-2.5 text-xs font-bold inline-flex items-center gap-2 border border-[#0d9488]/50 bg-[#0d9488]/10 text-[#0d9488] dark:text-[#5eead4] hover:bg-[#0d9488]/20 transition-all shadow-sm"
+              title={t("legacy.add_tree", "Add Tree")}
+            >
+              <Plus className="w-4 h-4 text-[#0d9488] dark:text-[#5eead4]" />
+              <span>{t("legacy.add_tree", "Add Tree")}</span>
+            </button>
+
+            {/* BUTTON 3: "EDIT TREE" BUTTON (Visible ONLY when a tree is loaded AND user is owner / can update) */}
+            {canUpdateSelected && (
+              <button
+                type="button"
+                onClick={() => {
+                  setTreeFormDrawerOpen(true);
+                  setTreesListDrawerOpen(false);
+                }}
+                className="interactive-btn btn-neu px-4 py-2.5 text-xs font-bold inline-flex items-center gap-2 border border-[#d9a441]/50 bg-[#d9a441]/10 text-[#d9a441] hover:bg-[#d9a441]/20 transition-all shadow-sm"
+                title={t("legacy.edit_tree", "Edit Tree")}
+              >
+                <FileEdit className="w-4 h-4 text-[#d9a441]" />
+                <span>{t("legacy.edit_tree", "Edit Tree")}</span>
+              </button>
+            )}
+
+            {/* READ-ONLY BADGE IF TREE BELONGS TO ANOTHER USER */}
+            {selectedTree && !canUpdateSelected && (
+              <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-amber-500/40 bg-amber-500/10 text-amber-600 dark:text-amber-400 text-xs font-bold shadow-xs">
+                <Lock className="w-3.5 h-3.5" />
+                <span>{t("legacy.read_only_tree", "Read-Only (Public Tree)")}</span>
+              </div>
+            )}
+
+            <button
+              type="button"
+              className={`px-4 py-2.5 rounded-lg border ${border} hover:bg-stone-500/10 inline-flex items-center gap-2 text-xs font-semibold transition`}
               onClick={() => void refreshLists({ notify: true })}
               disabled={loadingTrees}
             >
-              <RefreshCcw className="w-4 h-4" />
-
+              <RefreshCcw className="w-4 h-4 text-[#0d9488]" />
               {t("legacy.refresh", "Refresh")}
             </button>
           </div>
         </div>
 
         {treesError || gedcomError ? (
-          <div
-            className={`mt-4 rounded-lg border ${border} ${card} p-4 heritage-panel`}
-          >
+          <div className={`mt-4 rounded-lg border ${border} ${card} p-4 heritage-panel`}>
             {treesError ? (
-              <div className="text-[#a0552a] font-semibold">{treesError}</div>
+              <div className="text-red-500 font-semibold">{treesError}</div>
             ) : null}
-
             {gedcomError ? (
-              <div className="text-[#a0552a] font-semibold">{gedcomError}</div>
+              <div className="text-red-500 font-semibold">{gedcomError}</div>
             ) : null}
           </div>
         ) : null}
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-[380px_1fr] gap-6">
-        <div className="space-y-6">
-          <div
-            className={`rounded-xl border ${border} ${card} p-5 shadow-md heritage-panel`}
-          >
-            <div
-              className={`text-lg font-bold mb-4 ${isDark ? "text-[#f8f5ef]" : "text-[#162238]"}`}
-            >
+      {/* FULL WIDTH TREE BUILDER CANVAS */}
+      <div className={`rounded-2xl border ${border} ${card} p-5 shadow-xl heritage-panel relative w-full`}>
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-[#0d9488]/20 pb-3">
+          <div>
+            <div className={`text-xl font-bold font-cinzel flex items-center gap-2 ${isDark ? "text-[#0d9488]" : "text-[#0c4a6e]"}`}>
+              <span>{selectedTree ? selectedTree.title : t("legacy.canvas", "Family Tree Canvas")}</span>
+              {selectedTree && (
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                  canUpdateSelected ? "border-[#0d9488]/30 bg-[#0d9488]/10 text-[#0d9488]" : "border-amber-500/30 bg-amber-500/10 text-amber-500"
+                }`}>
+                  {canUpdateSelected ? t("legacy.my_tree_badge", "Your Tree") : t("legacy.read_only_badge", "Read-Only Public Tree")}
+                </span>
+              )}
+            </div>
+            <div className={`text-xs opacity-70 mt-0.5 ${inputText}`}>
               {selectedTree
-                ? t("legacy.tree_details", "Tree Details")
-                : t("legacy.new_tree", "New Tree")}
+                ? (selectedTree.description || t("legacy.active_tree", "Currently active tree.")) + (canUpdateSelected ? "" : " (You are viewing another user's public tree - read-only mode)")
+                : t("legacy.canvas_hint", "Click 'See My Trees' to load a tree or '+ Add Tree' to create one.")}
             </div>
-
-            <div className="space-y-3">
-              <div>
-                <label
-                  className={`block text-sm font-semibold mb-1.5 ${isDark ? "text-[#e8e4dc]" : "text-[#24766f]"}`}
-                >
-                  {t("legacy.tree_title", "Tree title")}{" "}
-                  <span className="text-red-500">*</span>
-                </label>
-                <input
-                  value={treeForm.title}
-                  onChange={(e) =>
-                    setTreeForm((s) => ({ ...s, title: e.target.value }))
-                  }
-                  placeholder={t("legacy.tree_title", "Tree title")}
-                  className={`heritage-input w-full px-4 py-2.5 rounded-lg border ${border} ${inputBg} ${inputText}
-                  focus:outline-none focus:ring-2 focus:ring-[#24766f]/25 focus:border-[#24766f]/50 transition-all`}
-                />
-              </div>
-
-              <div>
-                <label
-                  className={`block text-sm font-semibold mb-1.5 ${isDark ? "text-[#e8e4dc]" : "text-[#24766f]"}`}
-                >
-                  {t("legacy.custom_category", "Custom Category")}{" "}
-                  <span className="text-xs opacity-60">
-                    ({t("legacy.optional", "Optional")})
-                  </span>
-                </label>
-                <input
-                  value={treeForm.category}
-                  onChange={(e) =>
-                    setTreeForm((s) => ({ ...s, category: e.target.value }))
-                  }
-                  placeholder={t("legacy.custom_category_placeholder", "Name this category...")}
-                  className={`heritage-input w-full px-4 py-2.5 rounded-lg border ${border} ${inputBg} ${inputText}
-                  focus:outline-none focus:ring-2 focus:ring-[#24766f]/25 focus:border-[#24766f]/50 transition-all`}
-                />
-              </div>
-
-              <div>
-                <label
-                  className={`block text-sm font-semibold mb-1.5 ${isDark ? "text-[#e8e4dc]" : "text-[#24766f]"}`}
-                >
-                  {t("legacy.description", "Description")}{" "}
-                  <span className="text-xs opacity-60">
-                    ({t("legacy.optional", "Optional")})
-                  </span>
-                </label>
-                <textarea
-                  value={treeForm.description}
-                  onChange={(e) =>
-                    setTreeForm((s) => ({ ...s, description: e.target.value }))
-                  }
-                  placeholder={t("legacy.description", "Description (optional)")}
-                  rows={3}
-                  className={`heritage-input w-full px-4 py-2.5 rounded-lg border ${border} ${inputBg} ${inputText}
-                  focus:outline-none focus:ring-2 focus:ring-[#24766f]/25 focus:border-[#24766f]/50 transition-all resize-none`}
-                />
-              </div>
-
-              <div>
-                <label
-                  className={`block text-sm font-semibold mb-1.5 ${isDark ? "text-[#e8e4dc]" : "text-[#24766f]"}`}
-                >
-                  {t("legacy.archive_source", "Archive Source")}{" "}
-                  <span className="text-xs opacity-60">
-                    ({t("legacy.optional", "Optional")})
-                  </span>
-                </label>
-                <input
-                  value={treeForm.archiveSource}
-                  onChange={(e) =>
-                    setTreeForm((s) => ({
-                      ...s,
-                      archiveSource: e.target.value,
-                    }))
-                  }
-                  placeholder={t("legacy.archive_source", "Archive Source (optional)")}
-                  className={`heritage-input w-full px-4 py-2.5 rounded-lg border ${border} ${inputBg} ${inputText}
-                  focus:outline-none focus:ring-2 focus:ring-[#24766f]/25 focus:border-[#24766f]/50 transition-all`}
-                />
-              </div>
-
-              <div>
-                <label
-                  className={`block text-sm font-semibold mb-1.5 ${isDark ? "text-[#e8e4dc]" : "text-[#24766f]"}`}
-                >
-                  {t("legacy.document_code", "Document Code")}{" "}
-                  <span className="text-xs opacity-60">
-                    ({t("legacy.optional", "Optional")})
-                  </span>
-                </label>
-                <input
-                  value={treeForm.documentCode}
-                  onChange={(e) =>
-                    setTreeForm((s) => ({ ...s, documentCode: e.target.value }))
-                  }
-                  placeholder={t("legacy.document_code", "Document Code (optional)")}
-                  className={`heritage-input w-full px-4 py-2.5 rounded-lg border ${border} ${inputBg} ${inputText}
-                  focus:outline-none focus:ring-2 focus:ring-[#24766f]/25 focus:border-[#24766f]/50 transition-all`}
-                />
-              </div>
-
-              <label
-                className={`flex items-center gap-3 p-3 rounded-lg border ${border} 
-              ${isDark ? "bg-white/5" : "bg-[#f8f5ef]/50"} cursor-pointer transition-all hover:opacity-90`}
-              >
-                <input
-                  type="checkbox"
-                  checked={treeForm.isPublic}
-                  onChange={(e) =>
-                    setTreeForm((s) => ({ ...s, isPublic: e.target.checked }))
-                  }
-                  className={`h-5 w-5 rounded border-2 ${border} 
-                  ${isDark ? "accent-[#d9a441]" : "accent-[#24766f]"} cursor-pointer`}
-                />
-                <span
-                  className={`text-sm font-semibold ${isDark ? "text-[#e8e4dc]" : "text-[#24766f]"}`}
-                >
-                  {treeForm.isPublic
-                    ? t("legacy.public", "Public")
-                    : t("legacy.private", "Private")}
-                </span>
-              </label>
-
-              {/* Obligatory consent: the tree (its GEDCOM pointer + full file
-                  content) is only persisted to the database when this is checked. */}
-              <label
-                className={`flex items-start gap-3 p-3 rounded-lg border transition-all cursor-pointer ${
-                  treeForm.saveToDb
-                    ? "border-[#24766f]/50 " + (isDark ? "bg-[#24766f]/15" : "bg-[#24766f]/5")
-                    : "border-red-400/60 " + (isDark ? "bg-red-500/10" : "bg-red-50")
-                }`}
-              >
-                <input
-                  type="checkbox"
-                  checked={treeForm.saveToDb}
-                  onChange={(e) =>
-                    setTreeForm((s) => ({ ...s, saveToDb: e.target.checked }))
-                  }
-                  className={`mt-0.5 h-5 w-5 rounded border-2 ${border} ${isDark ? "accent-[#d9a441]" : "accent-[#24766f]"} cursor-pointer`}
-                />
-                <span
-                  className={`text-sm font-semibold ${isDark ? "text-[#e8e4dc]" : "text-[#24766f]"}`}
-                >
-                  {t("legacy.save_to_db_label", "Save this tree to the database")}{" "}
-                  <span className="text-red-500">*</span>
-                  <span className="block text-xs font-normal opacity-70">
-                    {t(
-                      "legacy.save_to_db_hint",
-                      "Required. Stores the tree and its GEDCOM content in the database so it is never lost.",
-                    )}
-                  </span>
-                </span>
-              </label>
-            </div>
-
-            <div className="mt-4 flex flex-wrap items-center gap-2">
-              <label className="flex items-center gap-2 text-sm font-medium">
-                <span className={isDark ? "text-[#e8e4dc]" : "text-[#24766f]"}>
-                  {t("legacy.save_file_as", "Save file as")}:
-                </span>
-                <select
-                  value={saveFormat}
-                  onChange={(e) => setSaveFormat(e.target.value)}
-                  className={`rounded-lg border ${border} px-3 py-2 text-sm ${inputBg} ${inputText}`}
-                >
-                  <option value="gedcom">
-                    {t("legacy.gedcom_format_551", "GEDCOM 5.5.1")}
-                  </option>
-                  <option value="gedcom7">
-                    {t("legacy.format_gedcom7", "GEDCOM 7.0")}
-                  </option>
-                  <option value="gedcomx_json">
-                    {t("legacy.gedcomx_format_json", "GEDCOM X (JSON)")}
-                  </option>
-                  <option value="gedcomx_xml">
-                    {t("legacy.gedcomx_format_xml", "GEDCOM X (XML)")}
-                  </option>
-                  <option value="gedcomx_gedx">
-                    {t("legacy.gedcomx_format_gedx", "GEDCOM X (.gedx)")}
-                  </option>
-                </select>
-              </label>
-              <button
-                type="button"
-                className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-lg font-semibold transition-all shadow-md hover:shadow-lg disabled:opacity-60
-                ${
-                  isDark
-                    ? "bg-[#24766f] hover:bg-[#24766f]/90 text-white"
-                    : "bg-[#24766f] hover:bg-[#24766f]/90 text-white"
-                }`}
-                onClick={() => void saveCurrentAsTree()}
-                disabled={saving || loadingGedcom || deletingTree || !treeForm.saveToDb}
-                title={
-                  !treeForm.saveToDb
-                    ? t("legacy.save_to_db_required", 'Please check "Save this tree to the database" before saving.')
-                    : undefined
-                }
-              >
-                <Save className="w-4 h-4" />
-                {saving
-                  ? t("legacy.saving", "Saving...")
-                  : canUpdateSelected
-                    ? t("legacy.update_tree", "Update Tree")
-                    : t("legacy.save_tree", "Save Tree")}
-              </button>
-
-              <button
-                type="button"
-                className={`px-4 py-2.5 rounded-lg border ${border} inline-flex items-center gap-2 font-medium transition-all
-                ${
-                  isDark
-                    ? "bg-white/10 hover:bg-white/15 text-white"
-                    : "bg-white hover:bg-[#f8f5ef] text-[#24766f]"
-                }`}
-                onClick={clearCanvas}
-                disabled={saving || loadingGedcom}
-                title={t("legacy.clear_canvas", "Clear canvas")}
-              >
-                <Trash2 className="w-4 h-4" />
-                {t("legacy.clear", "Clear")}
-              </button>
-
-              {canUpdateSelected && selectedTree ? (
-                <button
-                  type="button"
-                  className={`px-4 py-2.5 rounded-lg border ${border} text-sm font-semibold inline-flex items-center gap-2 transition-all
-                  ${
-                    isDark
-                      ? "bg-red-600/80 hover:bg-red-600 text-white"
-                      : "bg-red-600 hover:bg-red-700 text-white"
-                  }`}
-                  onClick={() => void deleteTree()}
-                  disabled={
-                    deletingTree || saving || loadingGedcom || autoSaving
-                  }
-                >
-                  <X className="w-4 h-4" />
-                  {deletingTree
-                    ? t("legacy.deleting", "Deleting...")
-                    : t("legacy.delete_tree", "Delete Tree")}
-                </button>
-              ) : null}
-            </div>
-
-            {autoSaving ? (
-              <div className="text-xs opacity-70 mt-2">
-                {t("legacy.auto_saving", "Auto-saving...")}
-              </div>
-            ) : autoSaveNotice ? (
-              <div className="text-xs opacity-70 mt-2">{autoSaveNotice}</div>
-            ) : null}
           </div>
 
+          <div className="flex items-center gap-2">
+            {canUpdateSelected && selectedTree && (
+              <button
+                type="button"
+                onClick={() => {
+                  setTreeFormDrawerOpen(true);
+                  setTreesListDrawerOpen(false);
+                }}
+                className="interactive-btn btn-neu px-3.5 py-1.5 text-xs inline-flex items-center gap-1.5 text-[#0d9488] font-bold"
+              >
+                <FileEdit className="w-3.5 h-3.5" />
+                <span>{t("legacy.edit_tree", "Edit Tree Details")}</span>
+              </button>
+            )}
+          </div>
+        </div>
+
+        <ErrorBoundary
+          fallback={({ error, reset }) => (
+            <div className={`rounded-lg border ${border} ${metaPanel} p-4`}>
+              <div className="font-semibold text-red-500">
+                {t("legacy.tree_builder_error", "Tree builder failed to load.")}
+              </div>
+              <div className="text-sm opacity-70">
+                {error?.message || t("legacy.tree_builder_try_again", "Please try again.")}
+              </div>
+              <button
+                type="button"
+                onClick={reset}
+                className={`mt-3 inline-flex items-center rounded-md border ${border} px-3 py-1 text-xs font-semibold uppercase tracking-wide`}
+              >
+                {t("legacy.retry", "Retry")}
+              </button>
+            </div>
+          )}
+        >
+          <TreesBuilder
+            people={people}
+            setPeople={setPeople}
+            dataFormat={
+              selectedTree?.data_format === "gedcomx"
+                ? "gedcomx"
+                : selectedTree?.data_format === "gedcom7"
+                  ? "gedcom7"
+                  : "gedcom"
+            }
+            onAutoSave={scheduleAutoSave}
+            readOnly={builderReadOnly}
+          />
+        </ErrorBoundary>
+      </div>
+
+      {/* DRAWER 1: TREES LIST SIDEBAR (Triggered by "See My Trees") */}
+      {treesListDrawerOpen ? createPortal(
+        <div
+          className="fixed inset-0 z-[2200] flex justify-end bg-black/60 backdrop-blur-xs animate-in fade-in duration-200"
+          onClick={() => setTreesListDrawerOpen(false)}
+        >
           <div
-            className={`rounded-xl border ${border} ${card} p-5 shadow-md heritage-panel`}
+            className={`w-full sm:w-[460px] h-full max-h-screen flex flex-col ${card} ${inputText} border-l ${border} shadow-2xl animate-in slide-in-from-right duration-300 overflow-hidden`}
+            onClick={(e) => e.stopPropagation()}
           >
-            <div className="grid grid-cols-2 gap-3 mb-4">
+            {/* HEADER */}
+            <div className={`flex shrink-0 items-center justify-between border-b ${border} px-6 py-4 ${isDark ? "bg-[#071827]" : "bg-[#f8f5ef]"}`}>
+              <div className="flex items-center gap-2">
+                <FolderGit2 className="w-5 h-5 text-[#0d9488]" />
+                <h3 className="font-cinzel font-bold text-lg text-[#0c4a6e] dark:text-[#0d9488]">
+                  {t("legacy.see_my_trees", "See My Trees")}
+                </h3>
+              </div>
               <button
                 type="button"
-                className={`px-4 py-2.5 rounded-lg border text-sm font-semibold transition-all ${
-                  tab === "my"
-                    ? `${isDark ? "bg-[#24766f] text-white border-[#24766f] shadow-md" : "bg-[#24766f] text-white border-[#24766f] shadow-md"}`
-                    : `${border} ${hoverRow} ${isDark ? "text-[#e8e4dc]" : "text-[#24766f]"}`
-                }`}
-                onClick={() => setTab("my")}
+                onClick={() => setTreesListDrawerOpen(false)}
+                className="p-1.5 rounded-lg text-stone-400 hover:bg-stone-500/10 hover:text-red-500 transition-colors"
               >
-                {t("legacy.my_trees", "My Trees")}
-              </button>
-
-              <button
-                type="button"
-                className={`px-4 py-2.5 rounded-lg border text-sm font-semibold transition-all ${
-                  tab === "public"
-                    ? `${isDark ? "bg-[#24766f] text-white border-[#24766f] shadow-md" : "bg-[#24766f] text-white border-[#24766f] shadow-md"}`
-                    : `${border} ${hoverRow} ${isDark ? "text-[#e8e4dc]" : "text-[#24766f]"}`
-                }`}
-                onClick={() => setTab("public")}
-              >
-                {t("legacy.public_trees", "Public Trees")}
+                <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="relative mb-4">
-              <Search
-                className={`w-4 h-4 absolute rtl:right-3 rtl:left-auto ltr:left-3 top-1/2 -translate-y-1/2 ${isDark ? "text-[#d9a441]/60" : "text-[#24766f]/60"}`}
-              />
+            {/* BODY */}
+            <div className="flex-1 overflow-y-auto p-5 space-y-5 custom-scrollbar">
+              {/* TABS: MY TREES vs PUBLIC TREES */}
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  className={`py-2.5 px-3 rounded-lg border text-xs font-bold transition ${
+                    tab === "my"
+                      ? "bg-[#0d9488] text-white border-[#0d9488] shadow-md"
+                      : `${border} ${hoverRow} opacity-80`
+                  }`}
+                  onClick={() => setTab("my")}
+                >
+                  {t("legacy.my_trees", "My Trees")} ({myTrees.length})
+                </button>
 
-              <input
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-                className={`heritage-input w-full rtl:pr-9 rtl:pl-3 ltr:pl-9 ltr:pr-3 py-2.5 rounded-lg border
-                focus:outline-none focus:ring-2 focus:ring-[#24766f]/25 focus:border-[#24766f]/50
-                transition-all ${inputBg} ${inputText} ${border}`}
-                placeholder={t("legacy.search_trees", "Search trees...")}
-              />
-            </div>
-
-            {loadingTrees ? (
-              <div className="py-8 text-center opacity-70">
-                {t("legacy.loading", "Loading...")}
+                <button
+                  type="button"
+                  className={`py-2.5 px-3 rounded-lg border text-xs font-bold transition ${
+                    tab === "public"
+                      ? "bg-[#0d9488] text-white border-[#0d9488] shadow-md"
+                      : `${border} ${hoverRow} opacity-80`
+                  }`}
+                  onClick={() => setTab("public")}
+                >
+                  {t("legacy.public_trees", "Public Trees")} ({publicTrees.length})
+                </button>
               </div>
-            ) : filteredTrees.length === 0 ? (
-              <div className="py-8 text-center opacity-70">
-                {t("legacy.no_trees_found", "No trees found.")}
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 gap-4 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
-                {filteredTrees.map((tree) => {
-                  const active = selectedTree?.id === tree.id;
-                  const canDownload =
-                    Number.isFinite(Number(tree.id)) && tree.hasGedcom;
 
-                  return (
-                    <div
-                      key={tree.id}
-                      role="button"
-                      tabIndex={0}
-                      onClick={() => void openTree(tree)}
-                      onKeyDown={(event) => {
-                        if (event.key === "Enter" || event.key === " ") {
-                          event.preventDefault();
+              {/* SEARCH FILTER */}
+              <div className="relative">
+                <Search className="w-3.5 h-3.5 absolute ltr:left-3 rtl:right-3 top-1/2 -translate-y-1/2 opacity-50" />
+                <input
+                  value={q}
+                  onChange={(e) => setQ(e.target.value)}
+                  className={`w-full ltr:pl-8 rtl:pr-8 px-3 py-2 text-xs rounded-lg border ${border} ${inputBg} ${inputText}`}
+                  placeholder={t("legacy.search_trees", "Search trees...")}
+                />
+              </div>
+
+              {/* TREES LIST */}
+              {loadingTrees ? (
+                <div className="py-8 text-center text-xs opacity-70">
+                  {t("legacy.loading", "Loading trees...")}
+                </div>
+              ) : filteredTrees.length === 0 ? (
+                <div className="py-8 text-center text-xs opacity-70">
+                  {t("legacy.no_trees_found", "No trees found.")}
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {filteredTrees.map((tree) => {
+                    const active = selectedTree?.id === tree.id;
+                    const canDownload = Number.isFinite(Number(tree.id)) && tree.hasGedcom;
+
+                    const isTreeOwned = tab === "my" || isAdmin || (user?.id && (String(tree.owner_id || tree.userId || tree.user_id) === String(user.id)));
+
+                    return (
+                      <div
+                        key={tree.id}
+                        onClick={() => {
                           void openTree(tree);
-                        }
-                      }}
-                      className={`${card} border ${border} rounded-xl shadow-md overflow-hidden transition-all 
-                      focus:outline-none focus:ring-2 focus:ring-[#24766f]/40 cursor-pointer
-                      ${
-                        active
-                          ? `ring-2 ring-[#24766f]/50 border-[#24766f] ${isDark ? "bg-[#24766f]/20" : "bg-[#24766f]/10"} shadow-lg scale-[1.02]`
-                          : `hover:shadow-lg hover:border-[#24766f]/30 ${hoverRow}`
-                      }`}
-                    >
-                      <div className="p-4 border-b border-white/5 bg-gradient-to-r from-[#24766f]/10 to-transparent">
-                        <div className="flex items-start justify-between gap-4">
+                          setTreesListDrawerOpen(false);
+                        }}
+                        className={`p-4 rounded-xl border ${border} ${card} shadow-sm hover:border-[#0d9488]/50 transition-all cursor-pointer ${
+                          active ? "ring-2 ring-[#0d9488] bg-[#0d9488]/10" : hoverRow
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-2 mb-2">
                           <div className="min-w-0">
-                            <p className="text-[10px] uppercase tracking-[0.3em] text-[#24766f] opacity-70">
-                              {t("legacy.trees", "Family Trees")}
-                            </p>
-                            <h3 className="text-xl font-bold truncate">
+                            <h4 className="font-bold text-sm truncate text-[#0c4a6e] dark:text-[#0d9488]">
                               {tree.title}
-                            </h3>
-                            <p className="text-sm opacity-70">
+                            </h4>
+                            <p className="text-[11px] opacity-70">
                               {tree.owner || t("legacy.unknown", "Unknown")}
                             </p>
                           </div>
-                          <span
-                            className={`text-[10px] uppercase tracking-[0.2em] px-3 py-1 rounded-full border ${border}`}
-                          >
-                            {tree.isPublic
-                              ? t("legacy.public", "Public")
-                              : t("legacy.private", "Private")}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="p-4 space-y-4">
-                        <p className="text-sm opacity-80 line-clamp-3">
-                          {tree.description ||
-                            t("legacy.no_description", "No description.")}
-                        </p>
-
-                        {tree.category ? (
-                          <span className="inline-flex w-fit px-2.5 py-1 rounded-full bg-[#24766f]/10 text-[#24766f] text-xs font-semibold">
-                            {tree.category}
-                          </span>
-                        ) : null}
-
-                        <div className="grid gap-3 sm:grid-cols-2">
-                          <div
-                            className={`${metaPanel} border rounded-xl p-3 flex items-start gap-2`}
-                          >
-                            <Archive className="w-4 h-4 text-[#d9a441] mt-0.5" />
-                            <div>
-                              <p className="text-[10px] uppercase opacity-60">
-                                {t("legacy.archive_source", "Archive Source")}
-                              </p>
-                              <p className="text-xs font-semibold break-words">
-                                {tree.archiveSource ||
-                                  t("legacy.not_provided", "Not provided")}
-                              </p>
-                            </div>
-                          </div>
-                          <div
-                            className={`${metaPanel} border rounded-xl p-3 flex items-start gap-2`}
-                          >
-                            <FileText className="w-4 h-4 text-[#d9a441] mt-0.5" />
-                            <div>
-                              <p className="text-[10px] uppercase opacity-60">
-                                {t("legacy.document_code", "Document Code")}
-                              </p>
-                              <p className="text-xs font-semibold font-mono break-words">
-                                {tree.documentCode ||
-                                  t("legacy.not_provided", "Not provided")}
-                              </p>
-                            </div>
+                          <div className="flex flex-col items-end gap-1">
+                            <span className="text-[9px] font-bold px-2 py-0.5 rounded-full border border-[#0d9488]/30 bg-[#0d9488]/10 text-[#0d9488]">
+                              {tree.isPublic ? t("legacy.public", "Public") : t("legacy.private", "Private")}
+                            </span>
+                            {!isTreeOwned && (
+                              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-500 border border-amber-500/20">
+                                Read-Only
+                              </span>
+                            )}
                           </div>
                         </div>
 
-                        <div className="text-xs opacity-70 flex items-center gap-2 flex-wrap">
-                          <Users className="w-4 h-4" />
-                          {tree.hasGedcom
-                            ? t("legacy.has_file", "Has file")
-                            : t("legacy.no_file", "No file")}
-                          {tree.hasGedcom ? (
-                            <span
-                              className={`px-2 py-0.5 rounded font-medium inline-flex items-center gap-1 ${
-                                tree.hasGedcomBackup
-                                  ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
-                                  : "bg-amber-500/15 text-amber-600 dark:text-amber-400"
-                              }`}
-                              title={
-                                tree.hasGedcomBackup
-                                  ? t(
-                                      "legacy.tree_db_backed_up_hint",
-                                      "This tree's data is stored in the database and is safe even if the uploads folder is lost.",
-                                    )
-                                  : t(
-                                      "legacy.tree_file_only_hint",
-                                      "This tree currently relies on its uploaded file only. Save it again (Edit → Save) to also store it safely in the database.",
-                                    )
-                              }
-                            >
-                              {tree.hasGedcomBackup
-                                ? t("legacy.tree_db_backed_up", "Backed up in database")
-                                : t("legacy.tree_file_only", "File-only – re-save to protect")}
-                            </span>
-                          ) : null}
-                          {tree.hasGedcom && tree.data_format === "gedcomx" ? (
-                            <span className="px-2 py-0.5 rounded bg-[#24766f]/20 text-[#24766f] dark:text-[#d9a441] font-medium">
-                              {t("legacy.saved_with_gedcomx", "Saved with GEDCOM X")}
-                            </span>
-                          ) : null}
-                          {tree.hasGedcom && tree.data_format === "gedcom7" ? (
-                            <span className="px-2 py-0.5 rounded bg-[#24766f]/20 text-[#24766f] dark:text-[#d9a441] font-medium">
-                              {t("legacy.saved_with_gedcom7", "Saved with GEDCOM 7.0")}
-                            </span>
-                          ) : null}
-                          {tree.hasGedcom &&
-                          tree.data_format !== "gedcomx" &&
-                          tree.data_format !== "gedcom7" ? (
-                            <span className="px-2 py-0.5 rounded bg-[#24766f]/10 text-[#24766f]/80 dark:text-[#e8e4dc]/80 font-medium">
-                              {t("legacy.saved_with_gedcom551",
-                                "Saved with GEDCOM 5.5.1",
-                              )}
-                            </span>
-                          ) : null}
-                          {loadingGedcom && active ? (
-                            <span className="ml-auto">
-                              {t("legacy.loading", "Loading...")}
-                            </span>
-                          ) : null}
-                        </div>
+                        {tree.description && (
+                          <p className="text-xs opacity-75 line-clamp-2 mb-2">
+                            {tree.description}
+                          </p>
+                        )}
 
-                        <div className="flex flex-wrap gap-2">
-                          <button
-                            type="button"
-                            onClick={(event) => {
-                              event.stopPropagation();
-                              void openTree(tree);
-                            }}
-                            className={`px-4 py-2 rounded-md border ${border} hover:opacity-90 inline-flex items-center gap-2`}
-                          >
-                            <Eye className="w-4 h-4" />
-                            {t("legacy.view_tree", "View Tree")}
-                          </button>
-                          {canDownload ? (
+                        <div className="flex items-center justify-between pt-2.5 border-t border-[#0d9488]/15 text-[11px]">
+                          <span className="opacity-70">
+                            {tree.hasGedcom ? t("legacy.has_file", "GEDCOM Available") : t("legacy.no_file", "No File")}
+                          </span>
+
+                          <div className="flex items-center gap-1.5">
                             <button
                               type="button"
-                              onClick={(event) => {
-                                event.stopPropagation();
-                                void downloadTreeFile(tree, tab);
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                void openTree(tree);
+                                setTreesListDrawerOpen(false);
                               }}
-                              className="px-4 py-2 rounded-md text-white font-medium bg-gradient-to-r from-[#0f2742] to-[#d9a441] hover:opacity-90 transition inline-flex items-center gap-2"
+                              className="px-3 py-1 rounded bg-[#0d9488]/15 hover:bg-[#0d9488]/25 text-[#0d9488] font-bold text-[11px] transition inline-flex items-center gap-1"
                             >
-                              <Download className="w-4 h-4" />
-                              {tree.data_format === "gedcomx"
-                                ? t("legacy.download_gedcomx", "Download GEDCOM X")
-                                : tree.data_format === "gedcom7"
-                                  ? t("legacy.download_gedcom7", "Download GEDCOM 7.0")
-                                  : t("legacy.download_gedcom551",
-                                      "Download GEDCOM 5.5.1",
-                                    )}
+                              <Eye className="w-3.5 h-3.5" />
+                              {t("legacy.view_tree", "Select & View")}
                             </button>
-                          ) : null}
+
+                            {canDownload && (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  void downloadTreeFile(tree, tab);
+                                }}
+                                className="px-2 py-1 rounded bg-stone-500/15 hover:bg-stone-500/25 text-stone-300 font-semibold transition"
+                                title={t("legacy.download", "Download")}
+                              >
+                                <Download className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           </div>
-        </div>
+        </div>,
+        document.body
+      ) : null}
 
+      {/* DRAWER 2: TREE FORM SIDEBAR (Triggered by "+ Add Tree" or "Edit Tree") */}
+      {treeFormDrawerOpen ? createPortal(
         <div
-          className={`rounded-xl border ${border} ${card} p-6 w-full shadow-md heritage-panel`}
+          className="fixed inset-0 z-[2200] flex justify-end bg-black/60 backdrop-blur-xs animate-in fade-in duration-200"
+          onClick={() => setTreeFormDrawerOpen(false)}
         >
-          <div className="mb-4">
-            <div
-              className={`text-xl font-bold mb-1 ${isDark ? "text-[#f8f5ef]" : "text-[#162238]"}`}
-            >
-              {selectedTree ? selectedTree.title : t("legacy.canvas", "Canvas")}
+          <div
+            className={`w-full sm:w-[460px] h-full max-h-screen flex flex-col ${card} ${inputText} border-l ${border} shadow-2xl animate-in slide-in-from-right duration-300 overflow-hidden`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* HEADER */}
+            <div className={`flex shrink-0 items-center justify-between border-b ${border} px-6 py-4 ${isDark ? "bg-[#071827]" : "bg-[#f8f5ef]"}`}>
+              <div className="flex items-center gap-2">
+                {selectedTree ? <FileEdit className="w-5 h-5 text-[#0d9488]" /> : <Plus className="w-5 h-5 text-[#0d9488]" />}
+                <h3 className="font-cinzel font-bold text-lg text-[#0c4a6e] dark:text-[#0d9488]">
+                  {selectedTree ? t("legacy.edit_tree", "Edit Tree") : t("legacy.add_tree", "Add New Tree")}
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setTreeFormDrawerOpen(false)}
+                className="p-1.5 rounded-lg text-stone-400 hover:bg-stone-500/10 hover:text-red-500 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
             </div>
 
-            <div
-              className={`text-sm ${isDark ? "text-[#e8e4dc]/70" : "text-[#162238]"}`}
-            >
-              {selectedTree
-                ? selectedTree.description || ""
-                : t("legacy.canvas_hint", "Import a file or add people to start.")}
+            {/* BODY */}
+            <div className="flex-1 overflow-y-auto p-6 space-y-5 custom-scrollbar">
+              {/* IF SELECTED TREE IS NOT OWNED, SHOW READ ONLY WARNING */}
+              {selectedTree && !canUpdateSelected ? (
+                <div className="p-4 rounded-xl border border-amber-500/40 bg-amber-500/10 text-amber-600 dark:text-amber-400 text-xs font-semibold space-y-2">
+                  <div className="flex items-center gap-2 font-bold text-sm">
+                    <Lock className="w-4 h-4" />
+                    <span>{t("legacy.cannot_edit_others_title", "Read-Only Public Tree")}</span>
+                  </div>
+                  <p>
+                    {t("legacy.cannot_edit_others_desc", "This tree belongs to another user. You can view its family connections on the canvas, but you cannot edit or save changes to it.")}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={openNewTreeForm}
+                    className="mt-2 px-3 py-1.5 rounded-lg bg-[#0d9488] text-white text-xs font-bold hover:bg-[#0d9488]/90 transition"
+                  >
+                    + {t("legacy.create_your_own_tree", "Create Your Own Tree")}
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <div>
+                    <label className="block text-xs font-bold text-[#0c4a6e] dark:text-[#0d9488] mb-1">
+                      {t("legacy.tree_title", "Tree title")} <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      value={treeForm.title}
+                      onChange={(e) => setTreeForm((s) => ({ ...s, title: e.target.value }))}
+                      placeholder={t("legacy.tree_title", "e.g. Famille Ben Mohamed")}
+                      className={`w-full px-4 py-2.5 text-xs rounded-lg border ${border} ${inputBg} ${inputText} focus:ring-2 focus:ring-[#0d9488]/40`}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-bold text-[#0c4a6e] dark:text-[#0d9488] mb-1">
+                        {t("legacy.custom_category", "Category")}
+                      </label>
+                      <input
+                        value={treeForm.category}
+                        onChange={(e) => setTreeForm((s) => ({ ...s, category: e.target.value }))}
+                        placeholder="e.g. Royal / Family"
+                        className={`w-full px-3.5 py-2.5 text-xs rounded-lg border ${border} ${inputBg} ${inputText}`}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-[#0c4a6e] dark:text-[#0d9488] mb-1">
+                        {t("legacy.save_file_as", "Save Format")}
+                      </label>
+                      <select
+                        value={saveFormat}
+                        onChange={(e) => setSaveFormat(e.target.value)}
+                        className={`w-full px-3.5 py-2.5 text-xs rounded-lg border ${border} ${inputBg} ${inputText}`}
+                      >
+                        <option value="gedcom">{t("legacy.gedcom_format_551", "GEDCOM 5.5.1")}</option>
+                        <option value="gedcom7">{t("legacy.format_gedcom7", "GEDCOM 7.0")}</option>
+                        <option value="gedcomx_json">{t("legacy.gedcomx_format_json", "GEDCOM X (JSON)")}</option>
+                        <option value="gedcomx_xml">{t("legacy.gedcomx_format_xml", "GEDCOM X (XML)")}</option>
+                        <option value="gedcomx_gedx">{t("legacy.gedcomx_format_gedx", "GEDCOM X (.gedx)")}</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-[#0c4a6e] dark:text-[#0d9488] mb-1">
+                      {t("legacy.description", "Description")}
+                    </label>
+                    <textarea
+                      value={treeForm.description}
+                      onChange={(e) => setTreeForm((s) => ({ ...s, description: e.target.value }))}
+                      placeholder={t("legacy.description", "Description (optional)")}
+                      rows={3}
+                      className={`w-full px-4 py-2.5 text-xs rounded-lg border ${border} ${inputBg} ${inputText} resize-none`}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-bold text-[#0c4a6e] dark:text-[#0d9488] mb-1">
+                        {t("legacy.archive_source", "Archive Source")}
+                      </label>
+                      <input
+                        value={treeForm.archiveSource}
+                        onChange={(e) => setTreeForm((s) => ({ ...s, archiveSource: e.target.value }))}
+                        placeholder="Archives..."
+                        className={`w-full px-3.5 py-2.5 text-xs rounded-lg border ${border} ${inputBg} ${inputText}`}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-[#0c4a6e] dark:text-[#0d9488] mb-1">
+                        {t("legacy.document_code", "Document Code")}
+                      </label>
+                      <input
+                        value={treeForm.documentCode}
+                        onChange={(e) => setTreeForm((s) => ({ ...s, documentCode: e.target.value }))}
+                        placeholder="DOC-12345"
+                        className={`w-full px-3.5 py-2.5 text-xs rounded-lg border ${border} ${inputBg} ${inputText}`}
+                      />
+                    </div>
+                  </div>
+
+                  <label className="flex items-center gap-3 p-3 rounded-lg border border-[#0d9488]/30 bg-[#0d9488]/5 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={treeForm.isPublic}
+                      onChange={(e) => setTreeForm((s) => ({ ...s, isPublic: e.target.checked }))}
+                      className="h-4 w-4 rounded accent-[#0d9488]"
+                    />
+                    <span className="text-xs font-bold">
+                      {treeForm.isPublic ? t("legacy.public", "Public Tree") : t("legacy.private", "Private Tree")}
+                    </span>
+                  </label>
+
+                  <label className="flex items-start gap-3 p-3.5 rounded-lg border border-[#0d9488]/40 bg-[#0d9488]/10 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={treeForm.saveToDb}
+                      onChange={(e) => setTreeForm((s) => ({ ...s, saveToDb: e.target.checked }))}
+                      className="mt-0.5 h-4 w-4 rounded accent-[#0d9488]"
+                    />
+                    <div className="text-xs">
+                      <span className="font-bold">{t("legacy.save_to_db_label", "Save this tree to the database")} *</span>
+                      <span className="block opacity-75 mt-0.5">
+                        {t("legacy.save_to_db_hint", "Stores the tree structure and data safely in the database.")}
+                      </span>
+                    </div>
+                  </label>
+
+                  {/* FOOTER ACTIONS */}
+                  <div className="flex flex-wrap items-center gap-2 pt-4 border-t border-[#0d9488]/20">
+                    <button
+                      type="button"
+                      onClick={() => void saveCurrentAsTree()}
+                      disabled={saving || loadingGedcom || deletingTree || !treeForm.saveToDb}
+                      className="interactive-btn btn-neu btn-neu--primary px-5 py-2.5 text-xs font-bold flex-1 inline-flex items-center justify-center gap-2 shadow-md"
+                    >
+                      <Save className="w-4 h-4" />
+                      {saving
+                        ? t("legacy.saving", "Saving...")
+                        : canUpdateSelected
+                          ? t("legacy.update_tree", "Update Tree")
+                          : t("legacy.save_tree", "Save Tree")}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={clearCanvas}
+                      disabled={saving || loadingGedcom}
+                      className="interactive-btn btn-neu px-4 py-2.5 text-xs font-semibold"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      {t("legacy.clear", "Clear")}
+                    </button>
+
+                    {canUpdateSelected && selectedTree ? (
+                      <button
+                        type="button"
+                        onClick={() => void deleteTree()}
+                        disabled={deletingTree || saving || loadingGedcom || autoSaving}
+                        className="px-4 py-2.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-bold transition shadow-md"
+                      >
+                        {deletingTree ? t("legacy.deleting", "Deleting...") : t("legacy.delete", "Delete Tree")}
+                      </button>
+                    ) : null}
+                  </div>
+                </>
+              )}
             </div>
           </div>
+        </div>,
+        document.body
+      ) : null}
 
-          <ErrorBoundary
-            fallback={({ error, reset }) => (
-              <div className={`rounded-lg border ${border} ${metaPanel} p-4`}>
-                <div className="font-semibold">
-                  {t("legacy.tree_builder_error", "Tree builder failed to load.")}
-                </div>
-                <div className="text-sm opacity-70">
-                  {error?.message ||
-                    t("legacy.tree_builder_try_again", "Please try again.")}
-                </div>
-                <button
-                  type="button"
-                  onClick={reset}
-                  className={`mt-3 inline-flex items-center rounded-md border ${border} px-3 py-1 text-xs font-semibold uppercase tracking-wide`}
-                >
-                  {t("legacy.retry", "Retry")}
-                </button>
-              </div>
-            )}
-          >
-            <TreesBuilder
-              people={people}
-              setPeople={setPeople}
-              dataFormat={
-                selectedTree?.data_format === "gedcomx"
-                  ? "gedcomx"
-                  : selectedTree?.data_format === "gedcom7"
-                    ? "gedcom7"
-                    : "gedcom"
-              }
-              onAutoSave={scheduleAutoSave}
-              readOnly={builderReadOnly}
-            />
-          </ErrorBoundary>
-        </div>
-      </div>
     </div>
   );
 }

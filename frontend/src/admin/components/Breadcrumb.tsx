@@ -27,21 +27,21 @@ export default function Breadcrumb() {
     to: "/" + parts.slice(0, i + 1).join("/"),
   }));
 
-  const baseText = isDark ? "text-[#f8f5ef]" : "text-[#3e2723]";
-  const accent = "text-[#5d4037]";
-  const muted = isDark ? "text-[#f8f5ef]/50" : "text-[#3e2723]/50";
+  const baseText = "!text-white";
+  const accent = "!text-white/90 hover:!text-white";
+  const muted = "!text-white/70";
 
   return (
-    <nav className={`text-sm mb-4 ${baseText}`}>
+    <nav className={`text-sm mb-4 ${baseText} drop-shadow-sm`}>
       <ol className="flex items-center gap-2 flex-wrap">
         {/* Home */}
         <li>
           <Link
             to="/"
-            className={`inline-flex items-center gap-2 ${accent} hover:underline`}
+            className={`inline-flex items-center gap-2 ${accent} font-medium hover:underline transition-colors`}
           >
-            <Home className="w-4 h-4" />
-            <span>{t("home", "Home")}</span>
+            <Home className="w-4 h-4 text-white" />
+            <span className="text-white">{t("home", "Home")}</span>
           </Link>
         </li>
 
@@ -51,13 +51,13 @@ export default function Breadcrumb() {
             <ChevronRight className={`w-4 h-4 ${muted}`} />
 
             {i === segments.length - 1 ? (
-              <span className="font-semibold">
+              <span className="font-bold text-white">
                 {String(s.label).replace(/-/g, " ")}
               </span>
             ) : (
               <Link
                 to={s.to}
-                className={`${accent} hover:underline capitalize`}
+                className={`${accent} hover:underline capitalize text-white/90`}
               >
                 {String(s.label).replace(/-/g, " ")}
               </Link>

@@ -38,9 +38,9 @@ export default function AdminLayout() {
             open ? "lg:pl-72" : "lg:pl-0"
           }`}
         >
-          <div className="max-w-7xl mx-auto space-y-6">
+          <div className={`mx-auto space-y-6 transition-all duration-300 ${open ? "max-w-7xl" : "max-w-[98%] w-full"}`}>
             <Breadcrumb />
-            <div className="surface-card p-6 sm:p-8 shadow-xl border border-[var(--gold)]/30 backdrop-blur-md">
+            <div className="surface-card p-4 sm:p-8 shadow-xl border border-[var(--gold)]/30 backdrop-blur-md w-full">
               <Outlet context={{ sidebarOpen: open }} />
             </div>
           </div>
