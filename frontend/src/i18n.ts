@@ -8,8 +8,8 @@ export function useLanguage() {
     t,
     dir,
     availableLanguages: [
-      { code: "en", name: "English", dir: "ltr" },
       { code: "fr", name: "Français", dir: "ltr" },
+      { code: "en", name: "English", dir: "ltr" },
       { code: "ar", name: "العربية", dir: "rtl" },
       { code: "es", name: "Español", dir: "ltr" },
     ] as const,

@@ -3,8 +3,8 @@ import { useTranslation, Locale } from "../context/TranslationContext";
 import { Globe, ChevronDown } from "lucide-react";
 
 export const languages: { code: string; label: string; short: string; badge: string }[] = [
-  { code: "en", label: "English", short: "EN", badge: "EN" },
   { code: "fr", label: "Français", short: "FR", badge: "FR" },
+  { code: "en", label: "English", short: "EN", badge: "EN" },
   { code: "ar", label: "العربية", short: "AR", badge: "AR" },
   { code: "es", label: "Español", short: "ES", badge: "ES" },
   { code: "it", label: "Italiano", short: "IT", badge: "IT" },

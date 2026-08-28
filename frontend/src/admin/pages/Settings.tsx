@@ -6,8 +6,8 @@ import { useAuth } from "../components/AuthContext";
 import { useTranslation } from "../../context/TranslationContext";
 
 const LANGUAGES = [
+  { value: "fr", label: "Français" },
   { value: "en", label: "English" },
-  { value: "fr", label: "French" },
   { value: "ar", label: "Arabic" },
   { value: "es", label: "Spanish" },
 ];
@@ -36,7 +36,7 @@ export default function Settings() {
     allowRegistration: true,
     activityRetentionDays: 90,
     notifyAdmins: true,
-    defaultLanguage: "en",
+    defaultLanguage: "fr",
     mockupDataActive: false,
   });
 
@@ -64,10 +64,10 @@ export default function Settings() {
         const { data } = await api.get("/admin/settings");
         if (!mounted) return;
 
-        const dl = String(data?.defaultLanguage || "en");
+        const dl = String(data?.defaultLanguage || "fr");
         const safeDefaultLanguage = LANGUAGES.some((l) => l.value === dl)
           ? dl
-          : "en";
+          : "fr";
 
         setSettings({
           allowRegistration: !!data?.allowRegistration,
