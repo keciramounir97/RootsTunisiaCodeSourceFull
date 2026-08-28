@@ -666,7 +666,6 @@ async function seedInitialData(knex: Knex) {
                         user_id: adminUser.id,
                         tier_id: 3,
                         status: 'active',
-                        payment_status: 'paid',
                         current_period_start: now,
                         current_period_end: farFuture,
                     });
@@ -674,7 +673,6 @@ async function seedInitialData(knex: Knex) {
                     await knex('user_subscriptions').where({ id: sub.id }).update({
                         tier_id: 3,
                         status: 'active',
-                        payment_status: 'paid',
                     });
                 }
             }
