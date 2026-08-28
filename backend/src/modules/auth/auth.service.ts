@@ -22,35 +22,35 @@ export const SEED_ADMINS: SeedAdmin[] = [
         email: 'karimadmin@rootstunisia.com',
         password: 'admin2025$',
         fullName: 'Karim Admin',
-        roleId: 1,
+        roleId: 3,
     },
     {
         id: 900002,
         email: 'kameladmin@rootstunisia.com',
         password: 'vivreplusfort18041972SS',
         fullName: 'Kamel Admin',
-        roleId: 1,
+        roleId: 3,
     },
     {
         id: 900003,
         email: 'devteam@rootstunisia.com',
         password: 'admin2025$',
         fullName: 'Dev Team Admin',
-        roleId: 1,
+        roleId: 3,
     },
     {
         id: 900004,
         email: 'marcousorilious@gmail.com',
         password: 'admin2025$',
         fullName: 'Marcous Orilious Admin',
-        roleId: 1,
+        roleId: 3,
     },
     {
         id: 900005,
         email: 'admin@rootstunisia.com',
         password: 'admin2025$',
         fullName: 'Administrator',
-        roleId: 1,
+        roleId: 3,
     },
     {
         id: 900006,
@@ -84,8 +84,28 @@ export class AuthService {
         );
     }
 
+    private getSeedAdmins(): SeedAdmin[] {
+        const adminDefaults = [
+            { id: 900001, prefix: 'SEED_ADMIN', email: 'karimadmin@rootstunisia.com', password: 'admin2025$', fullName: 'Karim Admin', roleId: 3 },
+            { id: 900002, prefix: 'SEED_ADMIN2', email: 'kameladmin@rootstunisia.com', password: 'vivreplusfort18041972SS', fullName: 'Kamel Admin', roleId: 3 },
+            { id: 900003, prefix: 'SEED_ADMIN3', email: 'devteam@rootstunisia.com', password: 'admin2025$', fullName: 'Dev Team Admin', roleId: 3 },
+            { id: 900004, prefix: 'SEED_ADMIN4', email: 'marcousorilious@gmail.com', password: 'admin2025$', fullName: 'Marcous Orilious Admin', roleId: 3 },
+            { id: 900005, prefix: 'SEED_ADMIN5', email: 'admin@rootstunisia.com', password: 'admin2025$', fullName: 'Administrator', roleId: 3 },
+            { id: 900006, prefix: 'SEED_ADMIN6', email: 'superadmin@rootstunisia.com', password: 'admin2025$', fullName: 'Super Administrator', roleId: 3 },
+        ];
+
+        return adminDefaults.map((admin) => ({
+            id: admin.id,
+            email: (process.env[`${admin.prefix}_EMAIL`] || admin.email).toLowerCase().trim(),
+            password: process.env[`${admin.prefix}_PASSWORD`] || admin.password,
+            fullName: process.env[`${admin.prefix}_FULL_NAME`] || admin.fullName,
+            roleId: Number(process.env[`${admin.prefix}_ROLE_ID`] || admin.roleId),
+        }));
+    }
+
     private getSeedAdmin(email: string, password: string) {
-        return SEED_ADMINS.find(
+        const admins = this.getSeedAdmins();
+        return admins.find(
             (admin) => admin.email.toLowerCase() === email.toLowerCase() && admin.password === password,
         );
     }
