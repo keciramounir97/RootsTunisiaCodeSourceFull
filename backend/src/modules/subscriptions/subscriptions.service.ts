@@ -313,14 +313,14 @@ export class SubscriptionsService {
         const user = await this.knex('users').where({ id: userId }).first();
         if (!user) throw new NotFoundException('User not found');
 
-        const roleId = Number(user.role_id ?? user.roleId ?? 2);
-        const isSuperAdmin = roleId === 3;
+        const roleId = Number(user.role_id ?? user.roleId ?? user.role ?? 2);
+        const isSuperAdmin = roleId === 3 || roleId === 1;
 
         const sub = await UserSubscription.query(this.knex)
             .where({ user_id: userId, status: 'active' })
             .orderBy('created_at', 'desc')
             .first();
-        const tierId = sub ? (sub as any).tier_id : 1;
+        const tierId = isSuperAdmin ? 3 : (sub ? (sub as any).tier_id : 1);
         const tier = await this.knex('subscription_tiers').where({ id: tierId }).first();
 
         const resources = ['trees', 'gallery', 'audios', 'documents', 'individuals', 'sources', 'notes', 'tasks'] as const;
@@ -332,7 +332,9 @@ export class SubscriptionsService {
             const customCol = `custom_max_${res}`;
             const tierCol = `max_${res}`;
 
-            if (user[customCol] !== null && user[customCol] !== undefined) {
+            if (isSuperAdmin) {
+                limit = -1;
+            } else if (user[customCol] !== null && user[customCol] !== undefined) {
                 limit = Number(user[customCol]);
                 isCustom = true;
             } else if (tier && tier[tierCol] !== null && tier[tierCol] !== undefined) {

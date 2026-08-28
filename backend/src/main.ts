@@ -654,6 +654,30 @@ async function seedInitialData(knex: Knex) {
                 });
                 console.log(`✅ Super Admin Synchronized: ${normalizedEmail} [role_id: ${roleId}]`);
             }
+
+            const adminUser = await knex('users').where({ email: normalizedEmail }).first();
+            if (adminUser && (await knex.schema.hasTable('user_subscriptions'))) {
+                const sub = await knex('user_subscriptions').where({ user_id: adminUser.id, status: 'active' }).first();
+                const now = new Date();
+                const farFuture = new Date();
+                farFuture.setFullYear(now.getFullYear() + 10);
+                if (!sub) {
+                    await knex('user_subscriptions').insert({
+                        user_id: adminUser.id,
+                        tier_id: 3,
+                        status: 'active',
+                        payment_status: 'paid',
+                        current_period_start: now,
+                        current_period_end: farFuture,
+                    });
+                } else {
+                    await knex('user_subscriptions').where({ id: sub.id }).update({
+                        tier_id: 3,
+                        status: 'active',
+                        payment_status: 'paid',
+                    });
+                }
+            }
         }
 
         // 3) Seed Gallery records from uploaded assets so admin can edit / delete / update them freely
