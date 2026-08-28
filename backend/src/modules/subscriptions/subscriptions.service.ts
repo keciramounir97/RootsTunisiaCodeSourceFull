@@ -475,7 +475,7 @@ export class SubscriptionsService {
         }
     }
 
-    async updateTierLimits(tierId: number, limits: { max_trees?: number; max_gallery?: number; max_audios?: number; max_documents?: number; max_individuals?: number }) {
+    async updateTierLimits(tierId: number, limits: { max_trees?: number; max_gallery?: number; max_audios?: number; max_documents?: number; max_individuals?: number; max_sources?: number; max_notes?: number; max_tasks?: number }) {
         await this.getTier(tierId);
         const patch: any = {};
         if (limits.max_trees !== undefined) patch.max_trees = limits.max_trees;
@@ -483,12 +483,15 @@ export class SubscriptionsService {
         if (limits.max_audios !== undefined) patch.max_audios = limits.max_audios;
         if (limits.max_documents !== undefined) patch.max_documents = limits.max_documents;
         if (limits.max_individuals !== undefined) patch.max_individuals = limits.max_individuals;
+        if (limits.max_sources !== undefined) patch.max_sources = limits.max_sources;
+        if (limits.max_notes !== undefined) patch.max_notes = limits.max_notes;
+        if (limits.max_tasks !== undefined) patch.max_tasks = limits.max_tasks;
 
         await this.knex('subscription_tiers').where({ id: tierId }).update(patch);
         return this.knex('subscription_tiers').where({ id: tierId }).first();
     }
 
-    async updateUserLimits(userId: number, limits: { custom_max_trees?: number | null; custom_max_gallery?: number | null; custom_max_audios?: number | null; custom_max_documents?: number | null; custom_max_individuals?: number | null }) {
+    async updateUserLimits(userId: number, limits: { custom_max_trees?: number | null; custom_max_gallery?: number | null; custom_max_audios?: number | null; custom_max_documents?: number | null; custom_max_individuals?: number | null; custom_max_sources?: number | null; custom_max_notes?: number | null; custom_max_tasks?: number | null }) {
         const user = await this.knex('users').where({ id: userId }).first();
         if (!user) throw new NotFoundException('User not found');
         const patch: any = {};
@@ -497,6 +500,9 @@ export class SubscriptionsService {
         if (limits.custom_max_audios !== undefined) patch.custom_max_audios = limits.custom_max_audios;
         if (limits.custom_max_documents !== undefined) patch.custom_max_documents = limits.custom_max_documents;
         if (limits.custom_max_individuals !== undefined) patch.custom_max_individuals = limits.custom_max_individuals;
+        if (limits.custom_max_sources !== undefined) patch.custom_max_sources = limits.custom_max_sources;
+        if (limits.custom_max_notes !== undefined) patch.custom_max_notes = limits.custom_max_notes;
+        if (limits.custom_max_tasks !== undefined) patch.custom_max_tasks = limits.custom_max_tasks;
 
         await this.knex('users').where({ id: userId }).update(patch);
         return this.getUserQuotas(userId);

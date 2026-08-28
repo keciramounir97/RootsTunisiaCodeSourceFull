@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "../../context/TranslationContext";
 import { api } from "../../api/client";
-import { Search, Edit3, X, Check, Crown, Loader2, Save, ShieldAlert } from "lucide-react";
+import { Search, Edit3, Loader2, Save, ShieldAlert, Crown } from "lucide-react";
 
 export default function Subscriptions() {
   const { t } = useTranslation();
@@ -15,7 +15,19 @@ export default function Subscriptions() {
     max_audios: number;
     max_documents: number;
     max_individuals: number;
-  }>({ max_trees: 10, max_gallery: 10, max_audios: 10, max_documents: 10, max_individuals: 10 });
+    max_sources: number;
+    max_notes: number;
+    max_tasks: number;
+  }>({
+    max_trees: 25,
+    max_gallery: 25,
+    max_audios: 25,
+    max_documents: 25,
+    max_individuals: 25,
+    max_sources: 25,
+    max_notes: 25,
+    max_tasks: 25,
+  });
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: string; text: string }>({ type: "", text: "" });
 
@@ -38,11 +50,14 @@ export default function Subscriptions() {
   const startEdit = (tier: any) => {
     setEditingId(tier.id);
     setEditLimits({
-      max_trees: tier.max_trees ?? 10,
-      max_gallery: tier.max_gallery ?? 10,
-      max_audios: tier.max_audios ?? 10,
-      max_documents: tier.max_documents ?? 10,
-      max_individuals: tier.max_individuals ?? 10,
+      max_trees: tier.max_trees ?? 25,
+      max_gallery: tier.max_gallery ?? 25,
+      max_audios: tier.max_audios ?? 25,
+      max_documents: tier.max_documents ?? 25,
+      max_individuals: tier.max_individuals ?? 25,
+      max_sources: tier.max_sources ?? 25,
+      max_notes: tier.max_notes ?? 25,
+      max_tasks: tier.max_tasks ?? 25,
     });
     setMessage({ type: "", text: "" });
   };
@@ -89,7 +104,7 @@ export default function Subscriptions() {
               {t("subscription_tiers_quotas", "Subscription Tiers & Creation Limits")}
             </h1>
             <p className="text-xs text-[var(--text-color)] opacity-70">
-              Super Admin Control: Configure creation quotas (trees, gallery, audio, docs, individuals) per tier. Use -1 for unlimited.
+              Super Admin Control: Configure creation quotas (trees, gallery, audio, docs, individuals, sources, notes, tasks) per tier. Use -1 for unlimited.
             </p>
           </div>
         </div>
@@ -159,6 +174,50 @@ export default function Subscriptions() {
                       />
                     </div>
                     <div>
+                      <label className="block font-semibold mb-1">Max Individuals (-1 for ∞):</label>
+                      <input
+                        type="number"
+                        value={editLimits.max_individuals}
+                        onChange={(e) =>
+                          setEditLimits({ ...editLimits, max_individuals: parseInt(e.target.value) || 0 })
+                        }
+                        className="w-full px-3 py-1.5 rounded-lg border border-[var(--border-color)] bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block font-semibold mb-1">Max Saved Sources (-1 for ∞):</label>
+                      <input
+                        type="number"
+                        value={editLimits.max_sources}
+                        onChange={(e) =>
+                          setEditLimits({ ...editLimits, max_sources: parseInt(e.target.value) || 0 })
+                        }
+                        className="w-full px-3 py-1.5 rounded-lg border border-[var(--border-color)] bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block font-semibold mb-1">Max Research Notes (-1 for ∞):</label>
+                      <input
+                        type="number"
+                        value={editLimits.max_notes}
+                        onChange={(e) =>
+                          setEditLimits({ ...editLimits, max_notes: parseInt(e.target.value) || 0 })
+                        }
+                        className="w-full px-3 py-1.5 rounded-lg border border-[var(--border-color)] bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block font-semibold mb-1">Max Research Tasks (-1 for ∞):</label>
+                      <input
+                        type="number"
+                        value={editLimits.max_tasks}
+                        onChange={(e) =>
+                          setEditLimits({ ...editLimits, max_tasks: parseInt(e.target.value) || 0 })
+                        }
+                        className="w-full px-3 py-1.5 rounded-lg border border-[var(--border-color)] bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white"
+                      />
+                    </div>
+                    <div>
                       <label className="block font-semibold mb-1">Max Gallery Images (-1 for ∞):</label>
                       <input
                         type="number"
@@ -191,23 +250,28 @@ export default function Subscriptions() {
                         className="w-full px-3 py-1.5 rounded-lg border border-[var(--border-color)] bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white"
                       />
                     </div>
-                    <div>
-                      <label className="block font-semibold mb-1">Max Individuals (-1 for ∞):</label>
-                      <input
-                        type="number"
-                        value={editLimits.max_individuals}
-                        onChange={(e) =>
-                          setEditLimits({ ...editLimits, max_individuals: parseInt(e.target.value) || 0 })
-                        }
-                        className="w-full px-3 py-1.5 rounded-lg border border-[var(--border-color)] bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white"
-                      />
-                    </div>
                   </div>
                 ) : (
                   <ul className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
                     <li className="flex justify-between items-center py-1 border-b border-gray-100 dark:border-gray-800">
                       <span>🌳 Family Trees:</span>
                       <span className="font-bold font-mono text-[#d9a441]">{formatLimit(tier.max_trees)}</span>
+                    </li>
+                    <li className="flex justify-between items-center py-1 border-b border-gray-100 dark:border-gray-800">
+                      <span>👤 Individuals:</span>
+                      <span className="font-bold font-mono text-[#d9a441]">{formatLimit(tier.max_individuals)}</span>
+                    </li>
+                    <li className="flex justify-between items-center py-1 border-b border-gray-100 dark:border-gray-800">
+                      <span>🏛️ Saved Sources:</span>
+                      <span className="font-bold font-mono text-[#d9a441]">{formatLimit(tier.max_sources)}</span>
+                    </li>
+                    <li className="flex justify-between items-center py-1 border-b border-gray-100 dark:border-gray-800">
+                      <span>📝 Research Notes:</span>
+                      <span className="font-bold font-mono text-[#d9a441]">{formatLimit(tier.max_notes)}</span>
+                    </li>
+                    <li className="flex justify-between items-center py-1 border-b border-gray-100 dark:border-gray-800">
+                      <span>✅ Research Tasks:</span>
+                      <span className="font-bold font-mono text-[#d9a441]">{formatLimit(tier.max_tasks)}</span>
                     </li>
                     <li className="flex justify-between items-center py-1 border-b border-gray-100 dark:border-gray-800">
                       <span>🖼️ Gallery Images:</span>
@@ -220,10 +284,6 @@ export default function Subscriptions() {
                     <li className="flex justify-between items-center py-1 border-b border-gray-100 dark:border-gray-800">
                       <span>📄 Documents:</span>
                       <span className="font-bold font-mono text-[#d9a441]">{formatLimit(tier.max_documents)}</span>
-                    </li>
-                    <li className="flex justify-between items-center py-1 border-b border-gray-100 dark:border-gray-800">
-                      <span>👤 Individuals:</span>
-                      <span className="font-bold font-mono text-[#d9a441]">{formatLimit(tier.max_individuals)}</span>
                     </li>
                   </ul>
                 )}

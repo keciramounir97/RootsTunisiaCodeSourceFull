@@ -161,7 +161,7 @@ export class SubscriptionsController {
     @Roles(3)
     async updateTierLimits(
         @Param('id', ParseIntPipe) id: number,
-        @Body() body: { max_trees?: number; max_gallery?: number; max_audios?: number; max_documents?: number; max_individuals?: number },
+        @Body() body: { max_trees?: number; max_gallery?: number; max_audios?: number; max_documents?: number; max_individuals?: number; max_sources?: number; max_notes?: number; max_tasks?: number },
     ) {
         return this.service.updateTierLimits(id, body);
     }
@@ -171,7 +171,7 @@ export class SubscriptionsController {
     @Roles(3)
     async updateUserLimits(
         @Param('userId', ParseIntPipe) userId: number,
-        @Body() body: { custom_max_trees?: number | null; custom_max_gallery?: number | null; custom_max_audios?: number | null; custom_max_documents?: number | null; custom_max_individuals?: number | null },
+        @Body() body: { custom_max_trees?: number | null; custom_max_gallery?: number | null; custom_max_audios?: number | null; custom_max_documents?: number | null; custom_max_individuals?: number | null; custom_max_sources?: number | null; custom_max_notes?: number | null; custom_max_tasks?: number | null },
     ) {
         return this.service.updateUserLimits(userId, body);
     }
