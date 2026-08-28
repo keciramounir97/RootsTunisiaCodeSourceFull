@@ -24,6 +24,7 @@ import { RemindersModule } from './modules/reminders/reminders.module';
 import { DownloadRequestsModule } from './modules/download-requests/download-requests.module';
 import { LegalModule } from './modules/legal/legal.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
+import { IndividualsModule } from './modules/individuals/individuals.module';
 import { SourcesModule } from './modules/sources/sources.module';
 
 @Module({
