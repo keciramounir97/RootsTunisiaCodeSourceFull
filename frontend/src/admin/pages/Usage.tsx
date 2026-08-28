@@ -181,8 +181,9 @@ export default function Usage() {
       {/* Resource Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {resourceConfig.map(({ key, title, desc, Icon, createUrl }) => {
-          const item = limits[key] || { used: 0, max: isSuperAdmin ? -1 : 10 };
+          const item = limits[key] || { used: 0, max: isSuperAdmin ? -1 : 10, custom: false };
           const isUnlimited = isSuperAdmin || item.max === -1;
+          const isCustom = Boolean(item.custom);
           const used = item.used || 0;
           const max = item.max;
           const percentage = isUnlimited
