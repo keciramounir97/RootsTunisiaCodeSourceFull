@@ -2,10 +2,28 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "../../context/TranslationContext";
 import { api } from "../../api/client";
-import { Gauge, Crown, Network, UserRound, Image, Music, FileText, ArrowRight, AlertTriangle, CheckCircle2, Sparkles, Loader2, Archive, StickyNote, ListChecks } from "lucide-react";
+import { useAuth } from "../components/AuthContext";
+import {
+  Gauge,
+  Crown,
+  Network,
+  UserRound,
+  Image,
+  Music,
+  FileText,
+  ArrowRight,
+  AlertTriangle,
+  Sparkles,
+  Loader2,
+  Archive,
+  StickyNote,
+  ListChecks,
+  CheckCircle2,
+} from "lucide-react";
 
 export default function Usage() {
   const { t } = useTranslation();
+  const { user } = useAuth();
   const [quotas, setQuotas] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -33,8 +51,14 @@ export default function Usage() {
     );
   }
 
+  const isSuperAdmin = Boolean(
+    user?.role === 1 ||
+      user?.role === 3 ||
+      quotas?.isSuperAdmin ||
+      quotas?.data?.isSuperAdmin
+  );
+
   const limits = quotas?.limits || {};
-  const isSuperAdmin = Boolean(quotas?.isSuperAdmin);
 
   const resourceConfig: Array<{
     key: "trees" | "individuals" | "gallery" | "audios" | "documents" | "sources" | "notes" | "tasks";
@@ -54,9 +78,11 @@ export default function Usage() {
   ];
 
   // Check if any resource has reached 100% quota
-  const isAnyLimitReached = Object.values(limits).some(
-    (q: any) => q && q.max !== -1 && q.used >= q.max
-  );
+  const isAnyLimitReached =
+    !isSuperAdmin &&
+    Object.values(limits).some(
+      (q: any) => q && q.max !== -1 && q.used >= q.max
+    );
 
   return (
     <div className="p-4 md:p-6 space-y-6">
@@ -68,21 +94,23 @@ export default function Usage() {
           </div>
           <div>
             <h1 className="text-2xl font-bold font-cinzel text-[var(--text-color)]">
-              {t("usage_quotas", "Usage & Tier Limits")}
+              {t("usage_and_quotas", "Usage & Quotas")}
             </h1>
             <p className="text-xs text-[var(--text-color)] opacity-70">
-              Monitor your current resource usage and active plan creation quotas.
+              {t("usage_subtitle", "Monitor your account creation limits and resource usage")}
             </p>
           </div>
         </div>
 
-        <Link
-          to="/admin/user-upgrade"
-          className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-[#d9a441] to-[#e8c377] text-[#092C2B] font-bold text-xs shadow-md hover:shadow-lg transition-all"
-        >
-          <Crown className="w-4 h-4" />
-          <span>{t("upgrade_subscription", "Upgrade Subscription")}</span>
-        </Link>
+        {!isSuperAdmin && (
+          <Link
+            to="/admin/user-upgrade"
+            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-[#d9a441] to-[#e8c377] text-[#092C2B] font-bold text-xs shadow-md hover:shadow-lg transition-all"
+          >
+            <Crown className="w-4 h-4" />
+            <span>{t("upgrade_subscription", "Upgrade Subscription")}</span>
+          </Link>
+        )}
       </div>
 
       {/* Plan Header Card */}
@@ -93,20 +121,25 @@ export default function Usage() {
           <div>
             <div className="flex items-center gap-2 mb-2">
               <span className="px-3 py-1 rounded-full text-[0.65rem] font-extrabold uppercase tracking-widest bg-[#d9a441] text-[#092C2B]">
-                {quotas?.tierName || "Active Plan"}
+                {isSuperAdmin
+                  ? "Unlimited Super Admin"
+                  : quotas?.tierName || "Active Plan"}
               </span>
-              {isSuperAdmin && (
-                <span className="px-3 py-1 rounded-full text-[0.65rem] font-extrabold uppercase tracking-widest bg-purple-500 text-white">
-                  Super Admin (Unlimited)
-                </span>
-              )}
             </div>
-            <h2 className="text-2xl font-bold font-cinzel !text-white" style={{ color: "#ffffff", textShadow: "none" }}>
-              {`${quotas?.tierName || "Basic"} Tier Features`}
-            </h2>
-            <p className="text-xs !text-white/90 mt-1 max-w-xl" style={{ color: "rgba(255, 255, 255, 0.9)", textShadow: "none" }}>
+            <h2
+              className="text-2xl font-bold font-cinzel !text-white"
+              style={{ color: "#ffffff", textShadow: "none" }}
+            >
               {isSuperAdmin
-                ? "As a Super Admin, you have unrestricted unlimited creation rights across all resources."
+                ? "Super Admin Unlimited Tier"
+                : `${quotas?.tierName || "Basic"} Tier Features`}
+            </h2>
+            <p
+              className="text-xs !text-white/90 mt-1 max-w-xl"
+              style={{ color: "rgba(255, 255, 255, 0.9)", textShadow: "none" }}
+            >
+              {isSuperAdmin
+                ? "As an Administrator, your account possesses unrestricted unlimited creation rights across all platform resources."
                 : "Your account creation quotas are determined by your active subscription plan. Upgrade anytime to unlock higher limits."}
             </p>
           </div>
@@ -125,7 +158,7 @@ export default function Usage() {
       </div>
 
       {/* Global Alert Banner if quota is full */}
-      {isAnyLimitReached && !isSuperAdmin && (
+      {isAnyLimitReached && (
         <div className="p-4 rounded-2xl bg-amber-500/15 border border-amber-500/40 text-amber-900 dark:text-amber-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <AlertTriangle className="w-6 h-6 text-amber-500 shrink-0" />
@@ -138,9 +171,9 @@ export default function Usage() {
           </div>
           <Link
             to="/admin/user-upgrade"
-            className="px-4 py-2 rounded-xl bg-amber-500 text-white font-bold text-xs shrink-0 text-center hover:bg-amber-600 transition-colors"
+            className="px-4 py-2 rounded-xl bg-amber-500 text-white font-bold text-xs hover:bg-amber-600 transition shrink-0 text-center"
           >
-            Upgrade Now
+            Upgrade Plan
           </Link>
         </div>
       )}
@@ -148,11 +181,13 @@ export default function Usage() {
       {/* Resource Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {resourceConfig.map(({ key, title, desc, Icon, createUrl }) => {
-          const item = limits[key] || { used: 0, max: 10 };
-          const isUnlimited = item.max === -1;
+          const item = limits[key] || { used: 0, max: isSuperAdmin ? -1 : 10 };
+          const isUnlimited = isSuperAdmin || item.max === -1;
           const used = item.used || 0;
           const max = item.max;
-          const percentage = isUnlimited ? 0 : Math.min(100, Math.round((used / Math.max(1, max)) * 100));
+          const percentage = isUnlimited
+            ? 0
+            : Math.min(100, Math.round((used / Math.max(1, max)) * 100));
           const isFull = !isUnlimited && used >= max;
           const isNearFull = !isUnlimited && percentage >= 80 && !isFull;
 
@@ -170,18 +205,34 @@ export default function Usage() {
               <div>
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-3">
-                    <div className={`p-2.5 rounded-xl ${isFull ? "bg-red-500/15 text-red-500" : "bg-[#d9a441]/15 text-[#d9a441]"}`}>
+                    <div
+                      className={`p-2.5 rounded-xl ${
+                        isFull
+                          ? "bg-red-500/15 text-red-500"
+                          : "bg-[#d9a441]/15 text-[#d9a441]"
+                      }`}
+                    >
                       <Icon className="w-5 h-5" />
                     </div>
                     <div>
-                      <h3 className="font-bold text-base text-gray-900 dark:text-white">{title}</h3>
-                      <p className="text-[0.7rem] text-gray-500 dark:text-gray-400">{desc}</p>
+                      <h3 className="font-bold text-base text-gray-900 dark:text-white">
+                        {title}
+                      </h3>
+                      <p className="text-[0.7rem] text-gray-500 dark:text-gray-400">
+                        {desc}
+                      </p>
                     </div>
                   </div>
 
                   {isFull && (
                     <span className="px-2.5 py-0.5 rounded-full text-[0.65rem] font-extrabold uppercase bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300">
                       Full
+                    </span>
+                  )}
+                  {isUnlimited && (
+                    <span className="px-2.5 py-0.5 rounded-full text-[0.65rem] font-extrabold uppercase bg-teal-500/15 text-[#0d9488] flex items-center gap-1">
+                      <CheckCircle2 className="w-3 h-3 text-[#0d9488]" />
+                      Unlimited
                     </span>
                   )}
                 </div>
@@ -197,12 +248,12 @@ export default function Usage() {
                     </span>
                   </div>
                   <span className="text-xs font-semibold text-gray-500">
-                    {isUnlimited ? "Unlimited" : `${percentage}% used`}
+                    {isUnlimited ? "Unlimited Access" : `${percentage}% used`}
                   </span>
                 </div>
 
                 {/* Progress Bar */}
-                {!isUnlimited && (
+                {!isUnlimited ? (
                   <div className="w-full bg-gray-100 dark:bg-gray-800 h-2.5 rounded-full overflow-hidden">
                     <div
                       className={`h-full transition-all duration-500 ${
@@ -215,33 +266,27 @@ export default function Usage() {
                       style={{ width: `${percentage}%` }}
                     />
                   </div>
+                ) : (
+                  <div className="w-full bg-teal-500/10 h-2 rounded-full overflow-hidden">
+                    <div className="h-full bg-[#0d9488] w-full" />
+                  </div>
                 )}
               </div>
 
-              {/* Card Footer Actions */}
-              <div className="pt-3 border-t border-[var(--border-color)] flex items-center justify-between text-xs">
-                {isFull ? (
-                  <Link
-                    to="/admin/user-upgrade"
-                    className="w-full py-2 rounded-xl bg-red-500 text-white font-bold text-center flex items-center justify-center gap-1.5 hover:bg-red-600 transition-colors shadow-sm"
-                  >
-                    <Crown className="w-3.5 h-3.5" />
-                    <span>Quota Reached — Upgrade Plan</span>
-                  </Link>
-                ) : (
-                  <>
-                    <span className="text-[0.7rem] text-gray-500 flex items-center gap-1">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-green-500" />
-                      Quota available
-                    </span>
-                    <Link
-                      to={createUrl}
-                      className="font-bold text-[#d9a441] hover:underline flex items-center gap-1"
-                    >
-                      <span>Manage</span>
-                      <ArrowRight className="w-3 h-3" />
-                    </Link>
-                  </>
+              {/* Action Link */}
+              <div className="pt-4 border-t border-[var(--border-color)] flex items-center justify-between">
+                <Link
+                  to={createUrl}
+                  className="text-xs font-bold text-[#0d9488] dark:text-[#2dd4bf] hover:underline inline-flex items-center gap-1"
+                >
+                  <span>Manage {title}</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
+
+                {isCustom && !isSuperAdmin && (
+                  <span className="text-[0.65rem] font-bold text-purple-600 dark:text-purple-400 bg-purple-500/10 px-2 py-0.5 rounded">
+                    Custom Admin Quota
+                  </span>
                 )}
               </div>
             </div>
