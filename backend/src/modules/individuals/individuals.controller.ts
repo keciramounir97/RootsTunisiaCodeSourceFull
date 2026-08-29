@@ -62,33 +62,64 @@ export class IndividualsController {
     'source_links', 'is_backed_up', 'is_public', 'created_at', 'updated_at'
   ];
 
+  private indCache = new Map<string, { data: any; expiry: number }>();
+
+  private getCached(key: string) {
+    const item = this.indCache.get(key);
+    if (item && item.expiry > Date.now()) return item.data;
+    return null;
+  }
+
+  private setCached(key: string, data: any, ttlMs = 5000) {
+    this.indCache.set(key, { data, expiry: Date.now() + ttlMs });
+  }
+
+  public clearCache() {
+    this.indCache.clear();
+  }
+
   // Public Endpoint: list public individuals
   @Get('individuals')
   async listPublicIndividuals() {
+    const cached = this.getCached('public');
+    if (cached) return cached;
+
     const list = await Individual.query(this.knex)
       .select(this.summaryColumns)
       .where('is_public', true)
       .orderBy('id', 'desc');
-    return list.map((item) => this.parseIndividual(item));
+    const result = list.map((item) => this.parseIndividual(item));
+    this.setCached('public', result);
+    return result;
   }
 
   // Admin / My Endpoints: list all individuals
   @Get('admin/individuals')
   @UseGuards(JwtAuthGuard)
   async listAdminIndividuals() {
+    const cached = this.getCached('admin');
+    if (cached) return cached;
+
     const list = await Individual.query(this.knex)
       .select(this.summaryColumns)
       .orderBy('id', 'desc');
-    return list.map((item) => this.parseIndividual(item));
+    const result = list.map((item) => this.parseIndividual(item));
+    this.setCached('admin', result);
+    return result;
   }
 
   // GET single individual with full details including gedcom_text
   @Get('individuals/:id')
   async getIndividual(@Param('id') id: string) {
     const resolvedId = this.resolveIndividualId(id);
+    const cached = this.getCached(`ind_${resolvedId}`);
+    if (cached) return cached;
+
     const existing = await Individual.query(this.knex).findById(resolvedId);
     if (!existing) throw new NotFoundException('Individual not found');
-    return this.parseIndividual(existing);
+    const result = this.parseIndividual(existing);
+    this.setCached(`ind_${resolvedId}`, result);
+    return result;
   }
 
   @Post('admin/individuals')
@@ -114,10 +145,11 @@ export class IndividualsController {
       source_links: JSON.stringify(body.sourceLinks || []),
       gedcom_text: body.gedcomText || '',
       is_backed_up: body.isBackedUp !== undefined ? Boolean(body.isBackedUp) : true,
-      is_public: body.isPublic !== undefined ? Boolean(body.isPublic) : true,
+      isPublic: body.isPublic !== undefined ? Boolean(body.isPublic) : true,
     };
 
     const inserted = await Individual.query(this.knex).insert(payload);
+    this.clearCache();
     return this.parseIndividual(inserted);
   }
 
@@ -146,6 +178,7 @@ export class IndividualsController {
     if (body.isPublic !== undefined) payload.is_public = Boolean(body.isPublic);
 
     const updated = await Individual.query(this.knex).patchAndFetchById(resolvedId, payload);
+    this.clearCache();
     return this.parseIndividual(updated);
   }
 
@@ -156,6 +189,7 @@ export class IndividualsController {
     const existing = await Individual.query(this.knex).findById(resolvedId);
     if (!existing) throw new NotFoundException('Individual not found');
     await Individual.query(this.knex).deleteById(resolvedId);
+    this.clearCache();
     return { success: true, id: resolvedId };
   }
 }

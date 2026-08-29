@@ -79,11 +79,29 @@ export class TreesService implements OnModuleInit {
         return row;
     }
 
+    private treeCache = new Map<string, { data: any; expiry: number }>();
+    private gedcomCache = new Map<number, { text: string; expiry: number }>();
+
+    private getCached(key: string) {
+        const item = this.treeCache.get(key);
+        if (item && item.expiry > Date.now()) return item.data;
+        return null;
+    }
+
+    private setCached(key: string, data: any, ttlMs = 5000) {
+        this.treeCache.set(key, { data, expiry: Date.now() + ttlMs });
+    }
+
+    public clearCache() {
+        this.treeCache.clear();
+        this.gedcomCache.clear();
+    }
+
     async listPublic() {
-        const hasPersons = await this.knex.schema.hasTable('persons').catch(() => false);
-        const countSelect = hasPersons
-            ? this.knex.raw('(SELECT COUNT(*) FROM persons WHERE persons.tree_id = family_trees.id) as people_count')
-            : this.knex.raw('0 as people_count');
+        const cached = this.getCached('public');
+        if (cached) return cached;
+
+        const countSelect = this.knex.raw('0 as people_count');
 
         const rows = await Tree.query(this.knex)
             .select(this.backupFlagSelect())
@@ -92,29 +110,34 @@ export class TreesService implements OnModuleInit {
             .orderBy('created_at', 'desc')
             .withGraphFetched('owner')
             .modifyGraph('owner', (builder: any) => builder.select('id', 'full_name'));
-        return rows.map((r: any) => this.stripGedcomText(r));
+        const result = rows.map((r: any) => this.stripGedcomText(r));
+        this.setCached('public', result);
+        return result;
     }
 
     async getPublic(id: number) {
-        const hasPersons = await this.knex.schema.hasTable('persons').catch(() => false);
-        const graph = hasPersons ? '[owner, people]' : 'owner';
+        const cached = this.getCached(`tree_pub_${id}`);
+        if (cached) return cached;
 
         const tree = await Tree.query(this.knex)
             .findById(id)
             .select(this.backupFlagSelect())
             .where((builder: any) => builder.where('is_public', true).orWhereNull('is_public'))
-            .withGraphFetched(graph)
+            .withGraphFetched('owner')
             .modifyGraph('owner', (builder: any) => builder.select('id', 'full_name'));
 
         if (!tree) throw new NotFoundException('Tree not found');
-        return this.stripGedcomText(tree);
+        const result = this.stripGedcomText(tree);
+        this.setCached(`tree_pub_${id}`, result);
+        return result;
     }
 
     async listByUser(userId: number) {
-        const hasPersons = await this.knex.schema.hasTable('persons').catch(() => false);
-        const countSelect = hasPersons
-            ? this.knex.raw('(SELECT COUNT(*) FROM persons WHERE persons.tree_id = family_trees.id) as people_count')
-            : this.knex.raw('0 as people_count');
+        const cacheKey = `user_${userId}`;
+        const cached = this.getCached(cacheKey);
+        if (cached) return cached;
+
+        const countSelect = this.knex.raw('0 as people_count');
 
         const rows = await Tree.query(this.knex)
             .select(this.backupFlagSelect())
@@ -123,14 +146,16 @@ export class TreesService implements OnModuleInit {
             .orderBy('created_at', 'desc')
             .withGraphFetched('owner')
             .modifyGraph('owner', (builder: any) => builder.select('id', 'full_name', 'email'));
-        return rows.map((r: any) => this.stripGedcomText(r));
+        const result = rows.map((r: any) => this.stripGedcomText(r));
+        this.setCached(cacheKey, result);
+        return result;
     }
 
     async listAdmin() {
-        const hasPersons = await this.knex.schema.hasTable('persons').catch(() => false);
-        const countSelect = hasPersons
-            ? this.knex.raw('(SELECT COUNT(*) FROM persons WHERE persons.tree_id = family_trees.id) as people_count')
-            : this.knex.raw('0 as people_count');
+        const cached = this.getCached('admin');
+        if (cached) return cached;
+
+        const countSelect = this.knex.raw('0 as people_count');
 
         const rows = await Tree.query(this.knex)
             .select(this.backupFlagSelect())
@@ -138,25 +163,38 @@ export class TreesService implements OnModuleInit {
             .orderBy('created_at', 'desc')
             .withGraphFetched('owner')
             .modifyGraph('owner', (builder: any) => builder.select('id', 'full_name', 'email'));
-        return rows.map((r: any) => this.stripGedcomText(r));
+        const result = rows.map((r: any) => this.stripGedcomText(r));
+        this.setCached('admin', result);
+        return result;
     }
 
     async findOne(id: number) {
+        const cached = this.getCached(`tree_${id}`);
+        if (cached) return cached;
+
         const tree = await Tree.query(this.knex)
             .findById(id)
             .select(this.backupFlagSelect())
             .withGraphFetched('owner');
         if (!tree) throw new NotFoundException('Tree not found');
-        return this.stripGedcomText(tree);
+        const result = this.stripGedcomText(tree);
+        this.setCached(`tree_${id}`, result);
+        return result;
     }
 
     /** Returns the tree's GEDCOM content, prioritizing the database copy
      *  (gedcom_text) to ensure live web edits load instantly, falling back to disk.
      *  Self-heals disk file if missing! */
     async getGedcomContent(tree: any): Promise<string | null> {
+        const cached = this.gedcomCache.get(Number(tree.id));
+        if (cached && cached.expiry > Date.now()) {
+            return cached.text;
+        }
+
         const stored = await Tree.query(this.knex).findById(tree.id).select('gedcom_text', 'gedcom_path', 'is_public');
         const text = (stored as any)?.gedcom_text;
         if (typeof text === 'string' && text.trim().length > 0) {
+            this.gedcomCache.set(Number(tree.id), { text, expiry: Date.now() + 15000 });
             // Self-healing: if disk file is missing, restore it immediately!
             const storedPath = (stored as any)?.gedcom_path || tree?.gedcom_path;
             const filePath = storedPath ? resolveStoredFilePath(storedPath) : null;
@@ -256,6 +294,7 @@ export class TreesService implements OnModuleInit {
             );
         }
 
+        this.clearCache();
         await this.activityService.log(userId, 'trees', `Created tree: ${title}`);
         return newTree;
     }
@@ -344,6 +383,7 @@ export class TreesService implements OnModuleInit {
         }
 
         await Tree.query(this.knex).patch(updateData).where('id', id);
+        this.clearCache();
 
         if (file || (gedcomPath && tree.is_public !== isPublic)) {
             if (file && gedcomPath) {
@@ -376,9 +416,10 @@ export class TreesService implements OnModuleInit {
 
         if (tree.gedcom_path) safeUnlink(resolveStoredFilePath(tree.gedcom_path));
 
-        // Delete people first (cascade usually handles this in DB, but safe to do manual)
+        // Delete people first
         await Person.query(this.knex).delete().where('tree_id', id);
         await Tree.query(this.knex).deleteById(id);
+        this.clearCache();
 
         await this.activityService.log(userId, 'trees', `Deleted tree: ${tree.title}`);
         return { message: 'Deleted', backupCreated: true };
