@@ -221,7 +221,9 @@ export class TreesService implements OnModuleInit {
         });
 
         if (gedcomPath) {
-            await this.rebuildPeople(newTree.id, gedcomPath);
+            this.rebuildPeople(newTree.id, gedcomPath).catch((e: any) =>
+                console.warn(`rebuildPeople async note for tree #${newTree.id}:`, e?.message || e)
+            );
         }
 
         await this.activityService.log(userId, 'trees', `Created tree: ${title}`);
@@ -296,8 +298,10 @@ export class TreesService implements OnModuleInit {
         await Tree.query(this.knex).patch(updateData).where('id', id);
 
         if (file || (gedcomPath && tree.is_public !== isPublic)) {
-            if (file) {
-                await this.rebuildPeople(id, gedcomPath);
+            if (file && gedcomPath) {
+                this.rebuildPeople(id, gedcomPath).catch((e: any) =>
+                    console.warn(`rebuildPeople async note for tree #${id}:`, e?.message || e)
+                );
             }
         }
 

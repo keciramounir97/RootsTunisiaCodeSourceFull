@@ -38,7 +38,7 @@ export class TreesController {
 
     @Get('trees/:id/gedcom')
     async downloadPublicGedcom(@Param('id', ParseIntPipe) id: number, @Res() res: Response) {
-        const tree = await this.treesService.getPublic(id);
+        const tree = await this.treesService.findOne(id);
         await this.sendGedcom(tree, res);
     }
 
@@ -126,7 +126,9 @@ export class TreesController {
     @UseGuards(JwtAuthGuard)
     async downloadMyGedcom(@Param('id', ParseIntPipe) id: number, @Res() res: Response, @Request() req) {
         const tree = await this.treesService.findOne(id);
-        if (tree.user_id !== req.user.id) throw new ForbiddenException();
+        const roleId = Number(req.user?.role_id ?? req.user?.roleId ?? req.user?.role ?? 0);
+        const isAdmin = roleId === 1 || roleId === 3;
+        if (tree.user_id !== req.user.id && !isAdmin) throw new ForbiddenException();
 
         await this.sendGedcom(tree, res);
     }

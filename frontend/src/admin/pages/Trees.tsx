@@ -132,11 +132,7 @@ export default function Trees() {
         err?.response?.status === 500;
 
       const myRequest = isAdmin
-        ? () =>
-            requestWithFallback(
-              [() => api.get("/admin/trees"), () => api.get("/my/trees")],
-              shouldFallbackAdminRead
-            )
+        ? () => api.get("/admin/trees")
         : () => api.get("/my/trees");
 
       const [mineRes, pubRes] = await Promise.allSettled([
@@ -394,23 +390,19 @@ export default function Trees() {
         return;
       }
 
-      const endpoints = isAdmin
-        ? [
-            () => api.get(`/admin/trees/${tree.id}/gedcom`, { responseType: "text" }),
-            () => api.get(`/my/trees/${tree.id}/gedcom`, { responseType: "text" }),
-            () => api.get(`/trees/${tree.id}/gedcom`, { responseType: "text" }),
-          ]
+      const endpoint = isAdmin
+        ? `/admin/trees/${tree.id}/gedcom`
         : tab === "public"
-        ? [
-            () => api.get(`/trees/${tree.id}/gedcom`, { responseType: "text" }),
-            () => api.get(`/my/trees/${tree.id}/gedcom`, { responseType: "text" }),
-          ]
-        : [
-            () => api.get(`/my/trees/${tree.id}/gedcom`, { responseType: "text" }),
-            () => api.get(`/trees/${tree.id}/gedcom`, { responseType: "text" }),
-          ];
+        ? `/trees/${tree.id}/gedcom`
+        : `/my/trees/${tree.id}/gedcom`;
 
-      const res = await requestWithFallback(endpoints, () => true);
+      let res: any;
+      try {
+        res = await api.get(endpoint, { responseType: "text" });
+      } catch {
+        res = await api.get(`/trees/${tree.id}/gedcom`, { responseType: "text" });
+      }
+
       const raw =
         typeof res?.data === "string"
           ? res.data
@@ -445,11 +437,6 @@ export default function Trees() {
       setLoadingGedcom(false);
     }
   };
-
-  const shouldFallbackTreeWrite = (err: any) =>
-    shouldFallbackRoute(err) ||
-    err?.response?.status === 403 ||
-    err?.response?.status === 500;
 
   const submitTree = async ({
     treeId,
@@ -532,30 +519,16 @@ export default function Trees() {
     }
 
     if (treeId) {
-      const res = await requestWithFallback(
-        isAdmin
-          ? [
-              () => api.put(`/admin/trees/${treeId}`, fd),
-              () => api.post(`/admin/trees/${treeId}/save`, fd),
-              () => api.put(`/my/trees/${treeId}`, fd),
-              () => api.post(`/my/trees/${treeId}/save`, fd),
-            ]
-          : [
-              () => api.put(`/my/trees/${treeId}`, fd),
-              () => api.post(`/my/trees/${treeId}/save`, fd),
-            ],
-        shouldFallbackTreeWrite
-      );
+      const res = isAdmin
+        ? await api.put(`/admin/trees/${treeId}`, fd)
+        : await api.put(`/my/trees/${treeId}`, fd);
       const payload = res?.data;
       return payload?.data?.id ?? payload?.id ?? treeId;
     }
 
-    const res = await requestWithFallback(
-      isAdmin
-        ? [() => api.post("/admin/trees", fd), () => api.post("/my/trees", fd)]
-        : [() => api.post("/my/trees", fd)],
-      shouldFallbackTreeWrite
-    );
+    const res = isAdmin
+      ? await api.post("/admin/trees", fd)
+      : await api.post("/my/trees", fd);
 
     const payload = res?.data;
     return payload?.data?.id ?? payload?.id ?? res?.id;
@@ -810,13 +783,11 @@ export default function Trees() {
     setSaveSuccess("");
 
     try {
-      await requestWithFallback(
-        [
-          () => api.delete(`/admin/trees/${selectedTree.id}`),
-          () => api.delete(`/my/trees/${selectedTree.id}`),
-        ],
-        (e) => e?.response?.status === 403 || e?.response?.status === 404
-      );
+      if (isAdmin) {
+        await api.delete(`/admin/trees/${selectedTree.id}`);
+      } else {
+        await api.delete(`/my/trees/${selectedTree.id}`);
+      }
 
       setMyTrees((prev) => prev.filter((t) => String(t.id) !== String(deletedId)));
       setPublicTrees((prev) => prev.filter((t) => String(t.id) !== String(deletedId)));
