@@ -150,16 +150,25 @@ export class TreesService implements OnModuleInit {
         return this.stripGedcomText(tree);
     }
 
-    /** Returns the tree's GEDCOM content from disk, falling back to the database
-     *  copy (gedcom_text) when the uploaded file is missing. */
+    /** Returns the tree's GEDCOM content, prioritizing the database copy
+     *  (gedcom_text) to ensure live web edits load instantly, falling back to disk. */
     async getGedcomContent(tree: any): Promise<string | null> {
-        const filePath = tree?.gedcom_path ? resolveStoredFilePath(tree.gedcom_path) : null;
-        if (filePath && fs.existsSync(filePath)) {
-            return fs.readFileSync(filePath, 'utf8');
-        }
-        const stored = await Tree.query(this.knex).findById(tree.id).select('gedcom_text');
+        const stored = await Tree.query(this.knex).findById(tree.id).select('gedcom_text', 'gedcom_path');
         const text = (stored as any)?.gedcom_text;
-        return typeof text === 'string' && text.length ? text : null;
+        if (typeof text === 'string' && text.trim().length > 0) {
+            return text;
+        }
+
+        const storedPath = (stored as any)?.gedcom_path || tree?.gedcom_path;
+        const filePath = storedPath ? resolveStoredFilePath(storedPath) : null;
+        if (filePath && fs.existsSync(filePath)) {
+            const diskContent = fs.readFileSync(filePath, 'utf8');
+            if (diskContent && diskContent.trim().length > 0) {
+                return diskContent;
+            }
+        }
+
+        return null;
     }
 
     /** Suggested download filename for a tree's GEDCOM. */

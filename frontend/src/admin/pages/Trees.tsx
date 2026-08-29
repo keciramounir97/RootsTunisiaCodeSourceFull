@@ -726,12 +726,8 @@ export default function Trees() {
     setSaving(true);
 
     try {
-      const includeFile = isUpdateMode ? peopleDirtyRef.current : hasPeople;
-      const nextHasGedcom = includeFile
-        ? true
-        : isUpdateMode
-        ? selectedTree?.hasGedcom
-        : false;
+      const includeFile = hasPeople || isUpdateMode;
+      const nextHasGedcom = hasPeople;
 
       const treeId = await submitTree({
         treeId: canUpdateSelected ? selectedTree?.id : null,
