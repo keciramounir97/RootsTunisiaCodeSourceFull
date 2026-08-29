@@ -515,6 +515,8 @@ export default function Trees() {
       } else {
         fd.append("file", blob, fileName);
       }
+      fd.append("gedcomText", content);
+      fd.append("gedcom_text", content);
       if (saveFormat === "gedcom7") fd.append("dataFormat", "gedcom7");
       else if (saveFormat === "gedcom") fd.append("dataFormat", "gedcom");
       else if (saveFormat.startsWith("gedcomx")) fd.append("dataFormat", "gedcomx");

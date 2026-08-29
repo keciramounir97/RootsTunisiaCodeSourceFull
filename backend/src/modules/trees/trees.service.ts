@@ -151,11 +151,27 @@ export class TreesService implements OnModuleInit {
     }
 
     /** Returns the tree's GEDCOM content, prioritizing the database copy
-     *  (gedcom_text) to ensure live web edits load instantly, falling back to disk. */
+     *  (gedcom_text) to ensure live web edits load instantly, falling back to disk.
+     *  Self-heals disk file if missing! */
     async getGedcomContent(tree: any): Promise<string | null> {
-        const stored = await Tree.query(this.knex).findById(tree.id).select('gedcom_text', 'gedcom_path');
+        const stored = await Tree.query(this.knex).findById(tree.id).select('gedcom_text', 'gedcom_path', 'is_public');
         const text = (stored as any)?.gedcom_text;
         if (typeof text === 'string' && text.trim().length > 0) {
+            // Self-healing: if disk file is missing, restore it immediately!
+            const storedPath = (stored as any)?.gedcom_path || tree?.gedcom_path;
+            const filePath = storedPath ? resolveStoredFilePath(storedPath) : null;
+            if (!filePath || !fs.existsSync(filePath)) {
+                try {
+                    const isPublic = Boolean((stored as any)?.is_public ?? tree?.is_public);
+                    const filename = `tree_${tree.id}_restored.ged`;
+                    const destDir = isPublic ? TREE_UPLOADS_DIR : PRIVATE_TREE_UPLOADS_DIR;
+                    if (!fs.existsSync(destDir)) fs.mkdirSync(destDir, { recursive: true });
+                    const dest = path.join(destDir, filename);
+                    fs.writeFileSync(dest, text, 'utf8');
+                    const newPath = isPublic ? `/uploads/trees/${filename}` : `private/trees/${filename}`;
+                    Tree.query(this.knex).patch({ gedcom_path: newPath }).where('id', tree.id).catch(() => {});
+                } catch {}
+            }
             return text;
         }
 
@@ -164,6 +180,8 @@ export class TreesService implements OnModuleInit {
         if (filePath && fs.existsSync(filePath)) {
             const diskContent = fs.readFileSync(filePath, 'utf8');
             if (diskContent && diskContent.trim().length > 0) {
+                // Backfill database gedcom_text
+                Tree.query(this.knex).patch({ gedcom_text: diskContent }).where('id', tree.id).catch(() => {});
                 return diskContent;
             }
         }
@@ -190,9 +208,8 @@ export class TreesService implements OnModuleInit {
         let gedcomPath = file ? `/uploads/trees/${file.filename}` : null;
 
         let dataFormat: 'gedcom' | 'gedcomx' | 'gedcom7' = 'gedcom';
-        // Read the full GEDCOM up-front (before any move) so we can both infer the
-        // format and store a database backup copy in `gedcom_text`.
-        let gedcomText: string | null = null;
+        // Read the full GEDCOM up-front so we can infer format and forcefully store in database
+        let gedcomText: string | null = data.gedcom_text ?? data.gedcomText ?? null;
         if (file) {
             gedcomText = fs.readFileSync(file.path, 'utf8');
             const explicit = data.data_format ?? data.dataFormat;
@@ -200,6 +217,19 @@ export class TreesService implements OnModuleInit {
             else {
                 dataFormat = this.inferDataFormat(file.originalname, gedcomText.slice(0, 4000));
             }
+        } else if (gedcomText && typeof gedcomText === 'string' && gedcomText.trim().length > 0) {
+            const explicit = data.data_format ?? data.dataFormat;
+            if (explicit === 'gedcom7' || explicit === 'gedcomx' || explicit === 'gedcom') dataFormat = explicit;
+            else {
+                dataFormat = this.inferDataFormat('tree.ged', gedcomText.slice(0, 4000));
+            }
+            // Auto-write to disk as well
+            const filename = `tree_${Date.now()}_${Math.random().toString(36).slice(2, 8)}.ged`;
+            const destDir = isPublic ? TREE_UPLOADS_DIR : PRIVATE_TREE_UPLOADS_DIR;
+            if (!fs.existsSync(destDir)) fs.mkdirSync(destDir, { recursive: true });
+            const dest = path.join(destDir, filename);
+            fs.writeFileSync(dest, gedcomText, 'utf8');
+            gedcomPath = isPublic ? `/uploads/trees/${filename}` : `private/trees/${filename}`;
         }
 
         if (file && !isPublic) {
@@ -277,6 +307,24 @@ export class TreesService implements OnModuleInit {
                 updateData.data_format = this.inferDataFormat(file.originalname, gedcomText.slice(0, 4000));
             }
             gedcomPath = newPath;
+        } else if (data.gedcom_text !== undefined || data.gedcomText !== undefined) {
+            const rawText = data.gedcom_text ?? data.gedcomText ?? '';
+            if (typeof rawText === 'string' && rawText.trim().length > 0) {
+                updateData.gedcom_text = rawText;
+                const explicit = data.data_format ?? data.dataFormat;
+                if (explicit === 'gedcom7' || explicit === 'gedcomx' || explicit === 'gedcom') {
+                    updateData.data_format = explicit;
+                } else {
+                    updateData.data_format = this.inferDataFormat('tree.ged', rawText.slice(0, 4000));
+                }
+                const filename = `tree_${id}_${Date.now()}.ged`;
+                const destDir = isPublic ? TREE_UPLOADS_DIR : PRIVATE_TREE_UPLOADS_DIR;
+                if (!fs.existsSync(destDir)) fs.mkdirSync(destDir, { recursive: true });
+                const dest = path.join(destDir, filename);
+                fs.writeFileSync(dest, rawText, 'utf8');
+                updateData.gedcom_path = isPublic ? `/uploads/trees/${filename}` : `private/trees/${filename}`;
+                gedcomPath = updateData.gedcom_path;
+            }
         } else if (tree.is_public !== isPublic && tree.gedcom_path) {
             // Move existing file
             const currentPath = resolveStoredFilePath(tree.gedcom_path);
