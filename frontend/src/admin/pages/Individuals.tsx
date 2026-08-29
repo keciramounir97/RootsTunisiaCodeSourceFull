@@ -104,6 +104,7 @@ import { api } from "../../api/client";
 import { getApiRoot, requestWithFallback, shouldFallbackRoute } from "../../api/helpers";
 import {
   parseGedcom,
+  parseGedcomX,
   MEDIA_LINK_TYPES,
   DEFAULT_FALLBACK_MEDIA,
   normalizeExistingMediaResponse,
@@ -493,6 +494,23 @@ export default function Individuals() {
             : true,
     });
 
+    const tempId = editingId || uid();
+    const optimisticObj = normalizeIndividual({ ...payload, id: tempId });
+
+    // 1. Optimistic instant UI update (0ms latency for user)
+    if (editingId) {
+      setIndividuals((prev) =>
+        prev.map((item) => (item.id === editingId ? optimisticObj : item))
+      );
+      if (selectedIndividual?.id === editingId) {
+        setSelectedIndividual(optimisticObj);
+      }
+    } else {
+      setIndividuals((prev) => [optimisticObj, ...prev]);
+    }
+    closeModal();
+
+    // 2. Background async API persist
     try {
       if (editingId) {
         const { data } = await api.put(`/admin/individuals/${editingId}`, payload);
@@ -503,77 +521,61 @@ export default function Individuals() {
           if (selectedIndividual?.id === editingId) {
             setSelectedIndividual(normalizeIndividual(data));
           }
-          closeModal();
-          return;
         }
       } else {
         const { data } = await api.post("/admin/individuals", payload);
         if (data && data.id) {
-          setIndividuals((prev) => [normalizeIndividual(data), ...prev]);
-          closeModal();
-          return;
+          setIndividuals((prev) =>
+            prev.map((item) => (item.id === tempId ? normalizeIndividual(data) : item))
+          );
         }
       }
-    } catch {
-      /* fallback to local storage update */
+    } catch (err) {
+      console.warn("Individual API persist note:", err);
     }
-
-    if (editingId) {
-      setIndividuals((prev) =>
-        prev.map((item) =>
-          item.id === editingId ? normalizeIndividual({ ...payload, id: editingId }) : item
-        )
-      );
-      if (selectedIndividual?.id === editingId) {
-        setSelectedIndividual(normalizeIndividual({ ...payload, id: editingId }));
-      }
-    } else {
-      const newInd = normalizeIndividual({ ...payload, id: uid() });
-      setIndividuals((prev) => [newInd, ...prev]);
-    }
-
-    closeModal();
   };
 
-  // GEDCOM File Import
+  // GEDCOM / GEDCOM X File & Text Import (Parallel batch processing for ultra speed)
   const handleGedcomTextImport = async () => {
     const text = String(gedcomText || "").trim();
-    const parsed = parseGedcom(text);
+    if (!text) return;
+    const isX = text.startsWith("{") || text.startsWith("<?xml") || text.includes("<gedcomx");
+    const parsed = isX ? parseGedcomX(text) : parseGedcom(text);
     if (!Array.isArray(parsed) || parsed.length === 0) return;
 
-    const imported = [];
-    for (const p of parsed) {
-      const payload = {
-        name: p.name || `${p.given || ""} ${p.surname || ""}`.trim() || "Personne sans nom",
-        given: p.given || "",
-        surname: p.surname || "",
-        gender: p.gender || "",
-        birthYear: p.birthYear || "",
-        birthPlace: p.birthPlace || "",
-        deathDate: p.deathDate || "",
-        deathPlace: p.deathPlace || "",
-        profession: p.profession || "",
-        details: p.details || "",
-        customFields: Array.isArray(p.customFields) ? p.customFields : [],
-        sourceLinks: Array.isArray(p.sourceLinks) ? p.sourceLinks : [],
-        gedcomText: text,
-        sourceLinksManaged: true,
-        isBackedUp: true,
-        isPublic: true,
-      };
-      try {
-        const { data } = await api.post("/admin/individuals", payload);
-        imported.push(data && data.id ? data : { ...payload, id: uid() });
-      } catch {
-        imported.push({ ...payload, id: uid() });
-      }
-    }
+    // 1. Instant optimistic UI population
+    const optimisticItems = parsed.map((p) => ({
+      name: p.name || `${p.given || ""} ${p.surname || ""}`.trim() || "Personne sans nom",
+      given: p.given || "",
+      surname: p.surname || "",
+      gender: p.gender || "",
+      birthYear: p.birthYear || "",
+      birthPlace: p.birthPlace || "",
+      deathDate: p.deathDate || "",
+      deathPlace: p.deathPlace || "",
+      profession: p.profession || "",
+      details: p.details || "",
+      customFields: Array.isArray(p.customFields) ? p.customFields : [],
+      sourceLinks: Array.isArray(p.sourceLinks) ? p.sourceLinks : [],
+      gedcomText: text,
+      sourceLinksManaged: true,
+      isBackedUp: true,
+      isPublic: true,
+      id: uid(),
+    }));
 
-    if (imported.length) {
-      setIndividuals((prev) => [...imported, ...prev]);
-      setSelectedIndividual(imported[0] || null);
-    }
+    setIndividuals((prev) => [...optimisticItems, ...prev]);
+    if (optimisticItems.length) setSelectedIndividual(optimisticItems[0]);
     closeModal();
+
+    // 2. Concurrent parallel background upload
+    try {
+      await Promise.allSettled(
+        optimisticItems.map((item) => api.post("/admin/individuals", item))
+      );
+    } catch (err) {
+      console.warn("Batch import async note:", err);
+    }
   };
 
   const cardAccent = (gender: string) => (gender === "F" ? "#be185d" : "#0d9488");
@@ -606,11 +608,9 @@ export default function Individuals() {
   };
 
   const deleteIndividual = async (id: string) => {
-    try {
-      await api.delete(`/admin/individuals/${id}`).catch(() => {});
-    } catch {}
+    // Instant optimistic removal
     setIndividuals((prev) => {
-      const next = prev.filter((item) => item.id !== id);
+      const next = prev.filter((item) => String(item.id) !== String(id));
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
       } catch {}
@@ -619,6 +619,8 @@ export default function Individuals() {
     if (selectedIndividual?.id === id) {
       setSelectedIndividual(null);
     }
+    // Background API call
+    api.delete(`/admin/individuals/${id}`).catch(() => {});
   };
 
   const closeModal = () => {

@@ -1302,7 +1302,7 @@ export default function Trees() {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between text-xs">
                     <span className="font-bold text-[#0c4a6e] dark:text-[#0d9488]">
-                      {t("legacy.gedcom_code_editor", "Éditeur de Code GEDCOM (5.5.1 / 7.0)")}
+                      {t("legacy.gedcom_code_editor", "Éditeur de Code GEDCOM (5.5.1 / 7.0 / GEDCOM X)")}
                     </span>
                     <span className="text-[11px] opacity-75">
                       {people.length} {t("legacy.individuals_count", "individus synchronisés")}
@@ -1315,9 +1315,11 @@ export default function Trees() {
                       setGedcomCodeDraft(code);
                       if (code.trim().length > 10) {
                         try {
-                          const parsed = parseGedcom(code);
+                          const isX = code.trim().startsWith("{") || code.trim().startsWith("<?xml") || code.includes("<gedcomx");
+                          const parsed = isX ? parseGedcomX(code) : parseGedcom(code);
                           if (Array.isArray(parsed) && parsed.length > 0) {
                             setPeople(parsed);
+                            if (isX && saveFormat === "gedcom") setSaveFormat("gedcomx_json");
                             const meta = extractGedcomMetadata(code);
                             if (meta.title && !treeForm.title) {
                               setTreeForm((s) => ({ ...s, title: meta.title }));
@@ -1333,7 +1335,7 @@ export default function Trees() {
                         } catch (err) {}
                       }
                     }}
-                    placeholder={`0 HEAD\n1 SOUR RootsTunisia\n1 GEDC\n2 VERS 5.5.1\n0 @I1@ INDI\n1 NAME Prénom /Nom/\n1 SEX M\n1 BIRT\n2 DATE 1950\n0 TRLR`}
+                    placeholder={`0 HEAD\n1 SOUR RootsTunisia\n1 GEDC\n2 VERS 5.5.1\n0 @I1@ INDI\n1 NAME Prénom /Nom/\n1 SEX M\n1 BIRT\n2 DATE 1950\n0 TRLR\n\n// OU FORMAT GEDCOM X (JSON / XML):\n{\n  "persons": [{ "id": "p1", "names": [{ "nameForms": [{ "fullText": "Ali Ben Salah" }] }] }]\n}`}
                     rows={16}
                     className={`w-full p-4 font-mono text-[11px] leading-relaxed rounded-xl border ${border} ${inputBg} ${inputText} focus:ring-2 focus:ring-[#0d9488]/40 resize-none shadow-inner`}
                   />
@@ -1343,20 +1345,22 @@ export default function Trees() {
                       type="button"
                       onClick={() => {
                         try {
-                          const parsed = parseGedcom(gedcomCodeDraft);
+                          const isX = gedcomCodeDraft.trim().startsWith("{") || gedcomCodeDraft.trim().startsWith("<?xml") || gedcomCodeDraft.includes("<gedcomx");
+                          const parsed = isX ? parseGedcomX(gedcomCodeDraft) : parseGedcom(gedcomCodeDraft);
                           if (Array.isArray(parsed) && parsed.length > 0) {
                             setPeople(parsed);
+                            if (isX && saveFormat === "gedcom") setSaveFormat("gedcomx_json");
                             const meta = extractGedcomMetadata(gedcomCodeDraft);
                             if (meta.title) setTreeForm((s) => ({ ...s, title: meta.title }));
                             if (meta.source) setTreeForm((s) => ({ ...s, archiveSource: meta.source }));
                             if (meta.description) setTreeForm((s) => ({ ...s, description: meta.description }));
                             void saveCurrentAsTree();
-                            setSaveSuccess(t("legacy.gedcom_synced", "GEDCOM code parsed and synchronized with canvas!"));
+                            setSaveSuccess(t("legacy.gedcom_synced", "GEDCOM / GEDCOM X code parsed and synchronized with canvas!"));
                           } else {
                             setSaveError("No valid individual records found in the provided GEDCOM text.");
                           }
                         } catch (err) {
-                          setSaveError("Invalid GEDCOM syntax.");
+                          setSaveError("Invalid GEDCOM / GEDCOM X syntax.");
                         }
                       }}
                       className="interactive-btn btn-neu btn-neu--primary px-4 py-2.5 text-xs font-bold flex-1 inline-flex items-center justify-center gap-2 shadow-md"

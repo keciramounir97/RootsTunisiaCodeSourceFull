@@ -5012,7 +5012,8 @@ export default function TreesBuilder({
                           onClick={() => {
                             if (!rawIndiDraft.trim()) return;
                             try {
-                              const parsed = parseGedcom(rawIndiDraft);
+                              const isX = rawIndiDraft.trim().startsWith("{") || rawIndiDraft.trim().startsWith("<?xml") || rawIndiDraft.includes("<gedcomx");
+                              const parsed = isX ? parseGedcomX(rawIndiDraft) : parseGedcom(rawIndiDraft);
                               if (Array.isArray(parsed) && parsed.length > 0) {
                                 applyPeopleUpdate((prev) => {
                                   const existingIds = new Set(prev.map((p) => String(p.id)));
@@ -5026,12 +5027,12 @@ export default function TreesBuilder({
                                 });
                                 setPersonModalOpen(false);
                                 setRawIndiDraft("");
-                                notifyPerson(t("legacy.person_added", "Individu(s) ajouté(s) via GEDCOM avec succès!"));
+                                notifyPerson(t("legacy.person_added", "Individu(s) ajouté(s) via GEDCOM / GEDCOM X avec succès!"));
                               } else {
-                                notifyError("No valid INDI records found in the provided GEDCOM snippet.");
+                                notifyError("No valid individual records found in the provided snippet.");
                               }
                             } catch (err) {
-                              notifyError("Invalid GEDCOM syntax.");
+                              notifyError("Invalid GEDCOM / GEDCOM X syntax.");
                             }
                           }}
                           className="interactive-btn btn-neu btn-neu--primary !px-8 !py-2.5 !text-sm"
