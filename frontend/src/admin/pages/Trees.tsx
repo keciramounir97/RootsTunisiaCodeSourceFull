@@ -338,13 +338,6 @@ export default function Trees() {
     setLoadingGedcom(true);
 
     try {
-      if (!tree?.hasGedcom) {
-        setPeople([]);
-        peopleDirtyRef.current = false;
-        setSaveSuccess(t("legacy.tree_loaded", "Tree loaded."));
-        return;
-      }
-
       if (String(tree.id).startsWith("mock-")) {
         const familyName = tree.title.split(" ").pop() || "El-Masry";
         const mockPeople = [
@@ -396,25 +389,45 @@ export default function Trees() {
 
         setPeople(mockPeople);
         peopleDirtyRef.current = false;
-        setSaveSuccess(t("legacy.tree_loaded", "Tree loaded."));
+        setSaveSuccess(t("legacy.tree_loaded", "Arbre chargé."));
         setLoadingGedcom(false);
         return;
       }
 
-      const endpoint =
-        isAdmin
-          ? `/admin/trees/${tree.id}/gedcom`
-          : tab === "public"
-            ? `/trees/${tree.id}/gedcom`
-            : `/my/trees/${tree.id}/gedcom`;
-      const res = await api.get(endpoint, { responseType: "text" });
+      const endpoints = isAdmin
+        ? [
+            () => api.get(`/admin/trees/${tree.id}/gedcom`, { responseType: "text" }),
+            () => api.get(`/my/trees/${tree.id}/gedcom`, { responseType: "text" }),
+            () => api.get(`/trees/${tree.id}/gedcom`, { responseType: "text" }),
+          ]
+        : tab === "public"
+        ? [
+            () => api.get(`/trees/${tree.id}/gedcom`, { responseType: "text" }),
+            () => api.get(`/my/trees/${tree.id}/gedcom`, { responseType: "text" }),
+          ]
+        : [
+            () => api.get(`/my/trees/${tree.id}/gedcom`, { responseType: "text" }),
+            () => api.get(`/trees/${tree.id}/gedcom`, { responseType: "text" }),
+          ];
 
-      const raw = typeof res?.data === "string" ? res.data : (res?.data && (res.data as any).data != null ? String((res.data as any).data) : "");
-      const isGedcomX = tree.data_format === "gedcomx" || /^s*({|<?xml)/.test(raw);
-      setPeople(isGedcomX ? parseGedcomX(raw) : parseGedcom(raw));
+      const res = await requestWithFallback(endpoints, () => true);
+      const raw =
+        typeof res?.data === "string"
+          ? res.data
+          : res?.data && (res.data as any).data != null
+          ? String((res.data as any).data)
+          : "";
+
+      if (!raw || raw.trim() === "" || raw.trim() === "0 HEAD\n1 GEDC\n2 VERS 5.5.1\n0 TRLR") {
+        setPeople([]);
+      } else {
+        const isGedcomX = tree.data_format === "gedcomx" || /^\s*({|<\?xml)/.test(raw);
+        const parsed = isGedcomX ? parseGedcomX(raw) : parseGedcom(raw);
+        setPeople(Array.isArray(parsed) ? parsed : []);
+      }
 
       peopleDirtyRef.current = false;
-      setSaveSuccess(t("legacy.tree_loaded", "Tree loaded."));
+      setSaveSuccess(t("legacy.tree_loaded", "Arbre chargé."));
     } catch (err: any) {
       setPeople([]);
       const gedcomMessage = getGedcomLoadErrorMessage(
@@ -968,19 +981,15 @@ export default function Trees() {
           </div>
 
           <div className="flex items-center gap-2">
-            {canUpdateSelected && selectedTree && (
-              <button
-                type="button"
-                onClick={() => {
-                  setTreeFormDrawerOpen(true);
-                  setTreesListDrawerOpen(false);
-                }}
-                className="interactive-btn btn-neu px-3.5 py-1.5 text-xs inline-flex items-center gap-1.5 text-[#0d9488] font-bold"
-              >
-                <FileEdit className="w-3.5 h-3.5" />
-                <span>{t("legacy.edit_tree", "Edit Tree Details")}</span>
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={clearCanvas}
+              className="interactive-btn btn-neu px-3.5 py-1.5 text-xs inline-flex items-center gap-1.5 border border-red-500/40 bg-red-500/10 text-red-500 hover:bg-red-500/20 font-bold transition rounded-lg shadow-xs"
+              title={t("legacy.clear_canvas", "Vider le canevas")}
+            >
+              <Trash2 className="w-3.5 h-3.5 text-red-500" />
+              <span>{t("legacy.clear_canvas", "Vider le canevas")}</span>
+            </button>
           </div>
         </div>
 
