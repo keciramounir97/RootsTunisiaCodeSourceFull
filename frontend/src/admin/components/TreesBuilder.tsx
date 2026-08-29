@@ -1060,13 +1060,22 @@ export const parseGedcom = (raw) => {
         [given, surname].filter(Boolean).join(" ")
       );
 
-      if (combined) p.names.en = combined;
-    } else if (p.names?.en) {
-      const parsed = splitName(p.names.en);
+      if (combined) {
+        p.names.en = combined;
+        p.names.fr = combined;
+        p.names.ar = p.names.ar || combined;
+        p.name = combined;
+      }
+    } else if (p.names?.en || p.names?.fr || p.names?.ar || p.name) {
+      const existingName = p.names?.en || p.names?.fr || p.names?.ar || p.name;
+      const parsed = splitName(existingName);
 
       if (parsed.given) p.given = parsed.given;
-
       if (parsed.surname) p.surname = parsed.surname;
+      p.names.en = existingName;
+      p.names.fr = existingName;
+      p.names.ar = p.names.ar || existingName;
+      p.name = existingName;
     }
   }
 
@@ -2118,16 +2127,17 @@ export default function TreesBuilder({
 
   const nameOf = useCallback(
     (p) => {
-      if (!p) return t("legacy.unknown", "Unknown");
+      if (!p) return typeof t === "function" ? t("legacy.unknown", "Unknown") : "Unknown";
       const fromNames =
         p.names?.[locale] ||
-        p.names?.en ||
         p.names?.fr ||
+        p.names?.en ||
         p.names?.ar ||
-        p.names?.es;
+        p.names?.es ||
+        (typeof p.name === "string" ? p.name : "");
       if (fromNames && String(fromNames).trim()) return String(fromNames).trim();
       const givenSurname = [p.given, p.surname].filter(Boolean).map((s) => String(s).trim()).join(" ").trim();
-      return givenSurname || t("legacy.unknown", "Unknown");
+      return givenSurname || (typeof t === "function" ? t("legacy.unknown", "Unknown") : "Unknown");
     },
     [locale, t]
   );
