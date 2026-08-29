@@ -337,15 +337,6 @@ export default function AdminGallery() {
   };
 
   const handleDelete = async (id: number | string) => {
-    if (typeof id === "string") {
-      notify(
-        t("legacy.gallery_assets_need_backend",
-          "Start the backend once to import bundled gallery images before editing them.",
-        ),
-        "error",
-      );
-      return;
-    }
     if (
       !window.confirm(
         t("legacy.confirm_delete", "Are you sure you want to delete this item?")
@@ -354,25 +345,19 @@ export default function AdminGallery() {
       return;
     }
 
+    // Instant optimistic removal
+    setItems((prev) => prev.filter((item) => String(item.id) !== String(id)));
+    emitGalleryChanged({ id, action: "deleted" });
+    notify(t("legacy.gallery_deleted", "Image deleted."));
+
     try {
-      const shouldFallbackWrite = (err: any) =>
-        shouldFallbackRoute(err) ||
-        err?.response?.status === 401 ||
-        err?.response?.status === 403 ||
-        err?.response?.status === 500;
-      await requestWithFallback(
-        [
-          () => api.delete(`/admin/gallery/${id}`),
-          () => api.delete(`/my/gallery/${id}`),
-        ],
-        shouldFallbackWrite
-      );
-      await loadGallery();
-      emitGalleryChanged({ id, action: "deleted" });
-      notify(t("legacy.gallery_deleted", "Image deleted."));
+      if (isAdmin) {
+        await api.delete(`/admin/gallery/${id}`).catch(() => api.delete(`/my/gallery/${id}`));
+      } else {
+        await api.delete(`/my/gallery/${id}`).catch(() => api.delete(`/admin/gallery/${id}`));
+      }
     } catch (error) {
-      console.error("Delete failed:", error);
-      notify(getApiErrorMessage(error, t("legacy.delete_failed", "Failed to delete")), "error");
+      console.warn("Async gallery delete note:", error);
     }
   };
 

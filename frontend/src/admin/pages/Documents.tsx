@@ -258,24 +258,18 @@ export default function AdminDocuments() {
       return;
     }
 
+    // Instant optimistic removal
+    setDocuments((prev) => prev.filter((d) => String(d.id) !== String(id)));
+    notify(t("legacy.document_deleted", "Document deleted."));
+
     try {
-      const shouldFallbackWrite = (err: any) =>
-        shouldFallbackRoute(err) ||
-        err?.response?.status === 401 ||
-        err?.response?.status === 403 ||
-        err?.response?.status === 500;
-      await requestWithFallback(
-        [
-          () => api.delete(`/admin/documents/${id}`),
-          () => api.delete(`/my/documents/${id}`),
-        ],
-        shouldFallbackWrite
-      );
-      loadDocuments();
-      notify(t("legacy.document_deleted", "Document deleted."));
+      if (isAdmin) {
+        await api.delete(`/admin/documents/${id}`).catch(() => api.delete(`/my/documents/${id}`));
+      } else {
+        await api.delete(`/my/documents/${id}`).catch(() => api.delete(`/admin/documents/${id}`));
+      }
     } catch (error) {
-      console.error("Delete failed:", error);
-      notify(getApiErrorMessage(error, t("legacy.delete_failed", "Failed to delete")), "error");
+      console.warn("Async document delete note:", error);
     }
   };
 

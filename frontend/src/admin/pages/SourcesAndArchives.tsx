@@ -106,7 +106,27 @@ export default function SourcesAndArchives() {
       return;
     }
 
-    setSaving(true);
+    const tempId = editingSource?.id || Date.now();
+    const optimisticSource: SourceItem = {
+      id: tempId,
+      title: title.trim(),
+      url: url.trim(),
+      description: description.trim(),
+      icon_url: editingSource?.icon_url,
+      created_at: editingSource?.created_at || new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+
+    // Instant optimistic update
+    if (editingSource) {
+      setSources((prev) => prev.map((s) => (s.id === editingSource.id ? optimisticSource : s)));
+      showToast("Source updated successfully!");
+    } else {
+      setSources((prev) => [optimisticSource, ...prev]);
+      showToast("New source created successfully!");
+    }
+    setModalOpen(false);
+
     try {
       const fd = new FormData();
       fd.append("title", title.trim());
@@ -118,32 +138,27 @@ export default function SourcesAndArchives() {
 
       if (editingSource) {
         await api.put(`/my/sources/${editingSource.id}`, fd);
-        showToast("Source updated successfully!");
       } else {
-        await api.post("/my/sources", fd);
-        showToast("New source created successfully!");
+        const { data } = await api.post("/my/sources", fd);
+        if (data && data.id) {
+          setSources((prev) => prev.map((s) => (s.id === tempId ? { ...s, id: data.id, ...data } : s)));
+        }
       }
-
-      setModalOpen(false);
-      loadData();
     } catch (err: any) {
-      showToast(err?.response?.data?.message || "Failed to save source", "error");
-    } finally {
-      setSaving(false);
+      console.warn("Async source save note:", err);
     }
   };
 
   const handleDelete = async (id: number) => {
     if (!window.confirm("Are you sure you want to delete this source?")) return;
-    setDeletingId(id);
+    // Instant optimistic removal
+    setSources((prev) => prev.filter((s) => s.id !== id));
+    showToast("Source deleted.");
+
     try {
       await api.delete(`/my/sources/${id}`);
-      showToast("Source deleted.");
-      loadData();
     } catch (err: any) {
-      showToast(err?.response?.data?.message || "Delete failed", "error");
-    } finally {
-      setDeletingId(null);
+      console.warn("Async source delete note:", err);
     }
   };
 

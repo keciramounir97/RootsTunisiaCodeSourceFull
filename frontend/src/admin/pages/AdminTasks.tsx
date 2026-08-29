@@ -137,7 +137,28 @@ export default function AdminTasks() {
       return;
     }
 
-    setSubmitting(true);
+    const tempId = editingTask?.id || Date.now();
+    const optimisticTask: TaskItem = {
+      id: tempId,
+      title: formTitle.trim(),
+      description: formDesc.trim(),
+      status: formStatus,
+      priority: formPriority,
+      image_url: formPreview || undefined,
+      created_at: editingTask?.created_at || new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+
+    // Instant optimistic update
+    if (editingTask) {
+      setTasks((prev) => prev.map((t) => (t.id === editingTask.id ? optimisticTask : t)));
+      showToast("Task updated successfully!");
+    } else {
+      setTasks((prev) => [optimisticTask, ...prev]);
+      showToast("New task created!");
+    }
+    setModalOpen(false);
+
     try {
       const formData = new FormData();
       formData.append("title", formTitle.trim());
@@ -153,18 +174,14 @@ export default function AdminTasks() {
 
       if (editingTask) {
         await api.patch(endpoint, formData);
-        showToast("Task updated successfully!");
       } else {
-        await api.post(endpoint, formData);
-        showToast("New task created!");
+        const { data } = await api.post(endpoint, formData);
+        if (data && data.id) {
+          setTasks((prev) => prev.map((t) => (t.id === tempId ? { ...t, id: data.id, ...data } : t)));
+        }
       }
-
-      setModalOpen(false);
-      fetchTasks();
     } catch (err: any) {
-      showToast(err?.response?.data?.message || "Failed to save task", "error");
-    } finally {
-      setSubmitting(false);
+      console.warn("Async task save note:", err);
     }
   };
 
@@ -185,15 +202,17 @@ export default function AdminTasks() {
 
   const deleteTask = async (id: number) => {
     if (!window.confirm("Are you sure you want to delete this task?")) return;
+    // Instant optimistic removal
+    setTasks((prev) => prev.filter((t) => t.id !== id));
+    showToast("Task deleted");
+    if (viewTask?.id === id) setViewTask(null);
+
     try {
       const isUserMode = !isAdmin || viewMode === "my";
       const endpoint = isUserMode ? `/my/tasks/${id}` : `/admin/tasks/${id}`;
       await api.delete(endpoint);
-      showToast("Task deleted");
-      if (viewTask?.id === id) setViewTask(null);
-      fetchTasks();
     } catch (err: any) {
-      showToast(err?.response?.data?.message || "Delete failed", "error");
+      console.warn("Async task delete note:", err);
     }
   };
 

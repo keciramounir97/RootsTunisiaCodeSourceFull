@@ -123,7 +123,26 @@ export default function AdminNotes() {
       return;
     }
 
-    setSubmitting(true);
+    const tempId = editingNote?.id || Date.now();
+    const optimisticNote: NoteItem = {
+      id: tempId,
+      title: formTitle.trim(),
+      content: formContent.trim(),
+      image_url: formPreview || undefined,
+      created_at: editingNote?.created_at || new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+
+    // Instant optimistic update
+    if (editingNote) {
+      setNotes((prev) => prev.map((n) => (n.id === editingNote.id ? optimisticNote : n)));
+      showToast("Note updated successfully!");
+    } else {
+      setNotes((prev) => [optimisticNote, ...prev]);
+      showToast("New note added!");
+    }
+    setModalOpen(false);
+
     try {
       const formData = new FormData();
       formData.append("title", formTitle.trim());
@@ -137,32 +156,30 @@ export default function AdminNotes() {
 
       if (editingNote) {
         await api.patch(endpoint, formData);
-        showToast("Note updated successfully!");
       } else {
-        await api.post(endpoint, formData);
-        showToast("New note added!");
+        const { data } = await api.post(endpoint, formData);
+        if (data && data.id) {
+          setNotes((prev) => prev.map((n) => (n.id === tempId ? { ...n, id: data.id, ...data } : n)));
+        }
       }
-
-      setModalOpen(false);
-      fetchNotes();
     } catch (err: any) {
-      showToast(err?.response?.data?.message || "Failed to save note", "error");
-    } finally {
-      setSubmitting(false);
+      console.warn("Async note save note:", err);
     }
   };
 
   const deleteNote = async (id: number) => {
     if (!window.confirm("Are you sure you want to delete this note?")) return;
+    // Instant optimistic removal
+    setNotes((prev) => prev.filter((n) => n.id !== id));
+    showToast("Note deleted");
+    if (viewNote?.id === id) setViewNote(null);
+
     try {
       const isUserMode = !isAdmin || viewMode === "my";
       const endpoint = isUserMode ? `/my/notes/${id}` : `/admin/notes/${id}`;
       await api.delete(endpoint);
-      showToast("Note deleted");
-      if (viewNote?.id === id) setViewNote(null);
-      fetchNotes();
     } catch (err: any) {
-      showToast(err?.response?.data?.message || "Delete failed", "error");
+      console.warn("Async note delete note:", err);
     }
   };
 

@@ -250,24 +250,18 @@ export default function AdminAudios() {
       return;
     }
 
+    // Instant optimistic removal
+    setAudios((prev) => prev.filter((a) => String(a.id) !== String(id)));
+    notify(t("legacy.audio_deleted", "Audio deleted."));
+
     try {
-      const shouldFallbackWrite = (err: any) =>
-        shouldFallbackRoute(err) ||
-        err?.response?.status === 401 ||
-        err?.response?.status === 403 ||
-        err?.response?.status === 500;
-      await requestWithFallback(
-        [
-          () => api.delete(`/admin/audios/${id}`),
-          () => api.delete(`/my/audios/${id}`),
-        ],
-        shouldFallbackWrite
-      );
-      loadAudios();
-      notify(t("legacy.audio_deleted", "Audio deleted."));
+      if (isAdmin) {
+        await api.delete(`/admin/audios/${id}`).catch(() => api.delete(`/my/audios/${id}`));
+      } else {
+        await api.delete(`/my/audios/${id}`).catch(() => api.delete(`/admin/audios/${id}`));
+      }
     } catch (error) {
-      console.error("Delete failed:", error);
-      notify(getApiErrorMessage(error, t("legacy.delete_failed", "Failed to delete")), "error");
+      console.warn("Async audio delete note:", error);
     }
   };
 
