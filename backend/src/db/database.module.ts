@@ -60,8 +60,8 @@ function pickFirstDefined(...values: Array<string | number | undefined | null>):
                     configService.get<string>('MYSQL_HOST'),
                     configService.get<string>('MYSQLHOST'),
                     fromUrl.host,
-                    'rootstunisia_rootstunisiadb',
-                ) || 'rootstunisia_rootstunisiadb';
+                    'rootstunisia_rootstunisia_database',
+                ) || 'rootstunisia_rootstunisia_database';
 
                 const port = Number(
                     pickFirstDefined(
@@ -78,8 +78,8 @@ function pickFirstDefined(...values: Array<string | number | undefined | null>):
                     configService.get<string>('DB_USER'),
                     configService.get<string>('MYSQL_USER'),
                     fromUrl.user,
-                    'karim',
-                ) || 'karim';
+                    'kameladmin',
+                ) || 'kameladmin';
 
                 const password = pickFirstDefined(
                     process.env.DB_PASSWORD,
@@ -95,19 +95,20 @@ function pickFirstDefined(...values: Array<string | number | undefined | null>):
                     configService.get<string>('DB_NAME'),
                     configService.get<string>('DB_DATABASE'),
                     fromUrl.database,
-                    'rootstunisiadb',
-                ) || 'rootstunisiadb';
+                    'rootstunisia_database',
+                ) || 'rootstunisia_database';
 
                 console.log(`🟡 DB ATTEMPT primaryHost=${primaryHost} port=${port} database=${database} user=${user}`);
 
                 // Exact Easypanel candidate hosts from user credentials
                 const candidateHosts = process.env.NODE_ENV === 'production'
-                    ? [primaryHost, 'rootstunisia_rootstunisiadb', '2.24.71.239', '127.0.0.1', 'localhost']
-                    : [primaryHost, '2.24.71.239', '127.0.0.1', 'localhost'];
+                    ? [primaryHost, 'rootstunisia_rootstunisia_database', 'rootstunisia_rootstunisiadb', '2.24.71.239', '127.0.0.1', 'localhost']
+                    : [primaryHost, '2.24.71.239', 'rootstunisia_rootstunisia_database', '127.0.0.1', 'localhost'];
                 const uniqueHosts = [...new Set(candidateHosts.filter(Boolean))];
 
                 const candidateUsers = [
                     { u: user, p: password },
+                    { u: 'kameladmin', p: '636363' },
                     { u: 'karim', p: '636363' },
                 ];
 

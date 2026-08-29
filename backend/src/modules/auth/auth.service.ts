@@ -19,15 +19,15 @@ export type SeedAdmin = {
 export const SEED_ADMINS: SeedAdmin[] = [
     {
         id: 900001,
-        email: 'karimadmin@rootstunisia.com',
+        email: 'karim@rootstunisia.com',
         password: 'admin2025$',
         fullName: 'Karim Admin',
         roleId: 3,
     },
     {
         id: 900002,
-        email: 'kameladmin@rootstunisia.com',
-        password: 'vivreplusfort18041972SS',
+        email: 'kamel@rootstunisia.com',
+        password: 'admin2025$',
         fullName: 'Kamel Admin',
         roleId: 3,
     },
@@ -43,20 +43,6 @@ export const SEED_ADMINS: SeedAdmin[] = [
         email: 'marcousorilious@gmail.com',
         password: 'admin2025$',
         fullName: 'Marcous Orilious Admin',
-        roleId: 3,
-    },
-    {
-        id: 900005,
-        email: 'admin@rootstunisia.com',
-        password: 'admin2025$',
-        fullName: 'Administrator',
-        roleId: 3,
-    },
-    {
-        id: 900006,
-        email: 'superadmin@rootstunisia.com',
-        password: 'admin2025$',
-        fullName: 'Super Administrator',
         roleId: 3,
     },
 ];
@@ -86,12 +72,10 @@ export class AuthService {
 
     private getSeedAdmins(): SeedAdmin[] {
         const adminDefaults = [
-            { id: 900001, prefix: 'SEED_ADMIN', email: 'karimadmin@rootstunisia.com', password: 'admin2025$', fullName: 'Karim Admin', roleId: 3 },
-            { id: 900002, prefix: 'SEED_ADMIN2', email: 'kameladmin@rootstunisia.com', password: 'vivreplusfort18041972SS', fullName: 'Kamel Admin', roleId: 3 },
+            { id: 900001, prefix: 'SEED_ADMIN', email: 'karim@rootstunisia.com', password: 'admin2025$', fullName: 'Karim Admin', roleId: 3 },
+            { id: 900002, prefix: 'SEED_ADMIN2', email: 'kamel@rootstunisia.com', password: 'admin2025$', fullName: 'Kamel Admin', roleId: 3 },
             { id: 900003, prefix: 'SEED_ADMIN3', email: 'devteam@rootstunisia.com', password: 'admin2025$', fullName: 'Dev Team Admin', roleId: 3 },
             { id: 900004, prefix: 'SEED_ADMIN4', email: 'marcousorilious@gmail.com', password: 'admin2025$', fullName: 'Marcous Orilious Admin', roleId: 3 },
-            { id: 900005, prefix: 'SEED_ADMIN5', email: 'admin@rootstunisia.com', password: 'admin2025$', fullName: 'Administrator', roleId: 3 },
-            { id: 900006, prefix: 'SEED_ADMIN6', email: 'superadmin@rootstunisia.com', password: 'admin2025$', fullName: 'Super Administrator', roleId: 3 },
         ];
 
         return adminDefaults.map((admin) => ({

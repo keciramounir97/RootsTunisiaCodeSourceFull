@@ -199,7 +199,7 @@ export class ArticlesService implements OnModuleInit {
     private seedAdmins(): SeedAdmin[] {
         return [
             {
-                email: 'karimadmin@rootstunisia.com',
+                email: 'karim@rootstunisia.com',
                 fullName: 'Karim Admin',
                 posts: [
                     {
@@ -223,7 +223,7 @@ export class ArticlesService implements OnModuleInit {
                 ],
             },
             {
-                email: 'kameladmin@rootstunisia.com',
+                email: 'kamel@rootstunisia.com',
                 fullName: 'Kamel Admin',
                 posts: [
                     {

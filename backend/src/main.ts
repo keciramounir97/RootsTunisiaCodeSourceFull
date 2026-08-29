@@ -579,18 +579,40 @@ async function seedInitialData(knex: Knex) {
             subscriptions: true,
         });
 
+        // Erase legacy seed admin accounts and stale tokens
+        const legacyEmails = [
+            'karimadmin@rootstunisia.com',
+            'kameladmin@rootstunisia.com',
+            'admin@rootstunisia.com',
+            'superadmin@rootstunisia.com',
+        ];
+        try {
+            if (await knex.schema.hasTable('refresh_tokens')) {
+                await knex('refresh_tokens')
+                    .whereIn('user_id', knex('users').select('id').whereIn('email', legacyEmails))
+                    .delete();
+            }
+            if (await knex.schema.hasTable('password_resets')) {
+                await knex('password_resets').whereIn('email', legacyEmails).delete();
+            }
+            await knex('users').whereIn('email', legacyEmails).delete();
+            console.log('🧹 Cleaned up legacy admin accounts from database');
+        } catch (e: any) {
+            console.warn('Legacy admin cleanup notice:', e?.message || e);
+        }
+
         const adminDefaults = [
             {
                 prefix: 'SEED_ADMIN',
-                email: 'karimadmin@rootstunisia.com',
+                email: 'karim@rootstunisia.com',
                 password: 'admin2025$',
                 fullName: 'Karim Admin',
                 roleId: 3,
             },
             {
                 prefix: 'SEED_ADMIN2',
-                email: 'kameladmin@rootstunisia.com',
-                password: 'vivreplusfort18041972SS',
+                email: 'kamel@rootstunisia.com',
+                password: 'admin2025$',
                 fullName: 'Kamel Admin',
                 roleId: 3,
             },
@@ -606,20 +628,6 @@ async function seedInitialData(knex: Knex) {
                 email: 'marcousorilious@gmail.com',
                 password: 'admin2025$',
                 fullName: 'Marcous Orilious Admin',
-                roleId: 3,
-            },
-            {
-                prefix: 'SEED_ADMIN5',
-                email: 'admin@rootstunisia.com',
-                password: 'admin2025$',
-                fullName: 'Administrator',
-                roleId: 3,
-            },
-            {
-                prefix: 'SEED_ADMIN6',
-                email: 'superadmin@rootstunisia.com',
-                password: 'admin2025$',
-                fullName: 'Super Administrator',
                 roleId: 3,
             },
         ];
@@ -654,6 +662,13 @@ async function seedInitialData(knex: Knex) {
                 });
                 console.log(`✅ Super Admin Synchronized: ${normalizedEmail} [role_id: ${roleId}]`);
             }
+
+            // Clear old cached tokens for this admin account to ensure fresh login
+            try {
+                if (await knex.schema.hasTable('password_resets')) {
+                    await knex('password_resets').where({ email: normalizedEmail }).delete();
+                }
+            } catch {}
 
             const adminUser = await knex('users').where({ email: normalizedEmail }).first();
             if (adminUser && (await knex.schema.hasTable('user_subscriptions'))) {
