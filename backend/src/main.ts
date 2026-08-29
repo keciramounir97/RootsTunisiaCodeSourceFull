@@ -533,6 +533,142 @@ async function ensureCriticalSchema(knex: Knex) {
             console.log('🟡 Schema patch: created suggestions table');
         }
 
+        // 18) persons table (used by Tree builder, Tree count queries, and GEDCOM sync)
+        if (!(await knex.schema.hasTable('persons'))) {
+            await knex.schema.createTable('persons', (t) => {
+                t.increments('id');
+                t.integer('tree_id').unsigned().references('id').inTable('family_trees').onDelete('CASCADE');
+                t.string('name', 255).nullable();
+                t.string('gender', 20).nullable();
+                t.string('birth_date', 100).nullable();
+                t.string('birth_place', 255).nullable();
+                t.string('death_date', 100).nullable();
+                t.string('death_place', 255).nullable();
+                t.text('notes').nullable();
+                t.timestamp('created_at').defaultTo(knex.fn.now());
+                t.timestamp('updated_at').defaultTo(knex.fn.now());
+            });
+            console.log('🟡 Schema patch: created persons table');
+        }
+
+        // 19) person_links table
+        if (!(await knex.schema.hasTable('person_links'))) {
+            await knex.schema.createTable('person_links', (t) => {
+                t.increments('id');
+                t.integer('person_id').unsigned().notNullable().references('id').inTable('persons').onDelete('CASCADE');
+                t.string('label', 255).notNullable();
+                t.text('url').notNullable();
+                t.string('type', 50).notNullable().defaultTo('external');
+                t.integer('document_id').unsigned().nullable().references('id').inTable('documents').onDelete('SET NULL');
+                t.timestamp('created_at').defaultTo(knex.fn.now());
+                t.timestamp('updated_at').defaultTo(knex.fn.now());
+            });
+            console.log('🟡 Schema patch: created person_links table');
+        }
+
+        // 20) activity_logs table
+        if (!(await knex.schema.hasTable('activity_logs'))) {
+            await knex.schema.createTable('activity_logs', (t) => {
+                t.increments('id');
+                t.integer('actor_user_id').unsigned().nullable().references('id').inTable('users').onDelete('SET NULL');
+                t.string('type', 100).notNullable();
+                t.text('description').notNullable();
+                t.timestamp('created_at').defaultTo(knex.fn.now());
+            });
+            console.log('🟡 Schema patch: created activity_logs table');
+        }
+
+        // 21) notes table
+        if (!(await knex.schema.hasTable('notes'))) {
+            await knex.schema.createTable('notes', (t) => {
+                t.increments('id');
+                t.integer('user_id').unsigned().notNullable().references('id').inTable('users').onDelete('CASCADE');
+                t.string('title', 255).notNullable();
+                t.text('content').nullable();
+                t.boolean('is_archived').defaultTo(false);
+                t.string('image_url', 500).nullable();
+                t.timestamp('created_at').defaultTo(knex.fn.now());
+                t.timestamp('updated_at').defaultTo(knex.fn.now());
+            });
+            console.log('🟡 Schema patch: created notes table');
+        }
+
+        // 22) tasks table
+        if (!(await knex.schema.hasTable('tasks'))) {
+            await knex.schema.createTable('tasks', (t) => {
+                t.increments('id');
+                t.integer('user_id').unsigned().notNullable().references('id').inTable('users').onDelete('CASCADE');
+                t.string('title', 255).notNullable();
+                t.text('description').nullable();
+                t.string('status', 50).notNullable().defaultTo('todo');
+                t.string('priority', 50).notNullable().defaultTo('medium');
+                t.dateTime('due_date').nullable();
+                t.integer('assigned_to').unsigned().nullable().references('id').inTable('users').onDelete('SET NULL');
+                t.string('image_url', 500).nullable();
+                t.timestamp('created_at').defaultTo(knex.fn.now());
+                t.timestamp('updated_at').defaultTo(knex.fn.now());
+            });
+            console.log('🟡 Schema patch: created tasks table');
+        }
+
+        // 23) task_comments table
+        if (!(await knex.schema.hasTable('task_comments'))) {
+            await knex.schema.createTable('task_comments', (t) => {
+                t.increments('id');
+                t.integer('task_id').unsigned().notNullable().references('id').inTable('tasks').onDelete('CASCADE');
+                t.integer('user_id').unsigned().notNullable().references('id').inTable('users').onDelete('CASCADE');
+                t.text('comment').notNullable();
+                t.timestamp('created_at').defaultTo(knex.fn.now());
+                t.timestamp('updated_at').defaultTo(knex.fn.now());
+            });
+            console.log('🟡 Schema patch: created task_comments table');
+        }
+
+        // 24) reminders table
+        if (!(await knex.schema.hasTable('reminders'))) {
+            await knex.schema.createTable('reminders', (t) => {
+                t.increments('id');
+                t.integer('user_id').unsigned().notNullable().references('id').inTable('users').onDelete('CASCADE');
+                t.string('title', 255).notNullable();
+                t.text('description').nullable();
+                t.dateTime('remind_at').notNullable();
+                t.boolean('is_completed').defaultTo(false);
+                t.timestamp('created_at').defaultTo(knex.fn.now());
+                t.timestamp('updated_at').defaultTo(knex.fn.now());
+            });
+            console.log('🟡 Schema patch: created reminders table');
+        }
+
+        // 25) account_deletion_requests table
+        if (!(await knex.schema.hasTable('account_deletion_requests'))) {
+            await knex.schema.createTable('account_deletion_requests', (t) => {
+                t.increments('id');
+                t.integer('user_id').unsigned().notNullable().references('id').inTable('users').onDelete('CASCADE');
+                t.text('reason').nullable();
+                t.dateTime('requested_at').nullable();
+                t.string('status', 50).defaultTo('pending');
+                t.timestamp('created_at').defaultTo(knex.fn.now());
+            });
+            console.log('🟡 Schema patch: created account_deletion_requests table');
+        }
+
+        // 26) subscription_payments table
+        if (!(await knex.schema.hasTable('subscription_payments'))) {
+            await knex.schema.createTable('subscription_payments', (t) => {
+                t.increments('id');
+                t.integer('user_id').unsigned().notNullable().references('id').inTable('users').onDelete('CASCADE');
+                t.integer('tier_id').unsigned().nullable().references('id').inTable('subscription_tiers').onDelete('SET NULL');
+                t.decimal('amount', 10, 2).notNullable().defaultTo(0);
+                t.string('currency', 10).defaultTo('EUR');
+                t.string('status', 50).defaultTo('completed');
+                t.string('payment_method', 100).nullable();
+                t.string('transaction_id', 255).nullable();
+                t.timestamp('created_at').defaultTo(knex.fn.now());
+                t.timestamp('updated_at').defaultTo(knex.fn.now());
+            });
+            console.log('🟡 Schema patch: created subscription_payments table');
+        }
+
         console.log('🟢 Schema verification complete');
     } catch (err: any) {
         console.warn('⚠️ ensureCriticalSchema warning:', err?.message || err);

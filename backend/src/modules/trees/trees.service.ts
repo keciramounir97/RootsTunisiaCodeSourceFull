@@ -80,13 +80,14 @@ export class TreesService implements OnModuleInit {
     }
 
     async listPublic() {
+        const hasPersons = await this.knex.schema.hasTable('persons').catch(() => false);
+        const countSelect = hasPersons
+            ? this.knex.raw('(SELECT COUNT(*) FROM persons WHERE persons.tree_id = family_trees.id) as people_count')
+            : this.knex.raw('0 as people_count');
+
         const rows = await Tree.query(this.knex)
             .select(this.backupFlagSelect())
-            .select(
-                this.knex.raw(
-                    '(SELECT COUNT(*) FROM persons WHERE persons.tree_id = family_trees.id) as people_count'
-                )
-            )
+            .select(countSelect)
             .where((builder: any) => builder.where('is_public', true).orWhereNull('is_public'))
             .orderBy('created_at', 'desc')
             .withGraphFetched('owner')
@@ -95,11 +96,14 @@ export class TreesService implements OnModuleInit {
     }
 
     async getPublic(id: number) {
+        const hasPersons = await this.knex.schema.hasTable('persons').catch(() => false);
+        const graph = hasPersons ? '[owner, people]' : 'owner';
+
         const tree = await Tree.query(this.knex)
             .findById(id)
             .select(this.backupFlagSelect())
             .where((builder: any) => builder.where('is_public', true).orWhereNull('is_public'))
-            .withGraphFetched('[owner, people]')
+            .withGraphFetched(graph)
             .modifyGraph('owner', (builder: any) => builder.select('id', 'full_name'));
 
         if (!tree) throw new NotFoundException('Tree not found');
@@ -107,13 +111,14 @@ export class TreesService implements OnModuleInit {
     }
 
     async listByUser(userId: number) {
+        const hasPersons = await this.knex.schema.hasTable('persons').catch(() => false);
+        const countSelect = hasPersons
+            ? this.knex.raw('(SELECT COUNT(*) FROM persons WHERE persons.tree_id = family_trees.id) as people_count')
+            : this.knex.raw('0 as people_count');
+
         const rows = await Tree.query(this.knex)
             .select(this.backupFlagSelect())
-            .select(
-                this.knex.raw(
-                    '(SELECT COUNT(*) FROM persons WHERE persons.tree_id = family_trees.id) as people_count'
-                )
-            )
+            .select(countSelect)
             .where('user_id', userId)
             .orderBy('created_at', 'desc')
             .withGraphFetched('owner')
@@ -122,13 +127,14 @@ export class TreesService implements OnModuleInit {
     }
 
     async listAdmin() {
+        const hasPersons = await this.knex.schema.hasTable('persons').catch(() => false);
+        const countSelect = hasPersons
+            ? this.knex.raw('(SELECT COUNT(*) FROM persons WHERE persons.tree_id = family_trees.id) as people_count')
+            : this.knex.raw('0 as people_count');
+
         const rows = await Tree.query(this.knex)
             .select(this.backupFlagSelect())
-            .select(
-                this.knex.raw(
-                    '(SELECT COUNT(*) FROM persons WHERE persons.tree_id = family_trees.id) as people_count'
-                )
-            )
+            .select(countSelect)
             .orderBy('created_at', 'desc')
             .withGraphFetched('owner')
             .modifyGraph('owner', (builder: any) => builder.select('id', 'full_name', 'email'));
