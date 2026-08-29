@@ -303,27 +303,25 @@ export class AuthService {
             expires_at: this.knex.raw('DATE_ADD(NOW(), INTERVAL 15 MINUTE)'),
         });
 
-        try {
-            await this.mailerService.sendMail({
-                to: normalized,
-                subject: 'Roots Tunisia - Password Reset Code',
-                text: `Hello ${(user as any).full_name || (user as any).fullName || ''},\n\nYour password reset code for Roots Tunisia is: ${code}.\n\nThis code expires in 15 minutes.`,
-                html: `
-                    <div style="font-family: Arial, sans-serif; color: #2c1810; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e5e7eb; border-radius: 8px;">
-                        <h2 style="color: #134E4A; margin-bottom: 16px;">Roots Tunisia Password Reset</h2>
-                        <p>Hello ${(user as any).full_name || (user as any).fullName || 'User'},</p>
-                        <p>You requested a password reset for your account at Roots Tunisia.</p>
-                        <div style="background-color: #f3f4f6; padding: 16px; border-radius: 8px; text-align: center; margin: 24px 0;">
-                            <span style="font-size: 32px; font-weight: bold; letter-spacing: 4px; color: #0d1b2a;">${code}</span>
-                        </div>
-                        <p>Enter this verification code on the password reset page to set a new password. This code will expire in 15 minutes.</p>
-                        <p style="color: #6b7280; font-size: 12px; margin-top: 24px;">If you did not request this, please ignore this email.</p>
+        this.mailerService.sendMail({
+            to: normalized,
+            subject: 'Roots Tunisia - Password Reset Code',
+            text: `Hello ${(user as any).full_name || (user as any).fullName || ''},\n\nYour password reset code for Roots Tunisia is: ${code}.\n\nThis code expires in 15 minutes.`,
+            html: `
+                <div style="font-family: Arial, sans-serif; color: #2c1810; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e5e7eb; border-radius: 8px;">
+                    <h2 style="color: #134E4A; margin-bottom: 16px;">Roots Tunisia Password Reset</h2>
+                    <p>Hello ${(user as any).full_name || (user as any).fullName || 'User'},</p>
+                    <p>You requested a password reset for your account at Roots Tunisia.</p>
+                    <div style="background-color: #f3f4f6; padding: 16px; border-radius: 8px; text-align: center; margin: 24px 0;">
+                        <span style="font-size: 32px; font-weight: bold; letter-spacing: 4px; color: #0d1b2a;">${code}</span>
                     </div>
-                `,
-            });
-        } catch (err: any) {
-            console.error('Failed to send reset email:', err?.message || err);
-        }
+                    <p>Enter this verification code on the password reset page to set a new password. This code will expire in 15 minutes.</p>
+                    <p style="color: #6b7280; font-size: 12px; margin-top: 24px;">If you did not request this, please ignore this email.</p>
+                </div>
+            `,
+        }).catch((err: any) => {
+            console.error('Failed to send reset email asynchronously:', err?.message || err);
+        });
 
         return { message: 'If the email exists, a reset code will be sent.', code: process.env.NODE_ENV === 'development' ? code : undefined };
     }
