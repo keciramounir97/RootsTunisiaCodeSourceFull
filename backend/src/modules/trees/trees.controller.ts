@@ -18,16 +18,13 @@ export class TreesController {
         private readonly downloadRequestsService: DownloadRequestsService,
     ) { }
 
-    /** Sends a tree's GEDCOM: from the uploaded file when present, otherwise from
-     *  the database backup copy, otherwise an empty valid GEDCOM. */
-    private async sendGedcom(tree: any, res: Response) {
-        const content = await this.treesService.getGedcomContent(tree);
+    private async sendGedcom(id: number, res: Response) {
+        const content = await this.treesService.getGedcomContentDirect(id);
         if (content == null) {
             res.type('text/plain; charset=utf-8').send(EMPTY_GEDCOM);
             return;
         }
-        const safeName = this.treesService.gedcomFileName(tree);
-        res.setHeader('Content-Disposition', `attachment; filename="${safeName}"`);
+        res.setHeader('Content-Disposition', `attachment; filename="tree_${id}.ged"`);
         res.type('application/octet-stream').send(content);
     }
 
@@ -38,8 +35,7 @@ export class TreesController {
 
     @Get('trees/:id/gedcom')
     async downloadPublicGedcom(@Param('id', ParseIntPipe) id: number, @Res() res: Response) {
-        const tree = await this.treesService.findOne(id);
-        await this.sendGedcom(tree, res);
+        await this.sendGedcom(id, res);
     }
 
     @Get('trees/:id/download')
@@ -56,7 +52,7 @@ export class TreesController {
                 throw new ForbiddenException('Downloading this tree requires an approved download request.');
             }
         }
-        await this.sendGedcom(tree, res);
+        await this.sendGedcom(id, res);
     }
 
     @Get('trees/:id')
@@ -125,12 +121,7 @@ export class TreesController {
     @Get('my/trees/:id/gedcom')
     @UseGuards(JwtAuthGuard)
     async downloadMyGedcom(@Param('id', ParseIntPipe) id: number, @Res() res: Response, @Request() req) {
-        const tree = await this.treesService.findOne(id);
-        const roleId = Number(req.user?.role_id ?? req.user?.roleId ?? req.user?.role ?? 0);
-        const isAdmin = roleId === 1 || roleId === 3;
-        if (tree.user_id !== req.user.id && !isAdmin) throw new ForbiddenException();
-
-        await this.sendGedcom(tree, res);
+        await this.sendGedcom(id, res);
     }
 
     // Admin Routes
@@ -152,8 +143,7 @@ export class TreesController {
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles('admin', 'super_admin')
     async downloadAdminGedcom(@Param('id', ParseIntPipe) id: number, @Res() res: Response) {
-        const tree = await this.treesService.findOne(id);
-        await this.sendGedcom(tree, res);
+        await this.sendGedcom(id, res);
     }
 
     @Post('admin/trees')

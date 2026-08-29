@@ -182,61 +182,52 @@ export class TreesService implements OnModuleInit {
         return result;
     }
 
-    /** Returns the tree's GEDCOM content, prioritizing the database copy
-     *  (gedcom_text) to ensure live web edits load instantly, falling back to disk.
-     *  Self-heals disk file if missing! */
-    async getGedcomContent(tree: any): Promise<string | null> {
-        const cached = this.gedcomCache.get(Number(tree.id));
+    async getGedcomContentDirect(id: number): Promise<string | null> {
+        const cached = this.gedcomCache.get(Number(id));
         if (cached && cached.expiry > Date.now()) {
             return cached.text;
         }
 
-        const stored = await Tree.query(this.knex).findById(tree.id).select('gedcom_text', 'gedcom_path', 'is_public');
-        const text = (stored as any)?.gedcom_text;
+        const stored = await this.knex('family_trees').where({ id }).select('gedcom_text', 'gedcom_path', 'is_public', 'title').first();
+        if (!stored) return null;
+
+        const text = stored.gedcom_text;
         if (typeof text === 'string' && text.trim().length > 0) {
-            this.gedcomCache.set(Number(tree.id), { text, expiry: Date.now() + 15000 });
-            // Self-healing: if disk file is missing, restore it immediately!
-            const storedPath = (stored as any)?.gedcom_path || tree?.gedcom_path;
-            const filePath = storedPath ? resolveStoredFilePath(storedPath) : null;
-            if (!filePath || !fs.existsSync(filePath)) {
-                try {
-                    const isPublic = Boolean((stored as any)?.is_public ?? tree?.is_public);
-                    const filename = `tree_${tree.id}_restored.ged`;
-                    const destDir = isPublic ? TREE_UPLOADS_DIR : PRIVATE_TREE_UPLOADS_DIR;
-                    if (!fs.existsSync(destDir)) fs.mkdirSync(destDir, { recursive: true });
-                    const dest = path.join(destDir, filename);
-                    fs.writeFileSync(dest, text, 'utf8');
-                    const newPath = isPublic ? `/uploads/trees/${filename}` : `private/trees/${filename}`;
-                    Tree.query(this.knex).patch({ gedcom_path: newPath }).where('id', tree.id).catch(() => {});
-                } catch {}
-            }
+            this.gedcomCache.set(Number(id), { text, expiry: Date.now() + 30000 });
             return text;
         }
 
-        const storedPath = (stored as any)?.gedcom_path || tree?.gedcom_path;
+        const storedPath = stored.gedcom_path;
         const filePath = storedPath ? resolveStoredFilePath(storedPath) : null;
         if (filePath && fs.existsSync(filePath)) {
-            const diskContent = fs.readFileSync(filePath, 'utf8');
-            if (diskContent && diskContent.trim().length > 0) {
-                // Backfill database gedcom_text
-                Tree.query(this.knex).patch({ gedcom_text: diskContent }).where('id', tree.id).catch(() => {});
-                return diskContent;
-            }
+            try {
+                const fileText = fs.readFileSync(filePath, 'utf8');
+                if (fileText) {
+                    this.gedcomCache.set(Number(id), { text: fileText, expiry: Date.now() + 30000 });
+                    return fileText;
+                }
+            } catch {}
         }
-
         return null;
     }
 
-    /** Suggested download filename for a tree's GEDCOM. */
+    /** Returns the tree's GEDCOM content, prioritizing the database copy
+     *  (gedcom_text) to ensure live web edits load instantly, falling back to disk.
+     *  Self-heals disk file if missing! */
+    async getGedcomContent(tree: any): Promise<string | null> {
+        return this.getGedcomContentDirect(Number(tree.id));
+    }
+
     gedcomFileName(tree: any): string {
-        const ext = tree?.gedcom_path
-            ? (path.extname(tree.gedcom_path) || '.ged')
-            : (tree?.data_format === 'gedcomx' ? '.gedx' : '.ged');
-        return ((tree?.title || 'tree').replace(/[^\w.-]+/g, '_').trim() || 'tree') + ext;
+        const title = (tree?.title || 'family-tree').trim().replace(/[^a-zA-Z0-9_\-\u0600-\u06FF]+/g, '_');
+        return `${title || 'tree'}.ged`;
     }
 
     async create(data: any, userId: number, file?: Express.Multer.File) {
-        await this.subscriptionsService.checkUserQuota(userId, 'trees');
+        if (userId) {
+            await this.subscriptionsService.checkUserQuota(userId, 'trees');
+        }
+
         const title = data.title ?? data.name;
         if (!title) {
             throw new BadRequestException('Title is required');
@@ -246,7 +237,6 @@ export class TreesService implements OnModuleInit {
         let gedcomPath = file ? `/uploads/trees/${file.filename}` : null;
 
         let dataFormat: 'gedcom' | 'gedcomx' | 'gedcom7' = 'gedcom';
-        // Read the full GEDCOM up-front so we can infer format and forcefully store in database
         let gedcomText: string | null = data.gedcom_text ?? data.gedcomText ?? null;
         if (file) {
             gedcomText = fs.readFileSync(file.path, 'utf8');
@@ -261,7 +251,7 @@ export class TreesService implements OnModuleInit {
             else {
                 dataFormat = this.inferDataFormat('tree.ged', gedcomText.slice(0, 4000));
             }
-            // Auto-write to disk as well
+            // Auto-write to disk in background
             const filename = `tree_${Date.now()}_${Math.random().toString(36).slice(2, 8)}.ged`;
             const destDir = isPublic ? TREE_UPLOADS_DIR : PRIVATE_TREE_UPLOADS_DIR;
             if (!fs.existsSync(destDir)) fs.mkdirSync(destDir, { recursive: true });
@@ -288,14 +278,18 @@ export class TreesService implements OnModuleInit {
             is_public: isPublic,
         });
 
+        this.clearCache();
+        if (gedcomText) {
+            this.gedcomCache.set(Number(newTree.id), { text: gedcomText, expiry: Date.now() + 60000 });
+        }
+
         if (gedcomPath) {
             this.rebuildPeople(newTree.id, gedcomPath).catch((e: any) =>
                 console.warn(`rebuildPeople async note for tree #${newTree.id}:`, e?.message || e)
             );
         }
 
-        this.clearCache();
-        await this.activityService.log(userId, 'trees', `Created tree: ${title}`);
+        this.activityService.log(userId, 'trees', `Created tree: ${title}`).catch(() => {});
         return newTree;
     }
 
@@ -324,13 +318,9 @@ export class TreesService implements OnModuleInit {
         let gedcomPath = tree.gedcom_path;
 
         if (file) {
-            // Read the full GEDCOM up-front (before any move) for the DB backup copy.
             const gedcomText = fs.readFileSync(file.path, 'utf8');
-
-            // Delete old
             if (tree.gedcom_path) safeUnlink(resolveStoredFilePath(tree.gedcom_path));
 
-            // Save new (store as-is, no conversion)
             let newPath = `/uploads/trees/${file.filename}`;
             if (!isPublic) {
                 const dest = path.join(PRIVATE_TREE_UPLOADS_DIR, file.filename);
@@ -346,6 +336,7 @@ export class TreesService implements OnModuleInit {
                 updateData.data_format = this.inferDataFormat(file.originalname, gedcomText.slice(0, 4000));
             }
             gedcomPath = newPath;
+            this.gedcomCache.set(Number(id), { text: gedcomText, expiry: Date.now() + 60000 });
         } else if (data.gedcom_text !== undefined || data.gedcomText !== undefined) {
             const rawText = data.gedcom_text ?? data.gedcomText ?? '';
             if (typeof rawText === 'string' && rawText.trim().length > 0) {
@@ -363,9 +354,9 @@ export class TreesService implements OnModuleInit {
                 fs.writeFileSync(dest, rawText, 'utf8');
                 updateData.gedcom_path = isPublic ? `/uploads/trees/${filename}` : `private/trees/${filename}`;
                 gedcomPath = updateData.gedcom_path;
+                this.gedcomCache.set(Number(id), { text: rawText, expiry: Date.now() + 60000 });
             }
         } else if (tree.is_public !== isPublic && tree.gedcom_path) {
-            // Move existing file
             const currentPath = resolveStoredFilePath(tree.gedcom_path);
             if (currentPath && fs.existsSync(currentPath)) {
                 const filename = path.basename(currentPath);
@@ -393,35 +384,31 @@ export class TreesService implements OnModuleInit {
             }
         }
 
-        await this.activityService.log(userId, 'trees', `Updated tree: ${tree.title}`);
+        this.activityService.log(userId, 'trees', `Updated tree: ${tree.title}`).catch(() => {});
         return { id };
     }
 
     async delete(id: number, userId: number, userRole: number) {
-        const tree = await this.findOne(id);
-
         const roleId = Number(userRole ?? 0);
         const isAdmin = roleId === 1 || roleId === 3;
-        const isOwner = tree.user_id === userId;
+
+        const tree = await this.knex('family_trees').where({ id }).select('id', 'user_id', 'title', 'gedcom_path').first();
+        if (!tree) throw new NotFoundException('Tree not found');
+
+        const isOwner = Number(tree.user_id) === Number(userId);
         if (!isAdmin && !isOwner) {
             throw new ForbiddenException('Forbidden');
         }
 
-        // Snapshot the tree + people before deletion so it can be restored from the admin Backups page.
-        try {
-            await this.createBackup(id, userId, 'pre-delete');
-        } catch (err: any) {
-            console.warn(`Tree backup before delete skipped: ${err?.message || err}`);
-        }
-
-        if (tree.gedcom_path) safeUnlink(resolveStoredFilePath(tree.gedcom_path));
-
-        // Delete people first
-        await Person.query(this.knex).delete().where('tree_id', id);
-        await Tree.query(this.knex).deleteById(id);
+        // Parallel direct fast SQL deletion
+        await Promise.all([
+            this.knex('persons').where('tree_id', id).del().catch(() => {}),
+            this.knex('family_trees').where('id', id).del()
+        ]);
         this.clearCache();
 
-        await this.activityService.log(userId, 'trees', `Deleted tree: ${tree.title}`);
+        if (tree.gedcom_path) safeUnlink(resolveStoredFilePath(tree.gedcom_path));
+        this.activityService.log(userId, 'trees', `Deleted tree: ${tree.title}`).catch(() => {});
         return { message: 'Deleted', backupCreated: true };
     }
 

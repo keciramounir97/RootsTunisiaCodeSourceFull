@@ -145,7 +145,7 @@ export class IndividualsController {
       source_links: JSON.stringify(body.sourceLinks || []),
       gedcom_text: body.gedcomText || '',
       is_backed_up: body.isBackedUp !== undefined ? Boolean(body.isBackedUp) : true,
-      isPublic: body.isPublic !== undefined ? Boolean(body.isPublic) : true,
+      is_public: body.isPublic !== undefined ? Boolean(body.isPublic) : (body.is_public !== undefined ? Boolean(body.is_public) : true),
     };
 
     const inserted = await Individual.query(this.knex).insert(payload);
