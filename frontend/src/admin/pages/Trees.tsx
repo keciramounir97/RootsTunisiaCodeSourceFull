@@ -85,6 +85,8 @@ export default function Trees() {
   const [treesListDrawerOpen, setTreesListDrawerOpen] = useState(false);
   const [treeFormDrawerOpen, setTreeFormDrawerOpen] = useState(false);
 
+  const [drawerMode, setDrawerMode] = useState<"form" | "code">("form");
+  const [gedcomCodeDraft, setGedcomCodeDraft] = useState("");
   const [saveFormat, setSaveFormat] = useState("gedcom");
   const [treeForm, setTreeForm] = useState({
     title: "",
@@ -571,27 +573,58 @@ export default function Trees() {
     }
   };
 
+  const extractGedcomMetadata = (text: string) => {
+    let title = "";
+    let description = "";
+    let source = "";
+    let docCode = "";
+    const lines = String(text || "").split(/\r?\n/);
+    for (const l of lines) {
+      const line = l.trim();
+      if (!line) continue;
+      if (line.startsWith("1 SOUR ") && !source) {
+        source = line.replace(/^1 SOUR\s+/, "").trim();
+      }
+      if (line.startsWith("1 NOTE ") && !description) {
+        description = line.replace(/^1 NOTE\s+/, "").trim();
+      }
+      if (line.startsWith("1 REFN ") && !docCode) {
+        docCode = line.replace(/^1 REFN\s+/, "").trim();
+      }
+      if ((line.startsWith("1 NAME ") || line.startsWith("2 NAME ")) && !title) {
+        const rawName = line.replace(/^[12] NAME\s+/, "").replace(/\//g, "").trim();
+        if (rawName && rawName.toLowerCase() !== "unknown") {
+          title = `Arbre Famille ${rawName}`;
+        }
+      }
+    }
+    return { title, description, source, docCode };
+  };
+
   const runAutoSave = async () => {
-    if (!canUpdateSelected) return;
-    const pending = autoSavePeopleRef.current;
-    if (!Array.isArray(pending)) return;
+    const pending = autoSavePeopleRef.current || people;
+    if (!Array.isArray(pending) || pending.length === 0) return;
     if (autoSaveInFlightRef.current || saving) return;
 
-    const tree = selectedTree;
-    if (!tree) return;
-
-    const nextTitle = String(treeForm.title || tree.title || "").trim();
-    if (!nextTitle) return;
+    let targetTitle = String(treeForm.title || selectedTree?.title || "").trim();
+    if (!targetTitle) {
+      const firstPerson = pending[0];
+      const pName = firstPerson
+        ? (firstPerson.names?.fr || firstPerson.names?.en || firstPerson.name || `${firstPerson.given || ""} ${firstPerson.surname || ""}`.trim())
+        : "";
+      targetTitle = pName ? `Arbre ${pName}` : `Arbre Généalogique ${new Date().toLocaleDateString()}`;
+      setTreeForm((s) => ({ ...s, title: targetTitle }));
+    }
 
     const nextDescription =
       treeForm.description !== undefined && treeForm.description !== null
         ? String(treeForm.description)
-        : String(tree.description || "");
+        : String(selectedTree?.description || "");
 
     const nextIsPublic =
       treeForm.isPublic !== undefined && treeForm.isPublic !== null
         ? !!treeForm.isPublic
-        : !!tree.isPublic;
+        : (selectedTree ? !!selectedTree.isPublic : !!isAdmin);
 
     autoSaveInFlightRef.current = true;
     setAutoSaving(true);
@@ -606,8 +639,8 @@ export default function Trees() {
           : "gedcomx";
 
       const treeId = await submitTree({
-        treeId: tree.id,
-        title: nextTitle,
+        treeId: selectedTree?.id || null,
+        title: targetTitle,
         description: nextDescription,
         category: treeForm.category || "",
         archiveSource: treeForm.archiveSource || "",
@@ -618,9 +651,9 @@ export default function Trees() {
       });
 
       if (treeId) {
-        applyTreeUpdate({
+        const updatedTreeObj = {
           id: treeId,
-          title: nextTitle,
+          title: targetTitle,
           description: nextDescription,
           category: treeForm.category || "",
           archiveSource: treeForm.archiveSource || "",
@@ -628,15 +661,22 @@ export default function Trees() {
           isPublic: nextIsPublic,
           hasGedcom: true,
           data_format: nextDataFormat,
-        });
+        };
 
-        setAutoSaveNotice(t("legacy.auto_saved", "Auto-saved."));
+        if (!selectedTree) {
+          setSelectedTree(updatedTreeObj);
+          setSelectedScope("my");
+        } else {
+          applyTreeUpdate(updatedTreeObj);
+        }
+
+        setAutoSaveNotice(t("legacy.auto_saved", "Auto-sauvegardé."));
         peopleDirtyRef.current = false;
         autoSavePeopleRef.current = null;
         refreshLists();
       }
     } catch (err) {
-      setSaveError(getApiErrorMessage(err, "Auto-save failed"));
+      console.warn("Auto-save note:", err);
     } finally {
       autoSaveInFlightRef.current = false;
       setAutoSaving(false);
@@ -644,13 +684,12 @@ export default function Trees() {
   };
 
   const scheduleAutoSave = (nextPeople: any[]) => {
-    if (!canUpdateSelected) return;
     peopleDirtyRef.current = true;
     autoSavePeopleRef.current = nextPeople;
     if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
     autoSaveTimerRef.current = setTimeout(() => {
       void runAutoSave();
-    }, 800);
+    }, 600);
   };
 
   const clearCanvas = () => {
@@ -658,6 +697,7 @@ export default function Trees() {
     setSelectedScope(null);
     setPeople([]);
     setGedcomError("");
+    setGedcomCodeDraft("");
     peopleDirtyRef.current = false;
   };
 
@@ -850,6 +890,19 @@ export default function Trees() {
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
+            {/* LIVE AUTO-SAVE BADGE */}
+            {autoSaving ? (
+              <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-teal-500/40 bg-teal-500/10 text-teal-600 dark:text-teal-400 text-xs font-bold animate-pulse">
+                <RefreshCcw className="w-3.5 h-3.5 animate-spin" />
+                <span>{t("legacy.auto_saving", "Sauvegarde automatique...")}</span>
+              </div>
+            ) : autoSaveNotice ? (
+              <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-bold">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+                <span>{autoSaveNotice}</span>
+              </div>
+            ) : null}
+
             {/* BUTTON 1: SEE MY TREES (Opens Trees List Sidebar Drawer) */}
             <button
               type="button"
@@ -1172,21 +1225,56 @@ export default function Trees() {
             className={`w-full sm:w-[460px] h-full max-h-screen flex flex-col ${card} ${inputText} border-l ${border} shadow-2xl animate-in slide-in-from-right duration-300 overflow-hidden`}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* HEADER */}
-            <div className={`flex shrink-0 items-center justify-between border-b ${border} px-6 py-4 ${isDark ? "bg-[#071827]" : "bg-[#f8f5ef]"}`}>
-              <div className="flex items-center gap-2">
-                {selectedTree ? <FileEdit className="w-5 h-5 text-[#0d9488]" /> : <Plus className="w-5 h-5 text-[#0d9488]" />}
-                <h3 className="font-cinzel font-bold text-lg text-[#0c4a6e] dark:text-[#0d9488]">
-                  {selectedTree ? t("legacy.edit_tree", "Edit Tree") : t("legacy.add_tree", "Add New Tree")}
-                </h3>
+            {/* DRAWER HEADER WITH MODE SWITCHER */}
+            <div className={`p-5 border-b ${border} flex flex-col gap-3 bg-[#0d9488]/10`}>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-[#0c4a6e] dark:text-[#0d9488] font-bold">
+                  {selectedTree ? <FileEdit className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
+                  <span className="text-sm">
+                    {canUpdateSelected && selectedTree
+                      ? `${t("legacy.edit_tree", "Edit Tree")}: ${selectedTree.title || "#" + selectedTree.id}`
+                      : t("legacy.create_tree", "Create New Family Tree")}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setTreeFormDrawerOpen(false)}
+                  className="p-1.5 rounded-lg text-stone-400 hover:bg-stone-500/10 hover:text-red-500 transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={() => setTreeFormDrawerOpen(false)}
-                className="p-1.5 rounded-lg text-stone-400 hover:bg-stone-500/10 hover:text-red-500 transition-colors"
-              >
-                <X className="w-5 h-5" />
-              </button>
+
+              {/* TABS: FORMULAIRE vs CODE GEDCOM DIRECT */}
+              <div className="flex items-center p-1 rounded-lg bg-black/10 dark:bg-white/5 border border-[#0d9488]/20 text-xs">
+                <button
+                  type="button"
+                  onClick={() => setDrawerMode("form")}
+                  className={`flex-1 py-1.5 px-3 rounded-md font-bold transition-all text-center ${
+                    drawerMode === "form"
+                      ? "bg-[#0d9488] text-white shadow-sm"
+                      : "text-stone-500 hover:text-[#0d9488]"
+                  }`}
+                >
+                  {t("legacy.form_mode", "1. Formulaire")}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDrawerMode("code");
+                    if (!gedcomCodeDraft && people.length > 0) {
+                      setGedcomCodeDraft(buildGedcom(people));
+                    }
+                  }}
+                  className={`flex-1 py-1.5 px-3 rounded-md font-bold transition-all text-center ${
+                    drawerMode === "code"
+                      ? "bg-[#0d9488] text-white shadow-sm"
+                      : "text-stone-500 hover:text-[#0d9488]"
+                  }`}
+                >
+                  {t("legacy.code_mode", "2. Code GEDCOM Direct")}
+                </button>
+              </div>
             </div>
 
             {/* BODY */}
@@ -1209,7 +1297,77 @@ export default function Trees() {
                     + {t("legacy.create_your_own_tree", "Create Your Own Tree")}
                   </button>
                 </div>
+              ) : drawerMode === "code" ? (
+                /* DIRECT GEDCOM CODE EDITOR TAB */
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-bold text-[#0c4a6e] dark:text-[#0d9488]">
+                      {t("legacy.gedcom_code_editor", "Éditeur de Code GEDCOM (5.5.1 / 7.0)")}
+                    </span>
+                    <span className="text-[11px] opacity-75">
+                      {people.length} {t("legacy.individuals_count", "individus synchronisés")}
+                    </span>
+                  </div>
+                  <textarea
+                    value={gedcomCodeDraft}
+                    onChange={(e) => {
+                      const code = e.target.value;
+                      setGedcomCodeDraft(code);
+                      if (code.trim().length > 10) {
+                        try {
+                          const parsed = parseGedcom(code);
+                          if (Array.isArray(parsed) && parsed.length > 0) {
+                            setPeople(parsed);
+                            const meta = extractGedcomMetadata(code);
+                            if (meta.title && !treeForm.title) {
+                              setTreeForm((s) => ({ ...s, title: meta.title }));
+                            }
+                            if (meta.source && !treeForm.archiveSource) {
+                              setTreeForm((s) => ({ ...s, archiveSource: meta.source }));
+                            }
+                            if (meta.description && !treeForm.description) {
+                              setTreeForm((s) => ({ ...s, description: meta.description }));
+                            }
+                            scheduleAutoSave(parsed);
+                          }
+                        } catch (err) {}
+                      }
+                    }}
+                    placeholder={`0 HEAD\n1 SOUR RootsTunisia\n1 GEDC\n2 VERS 5.5.1\n0 @I1@ INDI\n1 NAME Prénom /Nom/\n1 SEX M\n1 BIRT\n2 DATE 1950\n0 TRLR`}
+                    rows={16}
+                    className={`w-full p-4 font-mono text-[11px] leading-relaxed rounded-xl border ${border} ${inputBg} ${inputText} focus:ring-2 focus:ring-[#0d9488]/40 resize-none shadow-inner`}
+                  />
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        try {
+                          const parsed = parseGedcom(gedcomCodeDraft);
+                          if (Array.isArray(parsed) && parsed.length > 0) {
+                            setPeople(parsed);
+                            const meta = extractGedcomMetadata(gedcomCodeDraft);
+                            if (meta.title) setTreeForm((s) => ({ ...s, title: meta.title }));
+                            if (meta.source) setTreeForm((s) => ({ ...s, archiveSource: meta.source }));
+                            if (meta.description) setTreeForm((s) => ({ ...s, description: meta.description }));
+                            void saveCurrentAsTree();
+                            setSaveSuccess(t("legacy.gedcom_synced", "GEDCOM code parsed and synchronized with canvas!"));
+                          } else {
+                            setSaveError("No valid individual records found in the provided GEDCOM text.");
+                          }
+                        } catch (err) {
+                          setSaveError("Invalid GEDCOM syntax.");
+                        }
+                      }}
+                      className="interactive-btn btn-neu btn-neu--primary px-4 py-2.5 text-xs font-bold flex-1 inline-flex items-center justify-center gap-2 shadow-md"
+                    >
+                      <Save className="w-4 h-4" />
+                      <span>{t("legacy.apply_and_sync", "Appliquer au canevas & Enregistrer")}</span>
+                    </button>
+                  </div>
+                </div>
               ) : (
+                /* FORM MODE TAB */
                 <>
                   <div>
                     <label className="block text-xs font-bold text-[#0c4a6e] dark:text-[#0d9488] mb-1">
@@ -1348,10 +1506,11 @@ export default function Trees() {
                       <button
                         type="button"
                         onClick={() => void deleteTree()}
-                        disabled={deletingTree || saving || loadingGedcom || autoSaving}
-                        className="px-4 py-2.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-bold transition shadow-md"
+                        disabled={saving || deletingTree}
+                        className="interactive-btn btn-neu px-4 py-2.5 text-xs font-semibold text-red-500 border border-red-500/40 hover:bg-red-500/10"
                       >
-                        {deletingTree ? t("legacy.deleting", "Deleting...") : t("legacy.delete", "Delete Tree")}
+                        <Trash2 className="w-4 h-4" />
+                        {deletingTree ? t("legacy.deleting", "Deleting...") : t("legacy.delete", "Delete")}
                       </button>
                     ) : null}
                   </div>

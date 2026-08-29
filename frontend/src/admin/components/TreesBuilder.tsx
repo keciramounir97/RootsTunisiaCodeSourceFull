@@ -2067,6 +2067,8 @@ export default function TreesBuilder({
 
   const [addForm, setAddForm] = useState(() => createEmptyForm());
   const [personModalOpen, setPersonModalOpen] = useState(false);
+  const [personModalMode, setPersonModalMode] = useState<"form" | "code">("form");
+  const [rawIndiDraft, setRawIndiDraft] = useState("");
 
   const applyPeopleUpdate = (updater) => {
     if (!canMutatePeople || readOnly) {
@@ -4949,8 +4951,96 @@ export default function TreesBuilder({
                   </button>
                 </div>
 
-                {/* Modal Body / Scrollable Form */}
+                {/* MODE SWITCHER: FORMULAIRE vs CODE GEDCOM DIRECT */}
+                <div className="px-6 pt-4">
+                  <div className="flex items-center p-1 rounded-lg bg-black/10 dark:bg-white/5 border border-[#0d9488]/20 text-xs">
+                    <button
+                      type="button"
+                      onClick={() => setPersonModalMode("form")}
+                      className={`flex-1 py-1.5 px-3 rounded-md font-bold transition-all text-center ${
+                        personModalMode === "form"
+                          ? "bg-[#0d9488] text-white shadow-sm"
+                          : "text-stone-500 hover:text-[#0d9488]"
+                      }`}
+                    >
+                      {t("legacy.form_mode", "1. Formulaire Individu")}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPersonModalMode("code")}
+                      className={`flex-1 py-1.5 px-3 rounded-md font-bold transition-all text-center ${
+                        personModalMode === "code"
+                          ? "bg-[#0d9488] text-white shadow-sm"
+                          : "text-stone-500 hover:text-[#0d9488]"
+                      }`}
+                    >
+                      {t("legacy.code_mode", "2. Code GEDCOM Direct (INDI)")}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Modal Body */}
                 <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
+                  {personModalMode === "code" ? (
+                    <div className="space-y-4">
+                      <div>
+                        <label className="text-xs font-bold text-[#0c4a6e] dark:text-[#0d9488] mb-1 block">
+                          {t("legacy.paste_indi_gedcom", "Coller ou écrire le code GEDCOM de l'individu (INDI)")}
+                        </label>
+                        <p className="text-[11px] opacity-75 mb-2">
+                          {t("legacy.paste_indi_hint", "Le système extrait automatiquement le nom, prénom, genre, dates de naissance/décès et liens de parenté.")}
+                        </p>
+                        <textarea
+                          value={rawIndiDraft}
+                          onChange={(e) => setRawIndiDraft(e.target.value)}
+                          placeholder={`0 @I1@ INDI\n1 NAME Prénom /Nom/\n1 SEX M\n1 BIRT\n2 DATE 1950\n2 PLAC Tunis\n1 DEAT\n2 DATE 2010\n1 NOTE Recherche historique`}
+                          rows={12}
+                          className={`w-full p-4 font-mono text-xs rounded-xl border ${border} ${inputBg} ${inputText} focus:ring-2 focus:ring-[#0d9488]/40 resize-none`}
+                        />
+                      </div>
+
+                      <div className="flex justify-end gap-3 pt-4 border-t border-[#0d9488]/20">
+                        <button
+                          type="button"
+                          onClick={() => setPersonModalOpen(false)}
+                          className="interactive-btn btn-neu px-5 py-2.5 text-sm"
+                        >
+                          {t("legacy.cancel", "Cancel")}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (!rawIndiDraft.trim()) return;
+                            try {
+                              const parsed = parseGedcom(rawIndiDraft);
+                              if (Array.isArray(parsed) && parsed.length > 0) {
+                                applyPeopleUpdate((prev) => {
+                                  const existingIds = new Set(prev.map((p) => String(p.id)));
+                                  const newPeople = parsed.map((p) => {
+                                    if (existingIds.has(String(p.id))) {
+                                      return { ...p, id: `I_${Date.now()}_${Math.random().toString(36).slice(2, 6)}` };
+                                    }
+                                    return p;
+                                  });
+                                  return [...prev, ...newPeople];
+                                });
+                                setPersonModalOpen(false);
+                                setRawIndiDraft("");
+                                notifyPerson(t("legacy.person_added", "Individu(s) ajouté(s) via GEDCOM avec succès!"));
+                              } else {
+                                notifyError("No valid INDI records found in the provided GEDCOM snippet.");
+                              }
+                            } catch (err) {
+                              notifyError("Invalid GEDCOM syntax.");
+                            }
+                          }}
+                          className="interactive-btn btn-neu btn-neu--primary !px-8 !py-2.5 !text-sm"
+                        >
+                          {t("legacy.import_and_add", "Importer et Ajouter à l'Arbre")}
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
                   <form
                     onSubmit={(e) => {
                       addPerson(e);
@@ -5233,6 +5323,7 @@ export default function TreesBuilder({
                       </button>
                     </div>
                   </form>
+                  )}
                 </div>
               </div>
             </div>,

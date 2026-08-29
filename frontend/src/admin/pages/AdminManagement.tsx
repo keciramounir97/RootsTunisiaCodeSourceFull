@@ -47,11 +47,11 @@ interface AdminUser {
 const PRIVILEGE_OPTIONS = [
   { key: "dashboard", label: "Dashboard", Icon: LayoutDashboard },
   { key: "trees", label: "Family Trees", Icon: Network },
+  { key: "individuals", label: "Individuals", Icon: Users },
   { key: "gallery", label: "Gallery (Images)", Icon: Image },
   { key: "audios", label: "Audio Archives", Icon: Music },
   { key: "documents", label: "Documents", Icon: FileText },
   { key: "books", label: "Books", Icon: BookOpen },
-  { key: "articles", label: "Articles", Icon: Newspaper },
   { key: "users", label: "Users", Icon: Users },
   { key: "suggestions", label: "Suggestions", Icon: MessageSquare },
   { key: "approvals", label: "User Approvals", Icon: UserCheck },
