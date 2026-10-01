@@ -37,3 +37,7 @@ Thumbs.db
 uploads/
 tmp/
 scratch/
+
+# Local backend secrets (never commit; configure via host environment variables)
+backend/.env
+
