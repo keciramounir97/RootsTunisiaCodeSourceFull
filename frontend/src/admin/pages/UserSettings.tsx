@@ -196,10 +196,13 @@ export default function UserSettings() {
             </label>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               {[
-                { code: "en", label: "English 🇬🇧" },
                 { code: "fr", label: "Français 🇫🇷" },
+                { code: "en", label: "English 🇬🇧" },
                 { code: "ar", label: "العربية 🇹🇳" },
                 { code: "es", label: "Español 🇪🇸" },
+                { code: "it", label: "Italiano 🇮🇹" },
+                { code: "mt", label: "Malti 🇲🇹" },
+                { code: "eo", label: "Esperanto 🌐" },
               ].map((lang) => (
                 <button
                   key={lang.code}

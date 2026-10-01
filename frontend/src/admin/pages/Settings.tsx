@@ -8,8 +8,11 @@ import { useTranslation } from "../../context/TranslationContext";
 const LANGUAGES = [
   { value: "fr", label: "Français" },
   { value: "en", label: "English" },
-  { value: "ar", label: "Arabic" },
-  { value: "es", label: "Spanish" },
+  { value: "ar", label: "العربية" },
+  { value: "es", label: "Español" },
+  { value: "it", label: "Italiano" },
+  { value: "mt", label: "Malti" },
+  { value: "eo", label: "Esperanto" },
 ];
 
 export default function Settings() {
