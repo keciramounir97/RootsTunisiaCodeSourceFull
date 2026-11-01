@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
-import { Save, Shield, Globe, Bell, Database, UserCircle2 } from "lucide-react";
+import { Save,
+  Coins, Shield, Globe, Bell, Database, UserCircle2 } from "lucide-react";
 import { useThemeStore } from "../../store/theme";
 import { api } from "../../api/client";
 import { useAuth } from "../components/AuthContext";
 import { useTranslation } from "../../context/TranslationContext";
+import { useCurrency } from "../../context/CurrencyContext";
 
 const LANGUAGES = [
   { value: "fr", label: "Français" },
@@ -18,6 +20,7 @@ export default function Settings() {
   const { theme } = useThemeStore();
   const { user, refreshMe } = useAuth();
   const { t } = useTranslation();
+  const { selectedCurrency, setCurrencyCode, currencies } = useCurrency();
   const isDark = theme === "dark";
   const isAdmin = user?.role === 1 || user?.role === 3;
 

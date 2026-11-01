@@ -69,4 +69,9 @@ export class MyProfileController {
     async selfDeleteAccount(@Body() body: { password?: string; reason?: string }, @Request() req) {
         return this.usersService.selfDeleteAccount(req.user.id, body.password || '', body.reason);
     }
+
+    @Post('send-email')
+    async sendEmail(@Body() body: { to: string; subject: string; body: string }, @Request() req) {
+        return this.usersService.sendUserEmail(body.to, body.subject, body.body, req.user?.id);
+    }
 }

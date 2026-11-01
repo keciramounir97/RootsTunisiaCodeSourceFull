@@ -132,11 +132,31 @@ export default function Home() {
   const [activeEraIndex, setActiveEraIndex] = useState(5); // Default to Ottoman & Beylical era
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [dbTrees, setDbTrees] = useState<any[]>([]);
+  const [activeSlides, setActiveSlides] = useState<any[]>(slides);
 
   useEffect(() => {
-    const id = setInterval(() => setActive((i) => (i + 1) % slides.length), 6000);
-    return () => clearInterval(id);
+    try {
+      const cached = localStorage.getItem("hero_diaporama_slides");
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setActiveSlides(
+            parsed.map((p) => ({
+              image: p.image_url || p.imageUrl,
+              label: p.description?.trim() ? p.description : "",
+              labelKey: p.labelKey || "",
+            }))
+          );
+        }
+      }
+    } catch {}
   }, []);
+
+  useEffect(() => {
+    if (!activeSlides.length) return;
+    const id = setInterval(() => setActive((i) => (i + 1) % activeSlides.length), 6000);
+    return () => clearInterval(id);
+  }, [activeSlides.length]);
 
   useEffect(() => {
     (async () => {
@@ -199,11 +219,11 @@ export default function Home() {
       {/* Hero slider (Diaporama) */}
       <section className="w-full px-4 pt-4 sm:px-6 lg:px-8">
         <div className="frame-gold relative mx-auto max-w-7xl overflow-hidden rounded-md min-h-[460px] sm:min-h-[540px] lg:min-h-[600px] flex items-center justify-center">
-          {slides.map((s, i) => (
+          {activeSlides.map((s, i) => (
             <img
-              key={s.labelKey}
+              key={s.labelKey || s.image || i}
               src={s.image}
-              alt={`${t(s.labelKey)}, ${t("tunisia")}`}
+              alt={s.label || (s.labelKey ? t(s.labelKey) : "Roots Tunisia")}
               width={1600}
               height={1000}
               className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-1000 ${
@@ -217,7 +237,7 @@ export default function Home() {
           <button
             type="button"
             aria-label={t("previous")}
-            onClick={() => setActive((i) => (i - 1 + slides.length) % slides.length)}
+            onClick={() => setActive((i) => (i - 1 + activeSlides.length) % activeSlides.length)}
             className="absolute start-3 top-1/2 -translate-y-1/2 z-20 hidden sm:flex h-10 w-10 items-center justify-center rounded-full border border-white/40 bg-black/45 !text-white hover:bg-[#d9a441] hover:!text-[#1f160f] hover:border-[#d9a441] transition-colors cursor-pointer"
           >
             <ChevronLeft className={`h-5 w-5 ${isRtl ? "rotate-180" : ""}`} />
@@ -225,7 +245,7 @@ export default function Home() {
           <button
             type="button"
             aria-label={t("next")}
-            onClick={() => setActive((i) => (i + 1) % slides.length)}
+            onClick={() => setActive((i) => (i + 1) % activeSlides.length)}
             className="absolute end-3 top-1/2 -translate-y-1/2 z-20 hidden sm:flex h-10 w-10 items-center justify-center rounded-full border border-white/40 bg-black/45 !text-white hover:bg-[#d9a441] hover:!text-[#1f160f] hover:border-[#d9a441] transition-colors cursor-pointer"
           >
             <ChevronRight className={`h-5 w-5 ${isRtl ? "rotate-180" : ""}`} />

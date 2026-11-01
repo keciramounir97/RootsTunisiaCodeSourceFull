@@ -65,6 +65,14 @@ export class DownloadRequestsService implements OnModuleInit {
                 table.index(['status']);
             });
         }
+        try {
+            const hasReason = await this.knex.schema.hasColumn('download_requests', 'reason');
+            if (!hasReason) {
+                await this.knex.schema.alterTable('download_requests', (t: any) => {
+                    t.text('reason').nullable();
+                });
+            }
+        } catch {}
     }
 
     private async sendUserEmail(to: string, subject: string, html: string, text: string) {
@@ -104,10 +112,11 @@ export class DownloadRequestsService implements OnModuleInit {
                 'download_requests.*',
                 'requester.full_name as requesterName',
                 'requester.email as requesterEmail',
+                'requester.phone_number as requesterPhone',
             );
     }
 
-    async createRequest(contentType: string, contentId: number, requesterId: number) {
+    async createRequest(contentType: string, contentId: number, requesterId: number, reason?: string) {
         this.assertValidContentType(contentType);
         const meta = await this.getContentMeta(contentType, contentId);
 
@@ -129,6 +138,7 @@ export class DownloadRequestsService implements OnModuleInit {
             content_created_at: meta.createdAt,
             owner_id: meta.ownerId,
             requester_id: requesterId,
+            reason: reason ? String(reason).trim() : null,
             status: 'pending',
             requested_at: new Date().toISOString().slice(0, 19).replace('T', ' '),
         });

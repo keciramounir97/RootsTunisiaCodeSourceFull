@@ -12,7 +12,7 @@ export class DownloadRequestsController {
 
     @Post('download-requests')
     async create(@Body() body: CreateDownloadRequestDto, @Request() req) {
-        return this.downloadRequestsService.createRequest(body.contentType, body.contentId, req.user.id);
+        return this.downloadRequestsService.createRequest(body.contentType, body.contentId, req.user.id, body.reason);
     }
 
     @Get('download-requests/mine')

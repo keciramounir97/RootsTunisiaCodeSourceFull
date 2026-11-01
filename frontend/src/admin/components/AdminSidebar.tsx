@@ -7,6 +7,7 @@ import { useAuth } from "./AuthContext";
 import { Logo } from "../../components/site/Logo";
 import {
   LayoutDashboard,
+  SlidersHorizontal,
   Layout,
   Network,
   Image,
@@ -59,37 +60,43 @@ const links = [
   { to: "/admin/notes", labelKey: "notes", Icon: StickyNote },
   // 8. Gallery
   { to: "/admin/gallery", labelKey: "gallery", Icon: Image },
-  // 9. Audio
+  // 9. Diaporama (Hero section banner selector & aspect ratio check)
+  { to: "/admin/diaporama", labelKey: "diaporama", Icon: SlidersHorizontal },
+  // 10. Audio
   { to: "/admin/audios", labelKey: "audios", Icon: Music },
-  // 10. Documents
+  // 11. Documents
   { to: "/admin/documents", labelKey: "documents", Icon: FileText },
-  // 11. Books
+  // 12. Books
   { to: "/admin/books", labelKey: "books", Icon: BookOpen },
-  // 12. Articles
+  // 13. Articles
   { to: "/admin/articles", labelKey: "articles", Icon: Newspaper },
-  // 13. Users
+  // 14. Users
   { to: "/admin/users", labelKey: "users", Icon: Users },
-  // 14. Admins (create & assign pages)
+  // 15. Admins (create & assign pages)
   { to: "/admin/admins", labelKey: "admins", Icon: Shield },
-  // 15. Super Admins
+  // 16. Super Admins
   { to: "/admin/super-admins", labelKey: "super_admins", Icon: Crown },
-  // 16. Contact
+  // 17. Contact
   { to: "/admin/contact-messages", labelKey: "contact_messages", Icon: MessageSquare },
-  // 17. Newsletter
+  // 18. Newsletter
   { to: "/admin/newsletter", labelKey: "newsletter", Icon: Mail },
-  // 18. Subscriptions (Unified real limitations & public copy)
+  // 19. Download Requests
+  { to: "/admin/download-requests", labelKey: "download_requests", Icon: Download },
+  // 20. Emails & Modèles
+  { to: "/admin/emails", labelKey: "email_templates", Icon: Mail },
+  // 21. Subscriptions (Unified real limitations & public copy)
   { to: "/admin/subscriptions", labelKey: "subscriptions", Icon: Crown },
-  // 19. Subscription Payments (proof, zoom, ✓/✗, client message)
+  // 22. Subscription Payments (proof, zoom, ✓/✗, client message)
   { to: "/admin/subscription-payments", labelKey: "subscription_payments", Icon: Wallet },
-  // 20. Payment Methods
+  // 23. Payment Methods
   { to: "/admin/payment-settings", labelKey: "payment_settings", Icon: Wallet },
-  // 21. Taux de Change
+  // 24. Taux de Change
   { to: "/admin/currencies", labelKey: "currencies_exchange", Icon: Coins },
-  // 22. Gestion du Contenu Juridique
+  // 25. Gestion du Contenu Juridique
   { to: "/admin/legal-content", labelKey: "legal_content", Icon: Scale },
-  // 23. Page Named Content (choose page & section to edit public content)
+  // 26. Page Named Content (choose page & section to edit public content)
   { to: "/admin/content", labelKey: "public_content_manager", Icon: Layout },
-  // 24. Settings
+  // 27. Settings
   { to: "/admin/settings", labelKey: "settings", Icon: Settings },
 ];
 
@@ -102,6 +109,7 @@ const labelFallbacks: Record<string, string> = {
   tasks: "مهام البحث (Mes Tâches)",
   notes: "الملاحظات ومراجع الأرشيف (Notes & Références)",
   gallery: "المعرض التراثي (Galerie)",
+  diaporama: "ديابوراما الواجهة (Hero Diaporama)",
   audios: "التسجيلات والروايات الشفوية (Récits Oraux & Audio)",
   documents: "الوثائق وسجلات الأرشيف (Documents & Sijillat)",
   books: "الكتب والمخطوطات (Livres & Manuscrits)",
@@ -111,6 +119,8 @@ const labelFallbacks: Record<string, string> = {
   super_admins: "المشرفون العامون (Super Admins)",
   contact_messages: "رسائل اتصل بنا (Messages de Contact)",
   newsletter: "النشرة البريدية (Newsletter)",
+  download_requests: "طلبات التحميل (Download Requests)",
+  email_templates: "نماذج البريد (Email Models)",
   subscriptions: "باقات الاشتراكات والحدود (Abonnements & Limites)",
   subscription_payments: "إشعارات واعتماد المدفوعات (Paiements & Preuves)",
   payment_settings: "وسائل وطرق الدفع (Moyens de Paiement)",

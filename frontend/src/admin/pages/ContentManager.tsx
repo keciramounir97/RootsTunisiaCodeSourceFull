@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useTranslation } from "../../context/TranslationContext";
 import { api } from "../../api/client";
 import {
@@ -16,7 +16,13 @@ import {
   Globe,
   Layout,
   ExternalLink,
+  Upload,
+  Plus,
+  Trash2,
+  Check,
+  RefreshCw,
 } from "lucide-react";
+import Toast from "../../components/Toast";
 
 interface SectionContent {
   badge: string;
@@ -34,30 +40,40 @@ interface SectionContent {
   stat2Label?: string;
   stat3Number?: string;
   stat3Label?: string;
+  customFields?: { key: string; label: string; value: string }[];
 }
 
+const LANGUAGES = [
+  { code: "ar", label: "العربية (AR)", dir: "rtl" },
+  { code: "fr", label: "Français (FR)", dir: "ltr" },
+  { code: "en", label: "English (EN)", dir: "ltr" },
+  { code: "es", label: "Español (ES)", dir: "ltr" },
+  { code: "it", label: "Italiano (IT)", dir: "ltr" },
+  { code: "mt", label: "Malti (MT)", dir: "ltr" },
+];
+
 const PAGES_CONFIG = [
-  { id: "home", labelKey: "page_home", label: "الصفحة الرئيسية (Home)", path: "/" },
-  { id: "about", labelKey: "page_about", label: "عن المنصة (About Us)", path: "/about" },
-  { id: "periods", labelKey: "page_periods", label: "الحقب التاريخية (Periods)", path: "/periods" },
-  { id: "sources", labelKey: "page_sources", label: "المصادر والأرشيف (Sources & Archives)", path: "/sources" },
-  { id: "gallery", labelKey: "page_gallery", label: "المعرض التراثي (Gallery Hub)", path: "/gallery" },
-  { id: "subscriptions", labelKey: "page_subscriptions", label: "الباقات والاشتراكات (Subscriptions)", path: "/subscriptions" },
-  { id: "contact", labelKey: "page_contact", label: "اتصل بنا (Contact Us)", path: "/contact" },
-  { id: "footer", labelKey: "page_footer", label: "تذييل الموقع (Footer & Links)", path: "/" },
+  { id: "home", label: "الصفحة الرئيسية (Home)", path: "/" },
+  { id: "about", label: "عن المنصة ورسالتها (About Us)", path: "/about" },
+  { id: "periods", label: "الحقب التاريخية (Periods)", path: "/periods" },
+  { id: "sources", label: "المصادر والأرشيف (Sources & Archives)", path: "/sources" },
+  { id: "gallery", label: "المعرض التراثي (Gallery Hub)", path: "/gallery" },
+  { id: "subscriptions", label: "الباقات والاشتراكات (Subscriptions)", path: "/subscriptions" },
+  { id: "contact", label: "اتصل بنا وبيانات الهاتف (Contact Us)", path: "/contact" },
+  { id: "footer", label: "تذييل الموقع وروابط التواصل (Footer)", path: "/" },
 ];
 
 const SECTIONS_CONFIG: Record<string, { id: string; label: string }[]> = {
   home: [
-    { id: "hero", label: "الواجهة الرئيسية (Hero Banner)" },
-    { id: "intro", label: "المقدمة والرسالة (Intro & Mission)" },
+    { id: "hero", label: "الواجهة الرئيسية وعنوان المنصة (Hero Banner)" },
+    { id: "intro", label: "المقدمة والرسالة التراثية (Intro & Mission)" },
     { id: "stats", label: "الإحصائيات والأرقام (Stats Counters)" },
     { id: "cta", label: "دعوة للانضمام والبحث (Call To Action)" },
   ],
   about: [
     { id: "hero", label: "شعار الصفحة والافتتاحية (About Hero)" },
     { id: "vision", label: "الرؤية والهدف الأكاديمي (Vision & Goals)" },
-    { id: "values", label: "المبادئ التوثيقية (Archival Principles)" },
+    { id: "values", label: "المبادئ التوثيقية والنزاهة (Archival Principles)" },
   ],
   periods: [
     { id: "hero", label: "مقدمة الحقب التاريخية (Periods Hero)" },
@@ -65,14 +81,14 @@ const SECTIONS_CONFIG: Record<string, { id: string; label: string }[]> = {
   ],
   sources: [
     { id: "hero", label: "افتتاحية المصادر وسجلات الأرشيف (Sources Hero)" },
-    { id: "guide", label: "دليل الاستشارة والبحث (Consultation Guide)" },
+    { id: "guide", label: "دليل الاستشارة والبحث الأرشيفي (Consultation Guide)" },
   ],
   gallery: [
     { id: "hero", label: "واجهة المعرض والأقسام (Gallery Hub Hero)" },
-    { id: "collections", label: "المجموعات التراثية (Collections Overview)" },
+    { id: "collections", label: "المجموعات التراثية والصور (Collections Overview)" },
   ],
   subscriptions: [
-    { id: "hero", label: "رأس صفحة الباقات (Tiers Hero & Subtitle)" },
+    { id: "hero", label: "رأس صفحة الباقات والأسعار (Tiers Hero & Subtitle)" },
     { id: "guarantee", label: "ضمان الأمان والخصوصية (Security Guarantee)" },
     { id: "faq", label: "الأسئلة الشائعة للاشتراك (Pricing FAQ)" },
   ],
@@ -86,128 +102,174 @@ const SECTIONS_CONFIG: Record<string, { id: string; label: string }[]> = {
   ],
 };
 
-const DEFAULT_CONTENT_MAP: Record<string, SectionContent> = {
-  "home_hero": {
-    badge: "ذاكرة تونس الحية عبر العصور",
-    title: "استكشف أصولك التونسية واكتشف تاريخ عائلتك العريق",
-    subtitle: "المنصة الأولى المخصصة للأنساب، السجلات العائلية، والأرشيف التاريخي في تونس والمغرب الكبير.",
-    description: "ابحث في آلاف السجلات التاريخية، ابنِ شجرة عائلتك التفاعلية بصيغة GEDCOM، واستكشف مئات المخطوطات والوثائق الرسمية.",
-    primaryBtnText: "ابدأ البحث الآن",
-    primaryBtnLink: "/gallery",
-    secondaryBtnText: "اكتشف باقات الاشتراك",
-    secondaryBtnLink: "/subscriptions",
-    imageUrl: "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=1200&q=80",
-    stat1Number: "10,000+",
-    stat1Label: "فرد وسجل تاريخي",
-    stat2Number: "500+",
-    stat2Label: "شجرة عائلية موثقة",
-    stat3Number: "100%",
-    stat3Label: "مصادر وأرشيفات رسمية",
-  },
-  "contact_coordinates": {
-    badge: "تواصل مع فريق التوثيق",
-    title: "يسعدنا الرد على استفساراتكم وبحوثكم الأنسابية",
-    subtitle: "فريق من الباحثين والمؤرخين متواجد لمساعدتكم في كل خطوة.",
-    description: "لأي استفسار بخصوص السجلات أو الاشتراكات أو طلبات الدعم، تواصلوا معنا مباشرة.",
-    primaryBtnText: "اتصل بنا هاتفياً",
-    primaryBtnLink: "tel:+9613626082",
-    secondaryBtnText: "مراسلة الدعم",
-    secondaryBtnLink: "/contact",
-    stat1Number: "+961 36 26 082",
-    stat1Label: "رقم الهاتف المعتمد",
-    stat2Number: "24/7",
-    stat2Label: "استقبال الرسائل",
-    stat3Number: "info@rootstunisia.com",
-    stat3Label: "البريد الإلكتروني",
-  },
+const DEFAULT_SECTION_CONTENT: SectionContent = {
+  badge: "ذاكرة تونس الحية عبر العصور",
+  title: "استكشف أصولك التونسية واكتشف تاريخ عائلتك العريق",
+  subtitle: "المنصة الأولى المخصصة للأنساب، السجلات العائلية، والأرشيف التاريخي في تونس والمغرب الكبير.",
+  description: "ابحث في آلاف السجلات التاريخية، ابنِ شجرة عائلتك التفاعلية بصيغة GEDCOM، واستكشف مئات المخطوطات والوثائق الرسمية.",
+  primaryBtnText: "ابدأ البحث الآن",
+  primaryBtnLink: "/gallery",
+  secondaryBtnText: "اكتشف باقات الاشتراك",
+  secondaryBtnLink: "/subscriptions",
+  imageUrl: "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=1200&q=80",
+  stat1Number: "10,000+",
+  stat1Label: "سجل ووثيقة تاريخية",
+  stat2Number: "24",
+  stat2Label: "ولاية مغطاة بالكامل",
+  stat3Number: "3,000+",
+  stat3Label: "شجرة عائلة موثقة",
+  customFields: [],
 };
 
 export default function ContentManager() {
   const { t, isRtl } = useTranslation();
-  const [selectedPage, setSelectedPage] = useState("home");
-  const [selectedSection, setSelectedSection] = useState("hero");
-  const [form, setForm] = useState<SectionContent>(DEFAULT_CONTENT_MAP["home_hero"]);
+  const [selectedPage, setSelectedPage] = useState<string>("home");
+  const [selectedSection, setSelectedSection] = useState<string>("hero");
+  const [selectedLang, setSelectedLang] = useState<string>("ar");
+
+  // Stores all content: key format = `${page}_${section}_${lang}`
+  const [contentStore, setContentStore] = useState<Record<string, SectionContent>>({});
   const [saving, setSaving] = useState(false);
-  const [savedSuccess, setSavedSuccess] = useState(false);
-  const [showPreview, setShowPreview] = useState(true);
+  const [previewMode, setPreviewMode] = useState<"desktop" | "mobile">("desktop");
+  const [showLivePreview, setShowLivePreview] = useState(true);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [toast, setToast] = useState<{ message: string; tone: "success" | "error" }>({
+    message: "",
+    tone: "success",
+  });
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  const contentKey = `${selectedPage}_${selectedSection}`;
+  const currentKey = `${selectedPage}_${selectedSection}_${selectedLang}`;
+  const currentContent: SectionContent = contentStore[currentKey] || {
+    ...DEFAULT_SECTION_CONTENT,
+  };
 
-  // Load saved content from local storage or app settings
+  // Load from API / LocalStorage
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem(`roots_content_${contentKey}`);
-      if (stored) {
-        setForm(JSON.parse(stored));
-        return;
+    (async () => {
+      try {
+        const res = await api.get("/admin/settings");
+        const sData = res.data?.data || res.data || {};
+        if (sData.public_content_store) {
+          const parsed = typeof sData.public_content_store === "string"
+            ? JSON.parse(sData.public_content_store)
+            : sData.public_content_store;
+          setContentStore(parsed);
+          return;
+        }
+      } catch {}
+
+      const local = localStorage.getItem("roots_public_content_store");
+      if (local) {
+        try {
+          setContentStore(JSON.parse(local));
+        } catch {}
       }
-    } catch {}
+    })();
+  }, []);
 
-    if (DEFAULT_CONTENT_MAP[contentKey]) {
-      setForm(DEFAULT_CONTENT_MAP[contentKey]);
-    } else {
-      // Generic template
-      setForm({
-        badge: t("content_default_badge", "قسم معتمد من إدارة المنصة"),
-        title: `${t("content_for", "محتوى")} ${selectedPage} - ${selectedSection}`,
-        subtitle: t("content_default_sub", "عنوان فرعي تعريفي يظهر للزوار في الموقع العام."),
-        description: t("content_default_desc", "النص التفصيلي لهذا القسم يشرح أهدافه ويوضح ميزاته للباحثين والمشتركين."),
-        primaryBtnText: t("learn_more", "المزيد من التفاصيل"),
-        primaryBtnLink: "/",
-        secondaryBtnText: t("contact_us", "اتصل بنا"),
-        secondaryBtnLink: "/contact",
-        imageUrl: "",
+  const updateCurrentContent = (field: keyof SectionContent, value: any) => {
+    setContentStore((prev) => ({
+      ...prev,
+      [currentKey]: {
+        ...(prev[currentKey] || DEFAULT_SECTION_CONTENT),
+        [field]: value,
+      },
+    }));
+  };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingImage(true);
+    const reader = new FileReader();
+    reader.onload = () => {
+      const base64 = reader.result as string;
+      updateCurrentContent("imageUrl", base64);
+      setUploadingImage(false);
+      setToast({
+        message: t("image_upload_success", "تم رفع الصورة وتعيينها لهذا القسم بنجاح!"),
+        tone: "success",
       });
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const addCustomField = () => {
+    const fields = currentContent.customFields || [];
+    const newField = {
+      key: `field_${Date.now()}`,
+      label: "عنصر مخصص جديد",
+      value: "قيمة المحتوى...",
+    };
+    updateCurrentContent("customFields", [...fields, newField]);
+  };
+
+  const updateCustomField = (index: number, key: "label" | "value", val: string) => {
+    const fields = [...(currentContent.customFields || [])];
+    if (fields[index]) {
+      fields[index][key] = val;
+      updateCurrentContent("customFields", fields);
     }
-  }, [contentKey, t]);
+  };
 
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const removeCustomField = (index: number) => {
+    const fields = (currentContent.customFields || []).filter((_, i) => i !== index);
+    updateCurrentContent("customFields", fields);
+  };
+
+  const handleSave = async () => {
     setSaving(true);
-    setSavedSuccess(false);
-
     try {
-      // 1. Local storage instant persistence
-      localStorage.setItem(`roots_content_${contentKey}`, JSON.stringify(form));
+      try {
+        await api.post("/admin/settings", {
+          key: "public_content_store",
+          value: JSON.stringify(contentStore),
+        });
+      } catch {
+        await api.put("/settings", {
+          public_content_store: contentStore,
+        });
+      }
 
-      // 2. Persist to API settings
-      await api.post("/admin/settings", {
-        key: `public_content_${contentKey}`,
-        value: JSON.stringify(form),
-      }).catch(() => {});
-
-      setSavedSuccess(true);
-      setTimeout(() => setSavedSuccess(false), 3000);
-    } catch (err) {
-      console.warn("Failed to persist to backend:", err);
-      setSavedSuccess(true);
+      localStorage.setItem("roots_public_content_store", JSON.stringify(contentStore));
+      setToast({
+        message: t(
+          "content_saved_success",
+          `تم حفظ ونشر تعديلات المحتوى بنجاح لجميع اللغات والصفحات!`
+        ),
+        tone: "success",
+      });
+    } catch {
+      localStorage.setItem("roots_public_content_store", JSON.stringify(contentStore));
+      setToast({
+        message: t(
+          "content_saved_cached",
+          "تم حفظ التعديلات بنجاح محلياً وتحديث الواجهة!"
+        ),
+        tone: "success",
+      });
     } finally {
       setSaving(false);
     }
   };
 
-  const handleReset = () => {
-    const fallback = DEFAULT_CONTENT_MAP[contentKey] || {
-      badge: "قسم معتمد",
-      title: `${selectedPage} - ${selectedSection}`,
-      subtitle: "عنوان فرعي تعريفي",
-      description: "النص التفصيلي لهذا القسم.",
-      primaryBtnText: "المزيد",
-      primaryBtnLink: "/",
-    };
-    setForm(fallback);
-    localStorage.removeItem(`roots_content_${contentKey}`);
-  };
-
-  const currentSections = SECTIONS_CONFIG[selectedPage] || [
-    { id: "hero", label: "الواجهة الرئيسية (Hero)" },
-  ];
-
-  const currentPageObj = PAGES_CONFIG.find((p) => p.id === selectedPage);
+  const availableSections = SECTIONS_CONFIG[selectedPage] || [];
+  const currentLangObj = LANGUAGES.find((l) => l.code === selectedLang) || LANGUAGES[0];
 
   return (
-    <div dir={isRtl ? "rtl" : "ltr"} className="space-y-6 text-start">
-      {/* Header */}
+    <div dir={isRtl ? "rtl" : "ltr"} className="space-y-6 text-start pb-16">
+      {toast.message && (
+        <Toast
+          message={toast.message}
+          tone={toast.tone}
+          onClose={() => setToast({ message: "", tone: "success" })}
+        />
+      )}
+
+      {/* Header Banner */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[var(--gold)]/20">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
@@ -216,12 +278,12 @@ export default function ContentManager() {
             </div>
             <div>
               <h1 className="font-display text-2xl font-bold text-[var(--foreground)]">
-                {t("public_content_manager_title", "إدارة محتوى الصفحات العامة (Content Manager)")}
+                {t("content_manager_title", "إدارة وتعديل محتوى الموقع الكامل (Full Content CMS)")}
               </h1>
               <p className="text-xs text-[var(--muted-foreground)]">
                 {t(
-                  "public_content_manager_subtitle",
-                  "تحكم كامل في نصوص، عناوين، صور وأزرار جميع صفحات وأقسام الموقع العام مع معاينة فورية"
+                  "content_manager_subtitle",
+                  "تحكم كامل في نصوص، صور، روابط، وأزرار كافة الصفحات بجميع اللغات الست مع المعاينة الفورية"
                 )}
               </p>
             </div>
@@ -229,332 +291,478 @@ export default function ContentManager() {
         </div>
 
         <div className="flex items-center gap-2">
-          {currentPageObj && (
-            <a
-              href={currentPageObj.path}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-[var(--gold)]/40 bg-[var(--gold)]/10 text-[var(--gold)] text-xs font-bold hover:bg-[var(--gold)]/20 transition-all"
-            >
-              <span>{t("view_live_page", "معاينة الصفحة الحية")}</span>
-              <ExternalLink className="w-3.5 h-3.5 rtl:rotate-180" />
-            </a>
-          )}
           <button
             type="button"
-            onClick={() => setShowPreview((v) => !v)}
-            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-[var(--border)] bg-[var(--background)] text-xs font-bold text-[var(--foreground)] hover:border-[var(--gold)] transition-colors cursor-pointer"
+            onClick={() => setShowLivePreview(!showLivePreview)}
+            className="px-3.5 py-2 rounded-xl border border-[var(--border)] hover:border-[var(--gold)] text-xs font-semibold text-[var(--foreground)] flex items-center gap-1.5 transition-colors cursor-pointer"
           >
             <Eye className="w-4 h-4 text-[var(--gold)]" />
-            <span>{showPreview ? t("hide_preview", "إخفاء المعاينة") : t("show_preview", "إظهار المعاينة")}</span>
+            <span>{showLivePreview ? t("hide_preview", "إخفاء المعاينة") : t("show_preview", "إظهار المعاينة")}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={saving}
+            className="px-4 py-2 rounded-xl bg-gradient-to-r from-[var(--gold)] to-amber-600 text-black text-xs font-bold flex items-center gap-1.5 shadow-md hover:opacity-95 transition-all cursor-pointer"
+          >
+            <Save className={`w-4 h-4 ${saving ? "animate-spin" : ""}`} />
+            <span>{t("save_all_content", "حفظ ونشر التعديلات")}</span>
           </button>
         </div>
       </div>
 
-      {/* Page Selector Tabs */}
+      {/* Step 1: Page Selector */}
       <div className="space-y-2">
-        <label className="block text-xs font-bold uppercase tracking-wider text-[var(--muted-foreground)]">
-          {t("step_1_choose_page", "1. اختر الصفحة المراد تعديلها:")}
+        <label className="text-xs font-bold uppercase tracking-wider text-[var(--muted-foreground)] block">
+          1. {t("select_target_page", "اختر الصفحة المراد تعديلها:")}
         </label>
-        <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
-          {PAGES_CONFIG.map((p) => {
-            const isSelected = selectedPage === p.id;
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2">
+          {PAGES_CONFIG.map((pg) => {
+            const isSelected = selectedPage === pg.id;
             return (
               <button
-                key={p.id}
-                type="button"
+                key={pg.id}
                 onClick={() => {
-                  setSelectedPage(p.id);
-                  const firstSec = (SECTIONS_CONFIG[p.id] || [{ id: "hero" }])[0].id;
+                  setSelectedPage(pg.id);
+                  const firstSec = SECTIONS_CONFIG[pg.id]?.[0]?.id || "hero";
                   setSelectedSection(firstSec);
                 }}
-                className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer border ${
+                className={`p-2.5 rounded-xl border text-xs font-bold text-center transition-all cursor-pointer ${
                   isSelected
-                    ? "bg-[var(--gold)] text-black border-[var(--gold)] shadow-md"
-                    : "bg-[var(--card)] text-[var(--foreground)] border-[var(--border)] hover:border-[var(--gold)]/50"
+                    ? "border-[var(--gold)] bg-[var(--gold)] text-black shadow-md"
+                    : "border-[var(--border)] bg-[var(--card)] text-[var(--muted-foreground)] hover:border-[var(--gold)]/50 hover:text-[var(--foreground)]"
                 }`}
               >
-                {p.label}
+                {pg.label.split(" ")[0]}
               </button>
             );
           })}
         </div>
       </div>
 
-      {/* Section Selector Pills */}
-      <div className="space-y-2">
-        <label className="block text-xs font-bold uppercase tracking-wider text-[var(--muted-foreground)]">
-          {t("step_2_choose_section", "2. اختر القسم أو العنصر:")}
-        </label>
-        <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
-          {currentSections.map((sec) => {
-            const isSelected = selectedSection === sec.id;
-            return (
-              <button
-                key={sec.id}
-                type="button"
-                onClick={() => setSelectedSection(sec.id)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all cursor-pointer border ${
-                  isSelected
-                    ? "bg-[var(--gold)]/20 text-[var(--gold)] border-[var(--gold)] shadow-sm font-bold"
-                    : "bg-[var(--background)] text-[var(--muted-foreground)] border-[var(--border)] hover:text-[var(--foreground)]"
-                }`}
-              >
+      {/* Step 2: Section & Multi-language Selector */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Section Selector */}
+        <div className="space-y-1.5">
+          <label className="text-xs font-bold uppercase tracking-wider text-[var(--muted-foreground)] block">
+            2. {t("select_target_section", "اختر القسم أو المكون:")}
+          </label>
+          <select
+            value={selectedSection}
+            onChange={(e) => setSelectedSection(e.target.value)}
+            className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--card)] text-xs text-[var(--foreground)] font-semibold outline-none focus:border-[var(--gold)] cursor-pointer"
+          >
+            {availableSections.map((sec) => (
+              <option key={sec.id} value={sec.id}>
                 {sec.label}
-              </button>
-            );
-          })}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Multi-Language Bar */}
+        <div className="space-y-1.5">
+          <label className="text-xs font-bold uppercase tracking-wider text-[var(--gold)] flex items-center gap-1.5">
+            <Globe className="w-3.5 h-3.5" />
+            <span>3. {t("choose_language_tab", "لغة المحتوى (تعديل متزامن لجميع اللغات):")}</span>
+          </label>
+          <div className="flex items-center gap-1.5 p-1 rounded-xl border border-[var(--border)] bg-[var(--card)] overflow-x-auto">
+            {LANGUAGES.map((lang) => {
+              const isSelected = selectedLang === lang.code;
+              return (
+                <button
+                  key={lang.code}
+                  onClick={() => setSelectedLang(lang.code)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all cursor-pointer flex-1 ${
+                    isSelected
+                      ? "bg-[var(--gold)] text-black shadow-sm"
+                      : "text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-black/5 dark:hover:bg-white/5"
+                  }`}
+                >
+                  {lang.label}
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
 
-      {/* Editor & Live Preview Grid */}
-      <div className={`grid grid-cols-1 ${showPreview ? "lg:grid-cols-2" : "grid-cols-1"} gap-6`}>
-        {/* Editor Form */}
-        <form onSubmit={handleSave} className="p-6 rounded-2xl border border-[var(--gold)]/30 bg-[var(--card)] shadow-md space-y-4">
-          <div className="flex items-center justify-between border-b border-[var(--border)] pb-3">
-            <h3 className="font-bold text-sm text-[var(--foreground)] flex items-center gap-2">
-              <Sliders className="w-4 h-4 text-[var(--gold)]" />
-              <span>{t("edit_section_fields", "تعديل حقول القسم")}</span>
-            </h3>
-            <span className="text-[0.68rem] font-mono font-bold text-[var(--gold)] bg-[var(--gold)]/10 px-2 py-0.5 rounded border border-[var(--gold)]/20">
-              {contentKey}
-            </span>
-          </div>
-
-          {/* Badge / Tagline */}
-          <div className="space-y-1">
-            <label className="block text-xs font-bold text-[var(--foreground)]">
-              {t("badge_text", "النص المميز أو الشعار المصغر (Badge / Eyebrow):")}
-            </label>
-            <input
-              type="text"
-              value={form.badge || ""}
-              onChange={(e) => setForm({ ...form, badge: e.target.value })}
-              placeholder={t("placeholder_badge", "مثال: ذاكرة تونس الحية عبر العصور")}
-              className="w-full px-3.5 py-2 rounded-xl border border-[var(--border)] bg-[var(--background)] text-xs text-[var(--foreground)] outline-none focus:border-[var(--gold)] transition-colors"
-            />
-          </div>
-
-          {/* Title */}
-          <div className="space-y-1">
-            <label className="block text-xs font-bold text-[var(--foreground)]">
-              {t("section_headline", "العنوان الرئيسي (Headline):")}
-            </label>
-            <input
-              type="text"
-              value={form.title || ""}
-              onChange={(e) => setForm({ ...form, title: e.target.value })}
-              placeholder={t("placeholder_title", "اكتب العنوان الرئيسي هنا...")}
-              className="w-full px-3.5 py-2 rounded-xl border border-[var(--border)] bg-[var(--background)] text-xs text-[var(--foreground)] font-bold outline-none focus:border-[var(--gold)] transition-colors"
-            />
-          </div>
-
-          {/* Subtitle */}
-          <div className="space-y-1">
-            <label className="block text-xs font-bold text-[var(--foreground)]">
-              {t("section_subtitle", "العنوان الفرعي (Subtitle):")}
-            </label>
-            <input
-              type="text"
-              value={form.subtitle || ""}
-              onChange={(e) => setForm({ ...form, subtitle: e.target.value })}
-              placeholder={t("placeholder_sub", "اكتب العنوان الفرعي...")}
-              className="w-full px-3.5 py-2 rounded-xl border border-[var(--border)] bg-[var(--background)] text-xs text-[var(--foreground)] outline-none focus:border-[var(--gold)] transition-colors"
-            />
-          </div>
-
-          {/* Detailed Paragraph */}
-          <div className="space-y-1">
-            <label className="block text-xs font-bold text-[var(--foreground)]">
-              {t("section_body", "النص التفصيلي والفقرة التوضيحية (Body Text):")}
-            </label>
-            <textarea
-              rows={4}
-              value={form.description || ""}
-              onChange={(e) => setForm({ ...form, description: e.target.value })}
-              placeholder={t("placeholder_desc", "اكتب النص التوضيحي للقسم...")}
-              className="w-full px-3.5 py-2 rounded-xl border border-[var(--border)] bg-[var(--background)] text-xs text-[var(--foreground)] outline-none focus:border-[var(--gold)] transition-colors resize-y leading-relaxed"
-            />
-          </div>
-
-          {/* Buttons Row */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-            <div className="space-y-1">
-              <label className="block text-[0.7rem] font-bold text-[var(--muted-foreground)]">
-                {t("primary_btn_text", "نص الزر الرئيسي (Primary CTA):")}
-              </label>
-              <input
-                type="text"
-                value={form.primaryBtnText || ""}
-                onChange={(e) => setForm({ ...form, primaryBtnText: e.target.value })}
-                className="w-full px-3 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--background)] text-xs text-[var(--foreground)] outline-none focus:border-[var(--gold)]"
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="block text-[0.7rem] font-bold text-[var(--muted-foreground)]">
-                {t("primary_btn_link", "رابط الزر الرئيسي (Link URL):")}
-              </label>
-              <input
-                type="text"
-                value={form.primaryBtnLink || ""}
-                onChange={(e) => setForm({ ...form, primaryBtnLink: e.target.value })}
-                className="w-full px-3 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--background)] text-xs text-[var(--foreground)] outline-none focus:border-[var(--gold)] font-mono"
-              />
-            </div>
-          </div>
-
-          {/* Secondary Buttons Row */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div className="space-y-1">
-              <label className="block text-[0.7rem] font-bold text-[var(--muted-foreground)]">
-                {t("secondary_btn_text", "نص الزر الثانوي (Secondary CTA):")}
-              </label>
-              <input
-                type="text"
-                value={form.secondaryBtnText || ""}
-                onChange={(e) => setForm({ ...form, secondaryBtnText: e.target.value })}
-                className="w-full px-3 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--background)] text-xs text-[var(--foreground)] outline-none focus:border-[var(--gold)]"
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="block text-[0.7rem] font-bold text-[var(--muted-foreground)]">
-                {t("secondary_btn_link", "رابط الزر الثانوي (Link URL):")}
-              </label>
-              <input
-                type="text"
-                value={form.secondaryBtnLink || ""}
-                onChange={(e) => setForm({ ...form, secondaryBtnLink: e.target.value })}
-                className="w-full px-3 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--background)] text-xs text-[var(--foreground)] outline-none focus:border-[var(--gold)] font-mono"
-              />
-            </div>
-          </div>
-
-          {/* Image URL */}
-          <div className="space-y-1 pt-1">
-            <label className="block text-xs font-bold text-[var(--foreground)] flex items-center gap-1.5">
-              <ImageIcon className="w-3.5 h-3.5 text-[var(--gold)]" />
-              <span>{t("image_url", "رابط الصورة المصاحبة (Image / Background URL):")}</span>
-            </label>
-            <input
-              type="text"
-              value={form.imageUrl || ""}
-              onChange={(e) => setForm({ ...form, imageUrl: e.target.value })}
-              placeholder="https://..."
-              className="w-full px-3.5 py-2 rounded-xl border border-[var(--border)] bg-[var(--background)] text-xs text-[var(--foreground)] outline-none focus:border-[var(--gold)] font-mono"
-            />
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex items-center justify-between gap-3 pt-4 border-t border-[var(--border)]">
-            <button
-              type="button"
-              onClick={handleReset}
-              className="px-4 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--background)] text-xs font-bold text-[var(--muted-foreground)] hover:text-rose-500 hover:border-rose-500/40 transition-colors flex items-center gap-1.5 cursor-pointer"
-            >
-              <RotateCcw className="w-3.5 h-3.5" />
-              <span>{t("reset_default", "استعادة الافتراضي")}</span>
-            </button>
-
-            <button
-              type="submit"
-              disabled={saving}
-              className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[var(--gold)] to-amber-500 text-black text-xs font-bold shadow hover:shadow-lg transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
-            >
-              {saving ? (
-                <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
-              ) : (
-                <Save className="w-4 h-4" />
-              )}
-              <span>{t("save_public_content", "حفظ وتطبيق على الموقع")}</span>
-            </button>
-          </div>
-
-          {savedSuccess && (
-            <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-xs font-bold flex items-center gap-2 animate-in fade-in">
-              <CheckCircle2 className="w-4 h-4 shrink-0" />
-              <span>{t("content_saved_notice", "تم حفظ وتحديث محتوى هذا القسم بنجاح ويظهر الآن على الموقع العام!")}</span>
-            </div>
-          )}
-        </form>
-
-        {/* Live Visual Preview Card */}
-        {showPreview && (
-          <div className="p-6 rounded-2xl border border-[var(--gold)]/40 bg-[var(--card)] shadow-lg space-y-4 flex flex-col justify-between">
-            <div className="space-y-4">
-              <div className="flex items-center justify-between border-b border-[var(--border)] pb-3">
-                <h3 className="font-bold text-sm text-[var(--foreground)] flex items-center gap-2">
-                  <Eye className="w-4 h-4 text-[var(--gold)]" />
-                  <span>{t("live_preview_box", "المعاينة الحية التفاعلية للقسم (Live Mock)")}</span>
-                </h3>
-                <span className="text-[0.65rem] text-emerald-500 font-bold flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                  {t("auto_preview", "معاينة مباشرة")}
+      {/* Editor & Preview Split Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* Editor Form Column */}
+        <div className={`${showLivePreview ? "lg:col-span-7" : "lg:col-span-12"} space-y-5`}>
+          <div className="p-5 rounded-2xl border border-[var(--border)] bg-[var(--card)] shadow-sm space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-[var(--border)]">
+              <span className="text-xs font-bold text-[var(--gold)] flex items-center gap-1.5">
+                <Sparkles className="w-4 h-4" />
+                <span>
+                  {t("editing_now", "أنت تقوم بتعديل:")} {selectedPage.toUpperCase()} / {selectedSection.toUpperCase()} ({currentLangObj.label})
                 </span>
+              </span>
+
+              <span className="text-[0.7rem] px-2 py-0.5 rounded bg-[var(--gold)]/10 text-[var(--gold)] font-mono">
+                Key: {currentKey}
+              </span>
+            </div>
+
+            {/* Image Uploader & URL Box */}
+            <div className="p-4 rounded-xl border border-[var(--gold)]/30 bg-[var(--gold)]/5 space-y-3">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold text-[var(--foreground)] flex items-center gap-1.5">
+                  <ImageIcon className="w-4 h-4 text-[var(--gold)]" />
+                  <span>{t("section_image_upload", "صورة هذا القسم (رفع صورة جديدة أو تعديل الرابط):")}</span>
+                </label>
+
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleImageUpload}
+                  accept="image/*"
+                  className="hidden"
+                />
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploadingImage}
+                  className="px-3 py-1.5 rounded-lg bg-[var(--gold)] text-black text-xs font-bold flex items-center gap-1 shadow-sm cursor-pointer"
+                >
+                  <Upload className={`w-3.5 h-3.5 ${uploadingImage ? "animate-bounce" : ""}`} />
+                  <span>{t("upload_image", "رفع صورة من جهازك")}</span>
+                </button>
               </div>
 
-              {/* Mock Rendered Section */}
-              <div className="p-6 rounded-2xl border border-[var(--gold)]/30 bg-[var(--background)] shadow-inner space-y-4 text-start relative overflow-hidden">
-                {form.badge && (
-                  <span className="px-3 py-1 rounded-full text-[0.68rem] font-bold bg-[var(--gold)]/15 text-[var(--gold)] border border-[var(--gold)]/30 inline-block">
-                    {form.badge}
-                  </span>
-                )}
-
-                <h2 className="font-display text-xl sm:text-2xl font-bold text-[var(--foreground)] leading-tight">
-                  {form.title}
-                </h2>
-
-                {form.subtitle && (
-                  <p className="text-xs sm:text-sm font-semibold text-[var(--gold)] leading-relaxed">
-                    {form.subtitle}
-                  </p>
-                )}
-
-                {form.description && (
-                  <p className="text-xs text-[var(--muted-foreground)] leading-relaxed">
-                    {form.description}
-                  </p>
-                )}
-
-                {/* Mock Image Display */}
-                {form.imageUrl && (
-                  <div className="rounded-xl overflow-hidden border border-[var(--gold)]/30 max-h-48">
-                    <img
-                      src={form.imageUrl}
-                      alt="Preview"
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).style.display = "none";
-                      }}
-                    />
+              <div className="flex items-center gap-3">
+                {currentContent.imageUrl ? (
+                  <img
+                    src={currentContent.imageUrl}
+                    alt="Section thumbnail"
+                    className="w-16 h-12 object-cover rounded-lg border border-[var(--gold)]/40 shrink-0"
+                  />
+                ) : (
+                  <div className="w-16 h-12 rounded-lg border border-dashed border-[var(--border)] flex items-center justify-center shrink-0">
+                    <ImageIcon className="w-5 h-5 text-[var(--muted-foreground)]" />
                   </div>
                 )}
+                <input
+                  type="text"
+                  value={currentContent.imageUrl || ""}
+                  onChange={(e) => updateCurrentContent("imageUrl", e.target.value)}
+                  placeholder="https://... رابط الصورة المباشر أو المحملة"
+                  className="w-full px-3 py-2 rounded-xl border border-[var(--border)] bg-[var(--background)] text-xs text-[var(--foreground)] outline-none focus:border-[var(--gold)] font-mono"
+                />
+              </div>
+            </div>
 
-                {/* Mock Buttons */}
-                <div className="flex flex-wrap items-center gap-2.5 pt-2">
-                  {form.primaryBtnText && (
-                    <button
-                      type="button"
-                      className="px-4 py-2 rounded-xl bg-gradient-to-r from-[var(--gold)] to-amber-500 text-black text-xs font-bold shadow"
-                    >
-                      {form.primaryBtnText}
-                    </button>
-                  )}
-                  {form.secondaryBtnText && (
-                    <button
-                      type="button"
-                      className="px-4 py-2 rounded-xl border border-[var(--gold)]/40 text-[var(--gold)] text-xs font-bold"
-                    >
-                      {form.secondaryBtnText}
-                    </button>
-                  )}
+            {/* Core Texts */}
+            <div className="grid grid-cols-1 gap-3.5">
+              <div>
+                <label className="block text-xs font-bold text-[var(--foreground)] mb-1">
+                  {t("badge_text", "النص الترويجي الصغير (Badge / Eyebrow):")}
+                </label>
+                <input
+                  type="text"
+                  dir={currentLangObj.dir}
+                  value={currentContent.badge || ""}
+                  onChange={(e) => updateCurrentContent("badge", e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl border border-[var(--border)] bg-[var(--background)] text-xs text-[var(--foreground)] outline-none focus:border-[var(--gold)]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-[var(--foreground)] mb-1">
+                  {t("main_title", "العنوان الرئيسي (Main Heading):")}
+                </label>
+                <input
+                  type="text"
+                  dir={currentLangObj.dir}
+                  value={currentContent.title || ""}
+                  onChange={(e) => updateCurrentContent("title", e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl border border-[var(--border)] bg-[var(--background)] text-xs font-bold text-[var(--foreground)] outline-none focus:border-[var(--gold)]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-[var(--foreground)] mb-1">
+                  {t("subtitle_text", "العنوان الفرعي (Subtitle / Lead):")}
+                </label>
+                <input
+                  type="text"
+                  dir={currentLangObj.dir}
+                  value={currentContent.subtitle || ""}
+                  onChange={(e) => updateCurrentContent("subtitle", e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl border border-[var(--border)] bg-[var(--background)] text-xs text-[var(--foreground)] outline-none focus:border-[var(--gold)]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-[var(--foreground)] mb-1">
+                  {t("detailed_description", "الوصف التفصيلي (Detailed Body Copy):")}
+                </label>
+                <textarea
+                  rows={4}
+                  dir={currentLangObj.dir}
+                  value={currentContent.description || ""}
+                  onChange={(e) => updateCurrentContent("description", e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl border border-[var(--border)] bg-[var(--background)] text-xs text-[var(--foreground)] outline-none focus:border-[var(--gold)] leading-relaxed"
+                />
+              </div>
+            </div>
+
+            {/* Buttons & Links */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-[var(--border)]">
+              <div className="space-y-1.5">
+                <label className="block text-xs font-bold text-[var(--foreground)]">
+                  {t("primary_button_text", "نص الزر الرئيسي:")}
+                </label>
+                <input
+                  type="text"
+                  dir={currentLangObj.dir}
+                  value={currentContent.primaryBtnText || ""}
+                  onChange={(e) => updateCurrentContent("primaryBtnText", e.target.value)}
+                  className="w-full px-3 py-1.5 rounded-xl border border-[var(--border)] bg-[var(--background)] text-xs text-[var(--foreground)] outline-none focus:border-[var(--gold)]"
+                />
+                <input
+                  type="text"
+                  value={currentContent.primaryBtnLink || ""}
+                  onChange={(e) => updateCurrentContent("primaryBtnLink", e.target.value)}
+                  placeholder="/gallery"
+                  className="w-full px-3 py-1.5 rounded-xl border border-[var(--border)] bg-[var(--background)] text-xs text-[var(--muted-foreground)] outline-none focus:border-[var(--gold)] font-mono"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="block text-xs font-bold text-[var(--foreground)]">
+                  {t("secondary_button_text", "نص الزر الثانوي:")}
+                </label>
+                <input
+                  type="text"
+                  dir={currentLangObj.dir}
+                  value={currentContent.secondaryBtnText || ""}
+                  onChange={(e) => updateCurrentContent("secondaryBtnText", e.target.value)}
+                  className="w-full px-3 py-1.5 rounded-xl border border-[var(--border)] bg-[var(--background)] text-xs text-[var(--foreground)] outline-none focus:border-[var(--gold)]"
+                />
+                <input
+                  type="text"
+                  value={currentContent.secondaryBtnLink || ""}
+                  onChange={(e) => updateCurrentContent("secondaryBtnLink", e.target.value)}
+                  placeholder="/subscriptions"
+                  className="w-full px-3 py-1.5 rounded-xl border border-[var(--border)] bg-[var(--background)] text-xs text-[var(--muted-foreground)] outline-none focus:border-[var(--gold)] font-mono"
+                />
+              </div>
+            </div>
+
+            {/* Stats / Custom Key-Values */}
+            <div className="pt-2 border-t border-[var(--border)] space-y-2">
+              <label className="block text-xs font-bold text-[var(--foreground)]">
+                {t("stats_counters", "أرقام وتعدادات القسم (Stats Counters):")}
+              </label>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                <div className="space-y-1">
+                  <input
+                    type="text"
+                    value={currentContent.stat1Number || ""}
+                    onChange={(e) => updateCurrentContent("stat1Number", e.target.value)}
+                    placeholder="10,000+"
+                    className="w-full px-2.5 py-1.5 rounded-xl border border-[var(--border)] bg-[var(--background)] text-xs font-mono font-bold text-[var(--gold)] outline-none"
+                  />
+                  <input
+                    type="text"
+                    dir={currentLangObj.dir}
+                    value={currentContent.stat1Label || ""}
+                    onChange={(e) => updateCurrentContent("stat1Label", e.target.value)}
+                    placeholder="سجل تاريخي"
+                    className="w-full px-2.5 py-1.5 rounded-xl border border-[var(--border)] bg-[var(--background)] text-xs text-[var(--foreground)] outline-none"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <input
+                    type="text"
+                    value={currentContent.stat2Number || ""}
+                    onChange={(e) => updateCurrentContent("stat2Number", e.target.value)}
+                    placeholder="24"
+                    className="w-full px-2.5 py-1.5 rounded-xl border border-[var(--border)] bg-[var(--background)] text-xs font-mono font-bold text-[var(--gold)] outline-none"
+                  />
+                  <input
+                    type="text"
+                    dir={currentLangObj.dir}
+                    value={currentContent.stat2Label || ""}
+                    onChange={(e) => updateCurrentContent("stat2Label", e.target.value)}
+                    placeholder="ولاية مغطاة"
+                    className="w-full px-2.5 py-1.5 rounded-xl border border-[var(--border)] bg-[var(--background)] text-xs text-[var(--foreground)] outline-none"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <input
+                    type="text"
+                    value={currentContent.stat3Number || ""}
+                    onChange={(e) => updateCurrentContent("stat3Number", e.target.value)}
+                    placeholder="3,000+"
+                    className="w-full px-2.5 py-1.5 rounded-xl border border-[var(--border)] bg-[var(--background)] text-xs font-mono font-bold text-[var(--gold)] outline-none"
+                  />
+                  <input
+                    type="text"
+                    dir={currentLangObj.dir}
+                    value={currentContent.stat3Label || ""}
+                    onChange={(e) => updateCurrentContent("stat3Label", e.target.value)}
+                    placeholder="شجرة عائلة"
+                    className="w-full px-2.5 py-1.5 rounded-xl border border-[var(--border)] bg-[var(--background)] text-xs text-[var(--foreground)] outline-none"
+                  />
                 </div>
               </div>
             </div>
 
-            <div className="p-3 rounded-xl bg-[var(--gold)]/10 border border-[var(--gold)]/20 text-[0.7rem] text-[var(--muted-foreground)] flex items-center justify-between">
-              <span>{t("target_page", "الصفحة المستهدفة")}: <strong>{currentPageObj?.label}</strong></span>
-              <span>{t("target_section", "القسم")}: <strong>{selectedSection}</strong></span>
+            {/* Custom Content Items (Anything and everything!) */}
+            <div className="pt-3 border-t border-[var(--border)] space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold text-[var(--foreground)] flex items-center gap-1.5">
+                  <Plus className="w-3.5 h-3.5 text-[var(--gold)]" />
+                  <span>{t("custom_fields_title", "عناصر ونصوص إضافية مخصصة لهذا القسم:")}</span>
+                </label>
+                <button
+                  type="button"
+                  onClick={addCustomField}
+                  className="px-2.5 py-1 rounded-lg border border-[var(--gold)]/40 hover:bg-[var(--gold)]/10 text-[var(--gold)] text-xs font-bold cursor-pointer"
+                >
+                  + {t("add_custom_field", "إضافة حقل")}
+                </button>
+              </div>
+
+              {(currentContent.customFields || []).map((cf, idx) => (
+                <div key={idx} className="flex items-center gap-2 p-2 rounded-xl bg-[var(--background)] border border-[var(--border)]">
+                  <input
+                    type="text"
+                    value={cf.label}
+                    onChange={(e) => updateCustomField(idx, "label", e.target.value)}
+                    placeholder="اسم العنصر"
+                    className="w-1/3 px-2 py-1 rounded-lg border border-[var(--border)] bg-[var(--card)] text-xs text-[var(--foreground)] font-semibold outline-none"
+                  />
+                  <input
+                    type="text"
+                    dir={currentLangObj.dir}
+                    value={cf.value}
+                    onChange={(e) => updateCustomField(idx, "value", e.target.value)}
+                    placeholder="النص / المحتوى"
+                    className="w-full px-2 py-1 rounded-lg border border-[var(--border)] bg-[var(--card)] text-xs text-[var(--foreground)] outline-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeCustomField(idx)}
+                    className="text-red-500 hover:text-red-700 p-1 rounded"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Live Visual Preview Column */}
+        {showLivePreview && (
+          <div className="lg:col-span-5 sticky top-20 space-y-3">
+            <div className="p-4 rounded-2xl border border-[var(--gold)]/40 bg-[var(--card)] shadow-lg space-y-4">
+              <div className="flex items-center justify-between pb-2 border-b border-[var(--border)] text-xs">
+                <span className="font-bold text-[var(--gold)] flex items-center gap-1.5">
+                  <Eye className="w-4 h-4" />
+                  <span>{t("live_preview_card", "المعاينة الحية الفورية (Live Preview)")}</span>
+                </span>
+                <span className="text-[0.7rem] text-[var(--muted-foreground)]">
+                  اللغة: <strong>{currentLangObj.label}</strong>
+                </span>
+              </div>
+
+              {/* Rendered Component Preview Box */}
+              <div
+                dir={currentLangObj.dir}
+                className="rounded-xl overflow-hidden border border-[var(--border)] bg-[var(--background)] shadow-inner relative"
+              >
+                {/* Background Image / Thumbnail */}
+                {currentContent.imageUrl && (
+                  <div className="relative aspect-video w-full overflow-hidden bg-black/40">
+                    <img
+                      src={currentContent.imageUrl}
+                      alt="Hero preview"
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+                  </div>
+                )}
+
+                <div className="p-5 space-y-3 relative">
+                  {currentContent.badge && (
+                    <span className="inline-block px-2.5 py-1 rounded-full text-[0.7rem] font-bold bg-[var(--gold)]/20 text-[var(--gold)] border border-[var(--gold)]/30">
+                      {currentContent.badge}
+                    </span>
+                  )}
+
+                  <h3 className="text-base font-bold font-display text-[var(--foreground)] leading-snug">
+                    {currentContent.title || "عنوان القسم التجريبي"}
+                  </h3>
+
+                  {currentContent.subtitle && (
+                    <p className="text-xs font-semibold text-[var(--gold)]">
+                      {currentContent.subtitle}
+                    </p>
+                  )}
+
+                  <p className="text-xs text-[var(--muted-foreground)] leading-relaxed">
+                    {currentContent.description || "الوصف والمحتوى التوثيقي لهذا القسم يظهر هنا بشكل فوري..."}
+                  </p>
+
+                  {/* Buttons preview */}
+                  <div className="flex flex-wrap gap-2 pt-2">
+                    {currentContent.primaryBtnText && (
+                      <span className="px-3.5 py-1.5 rounded-lg bg-[var(--gold)] text-black text-xs font-bold shadow-sm inline-block">
+                        {currentContent.primaryBtnText}
+                      </span>
+                    )}
+                    {currentContent.secondaryBtnText && (
+                      <span className="px-3.5 py-1.5 rounded-lg border border-[var(--border)] text-[var(--foreground)] text-xs font-semibold inline-block">
+                        {currentContent.secondaryBtnText}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Stats Counter preview */}
+                  {(currentContent.stat1Number || currentContent.stat2Number) && (
+                    <div className="pt-3 border-t border-[var(--border)] grid grid-cols-3 gap-2 text-center text-xs">
+                      {currentContent.stat1Number && (
+                        <div>
+                          <p className="font-bold text-[var(--gold)] font-mono">{currentContent.stat1Number}</p>
+                          <span className="text-[0.65rem] text-[var(--muted-foreground)]">{currentContent.stat1Label}</span>
+                        </div>
+                      )}
+                      {currentContent.stat2Number && (
+                        <div>
+                          <p className="font-bold text-[var(--gold)] font-mono">{currentContent.stat2Number}</p>
+                          <span className="text-[0.65rem] text-[var(--muted-foreground)]">{currentContent.stat2Label}</span>
+                        </div>
+                      )}
+                      {currentContent.stat3Number && (
+                        <div>
+                          <p className="font-bold text-[var(--gold)] font-mono">{currentContent.stat3Number}</p>
+                          <span className="text-[0.65rem] text-[var(--muted-foreground)]">{currentContent.stat3Label}</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Custom fields preview */}
+                  {(currentContent.customFields || []).length > 0 && (
+                    <div className="pt-2 border-t border-[var(--border)] space-y-1 text-xs">
+                      {currentContent.customFields?.map((f, i) => (
+                        <div key={i} className="flex justify-between text-[0.72rem]">
+                          <span className="text-[var(--muted-foreground)]">{f.label}:</span>
+                          <strong className="text-[var(--foreground)]">{f.value}</strong>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         )}

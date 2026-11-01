@@ -264,4 +264,38 @@ export class UsersService {
 
         return { message: 'Your account and personal data have been completely deleted.' };
     }
+
+    async sendUserEmail(to: string, subject: string, body: string, adminId?: number) {
+        if (!to || !subject || !body) {
+            throw new BadRequestException('Recipient email, subject, and body are required');
+        }
+        const html = `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #d4af37; border-radius: 12px; background: #fffcf7;">
+                <div style="text-align: center; margin-bottom: 24px;">
+                    <h2 style="color: #1f160f; margin: 0; font-family: serif;">جذور تونس | Roots Tunisia</h2>
+                    <p style="color: #d4af37; font-size: 13px; margin: 4px 0 0 0;">منصة التوثيق والأنساب والأرشيف التاريخي</p>
+                </div>
+                <div style="line-height: 1.6; color: #333; font-size: 15px; white-space: pre-line;">
+                    ${body}
+                </div>
+                <hr style="border: none; border-top: 1px solid #e0d8c3; margin: 30px 0 15px 0;" />
+                <div style="text-align: center; font-size: 12px; color: #777;">
+                    <p style="margin: 0;">هذه الرسالة مرسلة من فريق إدارة منصة جذور تونس عبر خادم SMTP.</p>
+                    <p style="margin: 4px 0 0 0;">© ${new Date().getFullYear()} Roots Tunisia. All rights reserved.</p>
+                </div>
+            </div>
+        `;
+        await this.mailerService.sendMail({
+            to,
+            subject,
+            html,
+            text: body,
+        });
+        if (adminId) {
+            try {
+                await this.activityService.log(adminId, 'users', `Sent email to ${to}: "${subject}"`);
+            } catch {}
+        }
+        return { success: true, message: 'Email sent successfully via SMTP' };
+    }
 }

@@ -70,6 +70,76 @@ export default function UsersPage() {
     status: "active",
   });
   const [saving, setSaving] = useState(false);
+  const [emailModalUser, setEmailModalUser] = useState<any>(null);
+  const [emailTemplates, setEmailTemplates] = useState<any[]>([]);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>("");
+  const [emailSubject, setEmailSubject] = useState("");
+  const [emailBody, setEmailBody] = useState("");
+  const [sendingEmail, setSendingEmail] = useState(false);
+
+  const openEmailModal = (userTarget: any) => {
+    setEmailModalUser(userTarget);
+    const tmpls = [
+      {
+        id: "welcome",
+        name: t("tmpl_welcome", "ترحيب بالمستخدم (Welcome & Onboarding)"),
+        subject: `مرحباً بك في منصة جذور تونس يا ${userTarget.fullName || ""}`,
+        body: `عزيزي/عزيزتي ${userTarget.fullName || ""}،\n\nيسعدنا انضمامك إلى منصة "جذور تونس". يمكنك الآن توثيق أصولك وبناء شجرة عائلتك واستكشاف السجلات التاريخية.\n\nمع تحيات إدارة جذور تونس`,
+      },
+      {
+        id: "verification",
+        name: t("tmpl_verification", "تأكيد وتفعيل الحساب (Account Verification)"),
+        subject: "تفعيل وتأكيد حسابك في جذور تونس",
+        body: `مرحباً ${userTarget.fullName || ""}،\n\nيرجى تأكيد بريدك الإلكتروني لتفعيل حسابك بشكل كامل.\n\nمع تحيات إدارة جذور تونس`,
+      },
+      {
+        id: "upgrade",
+        name: t("tmpl_upgrade", "اعتماد وترقية الباقة (Subscription Upgrade)"),
+        subject: "تمت ترقية باقة اشتراكك بنجاح | Roots Tunisia",
+        body: `مرحباً ${userTarget.fullName || ""}،\n\nنود إبلاغك بأنه تم اعتماد ترقية باقة اشتراكك بنجاح، ويمكنك الآن التمتع بجميع المزايا.\n\nشكراً لثقتك بنا،\nإدارة الاشتراكات`,
+      },
+      {
+        id: "custom",
+        name: t("tmpl_custom", "رسالة مخصصة (Custom Message)"),
+        subject: "",
+        body: `مرحباً ${userTarget.fullName || ""}،\n\n`,
+      },
+    ];
+    setEmailTemplates(tmpls);
+    setSelectedTemplateId("welcome");
+    setEmailSubject(tmpls[0].subject);
+    setEmailBody(tmpls[0].body);
+  };
+
+  const handleTemplateChange = (tmplId: string) => {
+    setSelectedTemplateId(tmplId);
+    const tmpl = emailTemplates.find((t) => t.id === tmplId);
+    if (tmpl) {
+      setEmailSubject(tmpl.subject);
+      setEmailBody(tmpl.body);
+    }
+  };
+
+  const handleSendEmail = async () => {
+    if (!emailModalUser?.email || !emailSubject.trim() || !emailBody.trim()) {
+      notify(t("email_fields_required", "يرجى ملء عنوان ونص الرسالة"), "error");
+      return;
+    }
+    setSendingEmail(true);
+    try {
+      await api.post("/admin/send-email", {
+        to: emailModalUser.email,
+        subject: emailSubject.trim(),
+        body: emailBody.trim(),
+      });
+      notify(t("email_sent_success", `تم إرسال البريد الإلكتروني بنجاح عبر SMTP إلى ${emailModalUser.email}`));
+      setEmailModalUser(null);
+    } catch (err: any) {
+      notify(err?.response?.data?.message || t("email_send_failed", "فشل إرسال البريد الإلكتروني"), "error");
+    } finally {
+      setSendingEmail(false);
+    }
+  };
   const [toast, setToast] = useState<{ message: string; tone: "success" | "error" }>({ message: "", tone: "success" });
 
   const notify = useCallback((message: string, tone: "success" | "error" = "success") => {
@@ -442,6 +512,105 @@ export default function UsersPage() {
         )}
       </div>
 
+      {/* Send Email via SMTP Modal */}
+      {emailModalUser && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 backdrop-blur-sm bg-black/60">
+          <div className={`w-full max-w-lg rounded-2xl border ${border} ${card} p-6 shadow-2xl space-y-4 text-start`}>
+            <div className="flex items-center justify-between pb-3 border-b border-[var(--border)]">
+              <div className="flex items-center gap-2">
+                <div className="p-2 rounded-xl bg-[var(--gold)]/20 text-[var(--gold)]">
+                  <Mail className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-base text-[var(--foreground)]">
+                    {t("send_smtp_email_to", "إرسال بريد إلكتروني للمستخدم")}
+                  </h3>
+                  <p className="text-xs text-[var(--muted-foreground)]">
+                    {emailModalUser.fullName} &lt;{emailModalUser.email}&gt;
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEmailModalUser(null)}
+                className="text-[var(--muted-foreground)] hover:text-[var(--foreground)] p-1 rounded-lg cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-semibold text-[var(--foreground)] mb-1">
+                  {t("choose_email_model", "اختر نموذج بريد جاهز (Email Model):")}
+                </label>
+                <select
+                  value={selectedTemplateId}
+                  onChange={(e) => handleTemplateChange(e.target.value)}
+                  className={`w-full px-3 py-2 rounded-xl border ${border} ${inputBg} ${inputText} text-xs outline-none focus:border-[var(--gold)] cursor-pointer`}
+                >
+                  {emailTemplates.map((tmpl) => (
+                    <option key={tmpl.id} value={tmpl.id}>
+                      {tmpl.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-[var(--foreground)] mb-1">
+                  {t("email_subject", "عنوان الرسالة:")}
+                </label>
+                <input
+                  type="text"
+                  value={emailSubject}
+                  onChange={(e) => setEmailSubject(e.target.value)}
+                  className={`w-full px-3 py-2 rounded-xl border ${border} ${inputBg} ${inputText} text-xs outline-none focus:border-[var(--gold)]`}
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-[var(--foreground)] mb-1">
+                  {t("email_content", "محتوى الرسالة (يمكنك تعديلها على الفور):")}
+                </label>
+                <textarea
+                  rows={6}
+                  value={emailBody}
+                  onChange={(e) => setEmailBody(e.target.value)}
+                  className={`w-full px-3 py-2 rounded-xl border ${border} ${inputBg} ${inputText} text-xs outline-none focus:border-[var(--gold)] leading-relaxed`}
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between pt-2 border-t border-[var(--border)]">
+              <span className="text-[0.68rem] text-[var(--muted-foreground)]">
+                SMTP: Hostinger SSL (devteam@rootstunisia.com)
+              </span>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setEmailModalUser(null)}
+                  className="px-4 py-2 rounded-xl border border-[var(--border)] text-xs font-semibold cursor-pointer"
+                >
+                  {t("cancel", "إلغاء")}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleSendEmail}
+                  disabled={sendingEmail}
+                  className="px-4 py-2 rounded-xl bg-[var(--gold)] text-black text-xs font-bold inline-flex items-center gap-1.5 shadow-sm hover:opacity-95 transition-all cursor-pointer disabled:opacity-50"
+                >
+                  <Send className={`w-3.5 h-3.5 ${sendingEmail ? "animate-spin" : ""}`} />
+                  <span>{t("send_via_smtp", "إرسال عبر SMTP")}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      
       {showAdd ? (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 backdrop-blur-sm">
           <div

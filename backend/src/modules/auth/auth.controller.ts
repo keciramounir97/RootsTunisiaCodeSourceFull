@@ -56,4 +56,10 @@ export class AuthController {
     async me(@Request() req) {
         return req.user;
     }
+
+    @Post('verify-account')
+    @HttpCode(200)
+    async verifyAccount(@Body() body: { email: string; code: string }) {
+        return this.authService.verifyAccount(body.email, body.code);
+    }
 }

@@ -1,5 +1,18 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Calendar, Check, Clock, Download, RefreshCw, User, X } from "lucide-react";
+import {
+  Calendar,
+  Check,
+  Clock,
+  Download,
+  RefreshCw,
+  User,
+  X,
+  Mail,
+  Phone,
+  FileText,
+  AlertCircle,
+  HelpCircle,
+} from "lucide-react";
 import { api } from "../../api/client";
 import { getApiErrorMessage } from "../../api/helpers";
 import { useThemeStore } from "../../store/theme";
@@ -19,13 +32,15 @@ type DownloadRequest = {
   processed_at?: string | null;
   requesterName?: string;
   requesterEmail?: string;
+  requesterPhone?: string;
+  reason?: string | null;
 };
 
 const statusOptions: RequestStatus[] = ["pending", "approved", "rejected", "all"];
 
 export default function DownloadRequests() {
   const { theme } = useThemeStore();
-  const { t } = useTranslation();
+  const { t, isRtl } = useTranslation();
   const isDark = theme === "dark";
   const [status, setStatus] = useState<RequestStatus>("pending");
   const [requests, setRequests] = useState<DownloadRequest[]>([]);
@@ -41,7 +56,7 @@ export default function DownloadRequests() {
       accent: isDark ? "text-[#d9a441]" : "text-[#24766f]",
       button: isDark ? "border-white/10 hover:bg-white/10" : "border-[#d8e2ea] hover:bg-[#24766f]/8",
     }),
-    [isDark],
+    [isDark]
   );
 
   const loadRequests = useCallback(async () => {
@@ -51,7 +66,12 @@ export default function DownloadRequests() {
       const { data } = await api.get(`/admin/download-requests?status=${status}`);
       setRequests(Array.isArray(data) ? data : []);
     } catch (err) {
-      setError(getApiErrorMessage(err, t("download_requests_failed", "Failed to load download requests")));
+      setError(
+        getApiErrorMessage(
+          err,
+          t("download_requests_failed", "Failed to load download requests")
+        )
+      );
     } finally {
       setLoading(false);
     }
@@ -68,12 +88,18 @@ export default function DownloadRequests() {
       notifyAdmin(
         data?.message ||
           (action === "approve"
-            ? t("download_request_approved", "Download request approved.")
-            : t("download_request_rejected", "Download request rejected.")),
+            ? t("download_request_approved", "تمت الموافقة على طلب التحميل بنجاح.")
+            : t("download_request_rejected", "تم رفض طلب التحميل."))
       );
       await loadRequests();
     } catch (err) {
-      notifyAdmin(getApiErrorMessage(err, t("download_request_decision_failed", "Failed to update download request")), "error");
+      notifyAdmin(
+        getApiErrorMessage(
+          err,
+          t("download_request_decision_failed", "فشل تحديث حالة طلب التحميل")
+        ),
+        "error"
+      );
     } finally {
       setActionId(null);
     }
@@ -86,118 +112,180 @@ export default function DownloadRequests() {
 
   const contentTypeLabel = (type: string) =>
     ({
-      tree: t("family_tree", "Family Tree"),
-      book: t("books", "Books"),
-      gallery: t("gallery", "Gallery"),
-      audio: t("audios", "Audios"),
-      document: t("documents", "Documents"),
-    })[type] || type;
+      tree: t("family_tree", "شجرة العائلة"),
+      book: t("books", "الكتب والمخطوطات"),
+      gallery: t("gallery", "المعرض والصور"),
+      audio: t("audios", "الأرشيف الصوتي"),
+      document: t("documents", "الوثائق التاريخية"),
+    }[type] || type);
 
   return (
-    <div className={`min-h-screen p-6 ${palette.page}`}>
-      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between mb-6">
+    <div dir={isRtl ? "rtl" : "ltr"} className={`min-h-screen p-6 text-start ${palette.page}`}>
+      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between mb-6 pb-4 border-b border-[var(--gold)]/20">
         <div>
-          <p className={`text-sm uppercase tracking-[0.2em] ${palette.accent}`}>
-            {t("approvals", "Approvals")}
+          <p className={`text-xs uppercase tracking-[0.2em] font-bold ${palette.accent}`}>
+            {t("approvals", "إدارة التنزيلات والموافقات")}
           </p>
-          <h1 className="text-3xl font-bold mt-1">
-            {t("download_requests", "Download Requests")}
+          <h1 className="text-2xl font-bold mt-1 font-display">
+            {t("download_requests_page_title", "طلبات تحميل المحتوى والأرشيف (Download Requests)")}
           </h1>
-          <p className={`mt-2 max-w-2xl ${palette.muted}`}>
-            {t("download_requests_desc",
-              "Review requests to download trees, books, gallery photos, audios, and documents that people don't own.",
+          <p className={`mt-1.5 max-w-2xl text-xs ${palette.muted}`}>
+            {t(
+              "download_requests_desc",
+              "مراجعة طلبات المستخدمين لتحميل الأشجار، الكتب، الوثائق، والصوتيات المحمية، مع فحص بيانات المستخدم وسبب طلبه للمحتوى"
             )}
           </p>
         </div>
         <button
           type="button"
           onClick={() => void loadRequests()}
-          className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg border ${palette.button}`}
+          className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border text-xs font-semibold ${palette.button} transition-colors cursor-pointer`}
         >
-          <RefreshCw className="w-4 h-4" />
-          {t("refresh", "Refresh")}
+          <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
+          <span>{t("refresh", "تحديث")}</span>
         </button>
       </div>
 
+      {/* Filter Tabs */}
       <div className="flex flex-wrap gap-2 mb-6">
         {statusOptions.map((option) => (
           <button
             key={option}
             type="button"
             onClick={() => setStatus(option)}
-            className={`px-4 py-2 rounded-lg border text-sm transition ${
+            className={`px-3.5 py-1.5 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
               status === option
-                ? "bg-[#d9a441] border-[#d9a441] text-[#071827] font-semibold"
+                ? "bg-[var(--gold)] border-[var(--gold)] text-black shadow-sm"
                 : palette.button
             }`}
           >
-            {t(`status_${option}`, option.charAt(0).toUpperCase() + option.slice(1))}
+            {t(`status_${option}`, option.toUpperCase())}
           </button>
         ))}
       </div>
 
-      {error ? <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-4 text-red-400 mb-4">{error}</div> : null}
+      {error ? (
+        <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-red-500 text-xs mb-4">
+          {error}
+        </div>
+      ) : null}
 
-      <div className={`rounded-xl border overflow-hidden ${palette.panel}`}>
+      <div className={`rounded-2xl border overflow-hidden shadow-sm ${palette.panel}`}>
         {loading ? (
-          <div className="p-10 text-center">{t("loading", "Loading...")}</div>
+          <div className="p-16 text-center">
+            <div className="w-8 h-8 border-2 border-[var(--gold)] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+            <p className="text-xs text-[var(--muted-foreground)]">{t("loading", "جاري التحميل...")}</p>
+          </div>
         ) : requests.length === 0 ? (
-          <div className="p-10 text-center">
-            <Download className={`w-10 h-10 mx-auto mb-3 ${palette.accent}`} />
-            <p className="font-semibold">{t("no_download_requests", "No download requests")}</p>
+          <div className="p-16 text-center">
+            <Download className={`w-12 h-12 mx-auto mb-3 opacity-30 ${palette.accent}`} />
+            <p className="font-semibold text-sm">{t("no_download_requests", "لا توجد طلبات تحميل حالياً")}</p>
           </div>
         ) : (
           <div className="divide-y divide-white/10">
             {requests.map((request) => (
-              <div key={request.id} className="p-4 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                <div className="grid gap-2">
+              <div
+                key={request.id}
+                className="p-5 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+              >
+                <div className="space-y-3 flex-1">
+                  {/* User & Request Target */}
                   <div className="flex flex-wrap items-center gap-3">
-                    <span className="inline-flex items-center gap-2 font-semibold">
-                      <User className="w-4 h-4 text-[#24766f]" />
-                      {request.requesterName || t("unknown_user", "Unknown user")}
+                    <span className="inline-flex items-center gap-1.5 font-bold text-sm text-[var(--foreground)]">
+                      <User className="w-4 h-4 text-[var(--gold)]" />
+                      {request.requesterName || t("unknown_user", "مستخدم")}
                     </span>
-                    <span className={`text-sm ${palette.muted}`}>
-                      {t("requested_to_download", "requested to download")}{" "}
-                      <strong>{request.content_title || contentTypeLabel(request.content_type)}</strong>{" "}
-                      (#{request.content_id}) {t("from_content_type", "from")} {contentTypeLabel(request.content_type)}
+
+                    {request.requesterEmail && (
+                      <span className="inline-flex items-center gap-1 text-xs text-[var(--muted-foreground)]">
+                        <Mail className="w-3.5 h-3.5" />
+                        {request.requesterEmail}
+                      </span>
+                    )}
+
+                    {request.requesterPhone && (
+                      <span className="inline-flex items-center gap-1 text-xs text-[var(--muted-foreground)]">
+                        <Phone className="w-3.5 h-3.5" />
+                        {request.requesterPhone}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Requested File info */}
+                  <div className="p-3 rounded-xl bg-black/10 dark:bg-white/5 border border-[var(--border)] text-xs flex items-center gap-2">
+                    <FileText className="w-4 h-4 text-[var(--gold)] shrink-0" />
+                    <span className="font-semibold text-[var(--foreground)]">
+                      {request.content_title || contentTypeLabel(request.content_type)}
+                    </span>
+                    <span className="text-[var(--muted-foreground)]">
+                      (#{request.content_id}) — {contentTypeLabel(request.content_type)}
                     </span>
                   </div>
-                  <div className={`flex flex-wrap gap-4 text-sm ${palette.muted}`}>
-                    <span className="inline-flex items-center gap-2">
-                      <Clock className="w-4 h-4" />
-                      {t("requested", "Requested")}: {formatDate(request.requested_at)}
+
+                  {/* User Justification / Reason */}
+                  <div className="p-3 rounded-xl border border-[var(--gold)]/30 bg-[var(--gold)]/5 text-xs space-y-1">
+                    <div className="flex items-center gap-1.5 text-[var(--gold)] font-bold">
+                      <HelpCircle className="w-3.5 h-3.5" />
+                      <span>{t("request_reason_title", "مبرر وسبب طلب التحميل (Why user wants this content):")}</span>
+                    </div>
+                    <p className="text-[var(--foreground)] leading-relaxed italic ps-5">
+                      {request.reason?.trim()
+                        ? `"${request.reason}"`
+                        : t("no_specific_reason_provided", "لم يحدد المستخدم مبرراً إضافياً (طلب عام)")}
+                    </p>
+                  </div>
+
+                  {/* Metadata Date Badges */}
+                  <div className={`flex flex-wrap gap-4 text-[0.7rem] ${palette.muted}`}>
+                    <span className="inline-flex items-center gap-1">
+                      <Clock className="w-3.5 h-3.5" />
+                      {t("requested_on", "تاريخ الطلب")}: {formatDate(request.requested_at)}
                     </span>
-                    <span className="inline-flex items-center gap-2">
-                      <Calendar className="w-4 h-4" />
-                      {t("content_uploaded_on", "Uploaded")}: {formatDate(request.content_created_at)}
+                    <span className="inline-flex items-center gap-1">
+                      <Calendar className="w-3.5 h-3.5" />
+                      {t("status", "الحالة")}: <strong className="uppercase">{request.status}</strong>
                     </span>
-                    <span>{t("status", "Status")}: {request.status}</span>
-                    {request.processed_at ? <span>{t("processed", "Processed")}: {formatDate(request.processed_at)}</span> : null}
+                    {request.processed_at && (
+                      <span>{t("processed_at", "تاريخ المعالجة")}: {formatDate(request.processed_at)}</span>
+                    )}
                   </div>
                 </div>
 
+                {/* Actions */}
                 {request.status === "pending" ? (
-                  <div className="flex gap-2">
+                  <div className="flex items-center gap-2 shrink-0 self-end lg:self-center">
                     <button
                       type="button"
                       disabled={actionId === request.id}
                       onClick={() => void decide(request.id, "approve")}
-                      className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-green-600/15 text-green-500 hover:bg-green-600/25 disabled:opacity-50"
+                      className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold inline-flex items-center gap-1.5 shadow-sm transition-all cursor-pointer disabled:opacity-50"
                     >
                       <Check className="w-4 h-4" />
-                      {t("approve", "Approve")}
+                      <span>{t("approve_request", "قبول الطلب")}</span>
                     </button>
                     <button
                       type="button"
                       disabled={actionId === request.id}
                       onClick={() => void decide(request.id, "reject")}
-                      className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-red-600/15 text-red-500 hover:bg-red-600/25 disabled:opacity-50"
+                      className="px-4 py-2 rounded-xl bg-red-600/20 hover:bg-red-600/30 text-red-500 border border-red-500/30 text-xs font-bold inline-flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
                     >
                       <X className="w-4 h-4" />
-                      {t("reject", "Reject")}
+                      <span>{t("reject_request", "رفض الطلب")}</span>
                     </button>
                   </div>
-                ) : null}
+                ) : (
+                  <div className="shrink-0 self-end lg:self-center">
+                    <span
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold ${
+                        request.status === "approved"
+                          ? "bg-emerald-500/20 text-emerald-500 border border-emerald-500/30"
+                          : "bg-red-500/20 text-red-500 border border-red-500/30"
+                      }`}
+                    >
+                      {request.status === "approved" ? t("approved", "تمت الموافقة") : t("rejected", "مرفوض")}
+                    </span>
+                  </div>
+                )}
               </div>
             ))}
           </div>

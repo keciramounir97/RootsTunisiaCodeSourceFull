@@ -38,6 +38,11 @@ export default function SignUp() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [verificationPending, setVerificationPending] = useState(false);
+  const [registeredEmail, setRegisteredEmail] = useState("");
+  const [verificationCode, setVerificationCode] = useState("");
+  const [verifying, setVerifying] = useState(false);
+  const [verifySuccess, setVerifySuccess] = useState(false);
 
   const {
     register,
@@ -55,11 +60,42 @@ export default function SignUp() {
     },
   });
 
+  
+  const handleVerifyAccount = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!verificationCode.trim()) {
+      setError(t("code_required", "يرجى إدخال رمز التحقق المكون من 6 أرقام"));
+      return;
+    }
+    setVerifying(true);
+    setError("");
+    try {
+      await fetch("/api/auth/verify-account", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: registeredEmail,
+          code: verificationCode.trim(),
+        }),
+      });
+      setVerifySuccess(true);
+      setTimeout(() => {
+        navigate("/admin", { replace: true });
+      }, 1500);
+    } catch {
+      setError(t("verification_failed", "فشل التحقق من الرمز المدخل"));
+    } finally {
+      setVerifying(false);
+    }
+  };
+
   const onSubmit = async (data: RegisterFormData) => {
     setError("");
     setLoading(true);
     try {
-      await registerAuth(data.name.trim(), undefined, data.email.trim().toLowerCase(), data.password);
+      setRegisteredEmail(data.email.trim().toLowerCase());
+      await registerAuth(data.name.trim(), undefined, data.email.trim().toLowerCase(), data.password, (data as any).dob);
+      setVerificationPending(true);
       if (data.marketingConsent) {
         try {
           await fetch("/api/newsletter/subscribe", {
@@ -116,6 +152,64 @@ export default function SignUp() {
 
           {/* Right Form Part */}
           <div className="flex items-center justify-center p-8 sm:p-12 lg:p-16 bg-[var(--card)]">
+            {verificationPending ? (
+              <div className="w-full max-w-md p-6 rounded-2xl border border-[var(--gold)]/40 bg-[var(--card)] shadow-2xl text-center space-y-5">
+                <div className="w-14 h-14 rounded-full bg-[var(--gold)]/20 text-[var(--gold)] flex items-center justify-center mx-auto border border-[var(--gold)]/30">
+                  <Eye className="w-7 h-7" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold font-display text-[var(--foreground)]">
+                    {t("verify_account_title", "تأكيد ملكية الحساب عبر البريد")}
+                  </h2>
+                  <p className="text-xs text-[var(--muted-foreground)] mt-1.5 leading-relaxed">
+                    {t("verify_account_instructions", "تم إرسال رمز تحقق مكون من 6 أرقام إلى بريدك الإلكتروني:")}
+                    <br />
+                    <strong className="text-[var(--gold)] font-mono">{registeredEmail}</strong>
+                  </p>
+                </div>
+
+                {error && (
+                  <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-500 text-xs">
+                    {error}
+                  </div>
+                )}
+
+                {verifySuccess ? (
+                  <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 text-sm font-bold">
+                    ✓ {t("account_confirmed_welcome", "تم تأكيد الحساب بنجاح! جاري تحويلك إلى لوحة التحكم...")}
+                  </div>
+                ) : (
+                  <form onSubmit={handleVerifyAccount} className="space-y-4">
+                    <input
+                      type="text"
+                      maxLength={6}
+                      value={verificationCode}
+                      onChange={(e) => setVerificationCode(e.target.value)}
+                      placeholder="000000"
+                      className="w-48 mx-auto text-center font-mono text-2xl font-bold tracking-[8px] py-2 px-3 rounded-xl border-2 border-[var(--gold)] bg-[var(--background)] text-[var(--foreground)] outline-none"
+                    />
+
+                    <div className="space-y-2">
+                      <button
+                        type="submit"
+                        disabled={verifying || !verificationCode.trim()}
+                        className="btn-base btn-gold w-full text-xs font-bold py-2.5 rounded-xl cursor-pointer disabled:opacity-50"
+                      >
+                        {verifying ? t("verifying", "جاري التحقق...") : t("confirm_and_activate", "تأكيد وتفعيل الحساب")}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => navigate("/admin", { replace: true })}
+                        className="text-xs text-[var(--muted-foreground)] hover:text-[var(--foreground)] underline block mx-auto cursor-pointer"
+                      >
+                        {t("continue_to_dashboard", "المتابعة لاحقاً إلى لوحة التحكم")}
+                      </button>
+                    </div>
+                  </form>
+                )}
+              </div>
+            ) : (
             <form className="w-full max-w-md" onSubmit={handleSubmit(onSubmit)}>
               <Logo />
               <h1 className="display-lg mt-8 text-[var(--foreground)]">{t("create_account", "Create your account")}</h1>
@@ -232,6 +326,7 @@ export default function SignUp() {
                 </Link>
               </p>
             </form>
+          )}
           </div>
         </div>
       </div>

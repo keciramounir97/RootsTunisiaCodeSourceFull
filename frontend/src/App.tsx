@@ -101,6 +101,8 @@ const AdminSuggestions = lazy(() => import("./admin/pages/Suggestions"));
 const LegalContent = lazy(() => import("./admin/pages/LegalContent"));
 const SuperAdmins = lazy(() => import("./admin/pages/SuperAdmins"));
 const ContentManager = lazy(() => import("./admin/pages/ContentManager"));
+const Diaporama = lazy(() => import("./admin/pages/Diaporama"));
+const EmailTemplates = lazy(() => import("./admin/pages/EmailTemplates"));
 const DownloadRequests = lazy(() => import("./admin/pages/DownloadRequests"));
 const AdminArticles = lazy(() => import("./admin/pages/Articles"));
 const TierFeatures = lazy(() => import("./admin/pages/TierFeatures"));

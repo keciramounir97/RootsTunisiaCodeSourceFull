@@ -212,9 +212,108 @@ export class AuthService {
     }
 
     async signup(data: any) {
-        const payload = { ...data, full_name: data.full_name ?? data.fullName };
+        // Age validation: User must be at least 18 years old
+        if (data.dob) {
+            const birth = new Date(data.dob);
+            if (!isNaN(birth.getTime())) {
+                const today = new Date();
+                let age = today.getFullYear() - birth.getFullYear();
+                const m = today.getMonth() - birth.getMonth();
+                if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
+                    age--;
+                }
+                if (age < 18) {
+                    throw new BadRequestException('يجب أن يكون عمرك 18 عاماً فما فوق للتسجيل (غير مسموح للقاصرين) / You must be at least 18 years old to register');
+                }
+            }
+        }
+
+        const payload = {
+            ...data,
+            full_name: data.full_name ?? data.fullName,
+            dob: data.dob || null,
+        };
         const user = await this.usersService.create(payload, null);
-        return this.login(user);
+
+        // Generate 6-digit one-time verification code
+        const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+
+        try {
+            const hasCodeCol = await this.knex.schema.hasColumn('users', 'verification_code');
+            if (!hasCodeCol) {
+                await this.knex.schema.alterTable('users', (t: any) => {
+                    t.string('verification_code', 20).nullable();
+                    t.boolean('is_verified').defaultTo(false);
+                    t.date('dob').nullable();
+                });
+            }
+            await this.knex('users').where('id', user.id).update({
+                verification_code: verificationCode,
+                is_verified: false,
+                dob: data.dob || null,
+            });
+        } catch (dbErr) {
+            console.warn('Could not update user verification columns:', dbErr);
+        }
+
+        // Send one-time SMTP confirmation email
+        try {
+            await this.mailerService.sendMail({
+                to: user.email,
+                subject: 'رمز التحقق وتأكيد حسابك في جذور تونس | Verify Your Roots Tunisia Account',
+                html: `
+                    <div style="font-family: Arial, sans-serif; max-width: 550px; margin: 0 auto; padding: 24px; border: 1px solid #d4af37; border-radius: 12px; background: #fffcf7;">
+                        <h2 style="color: #1f160f; text-align: center; margin-top: 0; font-family: serif;">جذور تونس | Roots Tunisia</h2>
+                        <p style="color: #444; font-size: 15px; line-height: 1.6;">
+                            مرحباً <strong>${user.full_name || (user as any).fullName || ''}</strong>،<br><br>
+                            شكراً لإنشاء حسابك في منصة جذور تونس. لتأكيد وتفعيل ملكية حسابك لمرة واحدة فقط، يرجى استخدام رمز التحقق التالي:
+                        </p>
+                        <div style="text-align: center; margin: 25px 0;">
+                            <span style="display: inline-block; font-size: 32px; font-weight: bold; letter-spacing: 6px; color: #1f160f; background: #fdf6e2; padding: 12px 28px; border-radius: 8px; border: 2px dashed #d4af37;">
+                                ${verificationCode}
+                            </span>
+                        </div>
+                        <p style="color: #666; font-size: 13px; line-height: 1.5; text-align: center;">
+                            هذا الرمز صالح للاستخدام لمرة واحدة فقط لتأكيد هويتك وحسابك.
+                        </p>
+                    </div>
+                `,
+                text: `رمز التحقق الخاص بك لتأكيد حسابك في جذور تونس هو: ${verificationCode}`,
+            });
+        } catch (emailErr) {
+            console.warn('Could not send verification email via SMTP:', emailErr);
+        }
+
+        const loginRes = await this.login(user);
+        return {
+            ...loginRes,
+            requiresVerification: true,
+            verificationSent: true,
+        };
+    }
+
+    async verifyAccount(email: string, code: string) {
+        const normalized = String(email ?? '').trim().toLowerCase();
+        const user = await this.usersService.findByEmail(normalized);
+        if (!user) throw new BadRequestException('User not found');
+
+        let matched = false;
+        try {
+            const row = await this.knex('users').where('id', user.id).first();
+            if (row && String(row.verification_code || '').trim() === String(code).trim()) {
+                matched = true;
+                await this.knex('users').where('id', user.id).update({
+                    is_verified: true,
+                    verification_code: null,
+                    status: 'active',
+                });
+            }
+        } catch {}
+
+        if (matched) {
+            return { success: true, message: 'Account verified successfully and confirmed!' };
+        }
+        throw new BadRequestException('رمز التحقق غير صحيح، يرجى التأكد من الرمز المدخل');
     }
 
     async refreshToken(token: string) {

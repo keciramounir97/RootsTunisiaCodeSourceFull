@@ -1,4 +1,4 @@
-import { IsIn, IsInt } from 'class-validator';
+import { IsIn, IsInt, IsOptional, IsString } from 'class-validator';
 
 export const DOWNLOAD_CONTENT_TYPES = ['tree', 'book', 'gallery', 'audio', 'document'] as const;
 export type DownloadContentType = (typeof DOWNLOAD_CONTENT_TYPES)[number];
@@ -9,4 +9,8 @@ export class CreateDownloadRequestDto {
 
     @IsInt()
     contentId: number;
+
+    @IsOptional()
+    @IsString()
+    reason?: string;
 }
