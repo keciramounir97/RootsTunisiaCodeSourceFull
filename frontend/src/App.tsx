@@ -95,6 +95,7 @@ const HelpCenter = lazy(() => import("./pages/HelpCenter"));
 
 // ===== NEW ADMIN PAGES (redesign parity) =====
 const PaymentSettings = lazy(() => import("./admin/pages/PaymentSettings"));
+const Currencies = lazy(() => import("./admin/pages/Currencies"));
 const Backups = lazy(() => import("./admin/pages/Backups"));
 const AdminSuggestions = lazy(() => import("./admin/pages/Suggestions"));
 const LegalContent = lazy(() => import("./admin/pages/LegalContent"));
@@ -643,6 +644,16 @@ function AppRoutes() {
           }
         />
         <Route path="payment-settings" element={<PaymentSettings />} />
+        <Route
+          path="currencies"
+          element={
+            <Suspense fallback={<AdminLoadingFallback />}>
+              <ProtectedRoute roles={[3]}>
+                <Currencies />
+              </ProtectedRoute>
+            </Suspense>
+          }
+        />
         <Route path="backups" element={<Backups />} />
       </Route>
 

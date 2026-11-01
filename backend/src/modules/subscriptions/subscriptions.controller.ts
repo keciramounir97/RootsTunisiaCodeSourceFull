@@ -175,4 +175,84 @@ export class SubscriptionsController {
     ) {
         return this.service.updateUserLimits(userId, body);
     }
+
+    // ===== PUBLIC CURRENCIES & PAYMENT METHODS =====
+
+    @Get('currencies')
+    async getPublicCurrencies() {
+        return this.service.listCurrencies(true);
+    }
+
+    @Get('payment-methods')
+    async getPublicPaymentMethods() {
+        return this.service.listPaymentMethods(true);
+    }
+
+    // ===== SUPER ADMIN CURRENCIES (TAUX DE CHANGE) =====
+
+    @Get('admin/currencies')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(1, 3)
+    async getAdminCurrencies() {
+        return this.service.listCurrencies(false);
+    }
+
+    @Post('admin/currencies')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(3)
+    async addCurrency(@Body() body: { code: string; name?: string; symbol?: string; rate: number; is_base?: boolean }) {
+        return this.service.addCurrency(body);
+    }
+
+    @Put('admin/currencies/:id')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(3)
+    async updateCurrency(
+        @Param('id', ParseIntPipe) id: number,
+        @Body() body: { name?: string; symbol?: string; rate?: number; is_active?: boolean; is_base?: boolean }
+    ) {
+        return this.service.updateCurrency(id, body);
+    }
+
+    @Delete('admin/currencies/:id')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(3)
+    async deleteCurrency(@Param('id', ParseIntPipe) id: number) {
+        return this.service.deleteCurrency(id);
+    }
+
+    // ===== SUPER ADMIN PAYMENT METHODS (ADD / EDIT / REMOVE) =====
+
+    @Get('admin/payment-methods')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(1, 3)
+    async getAdminPaymentMethods() {
+        return this.service.listPaymentMethods(false);
+    }
+
+    @Post('admin/payment-methods')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(3)
+    async addPaymentMethod(
+        @Body() body: { code?: string; name: string; account_details?: string; instructions?: string; fee_note?: string; badge?: string; sort_order?: number }
+    ) {
+        return this.service.addPaymentMethod(body);
+    }
+
+    @Put('admin/payment-methods/:id')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(3)
+    async updatePaymentMethod(
+        @Param('id', ParseIntPipe) id: number,
+        @Body() body: { name?: string; account_details?: string; instructions?: string; fee_note?: string; badge?: string; is_active?: boolean; sort_order?: number }
+    ) {
+        return this.service.updatePaymentMethod(id, body);
+    }
+
+    @Delete('admin/payment-methods/:id')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(3)
+    async deletePaymentMethod(@Param('id', ParseIntPipe) id: number) {
+        return this.service.deletePaymentMethod(id);
+    }
 }

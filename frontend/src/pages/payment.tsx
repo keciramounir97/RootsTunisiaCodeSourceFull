@@ -2,32 +2,112 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate, useLocation, Link } from "react-router-dom";
 import { useTranslation } from "../context/TranslationContext";
 import { useAuth } from "../admin/components/AuthContext";
+import { useCurrency } from "../context/CurrencyContext";
 import { api } from "../api/client";
-import { CheckCircle2, AlertCircle, ArrowLeft, ShieldCheck } from "lucide-react";
-import { Section, SectionHeading } from "../components/site/Primitives";
+import {
+  CheckCircle2,
+  AlertCircle,
+  ArrowLeft,
+  ShieldCheck,
+  Building2,
+  Smartphone,
+  Copy,
+  Check,
+  CreditCard,
+  Crown,
+  Coins,
+  Wallet,
+} from "lucide-react";
 import SEO from "../components/SEO";
+
+interface PaymentMethod {
+  id: number;
+  code: string;
+  name: string;
+  account_details: string;
+  instructions: string;
+  fee_note: string;
+  badge: string;
+  is_active: boolean;
+  sort_order: number;
+}
 
 export default function Payment() {
   const { tier } = useParams<{ tier: string }>();
   const location = useLocation();
-  const { t } = useTranslation();
+  const { t, isRtl } = useTranslation();
   const { user } = useAuth();
   const navigate = useNavigate();
-
-  const [loading, setLoading] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const [proofUrl, setProofUrl] = useState("");
-  const [notes, setNotes] = useState("");
-  const [status, setStatus] = useState<{ type: string; msg: string }>({ type: "", msg: "" });
+  const { selectedCurrency, convertPrice, currencies, setCurrencyCode } = useCurrency();
 
   const queryParams = new URLSearchParams(location.search);
-  const planParam = queryParams.get("plan") || tier || "researcher";
-  const amountParam = queryParams.get("amount") || (planParam === "researcher" ? "39" : "0");
+  const tierParam = queryParams.get("tier") || (tier === "3" ? "3" : "2");
+  const planSlug = queryParams.get("plan") || (tierParam === "3" ? "historian" : "premium");
+  const intervalParam = queryParams.get("interval") || "monthly";
+
+  // Tier base USD calculation:
+  const isAnnual = intervalParam === "annual";
+  const baseUSD = tierParam === "3" ? (isAnnual ? 19.99 * 10 : 19.99) : (isAnnual ? 9.99 * 10 : 9.99);
+  const tierName = tierParam === "3" ? "Family Historian" : "Premium";
+  const tierId = parseInt(tierParam, 10) || 2;
+
+  // Real-time converted amount
+  const converted = convertPrice(baseUSD);
+
+  // Payment methods state loaded from Super Admin
+  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
+  const [loadingMethods, setLoadingMethods] = useState(true);
+  const [selectedMethod, setSelectedMethod] = useState<PaymentMethod | null>(null);
+
+  // Form states
+  const [proofUrl, setProofUrl] = useState("");
+  const [notes, setNotes] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [status, setStatus] = useState<{ type: string; msg: string }>({ type: "", msg: "" });
+  const [copiedField, setCopiedField] = useState(false);
+
+  // Fetch Super Admin configured payment methods
+  useEffect(() => {
+    (async () => {
+      try {
+        setLoadingMethods(true);
+        const { data } = await api.get("/payment-methods");
+        const items: PaymentMethod[] = Array.isArray(data?.data) ? data.data : Array.isArray(data) ? data : [];
+        setPaymentMethods(items);
+        if (items.length > 0) {
+          setSelectedMethod(items[0]);
+        }
+      } catch {
+        // Fallback default method
+        const fallback: PaymentMethod = {
+          id: 1,
+          code: "bank_transfer",
+          name: "Virement Bancaire (RIB / IBAN)",
+          account_details: "Banque: BIAT Tunisie\nRIB: 0800 1234 5678 9012 3456\nTitulaire: Roots Tunisia",
+          instructions: "Veuillez effectuer le virement bancaire puis saisir la référence ci-dessous.",
+          fee_note: "Sans frais supplémentaires",
+          badge: "Recommandé en Tunisie",
+          is_active: true,
+          sort_order: 1,
+        };
+        setPaymentMethods([fallback]);
+        setSelectedMethod(fallback);
+      } finally {
+        setLoadingMethods(false);
+      }
+    })();
+  }, []);
+
+  const handleCopyDetails = (text: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedField(true);
+    setTimeout(() => setCopiedField(false), 2500);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) {
-      navigate("/login");
+      navigate(`/login?redirect=${encodeURIComponent(location.pathname + location.search)}`);
       return;
     }
 
@@ -35,22 +115,24 @@ export default function Payment() {
     setStatus({ type: "", msg: "" });
 
     try {
-      const tierId = planParam === "basic" ? 1 : planParam === "researcher" ? 2 : 3;
       await api.post("/my/subscription/payment", {
         tier_id: tierId,
-        amount: parseFloat(amountParam),
+        amount: converted.amount,
+        currency: converted.code,
+        payment_method: selectedMethod?.name || "Virement Bancaire",
         proof_url: proofUrl || undefined,
         notes: notes || undefined,
       });
+
       setStatus({
         type: "success",
-        msg: t("payment_recorded_success", "تم تسجيل تأكيد الدفع! سيتم تفعيل اشتراكك خلال لحظات."),
+        msg: t("payment_recorded_success", "تم تسجيل طلب تأكيد الدفع بنجاح! سيتم مراجعة وتفعيل اشتراكك بأسرع وقت."),
       });
-      setTimeout(() => navigate("/subscriptions"), 2500);
+      setTimeout(() => navigate("/subscriptions"), 3000);
     } catch (err: any) {
       setStatus({
         type: "error",
-        msg: err.response?.data?.message || t("payment_recorded_failed", "فشل تسجيل الدفع. يرجى الاتصال بالدعم الفني."),
+        msg: err?.response?.data?.message || t("payment_recorded_failed", "فشل تسجيل الدفع. يرجى الاتصال بالدعم الفني."),
       });
     } finally {
       setSubmitting(false);
@@ -58,126 +140,240 @@ export default function Payment() {
   };
 
   return (
-    <div className="bg-[var(--background)] text-[var(--foreground)] min-h-screen pt-12 pb-20">
+    <div dir={isRtl ? "rtl" : "ltr"} className="bg-[var(--background)] text-[var(--foreground)] min-h-screen pt-8 pb-20">
       <SEO
-        title={t("seo_payment_title", "تأكيد الاشتراك — جذور تونس")}
-        description="Confirm your Roots Tunisia subscription payment in Tunisian Dinars (TND)."
+        title={t("seo_payment_title", "تأكيد الاشتراك والدفع — جذور تونس")}
+        description="Confirm your Roots Tunisia subscription payment with localized Tunisian and international payment methods."
       />
 
-      <div className="mx-auto max-w-xl px-5">
+      <div className="mx-auto max-w-3xl px-4 sm:px-6">
         <Link
           to="/subscriptions"
-          className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-[var(--gold)] hover:underline mb-8"
+          className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-[var(--gold)] hover:underline mb-6"
         >
-          <ArrowLeft className="h-3.5 w-3.5 rtl:rotate-180" /> {t("back_to_plans", "Back to Plans")}
+          <ArrowLeft className="h-3.5 w-3.5 rtl:rotate-180" /> {t("back_to_plans", "العودة إلى الخطط")}
         </Link>
 
-        <div className="surface-card p-8 sm:p-10 border-2 border-[var(--gold)]/40 shadow-xl">
-          <p className="eyebrow text-center">{t("subscription_checkout", "Subscription Checkout")}</p>
-          <h1 className="display-lg mt-2 text-center text-[var(--foreground)]">
-            {t("confirm_your_plan", "Confirm Your Plan")}
-          </h1>
-
-          <div className="mt-6 p-4 rounded bg-[var(--secondary)]/60 border border-[var(--gold)]/30 flex items-center justify-between">
-            <div>
-              <span className="text-xs uppercase tracking-[0.16em] text-[var(--muted-foreground)] font-bold">
-                {t("selected_plan", "Selected Plan")}
-              </span>
-              <p className="font-display text-xl font-semibold text-[var(--foreground)] capitalize">
-                {planParam === "researcher" ? t("plan_researcher_name", "باقة الباحث") : planParam === "institution" ? t("plan_institution_name", "باقة المؤسسات") : t("plan_zitouna_name", "باقة الزيتونة")} {t("plan", "Plan")}
-              </p>
-            </div>
-            <div className="text-right rtl:text-left">
-              <span className="font-display text-3xl font-bold text-[var(--primary)]">
-                {amountParam} {t("tnd", "TND")}
-              </span>
-              <span className="block text-[0.65rem] text-[var(--muted-foreground)] uppercase tracking-[0.1em]">
-                {t("monthly_ttc", "Monthly · TTC (Toutes Taxes Comprises)")}
-              </span>
-            </div>
-          </div>
-
-          {/* Transparent Fee & Renewal Disclosure */}
-          <div className="mt-4 p-3.5 rounded bg-[var(--background)] border border-[var(--border)] text-xs text-[var(--muted-foreground)] space-y-1.5">
-            <div className="flex justify-between items-center text-[var(--foreground)] font-medium">
-              <span>{t("subscription_fee", "Subscription Fee:")}</span>
-              <span>{amountParam} {t("tnd", "TND")}</span>
-            </div>
-            <div className="flex justify-between items-center text-emerald-600 dark:text-emerald-400">
-              <span>{t("hidden_platform_fees", "Hidden Platform Fees:")}</span>
-              <span>0.000 {t("tnd", "TND")}</span>
-            </div>
-            <div className="flex justify-between items-center border-t border-[var(--border)] pt-1 font-bold text-[var(--foreground)]">
-              <span>{t("total_due_today", "Total Due Today:")}</span>
-              <span>{amountParam} {t("tnd_ttc", "TND (TTC)")}</span>
-            </div>
-            <p className="pt-2 text-[0.7rem] leading-relaxed text-[var(--muted-foreground)]">
-              {t("renews_monthly_notice", "Renews monthly at the same rate. You may cancel your subscription at any time with immediate effect from your Account Settings. For eligibility and refund requests, review our")}{" "}
-              <Link to="/refund" target="_blank" className="text-[var(--gold)] underline hover:text-[var(--foreground)]">
-                {t("refund_cancellation_policy_link", "Refund & Cancellation Policy")}
-              </Link>
-              .
+        <div className="surface-card frame-gold p-6 sm:p-10 rounded-2xl border-2 border-[var(--gold)]/40 shadow-2xl space-y-8 text-start">
+          {/* Header */}
+          <div className="text-center space-y-2">
+            <span className="eyebrow text-[var(--gold)] font-bold">{t("subscription_checkout", "تأكيد وتفعيل الاشتراك")}</span>
+            <h1 className="font-display text-2xl sm:text-3xl font-bold text-[var(--foreground)]">
+              {t("confirm_your_plan", "تفاصيل الخطة والدفع")}
+            </h1>
+            <p className="text-xs sm:text-sm text-[var(--muted-foreground)] max-w-lg mx-auto">
+              {t("checkout_subtitle", "اختر وسيلة الدفع المناسبة واطلع على بيانات الحساب المعتمدة مباشرة من إدارة المنصة.")}
             </p>
           </div>
 
+          {/* Plan Summary Card with Currency Switcher */}
+          <div className="p-5 rounded-xl bg-[var(--gold)]/10 border border-[var(--gold)]/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="p-3 rounded-xl bg-[var(--gold)]/20 text-[var(--gold)] border border-[var(--gold)]/30">
+                <Crown className="w-6 h-6" />
+              </div>
+              <div>
+                <span className="text-[0.68rem] uppercase tracking-[0.16em] text-[var(--muted-foreground)] font-bold">
+                  {t("selected_plan", "الخطة المختارة")}
+                </span>
+                <h3 className="font-display text-xl font-bold text-[var(--foreground)]">
+                  {tierName} {t("plan", "Plan")}
+                </h3>
+                <span className="text-xs text-[var(--muted-foreground)]">
+                  {isAnnual ? t("billed_annually", "فاتورة سنوية (شهرين مجاناً)") : t("billed_monthly", "فاتورة شهرية")}
+                </span>
+              </div>
+            </div>
+
+            <div className="flex flex-col items-start sm:items-end gap-1">
+              <div className="flex items-center gap-2">
+                <span className="font-display text-3xl font-extrabold text-[var(--gold)]">
+                  {converted.formatted}
+                </span>
+              </div>
+
+              {/* In-checkout Currency Switcher */}
+              <div className="flex items-center gap-1.5 text-xs text-[var(--muted-foreground)]">
+                <Coins className="w-3.5 h-3.5 text-[var(--gold)]" />
+                <span>{t("currency", "العملة")}:</span>
+                <select
+                  value={selectedCurrency.code}
+                  onChange={(e) => setCurrencyCode(e.target.value)}
+                  className="bg-transparent font-bold font-mono text-[var(--foreground)] outline-none cursor-pointer border-b border-[var(--gold)]/40"
+                >
+                  {currencies.map((c) => (
+                    <option key={c.code} value={c.code} className="bg-[var(--card)] text-[var(--foreground)]">
+                      {c.code} ({c.symbol})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {/* Super Admin Configured Payment Methods Section */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm sm:text-base font-bold text-[var(--foreground)] flex items-center gap-2">
+                <Wallet className="h-4 w-4 text-[var(--gold)]" />
+                <span>{t("select_payment_method", "اختر وسيلة الدفع المعتمدة")}</span>
+              </h3>
+              <span className="text-[0.68rem] text-[var(--muted-foreground)]">
+                {paymentMethods.length} {t("methods_available", "طرق متاحة")}
+              </span>
+            </div>
+
+            {loadingMethods ? (
+              <div className="flex justify-center py-8">
+                <div className="w-8 h-8 border-2 border-[var(--gold)] border-t-transparent rounded-full animate-spin" />
+              </div>
+            ) : paymentMethods.length === 0 ? (
+              <div className="p-6 text-center text-sm rounded-xl border border-[var(--border)] text-[var(--muted-foreground)]">
+                {t("no_payment_methods_active", "يرجى التواصل مع الدعم الفني لإتمام الدفع.")}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {paymentMethods.map((method) => {
+                  const isSelected = selectedMethod?.id === method.id;
+                  return (
+                    <button
+                      key={method.id}
+                      type="button"
+                      onClick={() => setSelectedMethod(method)}
+                      className={`p-4 rounded-xl border text-start transition-all cursor-pointer flex flex-col justify-between space-y-2 ${
+                        isSelected
+                          ? "border-[var(--gold)] bg-[var(--gold)]/15 ring-2 ring-[var(--gold)]/40 shadow-md"
+                          : "border-[var(--border)] bg-[var(--background)] hover:border-[var(--gold)]/60"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-bold text-sm text-[var(--foreground)]">{method.name}</span>
+                        {method.badge && (
+                          <span className="px-2 py-0.5 rounded text-[0.62rem] font-bold bg-[var(--gold)]/20 text-[var(--gold)] border border-[var(--gold)]/30 shrink-0">
+                            {method.badge}
+                          </span>
+                        )}
+                      </div>
+
+                      {method.fee_note && (
+                        <p className="text-[0.7rem] text-emerald-600 dark:text-emerald-400 font-medium">
+                          ✓ {method.fee_note}
+                        </p>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Selected Method Details Box (Configured by Super Admin) */}
+            {selectedMethod && (
+              <div className="p-5 sm:p-6 rounded-xl border border-[var(--gold)]/40 bg-[var(--background)] shadow-md space-y-4">
+                <div className="flex items-center justify-between border-b border-[var(--gold)]/20 pb-3">
+                  <span className="text-xs font-bold uppercase tracking-wider text-[var(--gold)]">
+                    {t("official_account_coordinates", "بيانات الحساب المعتمدة")} — {selectedMethod.name}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => handleCopyDetails(selectedMethod.account_details)}
+                    className="btn-base btn-outline-light text-[0.7rem] py-1 px-2.5 flex items-center gap-1.5 cursor-pointer"
+                  >
+                    {copiedField ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+                    <span>{copiedField ? t("copied", "تم النسخ!") : t("copy_coordinates", "نسخ البيانات")}</span>
+                  </button>
+                </div>
+
+                {/* Exact Account Details text block */}
+                <div className="p-4 rounded-lg bg-[var(--card)] border border-[var(--border)] text-xs sm:text-sm font-mono whitespace-pre-wrap leading-relaxed text-[var(--foreground)] select-all">
+                  {selectedMethod.account_details}
+                </div>
+
+                {/* Instructions */}
+                {selectedMethod.instructions && (
+                  <div className="p-3.5 rounded-lg bg-[var(--gold)]/10 border border-[var(--gold)]/25 text-xs text-[var(--foreground)] space-y-1">
+                    <strong className="text-[var(--gold)] font-bold block">
+                      💡 {t("payment_instructions_title", "تعليمات الإيداع والتحويل")}:
+                    </strong>
+                    <p className="text-[var(--muted-foreground)] leading-relaxed">
+                      {selectedMethod.instructions}
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Status Message */}
           {status.msg && (
             <div
-              className={`mt-5 p-4 rounded text-sm flex items-center gap-2.5 ${
+              className={`p-4 rounded-xl text-sm flex items-center gap-3 shadow-md ${
                 status.type === "success"
-                  ? "bg-green-100 text-green-800 border border-green-300 dark:bg-green-950 dark:text-green-200"
-                  : "bg-red-100 text-red-800 border border-red-300 dark:bg-red-950 dark:text-red-200"
+                  ? "bg-emerald-50 text-emerald-800 border border-emerald-300 dark:bg-emerald-950/80 dark:text-emerald-200"
+                  : "bg-rose-50 text-rose-800 border border-rose-300 dark:bg-rose-950/80 dark:text-rose-200"
               }`}
             >
               {status.type === "success" ? (
-                <CheckCircle2 className="h-5 w-5 shrink-0" />
+                <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-600 dark:text-emerald-400" />
               ) : (
-                <AlertCircle className="h-5 w-5 shrink-0" />
+                <AlertCircle className="h-5 w-5 shrink-0 text-rose-600 dark:text-rose-400" />
               )}
               <span>{status.msg}</span>
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="mt-8 space-y-5">
-            <label className="grid gap-2">
-              <span className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
-                {t("bank_proof_reference_optional", "Bank Transfer / Proof Reference (Optional)")}
-              </span>
+          {/* Confirmation Form */}
+          <form onSubmit={handleSubmit} className="space-y-4 pt-2 border-t border-[var(--gold)]/20">
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted-foreground)] mb-1.5">
+                {t("payment_reference_label", "رقم أو مرجع التحويل / Transaction ID (موصى به)")}
+              </label>
               <input
                 type="text"
                 value={proofUrl}
                 onChange={(e) => setProofUrl(e.target.value)}
-                placeholder={t("placeholder_bank_tx_id", "Bank transfer transaction ID or reference code")}
-                className="rounded-sm border border-[var(--border)] bg-[var(--card)] px-4 py-3 text-sm text-[var(--foreground)] outline-none focus:border-[var(--gold)]"
+                placeholder={t("placeholder_tx_reference", "مثال: TXN-892402 أو رقم الحوالة / الوصل البنكي")}
+                className="w-full px-4 py-3 rounded-lg border border-[var(--border)] bg-[var(--card)] text-sm text-[var(--foreground)] outline-none focus:border-[var(--gold)] font-medium"
               />
-            </label>
+            </div>
 
-            <label className="grid gap-2">
-              <span className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
-                {t("additional_notes", "Additional Notes")}
-              </span>
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted-foreground)] mb-1.5">
+                {t("additional_notes_optional", "ملاحظات إضافية أو اسم صاحب الحساب (اختياري)")}
+              </label>
               <textarea
                 rows={3}
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                placeholder={t("placeholder_additional_notes", "Any special research or invoice instructions…")}
-                className="rounded-sm border border-[var(--border)] bg-[var(--card)] px-4 py-3 text-sm text-[var(--foreground)] outline-none focus:border-[var(--gold)]"
+                placeholder={t("placeholder_payment_notes", "اكتب هنا اسم صاحب الحساب المحول منه أو أي تفاصيل تخص اشتراكك...")}
+                className="w-full px-4 py-3 rounded-lg border border-[var(--border)] bg-[var(--card)] text-sm text-[var(--foreground)] outline-none focus:border-[var(--gold)]"
               />
-            </label>
+            </div>
 
             <div className="pt-4">
               <button
                 type="submit"
                 disabled={submitting}
-                className="btn-base btn-red w-full py-3.5"
+                className="btn-base btn-gold w-full py-4 text-sm sm:text-base font-bold flex items-center justify-center gap-2 cursor-pointer shadow-xl hover:scale-[1.01] transition-transform"
               >
-                {submitting ? t("processing", "Processing…") : `${t("confirm_subscription_btn", "Confirm Subscription")} (${amountParam} ${t("tnd", "TND")})`}
+                <ShieldCheck className="w-5 h-5" />
+                <span>
+                  {submitting
+                    ? t("processing", "جاري المعالجة...")
+                    : `${t("confirm_payment_btn", "تأكيد وإرسال إشعار الدفع")} (${converted.formatted})`}
+                </span>
               </button>
             </div>
           </form>
 
-          <div className="mt-8 pt-6 border-t border-[var(--gold)]/20 flex items-center justify-center gap-2 text-xs text-[var(--muted-foreground)]">
-            <ShieldCheck className="h-4 w-4 text-[var(--gold)]" />
-            <span>{t("secure_payment_guarantee", "Secure payment processing · All prices in Tunisian Dinars (TND) · VAT included")}</span>
+          {/* Security & Guarantee Footer */}
+          <div className="pt-4 border-t border-[var(--gold)]/20 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[var(--muted-foreground)]">
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="h-4 w-4 text-[var(--gold)] shrink-0" />
+              <span>{t("secure_verified_payment", "دفع آمن معتمد ومراجع يدوياً من إدارة المنصة")}</span>
+            </div>
+            <Link to="/refund" target="_blank" className="text-[var(--gold)] hover:underline">
+              {t("refund_policy_link", "سياسة الاسترجاع والإلغاء")}
+            </Link>
           </div>
         </div>
       </div>

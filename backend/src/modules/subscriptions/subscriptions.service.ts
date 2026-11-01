@@ -454,4 +454,269 @@ export class SubscriptionsService {
         await this.knex('users').where({ id: userId }).update(patch);
         return this.getUserQuotas(userId);
     }
+
+        // ==========================================
+    // CURRENCIES & EXCHANGE RATES (TAUX DE CHANGE)
+    // ==========================================
+    private currenciesReady = false;
+    private async ensureCurrenciesSchema() {
+        if (this.currenciesReady) return;
+        try {
+            if (!(await this.knex.schema.hasTable('currencies'))) {
+                await this.knex.schema.createTable('currencies', (t: any) => {
+                    t.increments('id').primary();
+                    t.string('code', 10).notNullable().unique();
+                    t.string('name', 100).notNullable();
+                    t.string('symbol', 15).notNullable().defaultTo('$');
+                    t.decimal('rate', 14, 4).notNullable().defaultTo(1.0);
+                    t.boolean('is_base').notNullable().defaultTo(false);
+                    t.boolean('is_active').notNullable().defaultTo(true);
+                    t.timestamp('created_at').defaultTo(this.knex.fn.now());
+                    t.timestamp('updated_at').defaultTo(this.knex.fn.now());
+                });
+                await this.knex('currencies').insert([
+                    { code: 'USD', name: 'US Dollar', symbol: '$', rate: 1.0, is_base: true, is_active: true },
+                    { code: 'TND', name: 'Dinar Tunisien', symbol: 'DT', rate: 3.15, is_base: false, is_active: true },
+                    { code: 'EUR', name: 'Euro', symbol: '€', rate: 0.92, is_base: false, is_active: true },
+                    { code: 'GBP', name: 'Livre Sterling', symbol: '£', rate: 0.79, is_base: false, is_active: true },
+                    { code: 'CAD', name: 'Dollar Canadien', symbol: 'CA$', rate: 1.38, is_base: false, is_active: true },
+                    { code: 'SAR', name: 'Riyal Saoudien', symbol: 'SAR', rate: 3.75, is_base: false, is_active: true },
+                ]);
+            }
+        } catch {}
+        this.currenciesReady = true;
+    }
+
+    async listCurrencies(onlyActive = true) {
+        await this.ensureCurrenciesSchema();
+        try {
+            let q = this.knex('currencies').select('*').orderBy('is_base', 'desc').orderBy('code', 'asc');
+            if (onlyActive) q = q.where('is_active', true);
+            const items = await q;
+            if (items && items.length > 0) return items;
+        } catch {}
+        return [
+            { id: 1, code: 'USD', name: 'US Dollar', symbol: '$', rate: 1.0, is_base: true, is_active: true },
+            { id: 2, code: 'TND', name: 'Dinar Tunisien', symbol: 'DT', rate: 3.15, is_base: false, is_active: true },
+            { id: 3, code: 'EUR', name: 'Euro', symbol: '€', rate: 0.92, is_base: false, is_active: true },
+            { id: 4, code: 'GBP', name: 'Livre Sterling', symbol: '£', rate: 0.79, is_base: false, is_active: true },
+            { id: 5, code: 'CAD', name: 'Dollar Canadien', symbol: 'CA$', rate: 1.38, is_base: false, is_active: true },
+            { id: 6, code: 'SAR', name: 'Riyal Saoudien', symbol: 'SAR', rate: 3.75, is_base: false, is_active: true },
+        ];
+    }
+
+    async addCurrency(data: { code: string; name?: string; symbol?: string; rate: number; is_base?: boolean }) {
+        await this.ensureCurrenciesSchema();
+        const code = String(data.code || '').trim().toUpperCase();
+        if (!code) throw new BadRequestException('Currency code abbreviation is required (e.g., TND, USD, EUR)');
+        const rate = Number(data.rate) > 0 ? Number(data.rate) : 1.0;
+        const now = this.knex.fn.now();
+
+        const existing = await this.knex('currencies').where({ code }).first();
+        if (existing) {
+            await this.knex('currencies').where({ id: existing.id }).update({
+                name: data.name || existing.name,
+                symbol: data.symbol || existing.symbol,
+                rate,
+                is_active: true,
+                updated_at: now,
+            });
+            return this.knex('currencies').where({ id: existing.id }).first();
+        }
+
+        const [id] = await this.knex('currencies').insert({
+            code,
+            name: data.name || code,
+            symbol: data.symbol || code,
+            rate,
+            is_base: Boolean(data.is_base),
+            is_active: true,
+            created_at: now,
+            updated_at: now,
+        });
+
+        return this.knex('currencies').where({ id }).first();
+    }
+
+    async updateCurrency(id: number, data: { name?: string; symbol?: string; rate?: number; is_active?: boolean; is_base?: boolean }) {
+        await this.ensureCurrenciesSchema();
+        const updateData: any = { updated_at: this.knex.fn.now() };
+        if (data.name !== undefined) updateData.name = data.name;
+        if (data.symbol !== undefined) updateData.symbol = data.symbol;
+        if (data.rate !== undefined) updateData.rate = Number(data.rate);
+        if (data.is_active !== undefined) updateData.is_active = Boolean(data.is_active);
+        if (data.is_base !== undefined) updateData.is_base = Boolean(data.is_base);
+
+        await this.knex('currencies').where({ id }).update(updateData);
+        return this.knex('currencies').where({ id }).first();
+    }
+
+    async deleteCurrency(id: number) {
+        await this.ensureCurrenciesSchema();
+        const curr = await this.knex('currencies').where({ id }).first();
+        if (curr?.is_base) throw new BadRequestException('Base currency cannot be deleted');
+        await this.knex('currencies').where({ id }).delete();
+        return { success: true };
+    }
+
+    // ==========================================
+    // PAYMENT METHODS (SUPER ADMIN CONTROLLED)
+    // ==========================================
+    private paymentMethodsReady = false;
+    private async ensurePaymentMethodsSchema() {
+        if (this.paymentMethodsReady) return;
+        try {
+            if (!(await this.knex.schema.hasTable('payment_methods'))) {
+                await this.knex.schema.createTable('payment_methods', (t: any) => {
+                    t.increments('id').primary();
+                    t.string('code', 50).notNullable().unique();
+                    t.string('name', 150).notNullable();
+                    t.text('account_details').nullable();
+                    t.text('instructions').nullable();
+                    t.string('fee_note', 150).nullable();
+                    t.string('badge', 100).nullable();
+                    t.boolean('is_active').notNullable().defaultTo(true);
+                    t.integer('sort_order').notNullable().defaultTo(0);
+                    t.timestamp('created_at').defaultTo(this.knex.fn.now());
+                    t.timestamp('updated_at').defaultTo(this.knex.fn.now());
+                });
+                await this.knex('payment_methods').insert([
+                    {
+                        code: 'bank_transfer',
+                        name: 'Virement Bancaire (RIB / IBAN)',
+                        account_details: 'Banque: BIAT / Attijari Bank Tunisie\nRIB: 0800 1234 5678 9012 3456\nIBAN: TN59 0800 1234 5678 9012 3456\nBénéficiaire: Roots Tunisia',
+                        instructions: 'Veuillez effectuer votre virement bancaire puis saisir la référence de transaction.',
+                        fee_note: 'Sans frais supplémentaires',
+                        badge: 'Recommandé en Tunisie',
+                        is_active: true,
+                        sort_order: 1,
+                    },
+                    {
+                        code: 'flouci_konnect',
+                        name: 'Flouci / Konnect (Paiement Électronique & Mobile)',
+                        account_details: 'Portefeuille Flouci: +961 36 26 082',
+                        instructions: 'Payez via votre application mobile Flouci ou Konnect.',
+                        fee_note: 'Validation instantanée',
+                        badge: 'Paiement Rapide',
+                        is_active: true,
+                        sort_order: 2,
+                    },
+                    {
+                        code: 'd17_postal',
+                        name: 'Mandat D17 / La Poste Tunisienne',
+                        account_details: 'Compte CCP: 1700 1234 5678 90\nNuméro D17: +961 36 26 082',
+                        instructions: 'Effectuez le paiement via l\'application D17 ou dans un bureau de poste.',
+                        fee_note: 'Accessible partout en Tunisie',
+                        badge: 'La Poste',
+                        is_active: true,
+                        sort_order: 3,
+                    },
+                ]);
+            }
+        } catch {}
+        this.paymentMethodsReady = true;
+    }
+
+    async listPaymentMethods(onlyActive = true) {
+        await this.ensurePaymentMethodsSchema();
+        try {
+            let q = this.knex('payment_methods').select('*').orderBy('sort_order', 'asc');
+            if (onlyActive) q = q.where('is_active', true);
+            const methods = await q;
+            if (methods && methods.length > 0) return methods;
+        } catch {}
+        return [
+            {
+                id: 1,
+                code: 'bank_transfer',
+                name: 'Virement Bancaire (RIB / IBAN)',
+                account_details: 'Banque: BIAT / Attijari Bank Tunisie\nRIB: 0800 1234 5678 9012 3456\nIBAN: TN59 0800 1234 5678 9012 3456\nBénéficiaire: Roots Tunisia',
+                instructions: 'Veuillez effectuer votre virement bancaire puis saisir la référence de transaction.',
+                fee_note: 'Sans frais supplémentaires',
+                badge: 'Recommandé en Tunisie',
+                is_active: true,
+                sort_order: 1,
+            },
+            {
+                id: 2,
+                code: 'flouci_konnect',
+                name: 'Flouci / Konnect (Paiement Électronique & Mobile)',
+                account_details: 'Portefeuille Flouci: +961 36 26 082',
+                instructions: 'Payez via votre application mobile Flouci ou Konnect.',
+                fee_note: 'Validation instantanée',
+                badge: 'Paiement Rapide',
+                is_active: true,
+                sort_order: 2,
+            },
+            {
+                id: 3,
+                code: 'd17_postal',
+                name: 'Mandat D17 / La Poste Tunisienne',
+                account_details: 'Compte CCP: 1700 1234 5678 90\nNuméro D17: +961 36 26 082',
+                instructions: 'Effectuez le paiement via l\'application D17 ou dans un bureau de poste.',
+                fee_note: 'Accessible partout en Tunisie',
+                badge: 'La Poste',
+                is_active: true,
+                sort_order: 3,
+            },
+        ];
+    }
+
+    async addPaymentMethod(data: {
+        code?: string;
+        name: string;
+        account_details?: string;
+        instructions?: string;
+        fee_note?: string;
+        badge?: string;
+        sort_order?: number;
+    }) {
+        await this.ensurePaymentMethodsSchema();
+        const code = String(data.code || `method_${Date.now()}`).trim().toLowerCase().replace(/[^a-z0-9_]/g, '_');
+        const now = this.knex.fn.now();
+
+        const [id] = await this.knex('payment_methods').insert({
+            code,
+            name: data.name,
+            account_details: data.account_details || '',
+            instructions: data.instructions || '',
+            fee_note: data.fee_note || '',
+            badge: data.badge || '',
+            is_active: true,
+            sort_order: Number(data.sort_order || 0),
+            created_at: now,
+            updated_at: now,
+        });
+
+        return this.knex('payment_methods').where({ id }).first();
+    }
+
+    async updatePaymentMethod(id: number, data: Partial<{
+        name: string;
+        account_details: string;
+        instructions: string;
+        fee_note: string;
+        badge: string;
+        is_active: boolean;
+        sort_order: number;
+    }>) {
+        await this.ensurePaymentMethodsSchema();
+        const updateData: any = { updated_at: this.knex.fn.now() };
+        if (data.name !== undefined) updateData.name = data.name;
+        if (data.account_details !== undefined) updateData.account_details = data.account_details;
+        if (data.instructions !== undefined) updateData.instructions = data.instructions;
+        if (data.fee_note !== undefined) updateData.fee_note = data.fee_note;
+        if (data.badge !== undefined) updateData.badge = data.badge;
+        if (data.is_active !== undefined) updateData.is_active = Boolean(data.is_active);
+        if (data.sort_order !== undefined) updateData.sort_order = Number(data.sort_order);
+
+        await this.knex('payment_methods').where({ id }).update(updateData);
+        return this.knex('payment_methods').where({ id }).first();
+    }
+
+    async deletePaymentMethod(id: number) {
+        await this.ensurePaymentMethodsSchema();
+        await this.knex('payment_methods').where({ id }).delete();
+        return { success: true };
+    }
 }

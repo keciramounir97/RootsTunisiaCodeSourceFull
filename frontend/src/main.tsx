@@ -10,6 +10,7 @@ import App from "./App";
 import { AuthProvider } from "./admin/components/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import { TranslationProvider } from "./context/TranslationContext";
+import { CurrencyProvider } from "./context/CurrencyContext";
 import { queryClient } from "./lib/queryClient";
 import { GlobalProvider } from "./context/GlobalContext";
 import { NotificationProvider } from "./context/NotificationContext";
@@ -26,14 +27,16 @@ if (rootElement) {
           <GlobalProvider>
             <ThemeProvider>
               <TranslationProvider>
-                <AuthProvider>
-                  <NotificationProvider>
-                    <FavoritesProvider>
-                      <App />
-                      <Toaster position="top-center" />
-                    </FavoritesProvider>
-                  </NotificationProvider>
-                </AuthProvider>
+                <CurrencyProvider>
+                  <AuthProvider>
+                    <NotificationProvider>
+                      <FavoritesProvider>
+                        <App />
+                        <Toaster position="top-center" />
+                      </FavoritesProvider>
+                    </NotificationProvider>
+                  </AuthProvider>
+                </CurrencyProvider>
               </TranslationProvider>
             </ThemeProvider>
           </GlobalProvider>

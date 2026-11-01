@@ -37,6 +37,7 @@ import {
   Globe,
   Gauge,
   Headphones,
+  Coins,
 } from "lucide-react";
 
 // Navigation Config
@@ -66,6 +67,7 @@ const links = [
   { to: "/admin/user-upgrade", labelKey: "user_upgrade", Icon: ArrowUpCircle },
   { to: "/admin/user-settings", labelKey: "user_settings", Icon: Settings },
   { to: "/admin/payment-settings", labelKey: "payment_settings", Icon: Wallet },
+  { to: "/admin/currencies", labelKey: "currencies_exchange", Icon: Coins },
   { to: "/admin/activity", labelKey: "activity", Icon: Activity },
   { to: "/admin/legal-content", labelKey: "legal_content", Icon: Scale },
   { to: "/admin/backups", labelKey: "backups", Icon: ArchiveRestore },
@@ -81,6 +83,7 @@ const labelFallbacks: Record<string, string> = {
   my_sources: "My Sources",
   articles: "Articles",
   tier_features_title: "Tier Features",
+  currencies_exchange: "Taux de Change & Devises",
 };
 
 export default function AdminSidebar({
