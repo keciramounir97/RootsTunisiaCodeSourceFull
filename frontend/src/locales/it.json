@@ -1207,5 +1207,8 @@
   "current_active_plan": "Piano Attivo Attuale",
   "active_plan_btn": "Piano Attuale",
   "start_free": "Piano Attuale",
-  "upgrade_to": "Passa a"
+  "upgrade_to": "Passa a",
+  "preferred_currency": "Valuta di visualizzazione e fatturazione:",
+  "currency_changed_success": "Valuta dell'account aggiornata con successo",
+  "select_currency": "Seleziona valuta"
 }

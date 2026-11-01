@@ -3,6 +3,7 @@ import { useTranslation } from "../../context/TranslationContext";
 import { useThemeStore } from "../../store/theme";
 import { useLanguage } from "../../i18n";
 import { useAuth } from "../components/AuthContext";
+import { useCurrency } from "../../context/CurrencyContext";
 import { api } from "../../api/client";
 import {
   User,
@@ -19,6 +20,7 @@ import {
   ShieldAlert,
   Power,
   RefreshCw,
+  Coins,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -27,6 +29,7 @@ export default function UserSettings() {
   const { theme, toggleTheme } = useThemeStore();
   const { language, changeLanguage } = useLanguage();
   const { user, logout } = useAuth();
+  const { selectedCurrency, setCurrencyCode, currencies } = useCurrency();
   const isDark = theme === "dark";
 
   // Password state
@@ -231,6 +234,45 @@ export default function UserSettings() {
                   {lang.label}
                 </button>
               ))}
+            </div>
+          </div>
+
+          {/* Currency Preference */}
+          <div className="pt-2 border-t border-[var(--border-color)] space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-1.5">
+                <Coins className="w-3.5 h-3.5 text-[#d9a441]" />
+                <span>{t("preferred_currency", "عملة العرض وتتبع الاشتراكات:")}</span>
+              </label>
+              <span className="text-[0.7rem] font-bold text-[#d9a441] font-mono bg-[#d9a441]/10 px-2 py-0.5 rounded border border-[#d9a441]/30">
+                {selectedCurrency.code} ({selectedCurrency.symbol})
+              </span>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              {currencies.map((curr) => {
+                const isSelected = selectedCurrency.code === curr.code;
+                return (
+                  <button
+                    key={curr.code}
+                    type="button"
+                    onClick={() => {
+                      setCurrencyCode(curr.code);
+                      setStatus({
+                        type: "success",
+                        msg: t("currency_changed_success", "تم ضبط عملة الحساب بنجاح"),
+                      });
+                    }}
+                    className={`py-2 px-3 rounded-xl border text-xs font-bold transition-all flex items-center justify-between cursor-pointer ${
+                      isSelected
+                        ? "bg-[#d9a441]/15 border-[#d9a441] text-[#d9a441] ring-2 ring-[#d9a441]/30 shadow-sm"
+                        : "border-[var(--border-color)] bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:border-[#d9a441]/40"
+                    }`}
+                  >
+                    <span>{curr.code}</span>
+                    <span className="font-mono text-[0.7rem] text-gray-500">{curr.symbol}</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
 

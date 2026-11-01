@@ -1207,5 +1207,8 @@
   "current_active_plan": "Pjan Attiv Kurrenti",
   "active_plan_btn": "Pjan Kurrenti",
   "start_free": "Pjan Kurrenti",
-  "upgrade_to": "Aġġorna għal"
+  "upgrade_to": "Aġġorna għal",
+  "preferred_currency": "Munita tal-Wiri u l-Kontijiet:",
+  "currency_changed_success": "Il-munita tal-kont ġiet aġġornata b'suċċess",
+  "select_currency": "Agħżel il-munita"
 }

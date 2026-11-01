@@ -3888,5 +3888,8 @@
   "tier_historian_name": "مؤرخ العائلة (Family Historian)",
   "ultimate_research": "البحث الأكاديمي الشامل",
   "active_plan_btn": "الباقة الحالية",
-  "start_free": "الباقة الحالية"
+  "start_free": "الباقة الحالية",
+  "preferred_currency": "عملة العرض وتتبع الاشتراكات:",
+  "currency_changed_success": "تم ضبط عملة الحساب بنجاح",
+  "select_currency": "اختر العملة"
 }

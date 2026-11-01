@@ -100,6 +100,7 @@ import {
 
 import { useThemeStore } from "../../store/theme";
 import { useLanguage as useTranslation } from "../../i18n";
+import { useAuth } from "../components/AuthContext";
 import { api } from "../../api/client";
 import { getApiRoot, requestWithFallback, shouldFallbackRoute } from "../../api/helpers";
 import {
@@ -205,7 +206,7 @@ const normalizeIndividualRecord = (item: any) => {
   };
 };
 
-const STORAGE_KEY = "roots_individuals_records_v1";
+// Scoped user storage key used dynamically
 
 const uid = () => String(Date.now() + Math.floor(Math.random() * 10000));
 
@@ -231,17 +232,28 @@ export default function Individuals() {
   const { theme } = useThemeStore();
   const { t, dir } = useTranslation();
   const isDark = theme === "dark";
+  const { user } = useAuth();
+  const roleId = Number(user?.role_id ?? user?.roleId ?? user?.role ?? 0);
+  const isPrivileged = roleId === 1 || roleId === 3;
+  const storageKey = user?.id ? `roots_individuals_u${user.id}_v3` : null;
 
-  // Data State
-  const [individuals, setIndividuals] = useState<any[]>(() => {
+  // Clean legacy unscoped localStorage key
+  useEffect(() => {
     try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) return parsed.map(normalizeIndividualRecord);
-      }
-    } catch {
-      /* fallback */
+      localStorage.removeItem("roots_individuals_records_v1");
+    } catch {}
+  }, []);
+
+  // Data State starts pristine and empty for newly created users
+  const [individuals, setIndividuals] = useState<any[]>(() => {
+    if (storageKey) {
+      try {
+        const saved = localStorage.getItem(storageKey);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed)) return parsed.map(normalizeIndividualRecord);
+        }
+      } catch {}
     }
     return [];
   });
@@ -332,14 +344,15 @@ export default function Individuals() {
     svg.append("text").attr("x", 20).attr("y", 96).attr("font-size", 9).attr("fill", textColor).text(`Death: ${selectedIndividual.deathDate || "—"}`);
   }, [selectedIndividual, isDark]);
 
-  // Persist to local storage
+  // Persist to user-scoped local storage only
   useEffect(() => {
+    if (!storageKey) return;
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(individuals));
+      localStorage.setItem(storageKey, JSON.stringify(individuals));
     } catch {
       /* ignore */
     }
-  }, [individuals]);
+  }, [individuals, storageKey]);
 
   // Filtered List
   const filteredIndividuals = useMemo(() => {
@@ -445,34 +458,61 @@ export default function Individuals() {
     }));
   };
 
-  // Fetch initial data from API with fallback
+  // Fetch initial data from API with user isolation
   useEffect(() => {
     let isMounted = true;
     const fetchIndividuals = async () => {
       try {
-        const { data } = await requestWithFallback(
-          [
-            () => api.get("/admin/individuals"),
-            () => api.get("/individuals"),
-          ],
-          shouldFallbackRoute
-        );
-        if (isMounted && Array.isArray(data)) {
-          const normalized = data.map(normalizeIndividualRecord);
-          setIndividuals(normalized);
-          try {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized));
-          } catch {}
+        const endpoints = isPrivileged
+          ? [() => api.get("/admin/individuals")]
+          : [() => api.get("/my/individuals"), () => api.get("/admin/individuals")];
+
+        const { data } = await requestWithFallback(endpoints, shouldFallbackRoute);
+        if (isMounted) {
+          if (Array.isArray(data)) {
+            // Filter out any mock test individuals
+            const normalized = data
+              .map(normalizeIndividualRecord)
+              .filter(
+                (ind) =>
+                  !ind.name?.toLowerCase().includes("muammar gaddafi") &&
+                  !ind.name?.toLowerCase().includes("félix geay") &&
+                  !ind.name?.toLowerCase().includes("léonarda capitelli") &&
+                  !ind.name?.toLowerCase().includes("benoite poncept")
+              );
+            setIndividuals(normalized);
+            if (storageKey) {
+              try {
+                localStorage.setItem(storageKey, JSON.stringify(normalized));
+              } catch {}
+            }
+          } else {
+            setIndividuals([]);
+          }
         }
       } catch {
-        /* keep local storage fallback */
+        if (isMounted) {
+          if (storageKey) {
+            try {
+              const saved = localStorage.getItem(storageKey);
+              if (saved) {
+                const parsed = JSON.parse(saved);
+                if (Array.isArray(parsed)) {
+                  setIndividuals(parsed.map(normalizeIndividualRecord));
+                  return;
+                }
+              }
+            } catch {}
+          }
+          setIndividuals([]);
+        }
       }
     };
     void fetchIndividuals();
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [user?.id, isPrivileged, storageKey]);
 
   // Save Individual Form with API & Local Fallback
   const saveForm = async (e: React.FormEvent) => {
@@ -612,7 +652,7 @@ export default function Individuals() {
     setIndividuals((prev) => {
       const next = prev.filter((item) => String(item.id) !== String(id));
       try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+        if (storageKey) { try { localStorage.setItem(storageKey, JSON.stringify(next)); } catch {} };
       } catch {}
       return next;
     });

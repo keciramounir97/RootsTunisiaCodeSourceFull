@@ -1649,5 +1649,8 @@
   "current_active_plan": "Current Active Plan",
   "active_plan_btn": "Current Plan",
   "start_free": "Current Plan",
-  "upgrade_to": "Upgrade to"
+  "upgrade_to": "Upgrade to",
+  "preferred_currency": "Display & Billing Currency:",
+  "currency_changed_success": "Account currency successfully updated",
+  "select_currency": "Select Currency"
 }

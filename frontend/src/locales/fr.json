@@ -1649,5 +1649,8 @@
   "current_active_plan": "Plan Actif Actuel",
   "active_plan_btn": "Forfait Actuel",
   "start_free": "Forfait Actuel",
-  "upgrade_to": "Passer à"
+  "upgrade_to": "Passer à",
+  "preferred_currency": "Devise d'affichage et de facturation :",
+  "currency_changed_success": "Devise du compte mise à jour avec succès",
+  "select_currency": "Choisir la devise"
 }

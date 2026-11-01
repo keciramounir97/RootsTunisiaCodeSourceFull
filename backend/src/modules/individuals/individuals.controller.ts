@@ -93,19 +93,38 @@ export class IndividualsController {
     return result;
   }
 
-  // Admin / My Endpoints: list all individuals
+  // Admin / My Endpoints: list individuals with user isolation
   @Get('admin/individuals')
   @UseGuards(JwtAuthGuard)
-  async listAdminIndividuals() {
-    const cached = this.getCached('admin');
-    if (cached) return cached;
+  async listAdminIndividuals(@Request() req: ExpressRequest) {
+    const user: any = (req as any).user;
+    const roleId = Number(user?.role_id ?? user?.roleId ?? user?.role ?? 0);
+    const isAdmin = roleId === 1 || roleId === 3;
+    const userId = Number(user?.id);
 
-    const list = await Individual.query(this.knex)
+    let query = Individual.query(this.knex)
       .select(this.summaryColumns)
       .orderBy('id', 'desc');
-    const result = list.map((item) => this.parseIndividual(item));
-    this.setCached('admin', result);
-    return result;
+
+    // Non-admin regular users ONLY see individuals they created themselves
+    if (!isAdmin) {
+      if (!userId) return [];
+      query = query.where('user_id', userId);
+    }
+
+    const list = await query;
+    return list.map((item) => this.parseIndividual(item));
+  }
+
+  @Get('my/individuals')
+  @UseGuards(JwtAuthGuard)
+  async listMyIndividuals(@Request() req: ExpressRequest) {
+    const userId = Number((req as any).user?.id);
+    const list = await Individual.query(this.knex)
+      .select(this.summaryColumns)
+      .where('user_id', userId)
+      .orderBy('id', 'desc');
+    return list.map((item) => this.parseIndividual(item));
   }
 
   // GET single individual with full details including gedcom_text
@@ -155,10 +174,18 @@ export class IndividualsController {
 
   @Put('admin/individuals/:id')
   @UseGuards(JwtAuthGuard)
-  async updateIndividual(@Param('id') id: string, @Body() body: any) {
+  async updateIndividual(@Param('id') id: string, @Body() body: any, @Request() req: ExpressRequest) {
+    const user: any = (req as any).user;
+    const roleId = Number(user?.role_id ?? user?.roleId ?? user?.role ?? 0);
+    const isAdmin = roleId === 1 || roleId === 3;
+    const userId = Number(user?.id);
+
     const resolvedId = this.resolveIndividualId(id);
-    const existing = await Individual.query(this.knex).findById(resolvedId);
+    const existing: any = await Individual.query(this.knex).findById(resolvedId);
     if (!existing) throw new NotFoundException('Individual not found');
+    if (!isAdmin && existing.user_id && existing.user_id !== userId) {
+      throw new BadRequestException('Not authorized to edit this individual');
+    }
 
     const payload: any = {};
     if (body.name !== undefined) payload.name = body.name;
@@ -184,10 +211,18 @@ export class IndividualsController {
 
   @Delete('admin/individuals/:id')
   @UseGuards(JwtAuthGuard)
-  async deleteIndividual(@Param('id') id: string) {
+  async deleteIndividual(@Param('id') id: string, @Request() req: ExpressRequest) {
+    const user: any = (req as any).user;
+    const roleId = Number(user?.role_id ?? user?.roleId ?? user?.role ?? 0);
+    const isAdmin = roleId === 1 || roleId === 3;
+    const userId = Number(user?.id);
+
     const resolvedId = this.resolveIndividualId(id);
-    const existing = await Individual.query(this.knex).findById(resolvedId);
+    const existing: any = await Individual.query(this.knex).findById(resolvedId);
     if (!existing) throw new NotFoundException('Individual not found');
+    if (!isAdmin && existing.user_id && existing.user_id !== userId) {
+      throw new BadRequestException('Not authorized to delete this individual');
+    }
     await Individual.query(this.knex).deleteById(resolvedId);
     this.clearCache();
     return { success: true, id: resolvedId };

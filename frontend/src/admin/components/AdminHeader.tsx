@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Menu, Search, User, LogOut, ExternalLink, PanelLeft, PanelLeftClose } from "lucide-react";
+import { Search, LogOut, ExternalLink, PanelLeft, PanelLeftClose } from "lucide-react";
 import { useTranslation } from "../../context/TranslationContext";
 import { useAuth } from "./AuthContext";
+import { useCurrency } from "../../context/CurrencyContext";
 import LanguageMenu from "../../components/LanguageMenu";
 
 export default function AdminHeader({
@@ -15,6 +16,7 @@ export default function AdminHeader({
   const { t, dir } = useTranslation();
   const isRtl = dir === "rtl";
   const { user, logout } = useAuth();
+  const { selectedCurrency, setCurrencyCode, currencies } = useCurrency();
   const [search, setSearch] = useState("");
   const navigate = useNavigate();
 
@@ -59,7 +61,7 @@ export default function AdminHeader({
         </form>
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 sm:gap-3">
         <Link
           to="/"
           target="_blank"
@@ -69,16 +71,32 @@ export default function AdminHeader({
           <ExternalLink className="h-3 w-3" />
         </Link>
 
+        {/* Currency Switcher */}
+        <div className="flex items-center">
+          <select
+            value={selectedCurrency.code}
+            onChange={(e) => setCurrencyCode(e.target.value)}
+            className="px-2 py-1 text-xs font-bold font-mono rounded-lg border border-[var(--gold)]/40 bg-[var(--background)] text-[var(--foreground)] outline-none hover:border-[var(--gold)] transition-colors cursor-pointer shadow-sm"
+            title={t("select_currency", "اختر العملة (Currency)")}
+          >
+            {currencies.map((curr) => (
+              <option key={curr.code} value={curr.code} className="bg-[var(--card)] text-[var(--foreground)]">
+                {curr.code} ({curr.symbol})
+              </option>
+            ))}
+          </select>
+        </div>
+
         <LanguageMenu />
 
         <div className={`flex items-center gap-2 ${isRtl ? "pr-2 border-r" : "pl-2 border-l"} border-[var(--gold)]/25`}>
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--primary)] text-xs font-bold text-white uppercase">
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--primary)] text-xs font-bold text-white uppercase shadow-sm">
             {user?.name ? user.name.charAt(0) : "U"}
           </div>
           <button
             onClick={() => logout()}
             title={t("nav_signout", "Sign Out")}
-            className="p-1.5 text-[var(--muted-foreground)] hover:text-red-500 rounded hover:bg-red-500/10 cursor-pointer"
+            className="p-1.5 text-[var(--muted-foreground)] hover:text-red-500 rounded hover:bg-red-500/10 cursor-pointer transition-colors"
           >
             <LogOut className="h-4 w-4" />
           </button>
