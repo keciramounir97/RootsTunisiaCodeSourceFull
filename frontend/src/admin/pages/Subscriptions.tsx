@@ -152,18 +152,18 @@ export default function Subscriptions() {
                     </p>
                   </div>
                   <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">
-                    Active
+                    {t("active", "Active")}
                   </span>
                 </div>
 
                 <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--text-color)] opacity-60 mb-3">
-                  Resource Creation Quotas:
+                  {t("resource_creation_quotas", "حصص وسعات إنشاء الموارد:")}
                 </h3>
 
                 {isEditing ? (
                   <div className="space-y-3 text-xs">
                     <div>
-                      <label className="block font-semibold mb-1">Max Trees (-1 for ∞):</label>
+                      <label className="block font-semibold mb-1">{t("max_trees_quota", "الحد الأقصى للأشجار (-1 لغير محدود):")}</label>
                       <input
                         type="number"
                         value={editLimits.max_trees}
@@ -174,7 +174,7 @@ export default function Subscriptions() {
                       />
                     </div>
                     <div>
-                      <label className="block font-semibold mb-1">Max Individuals (-1 for ∞):</label>
+                      <label className="block font-semibold mb-1">{t("max_individuals_quota", "الحد الأقصى للأفراد (-1 لغير محدود):")}</label>
                       <input
                         type="number"
                         value={editLimits.max_individuals}
@@ -185,7 +185,7 @@ export default function Subscriptions() {
                       />
                     </div>
                     <div>
-                      <label className="block font-semibold mb-1">Max Saved Sources (-1 for ∞):</label>
+                      <label className="block font-semibold mb-1">{t("max_sources_quota", "الحد الأقصى للمصادر (-1 لغير محدود):")}</label>
                       <input
                         type="number"
                         value={editLimits.max_sources}
@@ -196,7 +196,7 @@ export default function Subscriptions() {
                       />
                     </div>
                     <div>
-                      <label className="block font-semibold mb-1">Max Research Notes (-1 for ∞):</label>
+                      <label className="block font-semibold mb-1">{t("max_notes_quota", "الحد الأقصى للملاحظات (-1 لغير محدود):")}</label>
                       <input
                         type="number"
                         value={editLimits.max_notes}
@@ -207,7 +207,7 @@ export default function Subscriptions() {
                       />
                     </div>
                     <div>
-                      <label className="block font-semibold mb-1">Max Research Tasks (-1 for ∞):</label>
+                      <label className="block font-semibold mb-1">{t("max_tasks_quota", "الحد الأقصى للمهام (-1 لغير محدود):")}</label>
                       <input
                         type="number"
                         value={editLimits.max_tasks}
@@ -218,7 +218,7 @@ export default function Subscriptions() {
                       />
                     </div>
                     <div>
-                      <label className="block font-semibold mb-1">Max Gallery Images (-1 for ∞):</label>
+                      <label className="block font-semibold mb-1">{t("max_gallery_quota", "الحد الأقصى لصور المعرض (-1 لغير محدود):")}</label>
                       <input
                         type="number"
                         value={editLimits.max_gallery}
@@ -229,7 +229,7 @@ export default function Subscriptions() {
                       />
                     </div>
                     <div>
-                      <label className="block font-semibold mb-1">Max Audios (-1 for ∞):</label>
+                      <label className="block font-semibold mb-1">{t("max_audios_quota", "الحد الأقصى للتسجيلات (-1 لغير محدود):")}</label>
                       <input
                         type="number"
                         value={editLimits.max_audios}
@@ -240,7 +240,7 @@ export default function Subscriptions() {
                       />
                     </div>
                     <div>
-                      <label className="block font-semibold mb-1">Max Documents (-1 for ∞):</label>
+                      <label className="block font-semibold mb-1">{t("max_documents_quota", "الحد الأقصى للوثائق (-1 لغير محدود):")}</label>
                       <input
                         type="number"
                         value={editLimits.max_documents}
@@ -254,35 +254,35 @@ export default function Subscriptions() {
                 ) : (
                   <ul className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
                     <li className="flex justify-between items-center py-1 border-b border-gray-100 dark:border-gray-800">
-                      <span>🌳 Family Trees:</span>
+                      <span>🌳 {t("trees", "أشجار العائلات")}:</span>
                       <span className="font-bold font-mono text-[#d9a441]">{formatLimit(tier.max_trees)}</span>
                     </li>
                     <li className="flex justify-between items-center py-1 border-b border-gray-100 dark:border-gray-800">
-                      <span>👤 Individuals:</span>
+                      <span>👤 {t("individuals", "الأفراد")}:</span>
                       <span className="font-bold font-mono text-[#d9a441]">{formatLimit(tier.max_individuals)}</span>
                     </li>
                     <li className="flex justify-between items-center py-1 border-b border-gray-100 dark:border-gray-800">
-                      <span>🏛️ Saved Sources:</span>
+                      <span>🏛️ {t("sources", "المصادر المحفوظة")}:</span>
                       <span className="font-bold font-mono text-[#d9a441]">{formatLimit(tier.max_sources)}</span>
                     </li>
                     <li className="flex justify-between items-center py-1 border-b border-gray-100 dark:border-gray-800">
-                      <span>📝 Research Notes:</span>
+                      <span>📝 {t("notes", "الملاحظات البحثية")}:</span>
                       <span className="font-bold font-mono text-[#d9a441]">{formatLimit(tier.max_notes)}</span>
                     </li>
                     <li className="flex justify-between items-center py-1 border-b border-gray-100 dark:border-gray-800">
-                      <span>✅ Research Tasks:</span>
+                      <span>✅ {t("tasks", "المهام")}:</span>
                       <span className="font-bold font-mono text-[#d9a441]">{formatLimit(tier.max_tasks)}</span>
                     </li>
                     <li className="flex justify-between items-center py-1 border-b border-gray-100 dark:border-gray-800">
-                      <span>🖼️ Gallery Images:</span>
+                      <span>🖼️ {t("gallery", "صور المعرض")}:</span>
                       <span className="font-bold font-mono text-[#d9a441]">{formatLimit(tier.max_gallery)}</span>
                     </li>
                     <li className="flex justify-between items-center py-1 border-b border-gray-100 dark:border-gray-800">
-                      <span>🎵 Audios:</span>
+                      <span>🎵 {t("audios", "التسجيلات الصوتية")}:</span>
                       <span className="font-bold font-mono text-[#d9a441]">{formatLimit(tier.max_audios)}</span>
                     </li>
                     <li className="flex justify-between items-center py-1 border-b border-gray-100 dark:border-gray-800">
-                      <span>📄 Documents:</span>
+                      <span>📄 {t("documents", "الوثائق")}:</span>
                       <span className="font-bold font-mono text-[#d9a441]">{formatLimit(tier.max_documents)}</span>
                     </li>
                   </ul>
@@ -295,26 +295,26 @@ export default function Subscriptions() {
                     <button
                       onClick={() => setEditingId(null)}
                       disabled={saving}
-                      className="px-3 py-1.5 rounded-lg border text-xs font-semibold text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+                      className="px-3 py-1.5 rounded-lg border text-xs font-semibold text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
                     >
-                      Cancel
+                      {t("cancel", "Cancel")}
                     </button>
                     <button
                       onClick={() => handleSaveLimits(tier.id)}
                       disabled={saving}
-                      className="px-4 py-1.5 rounded-lg bg-gradient-to-r from-[#d9a441] to-[#e8c377] text-[#092C2B] font-bold text-xs flex items-center gap-1.5 shadow"
+                      className="px-4 py-1.5 rounded-lg bg-gradient-to-r from-[#d9a441] to-[#e8c377] text-[#092C2B] font-bold text-xs flex items-center gap-1.5 shadow cursor-pointer"
                     >
                       {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
-                      Save Quotas
+                      {t("save_quotas", "Save Quotas")}
                     </button>
                   </>
                 ) : (
                   <button
                     onClick={() => startEdit(tier)}
-                    className="w-full py-2 rounded-xl border border-[#d9a441]/40 text-[#d9a441] hover:bg-[#d9a441]/10 text-xs font-bold flex items-center justify-center gap-1.5 transition-colors"
+                    className="w-full py-2 rounded-xl border border-[#d9a441]/40 text-[#d9a441] hover:bg-[#d9a441]/10 text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
                   >
                     <Edit3 className="w-3.5 h-3.5" />
-                    Edit Creation Quotas
+                    {t("edit_creation_quotas", "Edit Creation Quotas")}
                   </button>
                 )}
               </div>

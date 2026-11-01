@@ -11,12 +11,16 @@ import GalleryDocuments from "./GalleryDocuments";
 import GalleryImages from "./GalleryImages";
 import GalleryTrees from "./GalleryTrees";
 
+import { AuthProvider } from "../admin/components/AuthContext";
+
 function renderWithProviders(ui: React.ReactNode) {
   return render(
     <MemoryRouter>
-      <ThemeProvider>
-        <TranslationProvider>{ui}</TranslationProvider>
-      </ThemeProvider>
+      <AuthProvider>
+        <ThemeProvider>
+          <TranslationProvider>{ui}</TranslationProvider>
+        </ThemeProvider>
+      </AuthProvider>
     </MemoryRouter>
   );
 }
@@ -24,7 +28,7 @@ function renderWithProviders(ui: React.ReactNode) {
 describe("Roots Tunisia Sub-Gallery Pages", () => {
   it("renders GalleryArticles page cleanly", () => {
     renderWithProviders(<GalleryArticles />);
-    expect(screen.getAllByText(/Articles|Stories/i)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/Articles|Stories|Récits/i)[0]).toBeInTheDocument();
   });
 
   it("renders GalleryAudios page cleanly", () => {
@@ -44,11 +48,11 @@ describe("Roots Tunisia Sub-Gallery Pages", () => {
 
   it("renders GalleryImages page cleanly", () => {
     renderWithProviders(<GalleryImages />);
-    expect(screen.getAllByText(/Photo & Visual|Visual Heritage/i)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/Photo & Visual|Visual Heritage|Galerie Photo|Visuelle|Patrimoine/i)[0]).toBeInTheDocument();
   });
 
   it("renders GalleryTrees page cleanly", () => {
     renderWithProviders(<GalleryTrees />);
-    expect(screen.getAllByText(/Family Trees|Pedigrees/i)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/Family Trees|Pedigrees|Arbres|Généalogiques|شجرات/i)[0]).toBeInTheDocument();
   });
 });

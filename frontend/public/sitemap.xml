@@ -1,38 +1,1720 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
-    <loc>https://www.rootstunisia.com/</loc>
-    <changefreq>daily</changefreq>
+    <loc>https://rootstunisia.com/</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>weekly</changefreq>
     <priority>1.0</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/"/>
   </url>
   <url>
-    <loc>https://www.rootstunisia.com/gallery</loc>
+    <loc>https://rootstunisia.com/en</loc>
+    <lastmod>2026-10-31</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
+    <priority>1.0</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/"/>
   </url>
   <url>
-    <loc>https://www.rootstunisia.com/library</loc>
+    <loc>https://rootstunisia.com/ar</loc>
+    <lastmod>2026-10-31</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
+    <priority>1.0</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/"/>
   </url>
   <url>
-    <loc>https://www.rootstunisia.com/periods</loc>
+    <loc>https://rootstunisia.com/es</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/it</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/mt</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/about</loc>
+    <lastmod>2026-10-31</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/about"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/about"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/about"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/about"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/about"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/about"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/about"/>
   </url>
   <url>
-    <loc>https://www.rootstunisia.com/archives</loc>
+    <loc>https://rootstunisia.com/en/about</loc>
+    <lastmod>2026-10-31</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/about"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/about"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/about"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/about"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/about"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/about"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/about"/>
   </url>
   <url>
-    <loc>https://www.rootstunisia.com/contact</loc>
-    <changefreq>yearly</changefreq>
-    <priority>0.5</priority>
+    <loc>https://rootstunisia.com/ar/about</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/about"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/about"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/about"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/about"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/about"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/about"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/about"/>
   </url>
   <url>
-    <loc>https://www.rootstunisia.com/about</loc>
+    <loc>https://rootstunisia.com/es/about</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/about"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/about"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/about"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/about"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/about"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/about"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/about"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/it/about</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/about"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/about"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/about"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/about"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/about"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/about"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/about"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/mt/about</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/about"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/about"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/about"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/about"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/about"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/about"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/about"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/gallery</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/gallery"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/gallery"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/gallery"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/gallery"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/gallery"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/gallery"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/gallery"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/en/gallery</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/gallery"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/gallery"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/gallery"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/gallery"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/gallery"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/gallery"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/gallery"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/ar/gallery</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/gallery"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/gallery"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/gallery"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/gallery"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/gallery"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/gallery"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/gallery"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/es/gallery</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/gallery"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/gallery"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/gallery"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/gallery"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/gallery"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/gallery"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/gallery"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/it/gallery</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/gallery"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/gallery"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/gallery"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/gallery"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/gallery"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/gallery"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/gallery"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/mt/gallery</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/gallery"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/gallery"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/gallery"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/gallery"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/gallery"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/gallery"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/gallery"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/gallery/trees</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/gallery/trees"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/gallery/trees"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/gallery/trees"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/gallery/trees"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/gallery/trees"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/gallery/trees"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/gallery/trees"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/en/gallery/trees</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/gallery/trees"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/gallery/trees"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/gallery/trees"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/gallery/trees"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/gallery/trees"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/gallery/trees"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/gallery/trees"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/ar/gallery/trees</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/gallery/trees"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/gallery/trees"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/gallery/trees"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/gallery/trees"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/gallery/trees"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/gallery/trees"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/gallery/trees"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/es/gallery/trees</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/gallery/trees"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/gallery/trees"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/gallery/trees"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/gallery/trees"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/gallery/trees"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/gallery/trees"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/gallery/trees"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/it/gallery/trees</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/gallery/trees"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/gallery/trees"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/gallery/trees"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/gallery/trees"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/gallery/trees"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/gallery/trees"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/gallery/trees"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/mt/gallery/trees</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/gallery/trees"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/gallery/trees"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/gallery/trees"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/gallery/trees"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/gallery/trees"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/gallery/trees"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/gallery/trees"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/gallery/images</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/gallery/images"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/gallery/images"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/gallery/images"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/gallery/images"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/gallery/images"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/gallery/images"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/gallery/images"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/en/gallery/images</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/gallery/images"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/gallery/images"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/gallery/images"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/gallery/images"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/gallery/images"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/gallery/images"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/gallery/images"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/ar/gallery/images</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/gallery/images"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/gallery/images"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/gallery/images"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/gallery/images"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/gallery/images"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/gallery/images"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/gallery/images"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/es/gallery/images</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/gallery/images"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/gallery/images"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/gallery/images"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/gallery/images"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/gallery/images"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/gallery/images"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/gallery/images"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/it/gallery/images</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/gallery/images"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/gallery/images"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/gallery/images"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/gallery/images"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/gallery/images"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/gallery/images"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/gallery/images"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/mt/gallery/images</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/gallery/images"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/gallery/images"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/gallery/images"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/gallery/images"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/gallery/images"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/gallery/images"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/gallery/images"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/gallery/audios</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/gallery/audios"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/gallery/audios"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/gallery/audios"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/gallery/audios"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/gallery/audios"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/gallery/audios"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/gallery/audios"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/en/gallery/audios</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/gallery/audios"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/gallery/audios"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/gallery/audios"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/gallery/audios"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/gallery/audios"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/gallery/audios"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/gallery/audios"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/ar/gallery/audios</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/gallery/audios"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/gallery/audios"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/gallery/audios"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/gallery/audios"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/gallery/audios"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/gallery/audios"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/gallery/audios"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/es/gallery/audios</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/gallery/audios"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/gallery/audios"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/gallery/audios"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/gallery/audios"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/gallery/audios"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/gallery/audios"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/gallery/audios"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/it/gallery/audios</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/gallery/audios"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/gallery/audios"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/gallery/audios"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/gallery/audios"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/gallery/audios"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/gallery/audios"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/gallery/audios"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/mt/gallery/audios</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/gallery/audios"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/gallery/audios"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/gallery/audios"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/gallery/audios"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/gallery/audios"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/gallery/audios"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/gallery/audios"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/gallery/documents</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/gallery/documents"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/gallery/documents"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/gallery/documents"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/gallery/documents"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/gallery/documents"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/gallery/documents"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/gallery/documents"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/en/gallery/documents</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/gallery/documents"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/gallery/documents"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/gallery/documents"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/gallery/documents"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/gallery/documents"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/gallery/documents"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/gallery/documents"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/ar/gallery/documents</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/gallery/documents"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/gallery/documents"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/gallery/documents"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/gallery/documents"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/gallery/documents"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/gallery/documents"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/gallery/documents"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/es/gallery/documents</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/gallery/documents"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/gallery/documents"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/gallery/documents"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/gallery/documents"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/gallery/documents"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/gallery/documents"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/gallery/documents"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/it/gallery/documents</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/gallery/documents"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/gallery/documents"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/gallery/documents"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/gallery/documents"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/gallery/documents"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/gallery/documents"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/gallery/documents"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/mt/gallery/documents</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/gallery/documents"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/gallery/documents"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/gallery/documents"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/gallery/documents"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/gallery/documents"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/gallery/documents"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/gallery/documents"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/gallery/books</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/gallery/books"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/gallery/books"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/gallery/books"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/gallery/books"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/gallery/books"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/gallery/books"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/gallery/books"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/en/gallery/books</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/gallery/books"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/gallery/books"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/gallery/books"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/gallery/books"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/gallery/books"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/gallery/books"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/gallery/books"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/ar/gallery/books</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/gallery/books"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/gallery/books"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/gallery/books"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/gallery/books"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/gallery/books"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/gallery/books"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/gallery/books"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/es/gallery/books</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/gallery/books"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/gallery/books"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/gallery/books"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/gallery/books"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/gallery/books"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/gallery/books"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/gallery/books"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/it/gallery/books</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/gallery/books"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/gallery/books"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/gallery/books"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/gallery/books"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/gallery/books"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/gallery/books"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/gallery/books"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/mt/gallery/books</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/gallery/books"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/gallery/books"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/gallery/books"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/gallery/books"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/gallery/books"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/gallery/books"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/gallery/books"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/gallery/articles</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/gallery/articles"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/gallery/articles"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/gallery/articles"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/gallery/articles"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/gallery/articles"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/gallery/articles"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/gallery/articles"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/en/gallery/articles</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/gallery/articles"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/gallery/articles"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/gallery/articles"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/gallery/articles"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/gallery/articles"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/gallery/articles"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/gallery/articles"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/ar/gallery/articles</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/gallery/articles"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/gallery/articles"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/gallery/articles"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/gallery/articles"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/gallery/articles"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/gallery/articles"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/gallery/articles"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/es/gallery/articles</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/gallery/articles"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/gallery/articles"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/gallery/articles"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/gallery/articles"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/gallery/articles"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/gallery/articles"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/gallery/articles"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/it/gallery/articles</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/gallery/articles"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/gallery/articles"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/gallery/articles"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/gallery/articles"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/gallery/articles"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/gallery/articles"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/gallery/articles"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/mt/gallery/articles</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/gallery/articles"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/gallery/articles"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/gallery/articles"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/gallery/articles"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/gallery/articles"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/gallery/articles"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/gallery/articles"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/genealogy-gallery</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/genealogy-gallery"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/genealogy-gallery"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/genealogy-gallery"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/genealogy-gallery"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/genealogy-gallery"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/genealogy-gallery"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/genealogy-gallery"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/en/genealogy-gallery</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/genealogy-gallery"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/genealogy-gallery"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/genealogy-gallery"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/genealogy-gallery"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/genealogy-gallery"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/genealogy-gallery"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/genealogy-gallery"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/ar/genealogy-gallery</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/genealogy-gallery"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/genealogy-gallery"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/genealogy-gallery"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/genealogy-gallery"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/genealogy-gallery"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/genealogy-gallery"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/genealogy-gallery"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/es/genealogy-gallery</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/genealogy-gallery"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/genealogy-gallery"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/genealogy-gallery"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/genealogy-gallery"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/genealogy-gallery"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/genealogy-gallery"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/genealogy-gallery"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/it/genealogy-gallery</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/genealogy-gallery"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/genealogy-gallery"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/genealogy-gallery"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/genealogy-gallery"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/genealogy-gallery"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/genealogy-gallery"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/genealogy-gallery"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/mt/genealogy-gallery</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/genealogy-gallery"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/genealogy-gallery"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/genealogy-gallery"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/genealogy-gallery"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/genealogy-gallery"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/genealogy-gallery"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/genealogy-gallery"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/library</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/library"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/library"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/library"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/library"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/library"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/library"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/library"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/en/library</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/library"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/library"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/library"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/library"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/library"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/library"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/library"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/ar/library</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/library"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/library"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/library"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/library"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/library"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/library"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/library"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/es/library</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/library"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/library"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/library"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/library"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/library"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/library"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/library"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/it/library</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/library"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/library"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/library"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/library"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/library"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/library"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/library"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/mt/library</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/library"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/library"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/library"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/library"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/library"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/library"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/library"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/audio</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/audio"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/audio"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/audio"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/audio"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/audio"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/audio"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/audio"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/en/audio</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/audio"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/audio"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/audio"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/audio"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/audio"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/audio"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/audio"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/ar/audio</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/audio"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/audio"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/audio"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/audio"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/audio"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/audio"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/audio"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/es/audio</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/audio"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/audio"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/audio"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/audio"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/audio"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/audio"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/audio"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/it/audio</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/audio"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/audio"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/audio"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/audio"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/audio"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/audio"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/audio"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/mt/audio</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/audio"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/audio"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/audio"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/audio"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/audio"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/audio"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/audio"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/articles</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/articles"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/articles"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/articles"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/articles"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/articles"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/articles"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/articles"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/en/articles</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/articles"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/articles"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/articles"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/articles"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/articles"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/articles"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/articles"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/ar/articles</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/articles"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/articles"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/articles"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/articles"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/articles"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/articles"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/articles"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/es/articles</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/articles"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/articles"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/articles"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/articles"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/articles"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/articles"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/articles"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/it/articles</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/articles"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/articles"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/articles"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/articles"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/articles"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/articles"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/articles"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/mt/articles</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/articles"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/articles"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/articles"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/articles"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/articles"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/articles"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/articles"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/periods</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/periods"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/periods"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/periods"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/periods"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/periods"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/periods"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/periods"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/en/periods</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/periods"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/periods"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/periods"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/periods"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/periods"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/periods"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/periods"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/ar/periods</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/periods"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/periods"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/periods"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/periods"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/periods"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/periods"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/periods"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/es/periods</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/periods"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/periods"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/periods"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/periods"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/periods"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/periods"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/periods"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/it/periods</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/periods"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/periods"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/periods"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/periods"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/periods"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/periods"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/periods"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/mt/periods</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/periods"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/periods"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/periods"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/periods"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/periods"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/periods"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/periods"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/research</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/research"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/research"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/research"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/research"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/research"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/research"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/research"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/en/research</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/research"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/research"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/research"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/research"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/research"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/research"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/research"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/ar/research</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/research"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/research"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/research"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/research"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/research"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/research"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/research"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/es/research</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/research"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/research"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/research"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/research"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/research"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/research"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/research"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/it/research</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/research"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/research"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/research"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/research"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/research"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/research"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/research"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/mt/research</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/research"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/research"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/research"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/research"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/research"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/research"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/research"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/sources-and-periods</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/sources-and-periods"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/sources-and-periods"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/sources-and-periods"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/sources-and-periods"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/sources-and-periods"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/sources-and-periods"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/sources-and-periods"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/en/sources-and-periods</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/sources-and-periods"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/sources-and-periods"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/sources-and-periods"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/sources-and-periods"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/sources-and-periods"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/sources-and-periods"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/sources-and-periods"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/ar/sources-and-periods</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/sources-and-periods"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/sources-and-periods"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/sources-and-periods"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/sources-and-periods"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/sources-and-periods"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/sources-and-periods"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/sources-and-periods"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/es/sources-and-periods</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/sources-and-periods"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/sources-and-periods"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/sources-and-periods"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/sources-and-periods"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/sources-and-periods"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/sources-and-periods"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/sources-and-periods"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/it/sources-and-periods</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/sources-and-periods"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/sources-and-periods"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/sources-and-periods"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/sources-and-periods"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/sources-and-periods"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/sources-and-periods"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/sources-and-periods"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/mt/sources-and-periods</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/sources-and-periods"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/sources-and-periods"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/sources-and-periods"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/sources-and-periods"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/sources-and-periods"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/sources-and-periods"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/sources-and-periods"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/subscriptions</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/subscriptions"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/subscriptions"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/subscriptions"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/subscriptions"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/subscriptions"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/subscriptions"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/subscriptions"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/en/subscriptions</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/subscriptions"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/subscriptions"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/subscriptions"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/subscriptions"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/subscriptions"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/subscriptions"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/subscriptions"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/ar/subscriptions</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/subscriptions"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/subscriptions"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/subscriptions"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/subscriptions"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/subscriptions"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/subscriptions"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/subscriptions"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/es/subscriptions</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/subscriptions"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/subscriptions"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/subscriptions"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/subscriptions"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/subscriptions"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/subscriptions"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/subscriptions"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/it/subscriptions</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/subscriptions"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/subscriptions"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/subscriptions"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/subscriptions"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/subscriptions"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/subscriptions"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/subscriptions"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/mt/subscriptions</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/subscriptions"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/subscriptions"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/subscriptions"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/subscriptions"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/subscriptions"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/subscriptions"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/subscriptions"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/help-center</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/help-center"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/help-center"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/help-center"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/help-center"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/help-center"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/help-center"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/help-center"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/en/help-center</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/help-center"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/help-center"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/help-center"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/help-center"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/help-center"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/help-center"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/help-center"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/ar/help-center</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/help-center"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/help-center"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/help-center"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/help-center"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/help-center"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/help-center"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/help-center"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/es/help-center</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/help-center"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/help-center"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/help-center"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/help-center"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/help-center"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/help-center"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/help-center"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/it/help-center</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/help-center"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/help-center"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/help-center"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/help-center"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/help-center"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/help-center"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/help-center"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/mt/help-center</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/help-center"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/help-center"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/help-center"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/help-center"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/help-center"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/help-center"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/help-center"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/contact</loc>
+    <lastmod>2026-10-31</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.5</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/contact"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/contact"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/contact"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/contact"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/contact"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/contact"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/contact"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/en/contact</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.5</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/contact"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/contact"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/contact"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/contact"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/contact"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/contact"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/contact"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/ar/contact</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.5</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/contact"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/contact"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/contact"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/contact"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/contact"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/contact"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/contact"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/es/contact</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.5</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/contact"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/contact"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/contact"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/contact"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/contact"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/contact"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/contact"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/it/contact</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.5</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/contact"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/contact"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/contact"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/contact"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/contact"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/contact"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/contact"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/mt/contact</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.5</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/contact"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/contact"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/contact"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/contact"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/contact"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/contact"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/contact"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/terms</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/terms"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/terms"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/terms"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/terms"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/terms"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/terms"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/terms"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/en/terms</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/terms"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/terms"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/terms"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/terms"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/terms"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/terms"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/terms"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/ar/terms</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/terms"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/terms"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/terms"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/terms"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/terms"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/terms"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/terms"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/es/terms</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/terms"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/terms"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/terms"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/terms"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/terms"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/terms"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/terms"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/it/terms</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/terms"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/terms"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/terms"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/terms"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/terms"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/terms"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/terms"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/mt/terms</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/terms"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/terms"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/terms"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/terms"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/terms"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/terms"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/terms"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/privacy</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/privacy"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/privacy"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/privacy"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/privacy"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/privacy"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/privacy"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/privacy"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/en/privacy</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/privacy"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/privacy"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/privacy"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/privacy"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/privacy"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/privacy"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/privacy"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/ar/privacy</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/privacy"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/privacy"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/privacy"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/privacy"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/privacy"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/privacy"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/privacy"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/es/privacy</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/privacy"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/privacy"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/privacy"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/privacy"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/privacy"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/privacy"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/privacy"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/it/privacy</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/privacy"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/privacy"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/privacy"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/privacy"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/privacy"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/privacy"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/privacy"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/mt/privacy</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/privacy"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/privacy"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/privacy"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/privacy"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/privacy"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/privacy"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/privacy"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/cookies</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/cookies"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/cookies"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/cookies"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/cookies"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/cookies"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/cookies"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/cookies"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/en/cookies</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/cookies"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/cookies"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/cookies"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/cookies"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/cookies"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/cookies"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/cookies"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/ar/cookies</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/cookies"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/cookies"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/cookies"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/cookies"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/cookies"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/cookies"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/cookies"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/es/cookies</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/cookies"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/cookies"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/cookies"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/cookies"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/cookies"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/cookies"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/cookies"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/it/cookies</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/cookies"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/cookies"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/cookies"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/cookies"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/cookies"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/cookies"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/cookies"/>
+  </url>
+  <url>
+    <loc>https://rootstunisia.com/mt/cookies</loc>
+    <lastmod>2026-10-31</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://rootstunisia.com/cookies"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://rootstunisia.com/en/cookies"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://rootstunisia.com/ar/cookies"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rootstunisia.com/es/cookies"/>
+    <xhtml:link rel="alternate" hreflang="it" href="https://rootstunisia.com/it/cookies"/>
+    <xhtml:link rel="alternate" hreflang="mt" href="https://rootstunisia.com/mt/cookies"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rootstunisia.com/cookies"/>
   </url>
 </urlset>

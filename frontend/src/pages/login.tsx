@@ -64,7 +64,7 @@ export default function Login() {
   return (
     <div className="bg-[var(--background)] text-[var(--foreground)] min-h-[85vh] py-8 sm:py-12">
       <SEO
-        title="Login — Roots Tunisia"
+        title={t("seo_login_title", "تسجيل الدخول — جذور تونس")}
         description="Sign in to your Roots Tunisia account to continue your Tunisian family research."
         keywords={["Login Roots Tunisia", "Tunisian genealogy account"]}
       />
@@ -75,19 +75,19 @@ export default function Login() {
           <div className="relative hidden lg:block overflow-hidden min-h-[600px]">
             <img
               src={carthage}
-              alt="Ruins of Carthage overlooking the Mediterranean"
+              alt={t("carthage_ruins_alt", "آثار قرطاج المطلة على البحر الأبيض المتوسط")}
               width={1600}
               height={1000}
               className="h-full w-full object-cover"
             />
             <div className="hero-scrim absolute inset-0" />
-            <div className="absolute bottom-12 left-12 right-12 max-w-md z-10">
-              <p className="eyebrow text-[var(--gold)]">Roots Tunisia</p>
+            <div className="absolute bottom-12 left-12 right-12 max-w-md z-10 rtl:text-right">
+              <p className="eyebrow text-[var(--gold)]">{t("roots_tunisia", "Roots Tunisia")}</p>
               <p className="mt-3 font-display text-3xl text-white font-semibold leading-snug">
-                Your lineage is waiting in the registers.
+                {t("login_hero_title", "Your lineage is waiting in the registers.")}
               </p>
               <p className="mt-2 text-xs text-white/80 leading-relaxed">
-                Connect ancestors across Ottoman sijillat, central état civil, and Mediterranean archival collections.
+                {t("login_hero_desc", "Connect ancestors across Ottoman sijillat, central état civil, and Mediterranean archival collections.")}
               </p>
             </div>
           </div>
@@ -96,9 +96,9 @@ export default function Login() {
           <div className="flex items-center justify-center p-8 sm:p-12 lg:p-16 bg-[var(--card)]">
             <form className="w-full max-w-md" onSubmit={handleSubmit(onSubmit)}>
               <Logo />
-              <h1 className="display-lg mt-8 text-[var(--foreground)]">Welcome back</h1>
+              <h1 className="display-lg mt-8 text-[var(--foreground)]">{t("welcome_back", "Welcome back")}</h1>
               <p className="mt-2 text-sm text-[var(--muted-foreground)]">
-                Sign in to continue building your Tunisian family tree.
+                {t("signin_continue_building", "Sign in to continue building your Tunisian family tree.")}
               </p>
 
               {error && (
@@ -111,17 +111,17 @@ export default function Login() {
               <div className="mt-8 grid gap-5">
                 <label className="grid gap-2">
                   <span className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
-                    Email
+                    {t("email", "Email")}
                   </span>
                   <div className="relative">
                     <input
                       {...register("email")}
                       type="email"
                       required
-                      className="w-full rounded-sm border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm text-[var(--foreground)] outline-none focus:border-[var(--gold)]"
-                      placeholder="you@example.tn"
+                      className="w-full rounded-sm border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm text-[var(--foreground)] outline-none focus:border-[var(--gold)] rtl:text-right"
+                      placeholder={t("placeholder_email_example", "you@example.tn")}
                     />
-                    <Mail className="absolute right-3 top-3.5 h-4 w-4 text-[var(--muted-foreground)] pointer-events-none" />
+                    <Mail className="absolute right-3 rtl:right-auto rtl:left-3 top-3.5 h-4 w-4 text-[var(--muted-foreground)] pointer-events-none" />
                   </div>
                   {errors.email && <p className="text-xs text-red-500">{errors.email.message}</p>}
                 </label>
@@ -129,13 +129,13 @@ export default function Login() {
                 <label className="grid gap-2">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
-                      Password
+                      {t("password", "Password")}
                     </span>
                     <Link
                       to="/reset-password"
                       className="text-xs font-semibold text-[var(--gold)] hover:underline"
                     >
-                      Forgot password?
+                      {t("forgot_password_q", "Forgot password?")}
                     </Link>
                   </div>
                   <div className="relative">
@@ -143,13 +143,13 @@ export default function Login() {
                       {...register("password")}
                       type={showPassword ? "text" : "password"}
                       required
-                      className="w-full rounded-sm border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm text-[var(--foreground)] outline-none focus:border-[var(--gold)]"
+                      className="w-full rounded-sm border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm text-[var(--foreground)] outline-none focus:border-[var(--gold)] rtl:text-right"
                       placeholder="••••••••"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-3.5 text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
+                      className="absolute right-3 rtl:right-auto rtl:left-3 top-3.5 text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
                     >
                       {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
@@ -158,14 +158,14 @@ export default function Login() {
                 </label>
 
                 <button type="submit" disabled={loading} className="btn-base btn-red w-full mt-2">
-                  {loading ? "Signing in…" : "Sign in to account"}
+                  {loading ? t("signing_in", "Signing in…") : t("sign_in_account", "Sign in to account")}
                 </button>
               </div>
 
               <p className="mt-8 text-sm text-[var(--muted-foreground)] text-center">
-                New to Roots Tunisia?{" "}
+                {t("new_to_roots_tunisia", "New to Roots Tunisia?")}{" "}
                 <Link to="/signup" className="font-semibold text-[var(--gold)] hover:underline">
-                  Create an account
+                  {t("create_an_account", "Create an account")}
                 </Link>
               </p>
             </form>

@@ -1,0 +1,527 @@
+{
+  "siteName": "Roots Tunisia",
+  "origin": "https://rootstunisia.com",
+  "defaultLocale": "fr",
+  "locales": [
+    "fr",
+    "en",
+    "ar",
+    "es",
+    "it",
+    "mt"
+  ],
+  "rtlLocales": [
+    "ar"
+  ],
+  "ogImage": "/og-image.png",
+  "organization": {
+    "email": "contact@rootstunisia.com",
+    "logo": "/logo-512.png",
+    "sameAs": []
+  },
+  "routes": [
+    {
+      "path": "/",
+      "priority": 1,
+      "changefreq": "weekly",
+      "schemaType": "WebSite",
+      "title": {
+        "en": "Roots Tunisia | Tunisian Genealogy & Family Trees",
+        "fr": "Roots Tunisia | Généalogie et arbres familiaux de Tunisie",
+        "ar": "جذور تونس | الأنساب وشجرات العائلات التونسية",
+        "es": "Roots Tunisia | Genealogía y árboles familiares de Túnez",
+        "it": "Roots Tunisia | Genealogia e alberi genealogici della Tunisia",
+        "mt": "Roots Tunisia | Ġenealoġija u siġar tal-familja tat-Tuneżija"
+      },
+      "description": {
+        "en": "Search Tunisian family trees, Carthage, Kairouan and civil-register lineages, and preserve heritage with Roots Tunisia.",
+        "fr": "Explorez les lignées tunisiennes, de Carthage à Kairouan, et préservez votre patrimoine sur Roots Tunisia.",
+        "ar": "ابحث في شجرات العائلات التونسية وسجلات الحالة المدنية والأرشيف البايليكي واحفظ تراث عائلتك على جذور تونس.",
+        "es": "Explore linajes tunecinos de Cartago a Kairuán y conserve su patrimonio en Roots Tunisia.",
+        "it": "Esplora i lignaggi tunisini da Cartagine a Kairouan e preserva il tuo patrimonio familiare su Roots Tunisia.",
+        "mt": "Esplora n-nisel Tuneżin minn Kartaġni sa Kairouan u ppreserva l-wirt tal-familja tiegħek fuq Roots Tunisia."
+      }
+    },
+    {
+      "path": "/about",
+      "priority": 0.7,
+      "changefreq": "monthly",
+      "schemaType": "AboutPage",
+      "title": {
+        "en": "About Roots Tunisia | Carthage, Kairouan and civil registry",
+        "fr": "À propos de Roots Tunisia | Lignées du Nil",
+        "ar": "عن جذور تونس | أنساب النيل والأرشيف",
+        "es": "Acerca de Roots Tunisia | Linajes del Nilo",
+        "it": "À propos de Roots Tunisia | Lignées du Nil",
+        "mt": "À propos de Roots Tunisia | Lignées du Nil"
+      },
+      "description": {
+        "en": "Roots Tunisia documents Tunisian families across the Tunisia, Coptic and Islamic records.",
+        "fr": "Roots Tunisia documente les familles tunisiennes de Carthage, Kairouan, des sijillats et de l’état civil et les archives.",
+        "ar": "جذور تونس توثّق العائلات التونسية عبر وادي النيل والدلتا والنوبة والسجلات القبطية والإسلامية.",
+        "es": "Roots Tunisia documenta familias tunecinas en Cartago, Kairuán, sijillat y estado civil y archivos históricos.",
+        "it": "Roots Tunisia documente les familles tunisiennes de Carthage, Kairouan, des sijillats et de l’état civil et les archives.",
+        "mt": "Roots Tunisia documente les familles tunisiennes de Carthage, Kairouan, des sijillats et de l’état civil et les archives."
+      }
+    },
+    {
+      "path": "/gallery",
+      "priority": 0.8,
+      "changefreq": "weekly",
+      "schemaType": "CollectionPage",
+      "title": {
+        "en": "Heritage gallery | Photos, trees, books — Roots Tunisia",
+        "fr": "Galerie patrimoniale | Photos, arbres, livres — Roots Tunisia",
+        "ar": "معرض التراث | صور وأشجار وكتب — جذور تونس",
+        "es": "Galería patrimonial | Fotos, árboles, libros — Roots Tunisia",
+        "it": "Galerie patrimoniale | Photos, arbres, livres — Roots Tunisia",
+        "mt": "Galerie patrimoniale | Photos, arbres, livres — Roots Tunisia"
+      },
+      "description": {
+        "en": "Browse Tunisian photographs, family trees, manuscripts, audio, and documents in the Roots Tunisia gallery.",
+        "fr": "Parcourez photographies, arbres, manuscrits, audios et documents tunisiens.",
+        "ar": "تصفح الصور وأشجار العائلات والمخطوطات والتسجيلات والوثائق التونسية.",
+        "es": "Explore fotografías, árboles, manuscritos, audios y documentos tunecinos.",
+        "it": "Parcourez photographies, arbres, manuscrits, audios et documents tunisiens.",
+        "mt": "Parcourez photographies, arbres, manuscrits, audios et documents tunisiens."
+      }
+    },
+    {
+      "path": "/gallery/trees",
+      "priority": 0.8,
+      "changefreq": "weekly",
+      "schemaType": "CollectionPage",
+      "title": {
+        "en": "Tunisian family trees | Roots Tunisia",
+        "fr": "Arbres familiaux tunisiens | Roots Tunisia",
+        "ar": "أشجار العائلات التونسية | جذور تونس",
+        "es": "Árboles familiares tunecinos | Roots Tunisia",
+        "it": "Arbres familiaux tunisiens | Roots Tunisia",
+        "mt": "Arbres familiaux tunisiens | Roots Tunisia"
+      },
+      "description": {
+        "en": "Explore published Tunisian GEDCOM trees and lineage maps from Tunisia.",
+        "fr": "Explorez les arbres GEDCOM tunisiens publiés de Carthage à Kairouan.",
+        "ar": "استكشف أشجار GEDCOM التونسية المنشورة من وادي النيل والدلتا.",
+        "es": "Explore árboles GEDCOM tunecinos publicados del Valle del Nilo y el Delta.",
+        "it": "Explorez les arbres GEDCOM tunisiens publiés de Carthage à Kairouan.",
+        "mt": "Explorez les arbres GEDCOM tunisiens publiés de Carthage à Kairouan."
+      }
+    },
+    {
+      "path": "/gallery/images",
+      "priority": 0.7,
+      "changefreq": "weekly",
+      "schemaType": "CollectionPage",
+      "title": {
+        "en": "Tunisian photo archives | Roots Tunisia",
+        "fr": "Archives photographiques tunisiennes | Roots Tunisia",
+        "ar": "أرشيف الصور التونسية | جذور تونس",
+        "es": "Archivo fotográfico tunecinoo | Roots Tunisia",
+        "it": "Archives photographiques tunisiennes | Roots Tunisia",
+        "mt": "Archives photographiques tunisiennes | Roots Tunisia"
+      },
+      "description": {
+        "en": "Period photographs of Tunisian families, villages, and ceremonial life.",
+        "fr": "Photographies d’époque des familles et villages tunisiens.",
+        "ar": "صور تاريخية للعائلات والقرى والحياة الاجتماعية التونسية.",
+        "es": "Fotografías de época de familias y pueblos tunecinos.",
+        "it": "Photographies d’époque des familles et villages tunisiens.",
+        "mt": "Photographies d’époque des familles et villages tunisiens."
+      }
+    },
+    {
+      "path": "/gallery/audios",
+      "priority": 0.7,
+      "changefreq": "weekly",
+      "schemaType": "CollectionPage",
+      "title": {
+        "en": "Oral histories of Tunisia | Roots Tunisia",
+        "fr": "Histoires orales de Tunisie | Roots Tunisia",
+        "ar": "التاريخ الشفوي لتونس | جذور تونس",
+        "es": "Historias orales de Túnez | Roots Tunisia",
+        "it": "Histoires orales de Tunisie | Roots Tunisia",
+        "mt": "Histoires orales de Tunisie | Roots Tunisia"
+      },
+      "description": {
+        "en": "Listen to Tunisian oral histories, family testimonies, and recorded nasab.",
+        "fr": "Écoutez témoignages familiaux et nasab enregistrés de Tunisie.",
+        "ar": "استمع إلى الشهادات العائلية والأنساب الشفوية التونسية.",
+        "es": "Escuche testimonios familiares y nasab grabados de Túnez.",
+        "it": "Écoutez témoignages familiaux et nasab enregistrés de Tunisie.",
+        "mt": "Écoutez témoignages familiaux et nasab enregistrés de Tunisie."
+      }
+    },
+    {
+      "path": "/gallery/documents",
+      "priority": 0.7,
+      "changefreq": "weekly",
+      "schemaType": "CollectionPage",
+      "title": {
+        "en": "Tunisian documents | Roots Tunisia",
+        "fr": "Documents tunisiens | Roots Tunisia",
+        "ar": "وثائق تونسية | جذور تونس",
+        "es": "Documentos tunecinos | Roots Tunisia",
+        "it": "Documents tunisiens | Roots Tunisia",
+        "mt": "Documents tunisiens | Roots Tunisia"
+      },
+      "description": {
+        "en": "Deeds, identity papers, waqf extracts, and family registers from Tunisia.",
+        "fr": "Actes, papiers d’identité, extraits de waqf et registres familiaux de Tunisie.",
+        "ar": "صكوك وأوراق هوية ومستخرجات وقف وسجلات عائلية من تونس.",
+        "es": "Escrituras, documentos de identidad y registros familiares de Túnez.",
+        "it": "Actes, papiers d’identité, extraits de waqf et registres familiaux de Tunisie.",
+        "mt": "Actes, papiers d’identité, extraits de waqf et registres familiaux de Tunisie."
+      }
+    },
+    {
+      "path": "/gallery/books",
+      "priority": 0.7,
+      "changefreq": "weekly",
+      "schemaType": "CollectionPage",
+      "title": {
+        "en": "Tunisian library & manuscripts | Roots Tunisia",
+        "fr": "Bibliothèque et manuscrits tunisiens | Roots Tunisia",
+        "ar": "مكتبة ومخطوطات تونس | جذور تونس",
+        "es": "Biblioteca y manuscritos tunecinos | Roots Tunisia",
+        "it": "Bibliothèque et manuscrits tunisiens | Roots Tunisia",
+        "mt": "Bibliothèque et manuscrits tunisiens | Roots Tunisia"
+      },
+      "description": {
+        "en": "Books and manuscripts supporting Tunisian genealogical research.",
+        "fr": "Livres et manuscrits pour la recherche généalogique tunisienne.",
+        "ar": "كتب ومخطوطات لدعم البحث في الأنساب التونسية.",
+        "es": "Libros y manuscritos para la investigación genealógica tunecinoa.",
+        "it": "Livres et manuscrits pour la recherche généalogique tunisienne.",
+        "mt": "Livres et manuscrits pour la recherche généalogique tunisienne."
+      }
+    },
+    {
+      "path": "/gallery/articles",
+      "priority": 0.7,
+      "changefreq": "weekly",
+      "schemaType": "CollectionPage",
+      "title": {
+        "en": "Community articles | Roots Tunisia",
+        "fr": "Articles communautaires | Roots Tunisia",
+        "ar": "مقالات المجتمع | جذور تونس",
+        "es": "Artículos de la comunidad | Roots Tunisia",
+        "it": "Articles communautaires | Roots Tunisia",
+        "mt": "Articles communautaires | Roots Tunisia"
+      },
+      "description": {
+        "en": "Research notes and community writing on Tunisian families and places.",
+        "fr": "Notes de recherche et écrits communautaires sur les familles tunisiennes.",
+        "ar": "ملاحظات بحثية وكتابات مجتمعية عن العائلات والأماكن التونسية.",
+        "es": "Notas de investigación sobre familias y lugares tunecinos.",
+        "it": "Notes de recherche et écrits communautaires sur les familles tunisiennes.",
+        "mt": "Notes de recherche et écrits communautaires sur les familles tunisiennes."
+      }
+    },
+    {
+      "path": "/genealogy-gallery",
+      "priority": 0.7,
+      "changefreq": "weekly",
+      "schemaType": "CollectionPage",
+      "title": {
+        "en": "Genealogy gallery | Roots Tunisia",
+        "fr": "Galerie généalogique | Roots Tunisia",
+        "ar": "معرض الأنساب | جذور تونس",
+        "es": "Galería genealógica | Roots Tunisia",
+        "it": "Galerie généalogique | Roots Tunisia",
+        "mt": "Galerie généalogique | Roots Tunisia"
+      },
+      "description": {
+        "en": "Featured Tunisian lineage presentations and tree highlights.",
+        "fr": "Présentations de lignées tunisiennes mises en avant.",
+        "ar": "عروض مميزة للأنساب والأشجار التونسية.",
+        "es": "Presentaciones destacadas de linajes tunecinos.",
+        "it": "Présentations de lignées tunisiennes mises en avant.",
+        "mt": "Présentations de lignées tunisiennes mises en avant."
+      }
+    },
+    {
+      "path": "/library",
+      "priority": 0.7,
+      "changefreq": "weekly",
+      "schemaType": "CollectionPage",
+      "title": {
+        "en": "Library | Roots Tunisia",
+        "fr": "Bibliothèque | Roots Tunisia",
+        "ar": "المكتبة | جذور تونس",
+        "es": "Biblioteca | Roots Tunisia",
+        "it": "Bibliothèque | Roots Tunisia",
+        "mt": "Bibliothèque | Roots Tunisia"
+      },
+      "description": {
+        "en": "Manuscripts and printed sources for Tunisian family history.",
+        "fr": "Manuscrits et sources imprimées pour l’histoire des familles tunisiennes.",
+        "ar": "مخطوطات ومصادر مطبوعة لتاريخ العائلات التونسية.",
+        "es": "Manuscritos y fuentes impresas de historia familiar tunecinoa.",
+        "it": "Manuscrits et sources imprimées pour l’histoire des familles tunisiennes.",
+        "mt": "Manuscrits et sources imprimées pour l’histoire des familles tunisiennes."
+      }
+    },
+    {
+      "path": "/audio",
+      "priority": 0.6,
+      "changefreq": "weekly",
+      "schemaType": "CollectionPage",
+      "title": {
+        "en": "Audio library | Roots Tunisia",
+        "fr": "Bibliothèque audio | Roots Tunisia",
+        "ar": "المكتبة الصوتية | جذور تونس",
+        "es": "Biblioteca de audio | Roots Tunisia",
+        "it": "Bibliothèque audio | Roots Tunisia",
+        "mt": "Bibliothèque audio | Roots Tunisia"
+      },
+      "description": {
+        "en": "Recorded interviews and oral genealogy from Tunisia.",
+        "fr": "Entretiens enregistrés et généalogie orale de Tunisie.",
+        "ar": "مقابلات مسجّلة وأنساب شفوية من تونس.",
+        "es": "Entrevistas grabadas y genealogía oral de Túnez.",
+        "it": "Entretiens enregistrés et généalogie orale de Tunisie.",
+        "mt": "Entretiens enregistrés et généalogie orale de Tunisie."
+      }
+    },
+    {
+      "path": "/articles",
+      "priority": 0.7,
+      "changefreq": "weekly",
+      "schemaType": "CollectionPage",
+      "title": {
+        "en": "Articles | Roots Tunisia",
+        "fr": "Articles | Roots Tunisia",
+        "ar": "المقالات | جذور تونس",
+        "es": "Artículos | Roots Tunisia",
+        "it": "Articles | Roots Tunisia",
+        "mt": "Articles | Roots Tunisia"
+      },
+      "description": {
+        "en": "Read and share research on Tunisian genealogy and local history.",
+        "fr": "Lisez et partagez des recherches sur la généalogie tunisienne.",
+        "ar": "اقرأ وشارك أبحاث الأنساب والتاريخ المحلي التونسي.",
+        "es": "Lea e investigue genealogía e historia local tunecinoa.",
+        "it": "Lisez et partagez des recherches sur la généalogie tunisienne.",
+        "mt": "Lisez et partagez des recherches sur la généalogie tunisienne."
+      }
+    },
+    {
+      "path": "/periods",
+      "priority": 0.6,
+      "changefreq": "monthly",
+      "schemaType": "WebPage",
+      "title": {
+        "en": "Historical periods of Tunisia | Roots Tunisia",
+        "fr": "Périodes historiques de Tunisie | Roots Tunisia",
+        "ar": "الحقب التاريخية لتونس | جذور تونس",
+        "es": "Periodos históricos de Túnez | Roots Tunisia",
+        "it": "Périodes historiques de Tunisie | Roots Tunisia",
+        "mt": "Périodes historiques de Tunisie | Roots Tunisia"
+      },
+      "description": {
+        "en": "Trace families through Pharaonic, Coptic, Islamic, Ottoman, and modern Tunisia.",
+        "fr": "Suivez les familles à travers l’Tunisie pharaonique, copte, islamique, ottomane et moderne.",
+        "ar": "تتبع العائلات عبر تونس الفرعونية والقبطية والإسلامية والعثمانية والحديثة.",
+        "es": "Siga familias a través del Cartago, Kairuán, sijillat otomanos y Túnez contemporáneo.",
+        "it": "Suivez les familles à travers l’Tunisie pharaonique, copte, islamique, ottomane et moderne.",
+        "mt": "Suivez les familles à travers l’Tunisie pharaonique, copte, islamique, ottomane et moderne."
+      }
+    },
+    {
+      "path": "/research",
+      "priority": 0.7,
+      "changefreq": "weekly",
+      "schemaType": "WebPage",
+      "title": {
+        "en": "Research Tunisian records | Roots Tunisia",
+        "fr": "Rechercher des archives tunisiennes | Roots Tunisia",
+        "ar": "ابحث في السجلات التونسية | جذور تونس",
+        "es": "Investigar archivos tunecinos | Roots Tunisia",
+        "it": "Rechercher des archives tunisiennes | Roots Tunisia",
+        "mt": "Rechercher des archives tunisiennes | Roots Tunisia"
+      },
+      "description": {
+        "en": "Search books, trees, and people across the Roots Tunisia archive.",
+        "fr": "Cherchez livres, arbres et personnes dans les archives Roots Tunisia.",
+        "ar": "ابحث في الكتب والأشجار والأشخاص عبر أرشيف جذور تونس.",
+        "es": "Busque libros, árboles y personas en el archivo Roots Tunisia.",
+        "it": "Cherchez livres, arbres et personnes dans les archives Roots Tunisia.",
+        "mt": "Cherchez livres, arbres et personnes dans les archives Roots Tunisia."
+      }
+    },
+    {
+      "path": "/sources-and-periods",
+      "priority": 0.6,
+      "changefreq": "monthly",
+      "schemaType": "WebPage",
+      "title": {
+        "en": "Sources and archives | Roots Tunisia",
+        "fr": "Sources et archives | Roots Tunisia",
+        "ar": "المصادر والأرشيف | جذور تونس",
+        "es": "Fuentes y archivos | Roots Tunisia",
+        "it": "Sources et archives | Roots Tunisia",
+        "mt": "Sources et archives | Roots Tunisia"
+      },
+      "description": {
+        "en": "Civil status, church registers, waqf, and national archival series for Tunisia.",
+        "fr": "État civil, registres ecclésiastiques, waqf et séries d’archives nationales de Tunisie.",
+        "ar": "الحالة المدنية والسجلات الكنسية والوقف وسلاسل الأرشيف الوطني لتونس.",
+        "es": "Estado civil, registros eclesiásticos, waqf y series de archivos de Túnez.",
+        "it": "État civil, registres ecclésiastiques, waqf et séries d’archives nationales de Tunisie.",
+        "mt": "État civil, registres ecclésiastiques, waqf et séries d’archives nationales de Tunisie."
+      }
+    },
+    {
+      "path": "/subscriptions",
+      "priority": 0.8,
+      "changefreq": "monthly",
+      "schemaType": "WebPage",
+      "title": {
+        "en": "Subscriptions | Roots Tunisia",
+        "fr": "Abonnements | Roots Tunisia",
+        "ar": "الاشتراكات | جذور تونس",
+        "es": "Suscripciones | Roots Tunisia",
+        "it": "Abonnements | Roots Tunisia",
+        "mt": "Abonnements | Roots Tunisia"
+      },
+      "description": {
+        "en": "Choose a Roots Tunisia plan for trees, downloads, and research tools.",
+        "fr": "Choisissez une formule Roots Tunisia pour arbres, téléchargements et outils.",
+        "ar": "اختر خطة جذور تونس للأشجار والتنزيلات وأدوات البحث.",
+        "es": "Elija un plan de Roots Tunisia para árboles, descargas y herramientas.",
+        "it": "Choisissez une formule Roots Tunisia pour arbres, téléchargements et outils.",
+        "mt": "Choisissez une formule Roots Tunisia pour arbres, téléchargements et outils."
+      }
+    },
+    {
+      "path": "/help-center",
+      "priority": 0.6,
+      "changefreq": "monthly",
+      "schemaType": "WebPage",
+      "title": {
+        "en": "Help Center | Roots Tunisia",
+        "fr": "Centre d’aide | Roots Tunisia",
+        "ar": "مركز المساعدة | جذور تونس",
+        "es": "Centro de ayuda | Roots Tunisia",
+        "it": "Centre d’aide | Roots Tunisia",
+        "mt": "Centre d’aide | Roots Tunisia"
+      },
+      "description": {
+        "en": "Guides for building trees, uploading GEDCOM, and using Roots Tunisia.",
+        "fr": "Guides pour construire des arbres, importer du GEDCOM et utiliser Roots Tunisia.",
+        "ar": "أدلة لبناء الأشجار ورفع GEDCOM واستخدام جذور تونس.",
+        "es": "Guías para construir árboles, subir GEDCOM y usar Roots Tunisia.",
+        "it": "Guides pour construire des arbres, importer du GEDCOM et utiliser Roots Tunisia.",
+        "mt": "Guides pour construire des arbres, importer du GEDCOM et utiliser Roots Tunisia."
+      }
+    },
+    {
+      "path": "/contact",
+      "priority": 0.5,
+      "changefreq": "yearly",
+      "schemaType": "ContactPage",
+      "title": {
+        "en": "Contact Roots Tunisia",
+        "fr": "Contacter Roots Tunisia",
+        "ar": "اتصل بجذور تونس",
+        "es": "Contactar Roots Tunisia",
+        "it": "Contacter Roots Tunisia",
+        "mt": "Contacter Roots Tunisia"
+      },
+      "description": {
+        "en": "Write to the Roots Tunisia team about archives, trees, and partnerships.",
+        "fr": "Écrivez à l’équipe Roots Tunisia au sujet des archives, arbres et partenariats.",
+        "ar": "راسل فريق جذور تونس بشأن الأرشيف والأشجار والشراكات.",
+        "es": "Escriba al equipo de Roots Tunisia sobre archivos, árboles y alianzas.",
+        "it": "Écrivez à l’équipe Roots Tunisia au sujet des archives, arbres et partenariats.",
+        "mt": "Écrivez à l’équipe Roots Tunisia au sujet des archives, arbres et partenariats."
+      }
+    },
+    {
+      "path": "/terms",
+      "priority": 0.3,
+      "changefreq": "yearly",
+      "schemaType": "WebPage",
+      "title": {
+        "en": "Terms of service | Roots Tunisia",
+        "fr": "Conditions d’utilisation | Roots Tunisia",
+        "ar": "شروط الخدمة | جذور تونس",
+        "es": "Términos de servicio | Roots Tunisia",
+        "it": "Conditions d’utilisation | Roots Tunisia",
+        "mt": "Conditions d’utilisation | Roots Tunisia"
+      },
+      "description": {
+        "en": "Terms governing use of the Roots Tunisia genealogy platform.",
+        "fr": "Conditions régissant l’usage de la plateforme Roots Tunisia.",
+        "ar": "الشروط المنظمة لاستخدام منصة جذور تونس.",
+        "es": "Términos que rigen el uso de la plataforma Roots Tunisia.",
+        "it": "Conditions régissant l’usage de la plateforme Roots Tunisia.",
+        "mt": "Conditions régissant l’usage de la plateforme Roots Tunisia."
+      }
+    },
+    {
+      "path": "/privacy",
+      "priority": 0.3,
+      "changefreq": "yearly",
+      "schemaType": "WebPage",
+      "title": {
+        "en": "Privacy policy | Roots Tunisia",
+        "fr": "Politique de confidentialité | Roots Tunisia",
+        "ar": "سياسة الخصوصية | جذور تونس",
+        "es": "Política de privacidad | Roots Tunisia",
+        "it": "Politique de confidentialité | Roots Tunisia",
+        "mt": "Politique de confidentialité | Roots Tunisia"
+      },
+      "description": {
+        "en": "How Roots Tunisia collects, stores, and protects genealogical data.",
+        "fr": "Comment Roots Tunisia collecte, stocke et protège les données généalogiques.",
+        "ar": "كيف تجمع جذور تونس بيانات الأنساب وتخزّنها وتحميها.",
+        "es": "Cómo Roots Tunisia recopila, almacena y protege datos genealógicos.",
+        "it": "Comment Roots Tunisia collecte, stocke et protège les données généalogiques.",
+        "mt": "Comment Roots Tunisia collecte, stocke et protège les données généalogiques."
+      }
+    },
+    {
+      "path": "/cookies",
+      "priority": 0.3,
+      "changefreq": "yearly",
+      "schemaType": "WebPage",
+      "title": {
+        "en": "Cookie policy | Roots Tunisia",
+        "fr": "Politique des cookies | Roots Tunisia",
+        "ar": "سياسة ملفات الارتباط | جذور تونس",
+        "es": "Política de cookies | Roots Tunisia",
+        "it": "Politique des cookies | Roots Tunisia",
+        "mt": "Politique des cookies | Roots Tunisia"
+      },
+      "description": {
+        "en": "Cookie use on rootstunisia.com for session, language, and analytics.",
+        "fr": "Utilisation des cookies sur rootstunisia.com pour session, langue et mesure.",
+        "ar": "استخدام ملفات الارتباط في rootstunisia.com للجلسة واللغة والقياس.",
+        "es": "Uso de cookies en rootstunisia.com para sesión, idioma y medición.",
+        "it": "Utilisation des cookies sur rootstunisia.com pour session, langue et mesure.",
+        "mt": "Utilisation des cookies sur rootstunisia.com pour session, langue et mesure."
+      }
+    }
+  ],
+  "aliases": {
+    "/sources": "/sources-and-periods",
+    "/archives": "/sources-and-periods",
+    "/sources-periods": "/sources-and-periods",
+    "/access-reliability": "/sources-and-periods",
+    "/sourcesandarchives": "/sources-and-periods"
+  },
+  "noindex": [
+    "/login",
+    "/signup",
+    "/resetpassword",
+    "/admin",
+    "/payment",
+    "/tasks",
+    "/notes",
+    "/reminders",
+    "/myprofile",
+    "/my-download-requests"
+  ]
+}

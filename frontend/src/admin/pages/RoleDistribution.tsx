@@ -51,6 +51,17 @@ export default function RoleDistribution() {
     [isDark],
   );
 
+  const getRoleLabel = (name: string) => {
+    const map: Record<string, string> = {
+      "super admin": t("legacy.super_admin", "مشرف عام"),
+      "super_admin": t("legacy.super_admin", "مشرف عام"),
+      "admin": t("legacy.admin", "مشرف"),
+      "user": t("legacy.user", "مستخدم"),
+    };
+    const key = (name || "").toLowerCase();
+    return map[key] || t(`role_${key}`, name);
+  };
+
   const selectedUser = users.find((user) => Number(user.id) === Number(selectedUserId));
 
   const loadDistribution = useCallback(async () => {
@@ -182,10 +193,10 @@ export default function RoleDistribution() {
                   onChange={(event) => setSelectedRoleId(Number(event.target.value) || "")}
                   className={`px-4 py-3 rounded-lg border ${palette.input}`}
                 >
-                  <option value="">{t("legacy.select_role", "Select Role")}</option>
+                  <option value="">{t("legacy.select_role", "اختر الدور")}</option>
                   {roles.map((role) => (
                     <option key={role.id} value={role.id}>
-                      {role.name}
+                      {getRoleLabel(role.name)}
                     </option>
                   ))}
                 </select>
@@ -196,7 +207,7 @@ export default function RoleDistribution() {
               <div className={`rounded-lg border p-4 ${isDark ? "border-white/10 bg-black/15" : "border-[#d8e2ea] bg-[#f8fafc]"}`}>
                 <p className="font-semibold">{selectedUser.fullName || selectedUser.email}</p>
                 <p className={`text-sm ${palette.muted}`}>
-                  {selectedUser.email} · {t("legacy.current_role", "Current role")}: {selectedUser.roleName || selectedUser.roleId || "-"}
+                  {selectedUser.email} · {t("legacy.current_role", "الدور الحالي")}: {getRoleLabel(selectedUser.roleName || String(selectedUser.roleId || "-"))}
                 </p>
               </div>
             ) : null}

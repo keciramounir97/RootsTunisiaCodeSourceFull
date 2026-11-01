@@ -1,5 +1,5 @@
 
-import { IsEmail, IsNotEmpty, IsString, MaxLength } from 'class-validator';
+import { IsBoolean, IsEmail, IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
 
 export class ContactDto {
     @IsString()
@@ -15,4 +15,8 @@ export class ContactDto {
     @IsNotEmpty()
     @MaxLength(5000)
     message: string;
+
+    @IsOptional()
+    @IsBoolean()
+    consent?: boolean;
 }

@@ -2,5 +2,8 @@ User-agent: *
 Allow: /
 Disallow: /admin/
 Disallow: /api/
+Disallow: /login
+Disallow: /signup
+Disallow: /resetpassword
 
-Sitemap: https://www.rootstunisia.com/sitemap.xml
+Sitemap: https://rootstunisia.com/sitemap.xml

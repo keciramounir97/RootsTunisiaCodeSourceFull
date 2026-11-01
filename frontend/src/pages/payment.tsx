@@ -44,13 +44,13 @@ export default function Payment() {
       });
       setStatus({
         type: "success",
-        msg: "Payment confirmation recorded! Your subscription will be active momentarily.",
+        msg: t("payment_recorded_success", "تم تسجيل تأكيد الدفع! سيتم تفعيل اشتراكك خلال لحظات."),
       });
       setTimeout(() => navigate("/subscriptions"), 2500);
     } catch (err: any) {
       setStatus({
         type: "error",
-        msg: err.response?.data?.message || "Failed to record payment. Please contact support.",
+        msg: err.response?.data?.message || t("payment_recorded_failed", "فشل تسجيل الدفع. يرجى الاتصال بالدعم الفني."),
       });
     } finally {
       setSubmitting(false);
@@ -60,7 +60,7 @@ export default function Payment() {
   return (
     <div className="bg-[var(--background)] text-[var(--foreground)] min-h-screen pt-12 pb-20">
       <SEO
-        title="Confirm Subscription — Roots Tunisia"
+        title={t("seo_payment_title", "تأكيد الاشتراك — جذور تونس")}
         description="Confirm your Roots Tunisia subscription payment in Tunisian Dinars (TND)."
       />
 
@@ -69,32 +69,55 @@ export default function Payment() {
           to="/subscriptions"
           className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-[var(--gold)] hover:underline mb-8"
         >
-          <ArrowLeft className="h-3.5 w-3.5" /> Back to Plans
+          <ArrowLeft className="h-3.5 w-3.5 rtl:rotate-180" /> {t("back_to_plans", "Back to Plans")}
         </Link>
 
         <div className="surface-card p-8 sm:p-10 border-2 border-[var(--gold)]/40 shadow-xl">
-          <p className="eyebrow text-center">Subscription Checkout</p>
+          <p className="eyebrow text-center">{t("subscription_checkout", "Subscription Checkout")}</p>
           <h1 className="display-lg mt-2 text-center text-[var(--foreground)]">
-            Confirm Your Plan
+            {t("confirm_your_plan", "Confirm Your Plan")}
           </h1>
 
           <div className="mt-6 p-4 rounded bg-[var(--secondary)]/60 border border-[var(--gold)]/30 flex items-center justify-between">
             <div>
               <span className="text-xs uppercase tracking-[0.16em] text-[var(--muted-foreground)] font-bold">
-                Selected Plan
+                {t("selected_plan", "Selected Plan")}
               </span>
               <p className="font-display text-xl font-semibold text-[var(--foreground)] capitalize">
-                {planParam} Plan
+                {planParam === "researcher" ? t("plan_researcher_name", "باقة الباحث") : planParam === "institution" ? t("plan_institution_name", "باقة المؤسسات") : t("plan_zitouna_name", "باقة الزيتونة")} {t("plan", "Plan")}
               </p>
             </div>
-            <div className="text-right">
+            <div className="text-right rtl:text-left">
               <span className="font-display text-3xl font-bold text-[var(--primary)]">
-                {amountParam} TND
+                {amountParam} {t("tnd", "TND")}
               </span>
               <span className="block text-[0.65rem] text-[var(--muted-foreground)] uppercase tracking-[0.1em]">
-                Monthly
+                {t("monthly_ttc", "Monthly · TTC (Toutes Taxes Comprises)")}
               </span>
             </div>
+          </div>
+
+          {/* Transparent Fee & Renewal Disclosure */}
+          <div className="mt-4 p-3.5 rounded bg-[var(--background)] border border-[var(--border)] text-xs text-[var(--muted-foreground)] space-y-1.5">
+            <div className="flex justify-between items-center text-[var(--foreground)] font-medium">
+              <span>{t("subscription_fee", "Subscription Fee:")}</span>
+              <span>{amountParam} {t("tnd", "TND")}</span>
+            </div>
+            <div className="flex justify-between items-center text-emerald-600 dark:text-emerald-400">
+              <span>{t("hidden_platform_fees", "Hidden Platform Fees:")}</span>
+              <span>0.000 {t("tnd", "TND")}</span>
+            </div>
+            <div className="flex justify-between items-center border-t border-[var(--border)] pt-1 font-bold text-[var(--foreground)]">
+              <span>{t("total_due_today", "Total Due Today:")}</span>
+              <span>{amountParam} {t("tnd_ttc", "TND (TTC)")}</span>
+            </div>
+            <p className="pt-2 text-[0.7rem] leading-relaxed text-[var(--muted-foreground)]">
+              {t("renews_monthly_notice", "Renews monthly at the same rate. You may cancel your subscription at any time with immediate effect from your Account Settings. For eligibility and refund requests, review our")}{" "}
+              <Link to="/refund" target="_blank" className="text-[var(--gold)] underline hover:text-[var(--foreground)]">
+                {t("refund_cancellation_policy_link", "Refund & Cancellation Policy")}
+              </Link>
+              .
+            </p>
           </div>
 
           {status.msg && (
@@ -117,26 +140,26 @@ export default function Payment() {
           <form onSubmit={handleSubmit} className="mt-8 space-y-5">
             <label className="grid gap-2">
               <span className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
-                Bank Transfer / Proof Reference (Optional)
+                {t("bank_proof_reference_optional", "Bank Transfer / Proof Reference (Optional)")}
               </span>
               <input
                 type="text"
                 value={proofUrl}
                 onChange={(e) => setProofUrl(e.target.value)}
-                placeholder="Bank transfer transaction ID or reference code"
+                placeholder={t("placeholder_bank_tx_id", "Bank transfer transaction ID or reference code")}
                 className="rounded-sm border border-[var(--border)] bg-[var(--card)] px-4 py-3 text-sm text-[var(--foreground)] outline-none focus:border-[var(--gold)]"
               />
             </label>
 
             <label className="grid gap-2">
               <span className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
-                Additional Notes
+                {t("additional_notes", "Additional Notes")}
               </span>
               <textarea
                 rows={3}
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                placeholder="Any special research or invoice instructions…"
+                placeholder={t("placeholder_additional_notes", "Any special research or invoice instructions…")}
                 className="rounded-sm border border-[var(--border)] bg-[var(--card)] px-4 py-3 text-sm text-[var(--foreground)] outline-none focus:border-[var(--gold)]"
               />
             </label>
@@ -147,14 +170,14 @@ export default function Payment() {
                 disabled={submitting}
                 className="btn-base btn-red w-full py-3.5"
               >
-                {submitting ? "Processing…" : `Confirm Subscription (${amountParam} TND)`}
+                {submitting ? t("processing", "Processing…") : `${t("confirm_subscription_btn", "Confirm Subscription")} (${amountParam} ${t("tnd", "TND")})`}
               </button>
             </div>
           </form>
 
           <div className="mt-8 pt-6 border-t border-[var(--gold)]/20 flex items-center justify-center gap-2 text-xs text-[var(--muted-foreground)]">
             <ShieldCheck className="h-4 w-4 text-[var(--gold)]" />
-            <span>Secure payment processing for Tunisian researchers</span>
+            <span>{t("secure_payment_guarantee", "Secure payment processing · All prices in Tunisian Dinars (TND) · VAT included")}</span>
           </div>
         </div>
       </div>

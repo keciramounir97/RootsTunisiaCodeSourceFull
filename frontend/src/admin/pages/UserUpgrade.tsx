@@ -107,7 +107,7 @@ export default function UserUpgrade() {
       });
       setStatus({
         type: "success",
-        msg: `Payment proof for ${selectedTier.name} plan submitted! Super Admin will review and activate your tier shortly.`,
+        msg: t("payment_proof_submitted", "تم تقديم إشعار الدفع بنجاح! سيقوم المشرف العام بمراجعته وتفعيل باقتك قريباً."),
       });
       setSelectedTier(null);
       setProofFile(null);
@@ -117,7 +117,7 @@ export default function UserUpgrade() {
     } catch (err: any) {
       setStatus({
         type: "error",
-        msg: err.response?.data?.message || "Failed to submit payment proof",
+        msg: err.response?.data?.message || t("payment_proof_failed", "فشل إرسال إشعار الدفع. يرجى المحاولة لاحقاً."),
       });
     } finally {
       setSubmittingPayment(false);
@@ -210,7 +210,7 @@ export default function UserUpgrade() {
               {t("subscription_plans", "Subscription Plans & Upgrades")}
             </h1>
             <p className="text-xs text-[var(--text-color)] opacity-70">
-              Upgrade your account tier to increase tree, photo, audio, and document upload quotas.
+              {t("user_upgrade_desc", "Upgrade your account tier to increase tree, photo, audio, and document upload quotas.")}
             </p>
           </div>
         </div>
@@ -250,7 +250,7 @@ export default function UserUpgrade() {
             >
               {isCurrentPlan && (
                 <span className="absolute -top-3 right-6 px-3 py-1 rounded-full text-[0.65rem] font-extrabold uppercase bg-[#d9a441] text-[#092C2B] shadow">
-                  Current Active Plan
+                  {t("current_active_plan", "Current Active Plan")}
                 </span>
               )}
 
@@ -261,42 +261,42 @@ export default function UserUpgrade() {
                 <div className="flex items-baseline gap-1 my-3">
                   <span className="text-3xl font-black text-[#d9a441]">${tier.price}</span>
                   <span className="text-xs text-gray-500 dark:text-gray-400 font-semibold">
-                    / {tier.interval || "month"}
+                    / {tier.interval || t("month", "month")}
                   </span>
                 </div>
 
                 <div className="border-t border-[var(--border-color)] pt-4 space-y-2.5 text-xs text-gray-700 dark:text-gray-300">
                   <div className="flex items-center gap-2">
                     <Check className="w-4 h-4 text-green-500 shrink-0" />
-                    <span>Max Trees: <b>{tier.max_trees === -1 ? "Unlimited" : tier.max_trees ?? (isFree ? 25 : tier.price === 9.99 ? 300 : 3000)}</b></span>
+                    <span>{t("max_trees", "Max Trees:")} <b>{tier.max_trees === -1 ? t("unlimited", "Unlimited") : tier.max_trees ?? (isFree ? 25 : tier.price === 9.99 ? 300 : 3000)}</b></span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Check className="w-4 h-4 text-green-500 shrink-0" />
-                    <span>Max Individuals: <b>{tier.max_individuals === -1 ? "Unlimited" : tier.max_individuals ?? (isFree ? 25 : tier.price === 9.99 ? 300 : 3000)}</b></span>
+                    <span>{t("max_individuals", "Max Individuals:")} <b>{tier.max_individuals === -1 ? t("unlimited", "Unlimited") : tier.max_individuals ?? (isFree ? 25 : tier.price === 9.99 ? 300 : 3000)}</b></span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Check className="w-4 h-4 text-green-500 shrink-0" />
-                    <span>Max Saved Sources: <b>{tier.max_sources === -1 ? "Unlimited" : tier.max_sources ?? (isFree ? 25 : tier.price === 9.99 ? 300 : 3000)}</b></span>
+                    <span>{t("max_saved_sources", "Max Saved Sources:")} <b>{tier.max_sources === -1 ? t("unlimited", "Unlimited") : tier.max_sources ?? (isFree ? 25 : tier.price === 9.99 ? 300 : 3000)}</b></span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Check className="w-4 h-4 text-green-500 shrink-0" />
-                    <span>Max Research Notes: <b>{tier.max_notes === -1 ? "Unlimited" : tier.max_notes ?? (isFree ? 25 : tier.price === 9.99 ? 300 : 3000)}</b></span>
+                    <span>{t("max_research_notes", "Max Research Notes:")} <b>{tier.max_notes === -1 ? t("unlimited", "Unlimited") : tier.max_notes ?? (isFree ? 25 : tier.price === 9.99 ? 300 : 3000)}</b></span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Check className="w-4 h-4 text-green-500 shrink-0" />
-                    <span>Max Research Tasks: <b>{tier.max_tasks === -1 ? "Unlimited" : tier.max_tasks ?? (isFree ? 25 : tier.price === 9.99 ? 300 : 3000)}</b></span>
+                    <span>{t("max_research_tasks", "Max Research Tasks:")} <b>{tier.max_tasks === -1 ? t("unlimited", "Unlimited") : tier.max_tasks ?? (isFree ? 25 : tier.price === 9.99 ? 300 : 3000)}</b></span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Check className="w-4 h-4 text-green-500 shrink-0" />
-                    <span>Max Gallery Images: <b>{tier.max_gallery === -1 ? "Unlimited" : tier.max_gallery ?? (isFree ? 25 : tier.price === 9.99 ? 300 : 3000)}</b></span>
+                    <span>{t("max_gallery_images", "Max Gallery Images:")} <b>{tier.max_gallery === -1 ? t("unlimited", "Unlimited") : tier.max_gallery ?? (isFree ? 25 : tier.price === 9.99 ? 300 : 3000)}</b></span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Check className="w-4 h-4 text-green-500 shrink-0" />
-                    <span>Max Audio Files: <b>{tier.max_audios === -1 ? "Unlimited" : tier.max_audios ?? (isFree ? 25 : tier.price === 9.99 ? 300 : 3000)}</b></span>
+                    <span>{t("max_audio_files", "Max Audio Files:")} <b>{tier.max_audios === -1 ? t("unlimited", "Unlimited") : tier.max_audios ?? (isFree ? 25 : tier.price === 9.99 ? 300 : 3000)}</b></span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Check className="w-4 h-4 text-green-500 shrink-0" />
-                    <span>Max Documents: <b>{tier.max_documents === -1 ? "Unlimited" : tier.max_documents ?? (isFree ? 25 : tier.price === 9.99 ? 300 : 3000)}</b></span>
+                    <span>{t("max_documents", "Max Documents:")} <b>{tier.max_documents === -1 ? t("unlimited", "Unlimited") : tier.max_documents ?? (isFree ? 25 : tier.price === 9.99 ? 300 : 3000)}</b></span>
                   </div>
                 </div>
               </div>
@@ -307,14 +307,14 @@ export default function UserUpgrade() {
                     disabled
                     className="w-full py-3 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-500 font-bold text-xs cursor-default text-center"
                   >
-                    Active Plan
+                    {t("active_plan", "Active Plan")}
                   </button>
                 ) : isFree ? (
                   <button
                     disabled
                     className="w-full py-3 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-500 font-bold text-xs cursor-default text-center"
                   >
-                    Freemium Tier
+                    {t("freemium_tier", "Freemium Tier")}
                   </button>
                 ) : (
                   <button
@@ -325,7 +325,7 @@ export default function UserUpgrade() {
                     className="w-full py-3 rounded-xl bg-gradient-to-r from-[#d9a441] to-[#e8c377] text-[#092C2B] font-bold text-xs flex items-center justify-center gap-2 hover:shadow-lg transition-all cursor-pointer"
                   >
                     <Crown className="w-4 h-4" />
-                    <span>Upgrade to {tier.name}</span>
+                    <span>{t("upgrade_to", "Upgrade to")} {tier.name}</span>
                   </button>
                 )}
               </div>
@@ -350,10 +350,10 @@ export default function UserUpgrade() {
               <Building2 className="w-7 h-7 text-[#d9a441]" />
               <div>
                 <h3 className="text-xl font-bold text-gray-900 dark:text-white">
-                  Bank Transfer & Payment Proof
+                  {t("bank_transfer_title", "Bank Transfer & Payment Proof")}
                 </h3>
                 <p className="text-xs text-gray-500 dark:text-gray-400">
-                  Upgrade Plan: <span className="font-bold text-[#d9a441]">{selectedTier.name}</span> (${selectedTier.price})
+                  {t("upgrade_plan_label", "Upgrade Plan:")} <span className="font-bold text-[#d9a441]">{selectedTier.name}</span> (${selectedTier.price})
                 </p>
               </div>
             </div>
@@ -362,23 +362,23 @@ export default function UserUpgrade() {
             <div className="p-4 rounded-2xl bg-amber-50 dark:bg-amber-900/20 border border-amber-500/30 text-xs space-y-2 mb-6">
               <div className="flex items-center gap-2 font-bold text-amber-900 dark:text-amber-300">
                 <Info className="w-4 h-4 text-[#d9a441]" />
-                <span>Super Admin Bank Transfer Instructions:</span>
+                <span>{t("bank_instructions_heading", "Super Admin Bank Transfer Instructions:")}</span>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 font-mono text-gray-800 dark:text-gray-200">
                 <div>
-                  <span className="text-gray-500">Bank Name:</span> <b>{bankSettings?.bank || "BiAT Bank Tunisia"}</b>
+                  <span className="text-gray-500">{t("bank_name", "Bank Name:")}</span> <b>{bankSettings?.bank || "BiAT Bank Tunisia"}</b>
                 </div>
                 <div>
-                  <span className="text-gray-500">Beneficiary:</span> <b>{bankSettings?.beneficiary || "Roots Tunisia Support"}</b>
+                  <span className="text-gray-500">{t("beneficiary", "Beneficiary:")}</span> <b>{bankSettings?.beneficiary || "Roots Tunisia Support"}</b>
                 </div>
                 <div className="sm:col-span-2">
-                  <span className="text-gray-500">Account / IBAN:</span> <b>{bankSettings?.account || "TN59 1000 1234 5678 9012 3456"}</b>
+                  <span className="text-gray-500">{t("account_iban", "Account / IBAN:")}</span> <b>{bankSettings?.account || "TN59 1000 1234 5678 9012 3456"}</b>
                 </div>
                 <div>
-                  <span className="text-gray-500">Reference Code:</span> <b>{bankSettings?.reference || "ROOTS-SUB"}</b>
+                  <span className="text-gray-500">{t("reference_code", "Reference Code:")}</span> <b>{bankSettings?.reference || "ROOTS-SUB"}</b>
                 </div>
                 <div>
-                  <span className="text-gray-500">Currency:</span> <b>{bankSettings?.currency || "USD"}</b>
+                  <span className="text-gray-500">{t("currency", "Currency:")}</span> <b>{bankSettings?.currency || "USD"}</b>
                 </div>
               </div>
               {bankSettings?.instructions && (
@@ -392,32 +392,32 @@ export default function UserUpgrade() {
             <div className="space-y-4 text-xs">
               <div>
                 <label className="block font-semibold text-gray-800 dark:text-gray-200 mb-1">
-                  Upload Payment Proof Receipt (Image / Screenshot):
+                  {t("upload_payment_proof", "Upload Payment Proof Receipt (Image / Screenshot):")}
                 </label>
                 <div className="flex items-center gap-3">
                   <label className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[var(--border-color)] bg-gray-50 dark:bg-gray-800 cursor-pointer hover:bg-gray-100 transition-colors">
                     <Upload className="w-4 h-4 text-[#d9a441]" />
-                    <span className="font-semibold text-gray-700 dark:text-gray-300">Choose Receipt Image</span>
+                    <span className="font-semibold text-gray-700 dark:text-gray-300">{t("choose_receipt_image", "Choose Receipt Image")}</span>
                     <input type="file" accept="image/*" onChange={handleProofFileChange} className="hidden" />
                   </label>
                   {proofFile && <span className="text-xs text-green-600 font-semibold truncate max-w-xs">{proofFile.name}</span>}
                 </div>
                 {proofPreview && (
                   <div className="mt-3">
-                    <img src={proofPreview} alt="Receipt Preview" className="max-h-36 rounded-xl border object-contain" />
+                    <img src={proofPreview} alt={t("receipt_preview", "معاينة الإشعار")} className="max-h-36 rounded-xl border object-contain" />
                   </div>
                 )}
               </div>
 
               <div>
                 <label className="block font-semibold text-gray-800 dark:text-gray-200 mb-1">
-                  Transaction Notes / Reference Message (Optional):
+                  {t("tx_notes_optional", "Transaction Notes / Reference Message (Optional):")}
                 </label>
                 <textarea
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   rows={3}
-                  placeholder="Enter bank transaction code, date of transfer, or note for support..."
+                  placeholder={t("placeholder_tx_notes", "Enter bank transaction code, date of transfer, or note for support...")}
                   className="w-full px-4 py-3 rounded-xl border border-[var(--border-color)] bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white text-xs outline-none focus:ring-2 focus:ring-[#d9a441]/30"
                 />
               </div>
@@ -428,7 +428,7 @@ export default function UserUpgrade() {
                   disabled={submittingPayment}
                   className="px-4 py-2.5 rounded-xl border border-gray-300 text-gray-700 dark:text-gray-300 font-semibold text-xs"
                 >
-                  Cancel
+                  {t("cancel", "Cancel")}
                 </button>
                 <button
                   onClick={handleSubmitBankPayment}
@@ -436,7 +436,7 @@ export default function UserUpgrade() {
                   className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#d9a441] to-[#e8c377] text-[#092C2B] font-bold text-xs flex items-center gap-2 shadow hover:shadow-lg disabled:opacity-50"
                 >
                   {submittingPayment ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                  Submit Payment Proof
+                  {t("submit_payment_proof", "Submit Payment Proof")}
                 </button>
               </div>
             </div>
@@ -451,10 +451,10 @@ export default function UserUpgrade() {
             <div>
               <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
                 <Sparkles className="w-5 h-5 text-[#d9a441]" />
-                Super Admin: User Subscriptions & Custom Limits
+                {t("super_admin_subscriptions_title", "Super Admin: User Subscriptions & Custom Limits")}
               </h2>
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                Directly upgrade user subscriptions or configure custom creation quota overrides per user account.
+                {t("super_admin_subscriptions_desc", "Directly upgrade user subscriptions or configure custom creation quota overrides per user account.")}
               </p>
             </div>
           </div>
@@ -463,11 +463,11 @@ export default function UserUpgrade() {
             <table className="w-full text-sm text-gray-900 dark:text-white">
               <thead>
                 <tr className="border-b border-[var(--border-color)] bg-[var(--paper-color)]">
-                  <th className="text-left px-4 py-3 font-semibold">ID</th>
-                  <th className="text-left px-4 py-3 font-semibold">Name</th>
-                  <th className="text-left px-4 py-3 font-semibold">Email</th>
-                  <th className="text-left px-4 py-3 font-semibold">Role</th>
-                  <th className="text-left px-4 py-3 font-semibold">Actions</th>
+                  <th className="text-left rtl:text-right px-4 py-3 font-semibold">{t("id", "ID")}</th>
+                  <th className="text-left rtl:text-right px-4 py-3 font-semibold">{t("name", "Name")}</th>
+                  <th className="text-left rtl:text-right px-4 py-3 font-semibold">{t("email", "Email")}</th>
+                  <th className="text-left rtl:text-right px-4 py-3 font-semibold">{t("role", "Role")}</th>
+                  <th className="text-left rtl:text-right px-4 py-3 font-semibold">{t("actions", "Actions")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -476,7 +476,7 @@ export default function UserUpgrade() {
                     <td className="px-4 py-3 font-mono text-xs opacity-60">#{u.id}</td>
                     <td className="px-4 py-3 font-semibold">{u.fullName || u.full_name || "—"}</td>
                     <td className="px-4 py-3 opacity-70">{u.email}</td>
-                    <td className="px-4 py-3 text-xs capitalize">{u.roleName || (u.role === 3 ? "Super Admin" : "User")}</td>
+                    <td className="px-4 py-3 text-xs capitalize">{u.roleName || (u.role === 3 ? t("super_admin", "Super Admin") : t("user", "User"))}</td>
                     <td className="px-4 py-3">
                       <div className="flex gap-2">
                         <button
@@ -484,7 +484,7 @@ export default function UserUpgrade() {
                           className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#d9a441]/15 text-[#d9a441] hover:bg-[#d9a441]/25 flex items-center gap-1"
                         >
                           <Crown className="w-3.5 h-3.5" />
-                          <span>Upgrade Tier</span>
+                          <span>{t("upgrade_tier", "Upgrade Tier")}</span>
                         </button>
                         {isSuperAdmin && (
                           <button
@@ -492,7 +492,7 @@ export default function UserUpgrade() {
                             className="px-3 py-1.5 rounded-lg text-xs font-semibold border border-[#d9a441]/40 text-[#d9a441] hover:bg-[#d9a441]/10 flex items-center gap-1"
                           >
                             <Sliders className="w-3.5 h-3.5" />
-                            <span>Custom Quotas</span>
+                            <span>{t("custom_quotas", "Custom Quotas")}</span>
                           </button>
                         )}
                       </div>
@@ -509,19 +509,19 @@ export default function UserUpgrade() {
       {adminSelectedUser && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => { if (!upgradingAdmin) setAdminSelectedUser(null); }}>
           <div className="bg-white dark:bg-gray-900 rounded-2xl border border-[var(--border-color)] p-6 shadow-2xl w-full max-w-md relative" onClick={(e) => e.stopPropagation()}>
-            <h3 className="font-bold text-lg text-gray-900 dark:text-white mb-1">Super Admin Tier Upgrade</h3>
+            <h3 className="font-bold text-lg text-gray-900 dark:text-white mb-1">{t("super_admin_tier_upgrade", "Super Admin Tier Upgrade")}</h3>
             <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">#{adminSelectedUser.id} — {adminSelectedUser.email}</p>
 
-            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Select Subscription Tier</label>
+            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">{t("select_subscription_tier", "Select Subscription Tier")}</label>
             <select value={selectedTierId} onChange={(e) => setSelectedTierId(parseInt(e.target.value))} className="w-full px-4 py-3 rounded-xl border border-[var(--border-color)] bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white text-sm mb-4 outline-none focus:ring-2 focus:ring-[#d9a441]/30">
               {tiers.map((tier: any) => (
-                <option key={tier.id} value={tier.id}>{tier.name} — ${tier.price}/{tier.interval || "month"}</option>
+                <option key={tier.id} value={tier.id}>{tier.name} — ${tier.price}/{tier.interval || t("month", "month")}</option>
               ))}
             </select>
 
             <button onClick={handleAdminUpgrade} disabled={upgradingAdmin} className="w-full py-3 rounded-full bg-gradient-to-r from-[#d9a441] to-[#e8c377] text-[#092C2B] font-bold text-sm flex items-center justify-center gap-2 transition-all hover:shadow-lg disabled:opacity-50">
               {upgradingAdmin ? <Loader2 className="w-4 h-4 animate-spin" /> : <Crown className="w-4 h-4" />}
-              Apply Tier Upgrade
+              {t("apply_tier_upgrade", "Apply Tier Upgrade")}
             </button>
           </div>
         </div>
@@ -531,7 +531,7 @@ export default function UserUpgrade() {
       {quotaUser && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => { if (!savingQuotas) setQuotaUser(null); }}>
           <div className="bg-white dark:bg-gray-900 rounded-2xl border border-[var(--border-color)] p-6 shadow-2xl w-full max-w-lg relative" onClick={(e) => e.stopPropagation()}>
-            <h3 className="font-bold text-lg text-gray-900 dark:text-white mb-1">Set Custom User Quotas</h3>
+            <h3 className="font-bold text-lg text-gray-900 dark:text-white mb-1">{t("set_custom_user_quotas", "Set Custom User Quotas")}</h3>
             <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">#{quotaUser.id} — {quotaUser.email}</p>
 
             {loadingQuotas ? (
@@ -540,47 +540,47 @@ export default function UserUpgrade() {
               <div className="space-y-4 text-xs">
                 {userQuotas && (
                   <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-900/20 text-amber-800 dark:text-amber-300 space-y-1">
-                    <p className="font-bold text-xs">Active Plan ({userQuotas.tierName}) Usage:</p>
+                    <p className="font-bold text-xs">{t("active_plan_usage", "Active Plan Usage")} ({userQuotas.tierName}):</p>
                     <div className="grid grid-cols-2 gap-2 text-[0.75rem]">
-                      <div>Trees: <b>{userQuotas.limits.trees?.used} / {userQuotas.limits.trees?.max === -1 ? "∞" : userQuotas.limits.trees?.max}</b></div>
-                      <div>Gallery: <b>{userQuotas.limits.gallery?.used} / {userQuotas.limits.gallery?.max === -1 ? "∞" : userQuotas.limits.gallery?.max}</b></div>
-                      <div>Audios: <b>{userQuotas.limits.audios?.used} / {userQuotas.limits.audios?.max === -1 ? "∞" : userQuotas.limits.audios?.max}</b></div>
-                      <div>Docs: <b>{userQuotas.limits.documents?.used} / {userQuotas.limits.documents?.max === -1 ? "∞" : userQuotas.limits.documents?.max}</b></div>
-                      <div>Individuals: <b>{userQuotas.limits.individuals?.used} / {userQuotas.limits.individuals?.max === -1 ? "∞" : userQuotas.limits.individuals?.max}</b></div>
+                      <div>{t("trees", "Trees")}: <b>{userQuotas.limits.trees?.used} / {userQuotas.limits.trees?.max === -1 ? "∞" : userQuotas.limits.trees?.max}</b></div>
+                      <div>{t("gallery", "Gallery")}: <b>{userQuotas.limits.gallery?.used} / {userQuotas.limits.gallery?.max === -1 ? "∞" : userQuotas.limits.gallery?.max}</b></div>
+                      <div>{t("audios", "Audios")}: <b>{userQuotas.limits.audios?.used} / {userQuotas.limits.audios?.max === -1 ? "∞" : userQuotas.limits.audios?.max}</b></div>
+                      <div>{t("documents", "Docs")}: <b>{userQuotas.limits.documents?.used} / {userQuotas.limits.documents?.max === -1 ? "∞" : userQuotas.limits.documents?.max}</b></div>
+                      <div>{t("individuals", "Individuals")}: <b>{userQuotas.limits.individuals?.used} / {userQuotas.limits.individuals?.max === -1 ? "∞" : userQuotas.limits.individuals?.max}</b></div>
                     </div>
                   </div>
                 )}
 
-                <p className="font-semibold text-gray-700 dark:text-gray-300">Custom Limit Overrides (leave blank for tier default, -1 for unlimited):</p>
+                <p className="font-semibold text-gray-700 dark:text-gray-300">{t("custom_limit_overrides_desc", "Custom Limit Overrides (leave blank for tier default, -1 for unlimited):")}</p>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block mb-1 font-medium">Trees Limit:</label>
-                    <input type="number" value={customLimits.custom_max_trees} onChange={(e) => setCustomLimits({ ...customLimits, custom_max_trees: e.target.value })} placeholder="Tier default" className="w-full px-3 py-2 rounded-lg border bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white" />
+                    <label className="block mb-1 font-medium">{t("trees_limit", "Trees Limit:")}</label>
+                    <input type="number" value={customLimits.custom_max_trees} onChange={(e) => setCustomLimits({ ...customLimits, custom_max_trees: e.target.value })} placeholder={t("tier_default", "Tier default")} className="w-full px-3 py-2 rounded-lg border bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white" />
                   </div>
                   <div>
-                    <label className="block mb-1 font-medium">Gallery Limit:</label>
-                    <input type="number" value={customLimits.custom_max_gallery} onChange={(e) => setCustomLimits({ ...customLimits, custom_max_gallery: e.target.value })} placeholder="Tier default" className="w-full px-3 py-2 rounded-lg border bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white" />
+                    <label className="block mb-1 font-medium">{t("gallery_limit", "Gallery Limit:")}</label>
+                    <input type="number" value={customLimits.custom_max_gallery} onChange={(e) => setCustomLimits({ ...customLimits, custom_max_gallery: e.target.value })} placeholder={t("tier_default", "Tier default")} className="w-full px-3 py-2 rounded-lg border bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white" />
                   </div>
                   <div>
-                    <label className="block mb-1 font-medium">Audios Limit:</label>
-                    <input type="number" value={customLimits.custom_max_audios} onChange={(e) => setCustomLimits({ ...customLimits, custom_max_audios: e.target.value })} placeholder="Tier default" className="w-full px-3 py-2 rounded-lg border bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white" />
+                    <label className="block mb-1 font-medium">{t("audios_limit", "Audios Limit:")}</label>
+                    <input type="number" value={customLimits.custom_max_audios} onChange={(e) => setCustomLimits({ ...customLimits, custom_max_audios: e.target.value })} placeholder={t("tier_default", "Tier default")} className="w-full px-3 py-2 rounded-lg border bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white" />
                   </div>
                   <div>
-                    <label className="block mb-1 font-medium">Docs Limit:</label>
-                    <input type="number" value={customLimits.custom_max_documents} onChange={(e) => setCustomLimits({ ...customLimits, custom_max_documents: e.target.value })} placeholder="Tier default" className="w-full px-3 py-2 rounded-lg border bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white" />
+                    <label className="block mb-1 font-medium">{t("docs_limit", "Docs Limit:")}</label>
+                    <input type="number" value={customLimits.custom_max_documents} onChange={(e) => setCustomLimits({ ...customLimits, custom_max_documents: e.target.value })} placeholder={t("tier_default", "Tier default")} className="w-full px-3 py-2 rounded-lg border bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white" />
                   </div>
                   <div className="col-span-2">
-                    <label className="block mb-1 font-medium">Individuals Limit:</label>
-                    <input type="number" value={customLimits.custom_max_individuals} onChange={(e) => setCustomLimits({ ...customLimits, custom_max_individuals: e.target.value })} placeholder="Tier default" className="w-full px-3 py-2 rounded-lg border bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white" />
+                    <label className="block mb-1 font-medium">{t("individuals_limit", "Individuals Limit:")}</label>
+                    <input type="number" value={customLimits.custom_max_individuals} onChange={(e) => setCustomLimits({ ...customLimits, custom_max_individuals: e.target.value })} placeholder={t("tier_default", "Tier default")} className="w-full px-3 py-2 rounded-lg border bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white" />
                   </div>
                 </div>
 
                 <div className="pt-3 flex justify-end gap-2">
-                  <button onClick={() => setQuotaUser(null)} disabled={savingQuotas} className="px-4 py-2 rounded-lg border text-gray-600 dark:text-gray-300 font-semibold">Cancel</button>
+                  <button onClick={() => setQuotaUser(null)} disabled={savingQuotas} className="px-4 py-2 rounded-lg border text-gray-600 dark:text-gray-300 font-semibold">{t("cancel", "Cancel")}</button>
                   <button onClick={handleSaveUserLimits} disabled={savingQuotas} className="px-5 py-2 rounded-full bg-gradient-to-r from-[#d9a441] to-[#e8c377] text-[#092C2B] font-bold flex items-center gap-1.5">
                     {savingQuotas ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sliders className="w-4 h-4" />}
-                    Save Custom Limits
+                    {t("save_custom_limits", "Save Custom Limits")}
                   </button>
                 </div>
               </div>

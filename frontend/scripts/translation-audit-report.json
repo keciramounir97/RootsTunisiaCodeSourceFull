@@ -1,0 +1,56 @@
+{
+  "generatedAt": "2026-10-01T18:23:02.635Z",
+  "reference": "en.json",
+  "referenceKeyCount": 236,
+  "locales": {
+    "en": {
+      "keyCount": 236,
+      "missingCount": 0,
+      "extraCount": 0,
+      "missing": [],
+      "extra": []
+    },
+    "fr": {
+      "keyCount": 236,
+      "missingCount": 0,
+      "extraCount": 0,
+      "missing": [],
+      "extra": []
+    },
+    "ar": {
+      "keyCount": 236,
+      "missingCount": 0,
+      "extraCount": 0,
+      "missing": [],
+      "extra": []
+    },
+    "es": {
+      "keyCount": 236,
+      "missingCount": 0,
+      "extraCount": 0,
+      "missing": [],
+      "extra": []
+    },
+    "it": {
+      "keyCount": 236,
+      "missingCount": 0,
+      "extraCount": 0,
+      "missing": [],
+      "extra": []
+    },
+    "mt": {
+      "keyCount": 236,
+      "missingCount": 0,
+      "extraCount": 0,
+      "missing": [],
+      "extra": []
+    },
+    "eo": {
+      "keyCount": 236,
+      "missingCount": 0,
+      "extraCount": 0,
+      "missing": [],
+      "extra": []
+    }
+  }
+}

@@ -46,49 +46,49 @@
 }
 
 :root {
-  --radius: 0.25rem;
+  --radius: 0.375rem;
 
   --parchment: oklch(0.968 0.014 85);
   --parchment-deep: oklch(0.928 0.024 82);
-  --ink: oklch(0.24 0.03 45);
+  --ink: oklch(0.21 0.032 45);
 
   --background: oklch(0.968 0.014 85);
-  --foreground: oklch(0.24 0.03 45);
-  --card: oklch(0.988 0.008 85);
-  --card-foreground: oklch(0.24 0.03 45);
-  --popover: oklch(0.988 0.008 85);
-  --popover-foreground: oklch(0.24 0.03 45);
+  --foreground: oklch(0.21 0.032 45);
+  --card: oklch(0.99 0.007 85);
+  --card-foreground: oklch(0.21 0.032 45);
+  --popover: oklch(0.99 0.007 85);
+  --popover-foreground: oklch(0.21 0.032 45);
 
   /* Tunisian flag red */
-  --primary: oklch(0.485 0.176 27);
-  --primary-foreground: oklch(0.98 0.01 85);
+  --primary: oklch(0.475 0.18 27);
+  --primary-foreground: oklch(0.985 0.01 85);
 
   --secondary: oklch(0.928 0.024 82);
-  --secondary-foreground: oklch(0.3 0.04 45);
+  --secondary-foreground: oklch(0.26 0.038 45);
 
   --muted: oklch(0.938 0.019 84);
-  --muted-foreground: oklch(0.49 0.032 60);
+  --muted-foreground: oklch(0.39 0.036 52);
 
   /* Carthage gold */
-  --accent: oklch(0.7 0.106 74);
-  --accent-foreground: oklch(0.22 0.03 45);
+  --accent: oklch(0.68 0.112 74);
+  --accent-foreground: oklch(0.2 0.03 45);
 
-  --gold: oklch(0.7 0.106 74);
+  --gold: oklch(0.54 0.12 72);
   --gold-soft: oklch(0.86 0.056 80);
   --olive: oklch(0.46 0.056 118);
 
   --destructive: oklch(0.52 0.19 27);
   --destructive-foreground: oklch(0.98 0.01 85);
-  --border: oklch(0.878 0.03 80);
-  --input: oklch(0.878 0.03 80);
-  --ring: oklch(0.7 0.106 74);
+  --border: oklch(0.85 0.035 80);
+  --input: oklch(0.85 0.035 80);
+  --ring: oklch(0.54 0.12 72);
 
   --gradient-hero: linear-gradient(
     180deg,
-    color-mix(in oklab, var(--ink) 20%, transparent) 0%,
-    color-mix(in oklab, var(--ink) 72%, transparent) 100%
+    rgba(16, 12, 8, 0.44) 0%,
+    rgba(16, 12, 8, 0.80) 100%
   );
-  --gradient-gold: linear-gradient(100deg, var(--gold) 0%, var(--gold-soft) 55%, var(--gold) 100%);
+  --gradient-gold: linear-gradient(100deg, #d9a441 0%, #f0ca6e 55%, #c88f20 100%);
   --gradient-parchment: linear-gradient(180deg, var(--parchment) 0%, var(--parchment-deep) 100%);
   --shadow-frame: 0 24px 60px -30px color-mix(in oklab, var(--ink) 45%, transparent);
   --shadow-card: 0 2px 0 0 color-mix(in oklab, var(--gold) 30%, transparent);
@@ -143,28 +143,28 @@
 }
 
 .dark {
-  --parchment: oklch(0.22 0.022 55);
-  --parchment-deep: oklch(0.18 0.02 55);
-  --background: oklch(0.19 0.02 55);
-  --foreground: oklch(0.95 0.012 85);
-  --card: oklch(0.24 0.024 55);
-  --card-foreground: oklch(0.95 0.012 85);
-  --popover: oklch(0.24 0.024 55);
-  --popover-foreground: oklch(0.95 0.012 85);
+  --parchment: oklch(0.21 0.022 55);
+  --parchment-deep: oklch(0.17 0.02 55);
+  --background: oklch(0.18 0.02 55);
+  --foreground: oklch(0.96 0.012 85);
+  --card: oklch(0.23 0.024 55);
+  --card-foreground: oklch(0.96 0.012 85);
+  --popover: oklch(0.23 0.024 55);
+  --popover-foreground: oklch(0.96 0.012 85);
   --primary: oklch(0.58 0.185 27);
-  --primary-foreground: oklch(0.97 0.01 85);
-  --secondary: oklch(0.28 0.028 60);
-  --secondary-foreground: oklch(0.95 0.012 85);
-  --muted: oklch(0.28 0.028 60);
-  --muted-foreground: oklch(0.75 0.03 80);
-  --accent: oklch(0.75 0.11 76);
-  --accent-foreground: oklch(0.2 0.02 55);
-  --gold: oklch(0.78 0.11 78);
-  --gold-soft: oklch(0.86 0.056 80);
+  --primary-foreground: oklch(0.98 0.01 85);
+  --secondary: oklch(0.27 0.028 60);
+  --secondary-foreground: oklch(0.96 0.012 85);
+  --muted: oklch(0.27 0.028 60);
+  --muted-foreground: oklch(0.82 0.028 82);
+  --accent: oklch(0.77 0.11 76);
+  --accent-foreground: oklch(0.18 0.02 55);
+  --gold: oklch(0.8 0.115 78);
+  --gold-soft: oklch(0.88 0.056 80);
   --olive: oklch(0.6 0.06 118);
-  --border: oklch(1 0 0 / 14%);
-  --input: oklch(1 0 0 / 18%);
-  --ring: oklch(0.78 0.11 78);
+  --border: oklch(1 0 0 / 16%);
+  --input: oklch(1 0 0 / 20%);
+  --ring: oklch(0.8 0.115 78);
 
   --color-primary: oklch(0.78 0.11 78);
   --color-secondary: oklch(0.19 0.02 55);
@@ -192,6 +192,26 @@
   --neu-highlight: oklch(0.32 0.024 55);
   --neu-shadow: 6px 6px 16px rgba(0, 0, 0, 0.45), -3px -3px 10px rgba(255, 255, 255, 0.03);
   --neu-pressed: inset 3px 3px 10px rgba(0, 0, 0, 0.5), inset -1px -1px 4px rgba(255, 255, 255, 0.04);
+}
+
+/* ==========================================================================
+   Accessibility & WCAG 2.2 AA Compliant Keyboard Navigation & Motion
+   ========================================================================== */
+:focus-visible {
+  outline: 2px solid var(--gold) !important;
+  outline-offset: 2px !important;
+  box-shadow: 0 0 0 4px color-mix(in oklab, var(--gold) 25%, transparent) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 @utility display-xl {
@@ -395,41 +415,63 @@
   transform: translateY(-1px);
 }
 
-.btn-gold {
-  background: var(--gradient-gold);
-  color: #2a1f15;
-  border: 1px solid rgba(217, 164, 65, 0.7);
+.btn-gold,
+a.btn-gold,
+button.btn-gold {
+  background: var(--gradient-gold) !important;
+  color: #1f160f !important;
+  border: 1px solid rgba(217, 164, 65, 0.75) !important;
 }
-.btn-gold:hover {
+.btn-gold:hover,
+a.btn-gold:hover,
+button.btn-gold:hover {
   filter: brightness(1.06);
+  color: #140e09 !important;
 }
 
-.btn-red {
-  background-color: var(--primary);
-  color: var(--primary-foreground);
-  border: 1px solid var(--primary);
-}
-.btn-red:hover {
-  background-color: #a50d24;
-}
-
-.btn-outline-light {
-  background-color: transparent;
+.btn-red,
+a.btn-red,
+button.btn-red {
+  background-color: #b81428 !important;
   color: #ffffff !important;
-  border: 1px solid rgba(255, 255, 255, 0.7);
+  border: 1px solid #b81428 !important;
 }
-.btn-outline-light:hover {
-  background-color: rgba(255, 255, 255, 0.16);
+.btn-red:hover,
+a.btn-red:hover,
+button.btn-red:hover {
+  background-color: #960f20 !important;
   color: #ffffff !important;
 }
 
-.btn-outline-ink {
-  background-color: transparent;
-  color: var(--foreground);
-  border: 1px solid rgba(217, 164, 65, 0.55);
+.btn-outline-light,
+a.btn-outline-light,
+button.btn-outline-light {
+  background-color: rgba(0, 0, 0, 0.28) !important;
+  color: #ffffff !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.85) !important;
+  backdrop-filter: blur(4px);
 }
-.btn-outline-ink:hover {
-  background-color: rgba(217, 164, 65, 0.14);
+.btn-outline-light:hover,
+a.btn-outline-light:hover,
+button.btn-outline-light:hover {
+  background-color: rgba(255, 255, 255, 0.2) !important;
+  color: #ffffff !important;
+  border-color: #ffffff !important;
+}
+
+.btn-outline-ink,
+a.btn-outline-ink,
+button.btn-outline-ink {
+  background-color: transparent !important;
+  color: var(--foreground) !important;
+  border: 1.5px solid rgba(217, 164, 65, 0.65) !important;
+}
+.btn-outline-ink:hover,
+a.btn-outline-ink:hover,
+button.btn-outline-ink:hover {
+  background-color: rgba(217, 164, 65, 0.16) !important;
+  color: var(--foreground) !important;
+  border-color: var(--gold) !important;
 }
 
 .zellige {
@@ -802,30 +844,23 @@ html {
   transition: max-width 0.4s ease-out, padding 0.4s ease-out;
 }
 
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-  font-family: "Cinzel", "URW Chancery L", serif;
-  letter-spacing: 0.08em;
-  color: #111111;
-  margin-bottom: 0.5rem;
-}
+@layer base {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: "Cormorant Garamond", "Cinzel", serif;
+    letter-spacing: 0.03em;
+    color: var(--foreground);
+    margin-bottom: 0.25rem;
+  }
 
-.dark h1,
-.dark h2,
-.dark h3,
-.dark h4,
-.dark h5,
-.dark h6 {
-  color: #FDFBF7;
-}
-
-p {
-  font-family: "Cormorant Garamond", "EB Garamond", "Garamond", serif;
-  line-height: 1.8;
+  p {
+    font-family: "Karla", "Cormorant Garamond", sans-serif;
+    line-height: 1.7;
+  }
 }
 
 .arabic-font {
@@ -1438,13 +1473,16 @@ p {
 }
 
 .navbar-logo-img {
-  height: clamp(48px, 6vw, 56px);
+  display: block;
+  height: clamp(32px, 6vw, 52px);
   width: auto;
+  max-width: min(42vw, 160px);
   object-fit: contain;
+  object-position: left center;
   border-radius: 17px;
   background-color: transparent;
   transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
-  flex-shrink: 0;
+  flex-shrink: 1;
   animation: logoEntrance 0.6s ease both;
 }
 
@@ -3998,10 +4036,7 @@ p {
 }
 
 /* Global text shadows and colors for page headings - Clean Single Text */
-h1, h2, h3, h4, h5, h6,
-.dark h1, .dark h2, .dark h3, .dark h4, .dark h5, .dark h6 {
-  text-shadow: none !important;
-}
+/* Allow utility text-shadows on hero headings */
 
 /* Reset headings inside naturally dark sections (hero, footer, heritage banner) to keep them highly readable */
 .heritage-hero h1,
@@ -5122,3 +5157,58 @@ table.easy-admin-table td, table.admin-table td {
 table.easy-admin-table tr:hover td, table.admin-table tr:hover td {
   background: rgba(217, 164, 65, 0.05);
 }
+
+/* ========================================================
+   COMPREHENSIVE RTL (RIGHT-TO-LEFT) ARABIC SUPPORT
+   ======================================================== */
+[dir="rtl"] {
+  text-align: right;
+  font-family: "Amiri", "Cairo", "Tajawal", "Noto Naskh Arabic", "Cormorant Garamond", serif;
+}
+
+[dir="rtl"] .font-display,
+[dir="rtl"] .display-xl,
+[dir="rtl"] .display-lg,
+[dir="rtl"] h1,
+[dir="rtl"] h2,
+[dir="rtl"] h3,
+[dir="rtl"] h4 {
+  font-family: "Amiri", "Cairo", "Tajawal", "Noto Naskh Arabic", "Cormorant Garamond", serif;
+  letter-spacing: normal !important;
+}
+
+[dir="rtl"] .display-xl,
+[dir="rtl"] .display-lg {
+  line-height: 1.28;
+}
+
+[dir="rtl"] .font-sans,
+[dir="rtl"] .font-body,
+[dir="rtl"] .eyebrow,
+[dir="rtl"] .btn-base,
+[dir="rtl"] .btn-neu {
+  font-family: "Cairo", "Tajawal", "Noto Sans Arabic", "Karla", system-ui, sans-serif;
+  letter-spacing: normal !important;
+}
+
+[dir="rtl"] table.easy-admin-table th,
+[dir="rtl"] table.admin-table th,
+[dir="rtl"] th {
+  text-align: right !important;
+}
+
+[dir="rtl"] input:not([type="checkbox"]):not([type="radio"]),
+[dir="rtl"] textarea,
+[dir="rtl"] select {
+  text-align: right;
+}
+
+[dir="rtl"] .text-left {
+  text-align: right !important;
+}
+
+[dir="rtl"] .font-cinzel,
+[dir="rtl"] [class*="tracking-"] {
+  letter-spacing: normal !important;
+}
+

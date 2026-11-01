@@ -535,7 +535,7 @@ export default function Trees() {
       : await api.post("/my/trees", fd);
 
     const payload = res?.data;
-    return payload?.data?.id ?? payload?.id ?? res?.id;
+    return payload?.data?.id ?? payload?.id ?? (res as any)?.id;
   };
 
   const downloadTreeFile = async (tree: any, scope?: string) => {
@@ -722,7 +722,7 @@ export default function Trees() {
 
     let title = String(treeForm.title || "").trim();
     if (!title && selectedTree?.title) title = String(selectedTree.title).trim();
-    if (!title) title = "Arbre Généalogique Familial";
+    if (!title) title = t("default_tree_name", "شجرة العائلة والنسب");
 
     if (!treeForm.saveToDb) {
       setTreeForm((prev) => ({ ...prev, saveToDb: true }));
@@ -997,7 +997,7 @@ export default function Trees() {
             </div>
             <div className={`text-xs opacity-70 mt-0.5 ${inputText}`}>
               {selectedTree
-                ? (selectedTree.description || t("legacy.active_tree", "Currently active tree.")) + (canUpdateSelected ? "" : " (You are viewing another user's public tree - read-only mode)")
+                ? (selectedTree.description || t("legacy.active_tree", "Currently active tree.")) + (canUpdateSelected ? "" : ` (${t("read_only_mode_notice", "You are viewing another user's public tree - read-only mode")})`)
                 : t("legacy.canvas_hint", "Click 'See My Trees' to load a tree or '+ Add Tree' to create one.")}
             </div>
           </div>
@@ -1160,7 +1160,7 @@ export default function Trees() {
                             </span>
                             {!isTreeOwned && (
                               <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-500 border border-amber-500/20">
-                                Read-Only
+                                {t("read_only", "Read-Only")}
                               </span>
                             )}
                           </div>
@@ -1265,7 +1265,7 @@ export default function Trees() {
                   onClick={() => {
                     setDrawerMode("code");
                     if (!gedcomCodeDraft && people.length > 0) {
-                      setGedcomCodeDraft(buildGedcom(people));
+                      setGedcomCodeDraft(buildGedcom(people, locale, t));
                     }
                   }}
                   className={`flex-1 py-1.5 px-3 rounded-md font-bold transition-all text-center ${
@@ -1359,13 +1359,13 @@ export default function Trees() {
                             void saveCurrentAsTree();
                             setSaveSuccess(t("legacy.gedcom_synced", "GEDCOM / GEDCOM X code parsed and synchronized with canvas!"));
                           } else {
-                            setSaveError("No valid individual records found in the provided GEDCOM text.");
+                            setSaveError(t("no_valid_gedcom_records", "No valid individual records found in the provided GEDCOM text."));
                           }
                         } catch (err) {
-                          setSaveError("Invalid GEDCOM / GEDCOM X syntax.");
+                          setSaveError(t("invalid_gedcom_syntax", "Invalid GEDCOM / GEDCOM X syntax."));
                         }
                       }}
-                      className="interactive-btn btn-neu btn-neu--primary px-4 py-2.5 text-xs font-bold flex-1 inline-flex items-center justify-center gap-2 shadow-md"
+                      className="interactive-btn btn-neu btn-neu--primary px-4 py-2.5 text-xs font-bold flex-1 inline-flex items-center justify-center gap-2 shadow-md cursor-pointer"
                     >
                       <Save className="w-4 h-4" />
                       <span>{t("legacy.apply_and_sync", "Appliquer au canevas & Enregistrer")}</span>
@@ -1395,7 +1395,7 @@ export default function Trees() {
                       <input
                         value={treeForm.category}
                         onChange={(e) => setTreeForm((s) => ({ ...s, category: e.target.value }))}
-                        placeholder="e.g. Royal / Family"
+                        placeholder={t("placeholder_tree_category", "e.g. Royal / Family")}
                         className={`w-full px-3.5 py-2.5 text-xs rounded-lg border ${border} ${inputBg} ${inputText}`}
                       />
                     </div>
@@ -1438,8 +1438,8 @@ export default function Trees() {
                       <input
                         value={treeForm.archiveSource}
                         onChange={(e) => setTreeForm((s) => ({ ...s, archiveSource: e.target.value }))}
-                        placeholder="Archives..."
-                        className={`w-full px-3.5 py-2.5 text-xs rounded-lg border ${border} ${inputBg} ${inputText}`}
+                        placeholder={t("archive_source", "Archives...")}
+                        className={`w-full px-3.5 py-2.5 text-xs rounded-lg border ${border} ${inputBg} ${inputText} rtl:text-right`}
                       />
                     </div>
                     <div>
@@ -1449,8 +1449,8 @@ export default function Trees() {
                       <input
                         value={treeForm.documentCode}
                         onChange={(e) => setTreeForm((s) => ({ ...s, documentCode: e.target.value }))}
-                        placeholder="DOC-12345"
-                        className={`w-full px-3.5 py-2.5 text-xs rounded-lg border ${border} ${inputBg} ${inputText}`}
+                        placeholder={t("placeholder_doc_code", "DOC-12345")}
+                        className={`w-full px-3.5 py-2.5 text-xs rounded-lg border ${border} ${inputBg} ${inputText} rtl:text-right`}
                       />
                     </div>
                   </div>

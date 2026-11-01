@@ -26,7 +26,7 @@ export default function UserSettings() {
   const { t } = useTranslation();
   const { theme, toggleTheme } = useThemeStore();
   const { language, changeLanguage } = useLanguage();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const isDark = theme === "dark";
 
   // Password state
@@ -44,6 +44,8 @@ export default function UserSettings() {
   // Account Deletion Modal
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deletionReason, setDeletionReason] = useState("");
+  const [deletePassword, setDeletePassword] = useState("");
+  const [deleteMode, setDeleteMode] = useState<"direct" | "request">("direct");
   const [submittingDelete, setSubmittingDelete] = useState(false);
 
   // Status banner
@@ -72,18 +74,18 @@ export default function UserSettings() {
   // Handle Language Change
   const handleLangChange = (langCode: string) => {
     changeLanguage(langCode);
-    setStatus({ type: "success", msg: `Language changed to ${langCode.toUpperCase()}` });
+    setStatus({ type: "success", msg: t("language_changed", "تم تغيير اللغة بنجاح") });
   };
 
   // Handle Password Change
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newPassword || newPassword.length < 6) {
-      setStatus({ type: "error", msg: "New password must be at least 6 characters long." });
+      setStatus({ type: "error", msg: t("password_min_length", "يجب أن تتكون كلمة المرور الجديدة من 6 أحرف على الأقل.") });
       return;
     }
     if (newPassword !== confirmPassword) {
-      setStatus({ type: "error", msg: "New password and confirmation do not match." });
+      setStatus({ type: "error", msg: t("password_match_error", "كلمة المرور الجديدة وتأكيدها غير متطابقين.") });
       return;
     }
 
@@ -94,14 +96,14 @@ export default function UserSettings() {
         currentPassword,
         newPassword,
       });
-      setStatus({ type: "success", msg: res.data?.message || "Password updated successfully!" });
+      setStatus({ type: "success", msg: res.data?.message || t("password_updated_success", "تم تحديث كلمة المرور بنجاح!") });
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
     } catch (err: any) {
       setStatus({
         type: "error",
-        msg: err.response?.data?.message || "Failed to update password. Check your current password.",
+        msg: err.response?.data?.message || t("password_update_failed", "فشل تحديث كلمة المرور. يرجى التحقق من كلمة المرور الحالية."),
       });
     } finally {
       setChangingPass(false);
@@ -117,7 +119,7 @@ export default function UserSettings() {
       setLoggingEnabled(nextState);
       setStatus({
         type: "success",
-        msg: `Activity logging turned ${nextState ? "ON" : "OFF"}.`,
+        msg: t("activity_logging_updated", "تم تحديث إعدادات تسجيل النشاط بنجاح."),
       });
     } catch (err: any) {
       setStatus({ type: "error", msg: "Failed to update activity logging preference." });
@@ -126,18 +128,32 @@ export default function UserSettings() {
     }
   };
 
-  // Handle Account Deletion Request
+  // Handle Account Deletion (Direct Self-Delete or Admin Request)
   const handleDeleteAccount = async () => {
     setSubmittingDelete(true);
+    setStatus({ type: "", msg: "" });
     try {
-      const res = await api.post("/my/account-deletion", { reason: deletionReason });
-      setStatus({
-        type: "success",
-        msg: res.data?.message || "Account deletion request submitted to Super Admin.",
-      });
-      setShowDeleteModal(false);
+      if (deleteMode === "direct") {
+        if (!deletePassword) {
+          setStatus({ type: "error", msg: t("enter_password_confirm_delete", "يرجى إدخال كلمة المرور لتأكيد الحذف الفوري للحساب.") });
+          setSubmittingDelete(false);
+          return;
+        }
+        await api.post("/my/account/self-delete", { password: deletePassword });
+        setShowDeleteModal(false);
+        await logout();
+        window.location.href = "/?deleted=true";
+        return;
+      } else {
+        const res = await api.post("/my/account-deletion", { reason: deletionReason });
+        setStatus({
+          type: "success",
+          msg: res.data?.message || t("account_deletion_submitted", "تم تقديم طلب حذف الحساب بنجاح إلى المشرف العام."),
+        });
+        setShowDeleteModal(false);
+      }
     } catch (err: any) {
-      setStatus({ type: "error", msg: err.response?.data?.message || "Failed to submit deletion request." });
+      setStatus({ type: "error", msg: err.response?.data?.message || t("account_deletion_failed", "فشل معالجة طلب حذف الحساب.") });
     } finally {
       setSubmittingDelete(false);
     }
@@ -156,7 +172,7 @@ export default function UserSettings() {
               {t("user_settings", "User Dashboard Settings")}
             </h1>
             <p className="text-xs text-[var(--text-color)] opacity-70">
-              Manage your preferences, security, language, theme mode, and personal activity log.
+              {t("user_settings_desc", "Manage your preferences, security, language, theme mode, and personal activity log.")}
             </p>
           </div>
         </div>
@@ -186,13 +202,13 @@ export default function UserSettings() {
         <div className="rounded-3xl border border-[var(--border-color)] bg-white dark:bg-[#1a2e2d] p-6 shadow-md space-y-6">
           <div className="flex items-center gap-3 border-b border-[var(--border-color)] pb-3">
             <Globe className="w-5 h-5 text-[#d9a441]" />
-            <h3 className="font-bold text-base text-gray-900 dark:text-white">Language & Appearance</h3>
+            <h3 className="font-bold text-base text-gray-900 dark:text-white">{t("language_and_appearance", "Language & Appearance")}</h3>
           </div>
 
           {/* Language Selector */}
           <div className="space-y-2">
             <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300">
-              Interface Language:
+              {t("interface_language", "Interface Language:")}
             </label>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               {[
@@ -202,7 +218,6 @@ export default function UserSettings() {
                 { code: "es", label: "Español 🇪🇸" },
                 { code: "it", label: "Italiano 🇮🇹" },
                 { code: "mt", label: "Malti 🇲🇹" },
-                { code: "eo", label: "Esperanto 🌐" },
               ].map((lang) => (
                 <button
                   key={lang.code}
@@ -222,23 +237,23 @@ export default function UserSettings() {
           {/* Theme Mode Toggle */}
           <div className="pt-2 border-t border-[var(--border-color)] space-y-2">
             <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300">
-              Theme Mode:
+              {t("theme_mode", "Theme Mode:")}
             </label>
             <div className="flex items-center justify-between p-3 rounded-xl border border-[var(--border-color)] bg-gray-50 dark:bg-gray-800">
               <div className="flex items-center gap-3">
                 {isDark ? <Moon className="w-5 h-5 text-amber-400" /> : <Sun className="w-5 h-5 text-amber-500" />}
                 <div>
                   <span className="font-bold text-xs text-gray-900 dark:text-white">
-                    {isDark ? "Dark Mode Active" : "Light Mode Active"}
+                    {isDark ? t("dark_mode_active", "Dark Mode Active") : t("light_mode_active", "Light Mode Active")}
                   </span>
-                  <p className="text-[0.7rem] text-gray-500">Toggle website color theme display</p>
+                  <p className="text-[0.7rem] text-gray-500">{t("toggle_theme_desc", "Toggle website color theme display")}</p>
                 </div>
               </div>
               <button
                 onClick={toggleTheme}
                 className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#d9a441] to-[#e8c377] text-[#092C2B] font-bold text-xs shadow hover:shadow-md transition-all"
               >
-                Switch to {isDark ? "Light" : "Dark"}
+                {t("switch_theme", "Switch Theme")}
               </button>
             </div>
           </div>
@@ -249,53 +264,53 @@ export default function UserSettings() {
           <div className="flex items-center justify-between border-b border-[var(--border-color)] pb-3">
             <div className="flex items-center gap-3">
               <Lock className="w-5 h-5 text-[#d9a441]" />
-              <h3 className="font-bold text-base text-gray-900 dark:text-white">Password & Security</h3>
+              <h3 className="font-bold text-base text-gray-900 dark:text-white">{t("password_and_security", "Password & Security")}</h3>
             </div>
             <Link
               to="/resetpassword"
               className="text-xs text-[#d9a441] hover:underline font-semibold flex items-center gap-1"
             >
               <KeyRound className="w-3.5 h-3.5" />
-              Forgot Password?
+              {t("forgot_password_q", "Forgot Password?")}
             </Link>
           </div>
 
           <form onSubmit={handleChangePassword} className="space-y-3 text-xs">
             <div>
               <label className="block font-semibold text-gray-700 dark:text-gray-300 mb-1">
-                Current Password:
+                {t("current_password", "Current Password:")}
               </label>
               <input
                 type="password"
                 value={currentPassword}
                 onChange={(e) => setCurrentPassword(e.target.value)}
-                placeholder="Enter current password..."
+                placeholder={t("placeholder_current_password", "Enter current password...")}
                 className="w-full px-4 py-2.5 rounded-xl border border-[var(--border-color)] bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-[#d9a441]/30"
               />
             </div>
 
             <div>
               <label className="block font-semibold text-gray-700 dark:text-gray-300 mb-1">
-                New Password:
+                {t("new_password", "New Password:")}
               </label>
               <input
                 type="password"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="Enter new password (min 6 chars)..."
+                placeholder={t("placeholder_new_password", "Enter new password (min 6 chars)...")}
                 className="w-full px-4 py-2.5 rounded-xl border border-[var(--border-color)] bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-[#d9a441]/30"
               />
             </div>
 
             <div>
               <label className="block font-semibold text-gray-700 dark:text-gray-300 mb-1">
-                Confirm New Password:
+                {t("confirm_new_password", "Confirm New Password:")}
               </label>
               <input
                 type="password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Re-enter new password..."
+                placeholder={t("placeholder_confirm_password", "Re-enter new password...")}
                 className="w-full px-4 py-2.5 rounded-xl border border-[var(--border-color)] bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-[#d9a441]/30"
               />
             </div>
@@ -306,7 +321,7 @@ export default function UserSettings() {
               className="w-full py-3 rounded-xl bg-gradient-to-r from-[#d9a441] to-[#e8c377] text-[#092C2B] font-bold text-xs flex items-center justify-center gap-2 shadow hover:shadow-lg transition-all disabled:opacity-50"
             >
               {changingPass ? <Loader2 className="w-4 h-4 animate-spin" /> : <Lock className="w-4 h-4" />}
-              <span>Update Password</span>
+              <span>{t("update_password", "Update Password")}</span>
             </button>
           </form>
         </div>
@@ -318,9 +333,9 @@ export default function UserSettings() {
           <div className="flex items-center gap-3">
             <Activity className="w-6 h-6 text-[#d9a441]" />
             <div>
-              <h3 className="font-bold text-lg text-gray-900 dark:text-white">Activity Log & Controls</h3>
+              <h3 className="font-bold text-lg text-gray-900 dark:text-white">{t("activity_log_controls", "Activity Log & Controls")}</h3>
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                Track your actions or turn activity logging ON/OFF for your account.
+                {t("activity_log_desc", "Track your actions or turn activity logging ON/OFF for your account.")}
               </p>
             </div>
           </div>
@@ -329,7 +344,7 @@ export default function UserSettings() {
           <div className="flex items-center gap-3 bg-gray-50 dark:bg-gray-800 p-2.5 rounded-2xl border border-[var(--border-color)]">
             <Power className={`w-4 h-4 ${loggingEnabled ? "text-green-500" : "text-gray-400"}`} />
             <span className="text-xs font-bold text-gray-800 dark:text-gray-200">
-              Activity Log: <span className={loggingEnabled ? "text-green-500 font-black" : "text-gray-400 font-bold"}>{loggingEnabled ? "ON" : "OFF"}</span>
+              {t("activity_log", "Activity Log:")} <span className={loggingEnabled ? "text-green-500 font-black" : "text-gray-400 font-bold"}>{loggingEnabled ? t("on", "ON") : t("off", "OFF")}</span>
             </span>
             <button
               onClick={handleToggleLogging}
@@ -340,7 +355,7 @@ export default function UserSettings() {
                   : "bg-gray-300 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
               }`}
             >
-              {togglingLog ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : loggingEnabled ? "Turn OFF" : "Turn ON"}
+              {togglingLog ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : loggingEnabled ? t("turn_off", "Turn OFF") : t("turn_on", "Turn ON")}
             </button>
           </div>
         </div>
@@ -348,13 +363,13 @@ export default function UserSettings() {
         {/* Activity Table */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <h4 className="font-bold text-xs text-gray-700 dark:text-gray-300 uppercase tracking-wider">Recent Account Activity</h4>
+            <h4 className="font-bold text-xs text-gray-700 dark:text-gray-300 uppercase tracking-wider">{t("recent_account_activity", "Recent Account Activity")}</h4>
             <button
               onClick={fetchUserData}
               className="text-xs text-[#d9a441] hover:underline flex items-center gap-1 font-semibold"
             >
               <RefreshCw className="w-3.5 h-3.5" />
-              Refresh Log
+              {t("refresh_log", "Refresh Log")}
             </button>
           </div>
 
@@ -364,16 +379,16 @@ export default function UserSettings() {
             </div>
           ) : activities.length === 0 ? (
             <div className="p-8 text-center text-xs text-gray-500 border border-dashed rounded-2xl">
-              No activity logs recorded yet. {loggingEnabled ? "Your future actions will appear here." : "Activity logging is currently turned OFF."}
+              {t("no_activity_logs", "No activity logs recorded yet.")}
             </div>
           ) : (
             <div className="border border-[var(--border-color)] rounded-2xl overflow-hidden shadow-sm">
               <table className="w-full text-xs text-gray-900 dark:text-white">
                 <thead>
                   <tr className="bg-gray-50 dark:bg-gray-800 border-b border-[var(--border-color)]">
-                    <th className="text-left px-4 py-3 font-semibold">Date & Time</th>
-                    <th className="text-left px-4 py-3 font-semibold">Category</th>
-                    <th className="text-left px-4 py-3 font-semibold">Description</th>
+                    <th className="text-left rtl:text-right px-4 py-3 font-semibold">{t("date_time", "Date & Time")}</th>
+                    <th className="text-left rtl:text-right px-4 py-3 font-semibold">{t("category", "Category")}</th>
+                    <th className="text-left rtl:text-right px-4 py-3 font-semibold">{t("description", "Description")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -398,9 +413,9 @@ export default function UserSettings() {
         <div className="flex items-center gap-3">
           <ShieldAlert className="w-6 h-6 text-red-500" />
           <div>
-            <h3 className="font-bold text-lg text-red-600 dark:text-red-400">Danger Zone — Delete Account</h3>
+            <h3 className="font-bold text-lg text-red-600 dark:text-red-400">{t("danger_zone_delete", "Danger Zone — Delete Account")}</h3>
             <p className="text-xs text-red-700/80 dark:text-red-300/80">
-              Permanently delete or request account removal. This action will cancel your subscription and remove your profile.
+              {t("danger_zone_desc", "Permanently delete or request account removal. This action will cancel your subscription and remove your profile.")}
             </p>
           </div>
         </div>
@@ -410,7 +425,7 @@ export default function UserSettings() {
           className="px-5 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs flex items-center gap-2 shadow transition-all"
         >
           <Trash2 className="w-4 h-4" />
-          <span>Delete My Account</span>
+          <span>{t("delete_my_account", "Delete My Account")}</span>
         </button>
       </div>
 
@@ -421,46 +436,103 @@ export default function UserSettings() {
           onClick={() => { if (!submittingDelete) setShowDeleteModal(false); }}
         >
           <div
-            className="bg-white dark:bg-gray-900 rounded-3xl border border-red-500/30 p-6 md:p-8 shadow-2xl w-full max-w-md relative space-y-4"
+            className="bg-white dark:bg-gray-900 rounded-3xl border border-red-500/30 p-6 md:p-8 shadow-2xl w-full max-w-lg relative space-y-4"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center gap-3 text-red-600 dark:text-red-400 border-b pb-3">
               <Trash2 className="w-6 h-6" />
-              <h3 className="font-bold text-lg">Confirm Account Deletion</h3>
+              <h3 className="font-bold text-lg">{t("account_erasure_title", "Account & Personal Data Erasure")}</h3>
             </div>
 
             <p className="text-xs text-gray-600 dark:text-gray-300 leading-relaxed">
-              Are you sure you want to submit an account deletion request for <b className="text-gray-900 dark:text-white">{user?.email}</b>?
+              {t("target_account", "Target account:")} <b className="text-gray-900 dark:text-white">{user?.email}</b>
             </p>
 
-            <div>
-              <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
-                Reason for leaving (Optional):
-              </label>
-              <textarea
-                value={deletionReason}
-                onChange={(e) => setDeletionReason(e.target.value)}
-                rows={3}
-                placeholder="Tell us why you are deleting your account..."
-                className="w-full px-4 py-2.5 rounded-xl border border-[var(--border-color)] bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white text-xs outline-none"
-              />
+            {/* Mode Selector */}
+            <div className="grid grid-cols-2 gap-2 p-1 bg-gray-100 dark:bg-gray-800 rounded-xl text-xs font-semibold">
+              <button
+                type="button"
+                onClick={() => setDeleteMode("direct")}
+                className={`py-2 px-3 rounded-lg transition-all ${
+                  deleteMode === "direct"
+                    ? "bg-red-600 text-white shadow"
+                    : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                }`}
+              >
+                {t("instant_erasure", "Instant Erasure")}
+              </button>
+              <button
+                type="button"
+                onClick={() => setDeleteMode("request")}
+                className={`py-2 px-3 rounded-lg transition-all ${
+                  deleteMode === "request"
+                    ? "bg-red-600 text-white shadow"
+                    : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                }`}
+              >
+                {t("admin_review_request", "Admin Review Request")}
+              </button>
             </div>
+
+            {/* GDPR Notice */}
+            <div className="p-3.5 rounded-xl bg-red-500/10 border border-red-500/20 text-[0.7rem] leading-relaxed text-red-800 dark:text-red-300 space-y-1">
+              <strong className="block text-red-700 dark:text-red-400 font-bold uppercase tracking-wider text-[0.65rem]">
+                {t("gdpr_erasure_policy", "GDPR Article 17 / Data Erasure Policy:")}
+              </strong>
+              <p>
+                {t("erasure_warning_text", "Confirming erasure will permanently delete your user profile, personal family trees, individuals, private research notes, tasks, comments, reminders, and reset tokens.")}
+              </p>
+              <p className="opacity-80">
+                {t("erasure_tax_notice", "Statutory billing invoices and payment references may be retained strictly for required accounting and tax auditing periods. Active sessions will be terminated immediately.")}
+              </p>
+            </div>
+
+            {deleteMode === "direct" ? (
+              <div className="space-y-2">
+                <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300">
+                  {t("enter_password_authorize_deletion", "Enter your current password to authorize permanent deletion:")} <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="password"
+                  value={deletePassword}
+                  onChange={(e) => setDeletePassword(e.target.value)}
+                  placeholder={t("placeholder_password", "Your account password")}
+                  required
+                  className="w-full px-4 py-2.5 rounded-xl border border-[var(--border-color)] bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white text-xs outline-none focus:border-red-500"
+                />
+              </div>
+            ) : (
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                  {t("reason_for_leaving_optional", "Reason for leaving (Optional):")}
+                </label>
+                <textarea
+                  value={deletionReason}
+                  onChange={(e) => setDeletionReason(e.target.value)}
+                  rows={3}
+                  placeholder={t("placeholder_reason_leaving", "Tell us why you are requesting account deletion...")}
+                  className="w-full px-4 py-2.5 rounded-xl border border-[var(--border-color)] bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white text-xs outline-none"
+                />
+              </div>
+            )}
 
             <div className="pt-3 flex justify-end gap-3 border-t">
               <button
+                type="button"
                 onClick={() => setShowDeleteModal(false)}
                 disabled={submittingDelete}
                 className="px-4 py-2 rounded-xl border text-xs font-semibold text-gray-700 dark:text-gray-300"
               >
-                Cancel
+                {t("cancel", "Cancel")}
               </button>
               <button
+                type="button"
                 onClick={handleDeleteAccount}
                 disabled={submittingDelete}
                 className="px-5 py-2 rounded-xl bg-red-600 text-white font-bold text-xs flex items-center gap-2 shadow hover:bg-red-700 disabled:opacity-50"
               >
                 {submittingDelete ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
-                Confirm Delete
+                {deleteMode === "direct" ? t("permanently_erase_data", "Permanently Erase My Data") : t("submit_deletion_request", "Submit Deletion Request")}
               </button>
             </div>
           </div>

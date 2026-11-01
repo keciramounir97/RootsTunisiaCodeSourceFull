@@ -12,7 +12,8 @@ export default function AdminHeader({
   sidebarOpen: boolean;
   onToggleSidebar: () => void;
 }) {
-  const { t } = useTranslation();
+  const { t, dir } = useTranslation();
+  const isRtl = dir === "rtl";
   const { user, logout } = useAuth();
   const [search, setSearch] = useState("");
   const navigate = useNavigate();
@@ -24,15 +25,25 @@ export default function AdminHeader({
   };
 
   return (
-    <header className={`fixed top-0 right-0 z-30 flex h-16 items-center justify-between border-b border-[var(--gold)]/30 bg-[var(--card)]/95 px-4 backdrop-blur shadow-sm transition-all duration-300 sm:px-6 ${sidebarOpen ? "lg:left-64" : "left-0"}`}>
+    <header
+      className={`fixed top-0 z-30 flex h-16 items-center justify-between border-b border-[var(--gold)]/30 bg-[var(--card)]/95 px-4 backdrop-blur shadow-sm transition-all duration-300 sm:px-6 ${
+        isRtl
+          ? `left-0 ${sidebarOpen ? "lg:right-64" : "right-0"}`
+          : `right-0 ${sidebarOpen ? "lg:left-64" : "left-0"}`
+      }`}
+    >
       <div className="flex items-center gap-3">
         <button
           onClick={onToggleSidebar}
-          aria-label="Toggle sidebar"
+          aria-label={t("toggle_sidebar", "Toggle sidebar")}
           title={sidebarOpen ? t("close_sidebar", "Close Sidebar") : t("open_sidebar", "Open Sidebar")}
           className="rounded p-2 text-[var(--foreground)] hover:bg-[var(--gold)]/15 transition-colors cursor-pointer"
         >
-          {sidebarOpen ? <PanelLeftClose className="h-5 w-5 text-[var(--gold)]" /> : <PanelLeft className="h-5 w-5" />}
+          {sidebarOpen ? (
+            <PanelLeftClose className={`h-5 w-5 text-[var(--gold)] ${isRtl ? "rotate-180" : ""}`} />
+          ) : (
+            <PanelLeft className={`h-5 w-5 ${isRtl ? "rotate-180" : ""}`} />
+          )}
         </button>
       </div>
 
@@ -60,7 +71,7 @@ export default function AdminHeader({
 
         <LanguageMenu />
 
-        <div className="flex items-center gap-2 pl-2 border-l border-[var(--gold)]/25">
+        <div className={`flex items-center gap-2 ${isRtl ? "pr-2 border-r" : "pl-2 border-l"} border-[var(--gold)]/25`}>
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--primary)] text-xs font-bold text-white uppercase">
             {user?.name ? user.name.charAt(0) : "U"}
           </div>

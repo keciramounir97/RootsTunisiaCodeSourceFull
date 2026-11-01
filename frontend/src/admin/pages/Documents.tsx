@@ -19,6 +19,7 @@ import {
 import AOS from "aos";
 import "aos/dist/aos.css";
 import Toast from "../../components/Toast";
+import { useAuth } from "../components/AuthContext";
 
 interface Document {
   id: number | string;
@@ -37,6 +38,9 @@ export default function AdminDocuments() {
   const { theme } = useThemeStore();
   const { t } = useLanguage();
   const isDark = theme === "dark";
+  const { user } = useAuth();
+  const isAdminUser =
+    !!user && (Number(user.role) === 1 || Number(user.role) === 3);
   const apiRoot = useMemo(() => getApiRoot(), []);
 
   const maxFileBytes = 25 * 1024 * 1024;
@@ -263,7 +267,7 @@ export default function AdminDocuments() {
     notify(t("legacy.document_deleted", "Document deleted."));
 
     try {
-      if (isAdmin) {
+      if (isAdminUser) {
         await api.delete(`/admin/documents/${id}`).catch(() => api.delete(`/my/documents/${id}`));
       } else {
         await api.delete(`/my/documents/${id}`).catch(() => api.delete(`/admin/documents/${id}`));

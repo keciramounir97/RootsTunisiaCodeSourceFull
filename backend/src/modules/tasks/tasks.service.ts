@@ -40,11 +40,15 @@ export class TasksService {
         return { deleted: true };
     }
 
-    async getComments(taskId: number) {
+    async getComments(taskId: number, userId?: number) {
+        if (userId) {
+            await this.getById(taskId, userId);
+        }
         return TaskComment.query(this.knex).where('task_id', taskId).orderBy('created_at', 'asc');
     }
 
     async addComment(taskId: number, userId: number, content: string) {
+        await this.getById(taskId, userId);
         return TaskComment.query(this.knex).insertAndFetch({ task_id: taskId, user_id: userId, content });
     }
 

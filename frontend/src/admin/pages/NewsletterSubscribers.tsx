@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Mail, Send, X, SendHorizontal, Users } from "lucide-react";
 import { api } from "../../api/client";
 import { useThemeStore } from "../../store/theme";
-import { useLanguage } from "../../i18n";
+import { useTranslation } from "../../context/TranslationContext";
 import Toast from "../../components/Toast";
 
 interface Subscriber {
@@ -14,7 +14,7 @@ interface Subscriber {
 
 export default function NewsletterSubscribers() {
   const { theme } = useThemeStore();
-  const { t } = useLanguage();
+  const { t } = useTranslation();
   const isDark = theme === "dark";
 
   const pageBg = isDark ? "bg-[#0d1b2a]" : "bg-[#f5f1e8]";
@@ -54,7 +54,7 @@ export default function NewsletterSubscribers() {
       const { data } = await api.get("/admin/newsletter/subscribers");
       setRows(Array.isArray(data) ? data : []);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Failed to load subscribers";
+      const msg = err instanceof Error ? err.message : t("failed_load_subscribers", "Failed to load subscribers");
       setError(msg);
       setToast({ message: msg, tone: "error" });
     } finally {
@@ -76,13 +76,13 @@ export default function NewsletterSubscribers() {
         subject: campaignSubject.trim(),
         content: campaignContent.trim(),
       });
-      setToast({ message: res.data?.message || "Campaign sent successfully!", tone: "success" });
+      setToast({ message: res.data?.message || t("campaign_sent_success", "Campaign sent successfully!"), tone: "success" });
       setCampaignModalOpen(false);
       setCampaignSubject("");
       setCampaignContent("");
     } catch (err: any) {
       setToast({
-        message: err.response?.data?.message || "Failed to send newsletter campaign",
+        message: err.response?.data?.message || t("failed_send_campaign", "Failed to send newsletter campaign"),
         tone: "error",
       });
     } finally {
@@ -101,14 +101,14 @@ export default function NewsletterSubscribers() {
         subject: individualSubject.trim(),
         content: individualContent.trim(),
       });
-      setToast({ message: `Email sent to ${targetEmail}`, tone: "success" });
+      setToast({ message: `${t("email_sent_to", "Email sent to")} ${targetEmail}`, tone: "success" });
       setIndividualModalOpen(false);
       setTargetEmail("");
       setIndividualSubject("");
       setIndividualContent("");
     } catch (err: any) {
       setToast({
-        message: err.response?.data?.message || `Failed to send email to ${targetEmail}`,
+        message: err.response?.data?.message || `${t("failed_send_email_to", "Failed to send email to")} ${targetEmail}`,
         tone: "error",
       });
     } finally {
@@ -132,10 +132,10 @@ export default function NewsletterSubscribers() {
           <div>
             <h1 className="text-2xl font-cinzel font-bold flex items-center gap-3">
               <Mail className="w-7 h-7 text-teal" />
-              {t("legacy.newsletterSubscribers", "Newsletter Subscribers")}
+              {t("newsletter_subscribers", "Newsletter Subscribers")}
             </h1>
             <p className={`text-xs mt-1 ${muted}`}>
-              Manage newsletter subscribers and dispatch emails or campaign broadcasts.
+              {t("newsletter_subscribers_desc", "Manage newsletter subscribers and dispatch emails or campaign broadcasts.")}
             </p>
           </div>
 
@@ -144,8 +144,8 @@ export default function NewsletterSubscribers() {
               onClick={() => setCampaignModalOpen(true)}
               className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-teal text-white hover:bg-teal/90 transition text-sm font-semibold shadow-md"
             >
-              <SendHorizontal className="w-4 h-4" />
-              Send Campaign to All ({rows.length})
+              <SendHorizontal className="w-4 h-4 rtl:rotate-180" />
+              {t("send_campaign_to_all", "Send Campaign to All")} ({rows.length})
             </button>
           )}
         </div>
@@ -157,16 +157,16 @@ export default function NewsletterSubscribers() {
         ) : error ? (
           <p className="text-red-400 text-center py-12">{error}</p>
         ) : rows.length === 0 ? (
-          <p className={`${muted} text-center py-12`}>{t("legacy.noSubscribers", "No subscribers yet")}</p>
+          <p className={`${muted} text-center py-12`}>{t("no_subscribers_yet", "No subscribers yet")}</p>
         ) : (
           <div className={`${card} border ${border} rounded-xl overflow-hidden shadow-lg`}>
             <table className="w-full text-sm">
               <thead>
                 <tr className={isDark ? "bg-white/5" : "bg-black/5"}>
-                  <th className="text-left px-4 py-3">#</th>
-                  <th className="text-left px-4 py-3">{t("legacy.email", "Email")}</th>
-                  <th className="text-left px-4 py-3">{t("legacy.subscribedAt", "Subscribed At")}</th>
-                  <th className="text-right px-4 py-3">Actions</th>
+                  <th className="text-left rtl:text-right px-4 py-3">#</th>
+                  <th className="text-left rtl:text-right px-4 py-3">{t("email", "Email")}</th>
+                  <th className="text-left rtl:text-right px-4 py-3">{t("subscribed_at", "Subscribed At")}</th>
+                  <th className="text-right rtl:text-left px-4 py-3">{t("actions", "Actions")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -179,13 +179,13 @@ export default function NewsletterSubscribers() {
                         ? new Date(row.created_at || row.createdAt || "").toLocaleDateString()
                         : "—"}
                     </td>
-                    <td className="px-4 py-3 text-right">
+                    <td className="px-4 py-3 text-right rtl:text-left">
                       <button
                         onClick={() => openIndividualModal(row.email)}
                         className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded bg-teal/10 text-teal hover:bg-teal/20 transition text-xs font-semibold"
                       >
-                        <Send className="w-3.5 h-3.5" />
-                        Send Email
+                        <Send className="w-3.5 h-3.5 rtl:rotate-180" />
+                        {t("send_email", "Send Email")}
                       </button>
                     </td>
                   </tr>
@@ -201,40 +201,40 @@ export default function NewsletterSubscribers() {
             <div className={`w-full max-w-lg p-6 rounded-xl border ${border} ${card} shadow-2xl relative`}>
               <button
                 onClick={() => setCampaignModalOpen(false)}
-                className={`absolute right-4 top-4 ${muted} hover:${text}`}
+                className={`absolute right-4 rtl:right-auto rtl:left-4 top-4 ${muted} hover:${text}`}
               >
                 <X className="w-5 h-5" />
               </button>
 
               <h3 className="text-lg font-bold flex items-center gap-2 mb-1">
                 <Users className="w-5 h-5 text-teal" />
-                Send Newsletter Campaign
+                {t("send_newsletter_campaign", "Send Newsletter Campaign")}
               </h3>
               <p className={`text-xs ${muted} mb-4`}>
-                Broadcast an email to all <strong>{rows.length} subscribers</strong> via devteam@rootstunisia.com.
+                {t("broadcast_campaign_desc", "Broadcast an email to all")} <strong>{rows.length} {t("subscribers", "subscribers")}</strong> via devteam@rootstunisia.com.
               </p>
 
               <form onSubmit={handleSendCampaign} className="space-y-4">
                 <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider mb-1">Subject</label>
+                  <label className="block text-xs font-semibold uppercase tracking-wider mb-1">{t("subject", "Subject")}</label>
                   <input
                     type="text"
                     required
                     value={campaignSubject}
                     onChange={(e) => setCampaignSubject(e.target.value)}
-                    placeholder="e.g. Monthly Roots Tunisia Archives Update"
+                    placeholder={t("placeholder_campaign_subject", "e.g. Monthly Roots Tunisia Archives Update")}
                     className={`w-full px-3 py-2 text-sm rounded border ${border} bg-transparent outline-none focus:border-teal`}
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider mb-1">Content</label>
+                  <label className="block text-xs font-semibold uppercase tracking-wider mb-1">{t("content", "Content")}</label>
                   <textarea
                     rows={6}
                     required
                     value={campaignContent}
                     onChange={(e) => setCampaignContent(e.target.value)}
-                    placeholder="Write your email content here..."
+                    placeholder={t("placeholder_campaign_content", "Write your email content here...")}
                     className={`w-full px-3 py-2 text-sm rounded border ${border} bg-transparent outline-none focus:border-teal`}
                   />
                 </div>
@@ -245,15 +245,15 @@ export default function NewsletterSubscribers() {
                     onClick={() => setCampaignModalOpen(false)}
                     className={`px-4 py-2 text-xs rounded border ${border} hover:bg-white/5`}
                   >
-                    Cancel
+                    {t("cancel", "Cancel")}
                   </button>
                   <button
                     type="submit"
                     disabled={sendingCampaign}
                     className="inline-flex items-center gap-2 px-4 py-2 text-xs rounded bg-teal text-white font-semibold hover:bg-teal/90 disabled:opacity-50"
                   >
-                    <SendHorizontal className="w-4 h-4" />
-                    {sendingCampaign ? "Sending Broadcast…" : "Send Campaign"}
+                    <SendHorizontal className="w-4 h-4 rtl:rotate-180" />
+                    {sendingCampaign ? t("sending_broadcast", "Sending Broadcast…") : t("send_campaign", "Send Campaign")}
                   </button>
                 </div>
               </form>
@@ -267,40 +267,40 @@ export default function NewsletterSubscribers() {
             <div className={`w-full max-w-lg p-6 rounded-xl border ${border} ${card} shadow-2xl relative`}>
               <button
                 onClick={() => setIndividualModalOpen(false)}
-                className={`absolute right-4 top-4 ${muted} hover:${text}`}
+                className={`absolute right-4 rtl:right-auto rtl:left-4 top-4 ${muted} hover:${text}`}
               >
                 <X className="w-5 h-5" />
               </button>
 
               <h3 className="text-lg font-bold flex items-center gap-2 mb-1">
                 <Send className="w-5 h-5 text-teal" />
-                Send Individual Email
+                {t("send_individual_email", "Send Individual Email")}
               </h3>
               <p className={`text-xs ${muted} mb-4`}>
-                Recipient: <strong className="text-teal">{targetEmail}</strong>
+                {t("recipient", "Recipient:")} <strong className="text-teal">{targetEmail}</strong>
               </p>
 
               <form onSubmit={handleSendIndividual} className="space-y-4">
                 <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider mb-1">Subject</label>
+                  <label className="block text-xs font-semibold uppercase tracking-wider mb-1">{t("subject", "Subject")}</label>
                   <input
                     type="text"
                     required
                     value={individualSubject}
                     onChange={(e) => setIndividualSubject(e.target.value)}
-                    placeholder="Email subject"
+                    placeholder={t("placeholder_email_subject", "Email subject")}
                     className={`w-full px-3 py-2 text-sm rounded border ${border} bg-transparent outline-none focus:border-teal`}
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider mb-1">Message</label>
+                  <label className="block text-xs font-semibold uppercase tracking-wider mb-1">{t("message", "Message")}</label>
                   <textarea
                     rows={6}
                     required
                     value={individualContent}
                     onChange={(e) => setIndividualContent(e.target.value)}
-                    placeholder="Write message content..."
+                    placeholder={t("placeholder_email_message", "Write message content...")}
                     className={`w-full px-3 py-2 text-sm rounded border ${border} bg-transparent outline-none focus:border-teal`}
                   />
                 </div>
@@ -311,15 +311,15 @@ export default function NewsletterSubscribers() {
                     onClick={() => setIndividualModalOpen(false)}
                     className={`px-4 py-2 text-xs rounded border ${border} hover:bg-white/5`}
                   >
-                    Cancel
+                    {t("cancel", "Cancel")}
                   </button>
                   <button
                     type="submit"
                     disabled={sendingIndividual}
                     className="inline-flex items-center gap-2 px-4 py-2 text-xs rounded bg-teal text-white font-semibold hover:bg-teal/90 disabled:opacity-50"
                   >
-                    <Send className="w-4 h-4" />
-                    {sendingIndividual ? "Sending Email…" : "Send Email"}
+                    <Send className="w-4 h-4 rtl:rotate-180" />
+                    {sendingIndividual ? t("sending_email", "Sending Email…") : t("send_email", "Send Email")}
                   </button>
                 </div>
               </form>

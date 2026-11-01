@@ -60,8 +60,8 @@ export class TasksController {
 
     @Get('my/tasks/:id/comments')
     @UseGuards(JwtAuthGuard)
-    async getComments(@Param('id', ParseIntPipe) id: number) {
-        return this.service.getComments(id);
+    async getComments(@Param('id', ParseIntPipe) id: number, @Request() req) {
+        return this.service.getComments(id, req.user.id);
     }
 
     @Post('my/tasks/:id/comments')

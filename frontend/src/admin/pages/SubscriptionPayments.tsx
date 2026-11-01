@@ -104,13 +104,13 @@ export default function SubscriptionPayments() {
           <table className="w-full text-sm text-gray-900 dark:text-white">
             <thead>
               <tr className="border-b border-[var(--border-color)] bg-[var(--paper-color)]">
-                <th className="text-left px-4 py-3 font-semibold text-gray-900 dark:text-white">ID</th>
-                <th className="text-left px-4 py-3 font-semibold text-gray-900 dark:text-white">{t("user", "User")}</th>
-                <th className="text-left px-4 py-3 font-semibold text-gray-900 dark:text-white">{t("tier", "Tier")}</th>
-                <th className="text-left px-4 py-3 font-semibold text-gray-900 dark:text-white">{t("amount", "Amount")}</th>
-                <th className="text-left px-4 py-3 font-semibold text-gray-900 dark:text-white">{t("status", "Status")}</th>
-                <th className="text-left px-4 py-3 font-semibold text-gray-900 dark:text-white">{t("date", "Date")}</th>
-                <th className="text-left px-4 py-3 font-semibold text-gray-900 dark:text-white">{t("actions", "Actions")}</th>
+                <th className="ltr:text-left rtl:text-right px-4 py-3 font-semibold text-gray-900 dark:text-white">{t("id_col", "المعرف")}</th>
+                <th className="ltr:text-left rtl:text-right px-4 py-3 font-semibold text-gray-900 dark:text-white">{t("user", "المستخدم")}</th>
+                <th className="ltr:text-left rtl:text-right px-4 py-3 font-semibold text-gray-900 dark:text-white">{t("tier", "الخطة")}</th>
+                <th className="ltr:text-left rtl:text-right px-4 py-3 font-semibold text-gray-900 dark:text-white">{t("amount", "المبلغ")}</th>
+                <th className="ltr:text-left rtl:text-right px-4 py-3 font-semibold text-gray-900 dark:text-white">{t("status", "الحالة")}</th>
+                <th className="ltr:text-left rtl:text-right px-4 py-3 font-semibold text-gray-900 dark:text-white">{t("date", "التاريخ")}</th>
+                <th className="ltr:text-left rtl:text-right px-4 py-3 font-semibold text-gray-900 dark:text-white">{t("actions", "الإجراءات")}</th>
               </tr>
             </thead>
             <tbody>
@@ -118,8 +118,8 @@ export default function SubscriptionPayments() {
                 <>
                   <tr key={payment.id} className="border-b border-[var(--border-color)] hover:bg-[var(--paper-color)] transition-colors cursor-pointer" onClick={() => setExpanded(expanded === payment.id ? null : payment.id)}>
                     <td className="px-4 py-3 font-mono text-xs">#{payment.id}</td>
-                    <td className="px-4 py-3">User #{payment.user_id}</td>
-                    <td className="px-4 py-3">Tier #{payment.tier_id}</td>
+                    <td className="px-4 py-3">{t("user", "المستخدم")} #{payment.user_id}</td>
+                    <td className="px-4 py-3">{t("tier", "الخطة")} #{payment.tier_id}</td>
                     <td className="px-4 py-3 font-semibold">${payment.amount.toFixed(2)}</td>
                     <td className="px-4 py-3">
                       <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
@@ -127,7 +127,7 @@ export default function SubscriptionPayments() {
                         payment.status === "rejected" ? "bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400" :
                         "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
                       }`}>
-                        {payment.status}
+                        {t(`status_${payment.status}`, payment.status)}
                       </span>
                     </td>
                     <td className="px-4 py-3 opacity-60">{new Date(payment.created_at).toLocaleDateString()}</td>

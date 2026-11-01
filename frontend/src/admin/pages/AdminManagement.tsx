@@ -66,6 +66,24 @@ export default function AdminManagement() {
   const isDark = theme === "dark";
   const isSuperAdmin = user?.role === 3;
 
+  const getPrivilegeLabel = (key: string, fallback: string = "") => {
+    const map: Record<string, string> = {
+      dashboard: t("privilege_dashboard", "لوحة التحكم"),
+      trees: t("privilege_trees", "أشجار العائلة"),
+      individuals: t("privilege_individuals", "الأفراد والأسلاف"),
+      gallery: t("privilege_gallery", "معرض الصور"),
+      audios: t("privilege_audios", "الأرشيف الصوتي"),
+      documents: t("privilege_documents", "الوثائق التاريخية"),
+      books: t("privilege_books", "المكتبة والمخطوطات"),
+      users: t("privilege_users", "إدارة المستخدمين"),
+      suggestions: t("privilege_suggestions", "الاقتراحات والطلبات"),
+      approvals: t("privilege_approvals", "موافقات المستخدمين"),
+      activity: t("privilege_activity", "سجل النشاطات"),
+      settings: t("privilege_settings", "الإعدادات العامة"),
+    };
+    return map[key] || t(`privilege_${key}`, fallback || key);
+  };
+
   const [admins, setAdmins] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -231,7 +249,7 @@ export default function AdminManagement() {
 
       resetForm();
     } catch (error) {
-      notify(getApiErrorMessage(error, "Failed to save admin"), "error");
+      notify(getApiErrorMessage(error, t("failed_save_admin", "فشل حفظ بيانات المشرف")), "error");
     } finally {
       setSaving(false);
     }
@@ -239,11 +257,11 @@ export default function AdminManagement() {
 
   const handleDelete = async (id: number | string) => {
     if (id === user?.id) {
-      notify(t("legacy.cannot_delete_self", "You cannot delete your own account"), "error");
+      notify(t("legacy.cannot_delete_self", "لا يمكنك حذف حسابك الشخصي"), "error");
       return;
     }
 
-    if (!window.confirm(t("legacy.confirm_delete_admin", "Are you sure you want to delete this admin?"))) {
+    if (!window.confirm(t("legacy.confirm_delete_admin", "هل أنت متأكد من حذف هذا المشرف؟"))) {
       return;
     }
 
@@ -354,11 +372,11 @@ export default function AdminManagement() {
               <table className="w-full">
                 <thead className={`${isDark ? "bg-white/5" : "bg-black/5"}`}>
                   <tr>
-                    <th className={`px-4 py-3 text-left text-sm font-semibold ${textColor}`}>{t("legacy.admin", "Admin")}</th>
-                    <th className={`px-4 py-3 text-left text-sm font-semibold ${textColor}`}>{t("legacy.role", "Role")}</th>
-                    <th className={`px-4 py-3 text-left text-sm font-semibold ${textColor}`}>{t("legacy.privileges", "Privileges")}</th>
-                    <th className={`px-4 py-3 text-left text-sm font-semibold ${textColor}`}>{t("legacy.created", "Created")}</th>
-                    <th className={`px-4 py-3 text-center text-sm font-semibold ${textColor}`}>{t("legacy.actions", "Actions")}</th>
+                    <th className={`px-4 py-3 ltr:text-left rtl:text-right text-sm font-semibold ${textColor}`}>{t("legacy.admin", "المشرف")}</th>
+                    <th className={`px-4 py-3 ltr:text-left rtl:text-right text-sm font-semibold ${textColor}`}>{t("legacy.role", "الدور")}</th>
+                    <th className={`px-4 py-3 ltr:text-left rtl:text-right text-sm font-semibold ${textColor}`}>{t("legacy.privileges", "الصلاحيات والامتيازات")}</th>
+                    <th className={`px-4 py-3 ltr:text-left rtl:text-right text-sm font-semibold ${textColor}`}>{t("legacy.created", "تاريخ الإنشاء")}</th>
+                    <th className={`px-4 py-3 text-center text-sm font-semibold ${textColor}`}>{t("legacy.actions", "الإجراءات")}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y ${border}">
@@ -385,20 +403,20 @@ export default function AdminManagement() {
                         }`}>
                           <Shield className="w-3 h-3" />
                           {admin.role === 3
-                            ? t("legacy.super_admin", "Super Admin")
-                            : t("legacy.admin", "Admin")}
+                            ? t("legacy.super_admin", "مشرف عام")
+                            : t("legacy.admin", "مشرف")}
                         </span>
                       </td>
                       <td className="px-4 py-4">
                         <div className="flex flex-wrap gap-1 max-w-xs">
                           {admin.privileges?.slice(0, 4).map((p) => (
                             <span key={p} className={`text-xs px-2 py-0.5 rounded ${isDark ? "bg-white/10" : "bg-black/10"}`}>
-                              {p}
+                              {getPrivilegeLabel(p)}
                             </span>
                           ))}
                           {admin.privileges?.length > 4 && (
                             <span className={`text-xs px-2 py-0.5 rounded ${isDark ? "bg-white/10" : "bg-black/10"}`}>
-                              +{admin.privileges.length - 4} {t("legacy.more", "more")}
+                              +{admin.privileges.length - 4} {t("legacy.more", "المزيد")}
                             </span>
                           )}
                         </div>
@@ -407,7 +425,7 @@ export default function AdminManagement() {
                         <p className={`text-sm ${textColor} opacity-70`}>{formatDate(admin.createdAt)}</p>
                         {admin.createdBy && (
                           <p className="text-xs opacity-50">
-                            {t("legacy.by", "by")} {admin.createdBy}
+                            {t("legacy.by", "بواسطة")} {admin.createdBy}
                           </p>
                         )}
                       </td>
@@ -418,14 +436,16 @@ export default function AdminManagement() {
                               <button
                                 onClick={() => handleEdit(admin)}
                                 className={`p-2 rounded-lg hover:bg-[#24766f]/20 transition ${textColor} opacity-70 hover:opacity-100`}
-                                title={t("legacy.edit", "Edit")}
+                                title={t("legacy.edit", "تعديل")}
+                                aria-label={t("legacy.edit", "تعديل")}
                               >
                                 <Edit className="w-4 h-4" />
                               </button>
                               <button
                                 onClick={() => handleDelete(admin.id)}
                                 className="p-2 rounded-lg hover:bg-red-500/20 text-red-500 transition"
-                                title={t("legacy.delete", "Delete")}
+                                title={t("legacy.delete", "حذف")}
+                                aria-label={t("legacy.delete", "حذف")}
                               >
                                 <Trash2 className="w-4 h-4" />
                               </button>
@@ -454,9 +474,9 @@ export default function AdminManagement() {
           >
             <div className="p-6 border-b ${border} flex items-center justify-between">
               <h3 className={`text-xl font-bold ${textColor}`}>
-                {editingAdmin ? t("legacy.edit_admin", "Edit Admin") : t("legacy.create_new_admin", "Create New Admin")}
+                {editingAdmin ? t("legacy.edit_admin", "تعديل بيانات المشرف") : t("legacy.create_new_admin", "إنشاء حساب مشرف جديد")}
               </h3>
-              <button onClick={resetForm} className="p-2 rounded-lg hover:bg-white/10 transition">
+              <button onClick={resetForm} className="p-2 rounded-lg hover:bg-white/10 transition" title={t("close", "إغلاق")} aria-label={t("close", "إغلاق")}>
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -465,14 +485,14 @@ export default function AdminManagement() {
               {/* Full Name */}
               <div>
                 <label className={`block text-sm font-semibold ${textColor} mb-2`}>
-                  {t("legacy.full_name", "Full Name")} <span className="text-red-500">*</span>
+                  {t("legacy.full_name", "الاسم الكامل")} <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
                   value={form.fullName}
                   onChange={(e) => setForm({ ...form, fullName: e.target.value })}
                   className={`w-full px-4 py-3 rounded-lg ${inputBg} border ${border} ${textColor} outline-none focus:border-[#d9a441]`}
-                  placeholder={t("legacy.full_name_placeholder", "Enter full name")}
+                  placeholder={t("legacy.full_name_placeholder", "أدخل الاسم الكامل")}
                 />
               </div>
 
@@ -480,7 +500,7 @@ export default function AdminManagement() {
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
                   <label className={`block text-sm font-semibold ${textColor} mb-2`}>
-                    {t("legacy.email", "Email")} <span className="text-red-500">*</span>
+                    {t("legacy.email", "البريد الإلكتروني")} <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="email"
@@ -491,13 +511,13 @@ export default function AdminManagement() {
                   />
                 </div>
                 <div>
-                  <label className={`block text-sm font-semibold ${textColor} mb-2`}>{t("legacy.phone", "Phone")}</label>
+                  <label className={`block text-sm font-semibold ${textColor} mb-2`}>{t("legacy.phone", "رقم الهاتف")}</label>
                   <input
                     type="tel"
                     value={form.phone}
                     onChange={(e) => setForm({ ...form, phone: e.target.value })}
                     className={`w-full px-4 py-3 rounded-lg ${inputBg} border ${border} ${textColor} outline-none focus:border-[#d9a441]`}
-                    placeholder="+212600000000"
+                    placeholder="+21600000000"
                   />
                 </div>
               </div>
@@ -507,7 +527,7 @@ export default function AdminManagement() {
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
                     <label className={`block text-sm font-semibold ${textColor} mb-2`}>
-                      {t("legacy.password", "Password")} <span className="text-red-500">*</span>
+                      {t("legacy.password", "كلمة المرور")} <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="password"
@@ -518,7 +538,7 @@ export default function AdminManagement() {
                   </div>
                   <div>
                     <label className={`block text-sm font-semibold ${textColor} mb-2`}>
-                      {t("legacy.confirm_password", "Confirm Password")} <span className="text-red-500">*</span>
+                      {t("legacy.confirm_password", "تأكيد كلمة المرور")} <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="password"
@@ -533,10 +553,10 @@ export default function AdminManagement() {
               {/* Privileges */}
               <div>
                 <label className={`block text-sm font-semibold ${textColor} mb-3`}>
-                  {t("legacy.privileges", "Admin Privileges")} <span className="text-red-500">*</span>
+                  {t("legacy.privileges", "الصلاحيات والامتيازات")} <span className="text-red-500">*</span>
                 </label>
                 <p className={`text-xs ${textColor} opacity-60 mb-3`}>
-                  {t("legacy.privileges_desc", "Select which pages this admin can access")}
+                  {t("legacy.privileges_desc", "حدد الصفحات والأقسام التي يحق لهذا المشرف الوصول إليها وإدارتها")}
                 </p>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                   {PRIVILEGE_OPTIONS.map(({ key, label, Icon }) => (
@@ -559,9 +579,9 @@ export default function AdminManagement() {
                         className="hidden"
                       />
                       <Icon className={`w-4 h-4 ${form.privileges.includes(key) ? "text-[#24766f]" : "opacity-50"}`} />
-                      <span className={`text-sm ${textColor}`}>{label}</span>
+                      <span className={`text-sm ${textColor}`}>{getPrivilegeLabel(key, label)}</span>
                       {form.privileges.includes(key) && (
-                        <Check className="w-4 h-4 text-[#24766f] ml-auto" />
+                        <Check className="w-4 h-4 text-[#24766f] ltr:ml-auto rtl:mr-auto" />
                       )}
                     </label>
                   ))}
@@ -575,7 +595,7 @@ export default function AdminManagement() {
                   onClick={resetForm}
                   className={`flex-1 py-3 rounded-lg border ${border} ${textColor} hover:bg-white/5 transition`}
                 >
-                  {t("legacy.cancel", "Cancel")}
+                  {t("legacy.cancel", "إلغاء")}
                 </button>
                 <button
                   type="submit"
@@ -585,7 +605,7 @@ export default function AdminManagement() {
                   }`}
                 >
                   <Save className="w-4 h-4" />
-                  {saving ? t("legacy.saving", "Saving...") : t("legacy.save", "Save")}
+                  {saving ? t("legacy.saving", "جار الحفظ...") : t("legacy.save", "حفظ البيانات")}
                 </button>
               </div>
             </form>

@@ -17,7 +17,7 @@ export default function ContactSupport() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!message.trim()) {
-      setStatus({ type: "error", msg: "Please enter your support complaint or message." });
+      setStatus({ type: "error", msg: t("enter_support_message", "Please enter your support complaint or message.") });
       return;
     }
 
@@ -25,9 +25,9 @@ export default function ContactSupport() {
     setStatus({ type: "", msg: "" });
 
     try {
-      const senderName = user?.fullName || user?.full_name || user?.name || "Registered User";
+      const senderName = user?.fullName || user?.full_name || user?.name || t("registered_user", "Registered User");
       const senderEmail = user?.email || "user@example.com";
-      const formattedMessage = `[Category: ${category}]\n[Subject: ${subject || "No Subject"}]\n\n${message.trim()}`;
+      const formattedMessage = `[Category: ${category}]\n[Subject: ${subject || t("no_subject", "No Subject")}]\n\n${message.trim()}`;
 
       const res = await api.post("/contact", {
         name: senderName,
@@ -37,14 +37,14 @@ export default function ContactSupport() {
 
       setStatus({
         type: "success",
-        msg: res.data?.message || "Your complaint/support message has been delivered to Super Admin support and dispatched via SMTP email!",
+        msg: res.data?.message || t("support_message_delivered", "Your complaint/support message has been delivered to Super Admin support and dispatched via SMTP email!"),
       });
       setSubject("");
       setMessage("");
     } catch (err: any) {
       setStatus({
         type: "error",
-        msg: err.response?.data?.message || "Failed to deliver support message. Please try again.",
+        msg: err.response?.data?.message || t("support_delivery_failed", "Failed to deliver support message. Please try again."),
       });
     } finally {
       setSubmitting(false);
@@ -63,7 +63,7 @@ export default function ContactSupport() {
             {t("contact_support", "Contact Support & Complaints")}
           </h1>
           <p className="text-xs text-[var(--text-color)] opacity-70">
-            Directly submit support inquiries or complaints to Super Admin. Messages are dispatched directly to admin SMTP email and logged in the admin panel.
+            {t("contact_support_desc", "Directly submit support inquiries or complaints to Super Admin. Messages are dispatched directly to admin SMTP email and logged in the admin panel.")}
           </p>
         </div>
       </div>
@@ -92,19 +92,19 @@ export default function ContactSupport() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block font-semibold text-gray-800 dark:text-gray-200 mb-1">
-                  Your Full Name:
+                  {t("your_full_name", "Your Full Name:")}
                 </label>
                 <input
                   type="text"
                   readOnly
-                  value={user?.fullName || user?.full_name || user?.name || "Registered User"}
+                  value={user?.fullName || user?.full_name || user?.name || t("registered_user", "Registered User")}
                   className="w-full px-4 py-2.5 rounded-xl border border-[var(--border-color)] bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400"
                 />
               </div>
 
               <div>
                 <label className="block font-semibold text-gray-800 dark:text-gray-200 mb-1">
-                  Your Email Address:
+                  {t("your_email_address", "Your Email Address:")}
                 </label>
                 <input
                   type="email"
@@ -117,44 +117,44 @@ export default function ContactSupport() {
 
             <div>
               <label className="block font-semibold text-gray-800 dark:text-gray-200 mb-1">
-                Complaint / Ticket Category:
+                {t("complaint_ticket_category", "Complaint / Ticket Category:")}
               </label>
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
                 className="w-full px-4 py-2.5 rounded-xl border border-[var(--border-color)] bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white text-xs outline-none focus:ring-2 focus:ring-[#d9a441]/30"
               >
-                <option value="Billing & Subscription Complaint">Billing & Subscription Complaint</option>
-                <option value="Technical Issue / Bug Report">Technical Issue / Bug Report</option>
-                <option value="Account & Quotas Inquiry">Account & Quotas Inquiry</option>
-                <option value="Feature Request">Feature Request</option>
-                <option value="General Support">General Support</option>
+                <option value="Billing & Subscription Complaint">{t("cat_billing_complaint", "Billing & Subscription Complaint")}</option>
+                <option value="Technical Issue / Bug Report">{t("cat_tech_issue", "Technical Issue / Bug Report")}</option>
+                <option value="Account & Quotas Inquiry">{t("cat_account_quotas", "Account & Quotas Inquiry")}</option>
+                <option value="Feature Request">{t("cat_feature_request", "Feature Request")}</option>
+                <option value="General Support">{t("cat_general_support", "General Support")}</option>
               </select>
             </div>
 
             <div>
               <label className="block font-semibold text-gray-800 dark:text-gray-200 mb-1">
-                Subject:
+                {t("subject", "Subject:")}
               </label>
               <input
                 type="text"
                 value={subject}
                 onChange={(e) => setSubject(e.target.value)}
-                placeholder="Brief summary of your inquiry..."
+                placeholder={t("placeholder_subject", "Brief summary of your inquiry...")}
                 className="w-full px-4 py-2.5 rounded-xl border border-[var(--border-color)] bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white text-xs outline-none focus:ring-2 focus:ring-[#d9a441]/30"
               />
             </div>
 
             <div>
               <label className="block font-semibold text-gray-800 dark:text-gray-200 mb-1">
-                Complaint / Detailed Message: <span className="text-red-500">*</span>
+                {t("complaint_detailed_message", "Complaint / Detailed Message:")} <span className="text-red-500">*</span>
               </label>
               <textarea
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 rows={6}
                 required
-                placeholder="Please describe your complaint or support request in detail..."
+                placeholder={t("placeholder_message", "Please describe your complaint or support request in detail...")}
                 className="w-full px-4 py-3 rounded-xl border border-[var(--border-color)] bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white text-xs outline-none focus:ring-2 focus:ring-[#d9a441]/30"
               />
             </div>
@@ -165,7 +165,7 @@ export default function ContactSupport() {
               className="w-full py-3.5 rounded-xl bg-gradient-to-r from-[#d9a441] to-[#e8c377] text-[#092C2B] font-bold text-xs flex items-center justify-center gap-2 shadow hover:shadow-lg transition-all disabled:opacity-50"
             >
               {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-              <span>Submit Support Ticket</span>
+              <span>{t("submit_support_ticket", "Submit Support Ticket")}</span>
             </button>
           </form>
         </div>
@@ -175,20 +175,20 @@ export default function ContactSupport() {
           <div className="rounded-3xl border border-[var(--border-color)] bg-gradient-to-br from-[#092C2B] to-[#124d4b] text-white p-6 shadow-xl space-y-4">
             <div className="flex items-center gap-3">
               <LifeBuoy className="w-6 h-6 text-[#d9a441]" />
-              <h3 className="font-bold text-base font-cinzel !text-white" style={{ color: "#ffffff", textShadow: "none" }}>Super Admin Support</h3>
+              <h3 className="font-bold text-base font-cinzel !text-white" style={{ color: "#ffffff", textShadow: "none" }}>{t("super_admin_support", "Super Admin Support")}</h3>
             </div>
             <p className="text-xs text-gray-200 leading-relaxed">
-              Your support ticket will be delivered directly to the Super Admin control panel for assistance.
+              {t("super_admin_support_desc", "Your support ticket will be delivered directly to the Super Admin control panel for assistance.")}
             </p>
           </div>
 
           <div className="rounded-3xl border border-[var(--border-color)] bg-white dark:bg-[#1a2e2d] p-5 shadow-sm text-xs space-y-2">
             <p className="font-bold text-gray-900 dark:text-white flex items-center gap-1.5">
               <ShieldAlert className="w-4 h-4 text-amber-500" />
-              Need Payment Help?
+              {t("need_payment_help", "Need Payment Help?")}
             </p>
             <p className="text-gray-600 dark:text-gray-400">
-              If you have submitted a bank payment proof for subscription upgrade, you can check review status in your account or send a message here with your transaction reference.
+              {t("need_payment_help_desc", "If you have submitted a bank payment proof for subscription upgrade, you can check review status in your account or send a message here with your transaction reference.")}
             </p>
           </div>
         </div>

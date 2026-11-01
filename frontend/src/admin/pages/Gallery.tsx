@@ -346,12 +346,12 @@ export default function AdminGallery() {
     }
 
     // Instant optimistic removal
-    setItems((prev) => prev.filter((item) => String(item.id) !== String(id)));
+    setGallery((prev) => prev.filter((item) => String(item.id) !== String(id)));
     emitGalleryChanged({ id, action: "deleted" });
     notify(t("legacy.gallery_deleted", "Image deleted."));
 
     try {
-      if (isAdmin) {
+      if (isAdminUser) {
         await api.delete(`/admin/gallery/${id}`).catch(() => api.delete(`/my/gallery/${id}`));
       } else {
         await api.delete(`/my/gallery/${id}`).catch(() => api.delete(`/admin/gallery/${id}`));

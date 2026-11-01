@@ -44,7 +44,29 @@ export class NewsletterController {
             console.error('Newsletter email error:', err?.message || err);
         }
 
+
         return { message: 'Subscribed' };
+    }
+
+    @Post('newsletter/unsubscribe')
+    async unsubscribe(@Body() body: { email?: string }) {
+        const email = String(body?.email ?? '').trim().toLowerCase();
+        if (!email) {
+            throw new BadRequestException('Email is required');
+        }
+
+        try {
+            await this.knex('newsletter_subscribers').where('email', email).del();
+        } catch (err: any) {
+            console.error('Newsletter unsubscribe DB error:', err?.message || err);
+        }
+
+        return { message: 'You have been successfully unsubscribed from Roots Tunisia marketing communications.' };
+    }
+
+    @Get('newsletter/unsubscribe')
+    async unsubscribeGet(@Body() body: any) {
+        return { message: 'To unsubscribe, send your email address to this endpoint via POST or visit our unsubscribe page.' };
     }
 
     @Get('admin/newsletter/subscribers')
@@ -68,21 +90,27 @@ export class NewsletterController {
             return { message: 'No subscribers found', count: 0 };
         }
 
+        const frontendUrl = process.env.FRONTEND_URL || 'https://rootstunisia.com';
         let sentCount = 0;
         let failCount = 0;
 
         for (const sub of subscribers) {
             try {
+                const unsubUrl = `${frontendUrl}/unsubscribe?email=${encodeURIComponent(sub.email)}`;
                 await this.mailerService.sendMail({
                     to: sub.email,
                     subject: subject,
-                    text: content,
+                    text: `${content}\n\nUnsubscribe from these emails: ${unsubUrl}`,
                     html: `
                         <div style="font-family: Arial, sans-serif; color: #2c1810; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e5e7eb; border-radius: 8px;">
                             <h2 style="color: #134E4A; margin-bottom: 16px;">${subject}</h2>
                             <div style="white-space: pre-wrap; font-size: 14px; line-height: 1.6; color: #374151;">${content}</div>
                             <hr style="margin: 24px 0; border: none; border-top: 1px solid #e5e7eb;" />
-                            <p style="font-size: 12px; color: #9ca3af; text-align: center;">Roots Tunisia · Heritage & Archives</p>
+                            <p style="font-size: 12px; color: #9ca3af; text-align: center; margin-bottom: 4px;">Roots Tunisia · Heritage & Archives</p>
+                            <p style="font-size: 11px; color: #9ca3af; text-align: center; margin: 0;">
+                                You are receiving this email because you subscribed to Roots Tunisia.
+                                <a href="${unsubUrl}" style="color: #991b1b; text-decoration: underline; margin-left: 6px;">Unsubscribe</a>
+                            </p>
                         </div>
                     `,
                 });
@@ -105,16 +133,23 @@ export class NewsletterController {
             throw new BadRequestException('Email, subject, and content are required');
         }
 
+        const frontendUrl = process.env.FRONTEND_URL || 'https://rootstunisia.com';
+        const unsubUrl = `${frontendUrl}/unsubscribe?email=${encodeURIComponent(email)}`;
+
         await this.mailerService.sendMail({
             to: email,
             subject: subject,
-            text: content,
+            text: `${content}\n\nUnsubscribe from these emails: ${unsubUrl}`,
             html: `
                 <div style="font-family: Arial, sans-serif; color: #2c1810; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e5e7eb; border-radius: 8px;">
                     <h2 style="color: #134E4A; margin-bottom: 16px;">${subject}</h2>
                     <div style="white-space: pre-wrap; font-size: 14px; line-height: 1.6; color: #374151;">${content}</div>
                     <hr style="margin: 24px 0; border: none; border-top: 1px solid #e5e7eb;" />
-                    <p style="font-size: 12px; color: #9ca3af; text-align: center;">Roots Tunisia · Heritage & Archives</p>
+                    <p style="font-size: 12px; color: #9ca3af; text-align: center; margin-bottom: 4px;">Roots Tunisia · Heritage & Archives</p>
+                    <p style="font-size: 11px; color: #9ca3af; text-align: center; margin: 0;">
+                        You are receiving this email because you subscribed to Roots Tunisia.
+                        <a href="${unsubUrl}" style="color: #991b1b; text-decoration: underline; margin-left: 6px;">Unsubscribe</a>
+                    </p>
                 </div>
             `,
         });

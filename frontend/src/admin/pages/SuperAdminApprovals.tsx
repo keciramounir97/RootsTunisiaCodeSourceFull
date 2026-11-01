@@ -53,7 +53,7 @@ export default function SuperAdminApprovals() {
       setPasswordRequests(Array.isArray(passRes.data) ? passRes.data : []);
       setDeletionRequests(Array.isArray(delRes.data) ? delRes.data : []);
     } catch (err: unknown) {
-      notify("Failed to load approvals data", "error");
+      notify(t("failed_load_approvals", "فشل تحميل طلبات الموافقة"), "error");
     } finally {
       setLoading(false);
     }
@@ -64,20 +64,20 @@ export default function SuperAdminApprovals() {
   const handlePasswordAction = async (id: number, action: "approve" | "reject") => {
     try {
       await api.post(`/admin/approvals/password-reset/${id}/${action}`);
-      notify(action === "approve" ? t("legacy.requestApproved", "Request approved") : t("legacy.requestRejected", "Request rejected"));
+      notify(action === "approve" ? t("legacy.requestApproved", "تمت الموافقة على الطلب بنجاح") : t("legacy.requestRejected", "تم رفض الطلب بنجاح"));
       loadAll();
     } catch (err: unknown) {
-      notify("Action failed", "error");
+      notify(t("action_failed", "فشلت العملية، يرجى المحاولة لاحقاً"), "error");
     }
   };
 
   const handleDeletionAction = async (id: number, action: "approve" | "reject") => {
     try {
       await api.post(`/admin/approvals/account-deletion/${id}/${action}`);
-      notify(action === "approve" ? t("legacy.requestApproved", "Request approved") : t("legacy.requestRejected", "Request rejected"));
+      notify(action === "approve" ? t("legacy.requestApproved", "تمت الموافقة على الطلب بنجاح") : t("legacy.requestRejected", "تم رفض الطلب بنجاح"));
       loadAll();
     } catch (err: unknown) {
-      notify("Action failed", "error");
+      notify(t("action_failed", "فشلت العملية، يرجى المحاولة لاحقاً"), "error");
     }
   };
 
@@ -94,12 +94,16 @@ export default function SuperAdminApprovals() {
           <button
             onClick={() => type === "password" ? handlePasswordAction(req.id, "approve") : handleDeletionAction(req.id, "approve")}
             className="p-2 text-emerald-500 hover:bg-emerald-500/10 rounded-lg"
+            title={t("approve", "موافقة")}
+            aria-label={t("approve", "موافقة")}
           >
             <Check className="w-4 h-4" />
           </button>
           <button
             onClick={() => type === "password" ? handlePasswordAction(req.id, "reject") : handleDeletionAction(req.id, "reject")}
             className="p-2 text-red-500 hover:bg-red-500/10 rounded-lg"
+            title={t("reject", "رفض")}
+            aria-label={t("reject", "رفض")}
           >
             <X className="w-4 h-4" />
           </button>
@@ -114,7 +118,7 @@ export default function SuperAdminApprovals() {
       <div className="max-w-6xl mx-auto">
         <h1 className="text-2xl font-cinzel font-bold mb-6 flex items-center gap-3">
           <Shield className="w-7 h-7 text-teal" />
-          {t("legacy.superAdminApprovals", "Super Admin Approvals")}
+          {t("legacy.superAdminApprovals", "موافقات المشرف العام")}
         </h1>
 
         {loading ? (
@@ -124,9 +128,9 @@ export default function SuperAdminApprovals() {
         ) : (
           <div className="space-y-8">
             <section>
-              <h2 className="text-xl font-semibold mb-4">{t("legacy.passwordResetRequests", "Password Reset Requests")} ({passwordRequests.length})</h2>
+              <h2 className="text-xl font-semibold mb-4">{t("legacy.passwordResetRequests", "طلبات استعادة كلمة المرور")} ({passwordRequests.length})</h2>
               {passwordRequests.length === 0 ? (
-                <p className={`${muted} text-center py-6`}>{t("legacy.noPendingRequests", "No pending requests")}</p>
+                <p className={`${muted} text-center py-6`}>{t("legacy.noPendingRequests", "لا توجد طلبات معلقة حالياً")}</p>
               ) : (
                 <div className="space-y-3">
                   {passwordRequests.map((req) => <RequestCard key={req.id} req={req} type="password" />)}
@@ -135,9 +139,9 @@ export default function SuperAdminApprovals() {
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold mb-4">{t("legacy.accountDeletionRequests", "Account Deletion Requests")} ({deletionRequests.length})</h2>
+              <h2 className="text-xl font-semibold mb-4">{t("legacy.accountDeletionRequests", "طلبات حذف الحسابات")} ({deletionRequests.length})</h2>
               {deletionRequests.length === 0 ? (
-                <p className={`${muted} text-center py-6`}>{t("legacy.noPendingRequests", "No pending requests")}</p>
+                <p className={`${muted} text-center py-6`}>{t("legacy.noPendingRequests", "لا توجد طلبات معلقة حالياً")}</p>
               ) : (
                 <div className="space-y-3">
                   {deletionRequests.map((req) => <RequestCard key={req.id} req={req} type="deletion" />)}
@@ -146,17 +150,17 @@ export default function SuperAdminApprovals() {
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold mb-4">{t("legacy.allUsers", "All Users")} ({users.length})</h2>
+              <h2 className="text-xl font-semibold mb-4">{t("legacy.allUsers", "كافة المستخدمين")} ({users.length})</h2>
               {users.length === 0 ? (
-                <p className={`${muted} text-center py-6`}>{t("legacy.noUsers", "No users")}</p>
+                <p className={`${muted} text-center py-6`}>{t("legacy.noUsers", "لا يوجد مستخدمون")}</p>
               ) : (
                 <div className={`${card} border ${border} rounded-xl overflow-hidden`}>
                   <table className="w-full text-sm">
                     <thead>
                       <tr className={isDark ? "bg-white/5" : "bg-black/5"}>
-                        <th className="text-left px-4 py-3">{t("legacy.name", "Name")}</th>
-                        <th className="text-left px-4 py-3">{t("legacy.email", "Email")}</th>
-                        <th className="text-left px-4 py-3">{t("legacy.role", "Role")}</th>
+                        <th className="ltr:text-left rtl:text-right px-4 py-3">{t("legacy.name", "الاسم")}</th>
+                        <th className="ltr:text-left rtl:text-right px-4 py-3">{t("legacy.email", "البريد الإلكتروني")}</th>
+                        <th className="ltr:text-left rtl:text-right px-4 py-3">{t("legacy.role", "الدور")}</th>
                       </tr>
                     </thead>
                     <tbody>

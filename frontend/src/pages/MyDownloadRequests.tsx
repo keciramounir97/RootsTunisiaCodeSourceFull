@@ -46,6 +46,13 @@ export default function MyDownloadRequests() {
     [isDark],
   );
 
+  const getStatusLabel = (status: string) => {
+    if (status === "approved") return t("status_approved", "تمت الموافقة");
+    if (status === "rejected") return t("status_rejected", "مرفوض");
+    if (status === "pending") return t("status_pending", "قيد الانتظار");
+    return status;
+  };
+
   const contentTypeLabel = (type: string) =>
     ({
       tree: t("family_tree", "Family Tree"),
@@ -141,9 +148,7 @@ export default function MyDownloadRequests() {
                             ? "bg-red-600/15 text-red-500"
                             : "bg-[#d9a441]/15 text-[#d9a441]"
                       }`}
-                    >
-                      {request.status}
-                    </span>
+                    >{getStatusLabel(request.status)}</span>
                   </div>
                 ))}
               </div>
@@ -212,9 +217,7 @@ export default function MyDownloadRequests() {
                             ? "bg-green-600/15 text-green-500"
                             : "bg-red-600/15 text-red-500"
                         }`}
-                      >
-                        {request.status}
-                      </span>
+                      >{getStatusLabel(request.status)}</span>
                     )}
                   </div>
                 ))}

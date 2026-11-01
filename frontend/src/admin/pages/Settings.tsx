@@ -12,7 +12,6 @@ const LANGUAGES = [
   { value: "es", label: "Español" },
   { value: "it", label: "Italiano" },
   { value: "mt", label: "Malti" },
-  { value: "eo", label: "Esperanto" },
 ];
 
 export default function Settings() {
@@ -191,8 +190,8 @@ export default function Settings() {
                 <Shield className="w-5 h-5 text-[#3e2723]" />
               </div>
               <div>
-                <div className="font-bold text-lg">Security</div>
-                <div className="text-sm opacity-70">Manage sign-up rules</div>
+                <div className="font-bold text-lg">{t("security", "Security")}</div>
+                <div className="text-sm opacity-70">{t("manage_signup_rules", "Manage sign-up rules")}</div>
               </div>
             </div>
 
@@ -225,8 +224,8 @@ export default function Settings() {
                 <Globe className="w-5 h-5 text-[#d4af37]" />
               </div>
               <div>
-                <div className="font-bold text-lg">Localization</div>
-                <div className="text-sm opacity-70">Default language</div>
+                <div className="font-bold text-lg">{t("localization", "Localization")}</div>
+                <div className="text-sm opacity-70">{t("default_language", "Default language")}</div>
               </div>
             </div>
 
@@ -265,8 +264,8 @@ export default function Settings() {
                 <Bell className="w-5 h-5 text-[#5d4037]" />
               </div>
               <div>
-                <div className="font-bold text-lg">Notifications</div>
-                <div className="text-sm opacity-70">Admin alerts</div>
+                <div className="font-bold text-lg">{t("notifications", "Notifications")}</div>
+                <div className="text-sm opacity-70">{t("admin_alerts", "Admin alerts")}</div>
               </div>
             </div>
 
@@ -299,9 +298,9 @@ export default function Settings() {
                 <Database className="w-5 h-5 text-[#556b2f]" />
               </div>
               <div>
-                <div className="font-bold text-lg">Logs & Retention</div>
+                <div className="font-bold text-lg">{t("logs_retention", "Logs & Retention")}</div>
                 <div className="text-sm opacity-70">
-                  How long activity stays stored
+                  {t("how_long_activity_stored", "How long activity stays stored")}
                 </div>
               </div>
             </div>
@@ -339,9 +338,9 @@ export default function Settings() {
               <UserCircle2 className="w-5 h-5 text-[#5d4037]" />
             </div>
             <div>
-              <div className="font-bold text-lg">My Profile</div>
+              <div className="font-bold text-lg">{t("my_profile", "My Profile")}</div>
               <div className="text-sm opacity-70">
-                Update your own account info
+                {t("update_own_account_info", "Update your own account info")}
               </div>
             </div>
           </div>

@@ -160,6 +160,37 @@ const SEED_DOCUMENTS: Record<(typeof LEGAL_SLUGS)[number], { title: string; intr
             },
         ],
     },
+    refund: {
+        title: 'Refund and Cancellation Policy',
+        intro:
+            'This Refund and Cancellation Policy outlines the terms and conditions for subscriptions, digital document accesses, and cancellations on Roots Tunisia in compliance with applicable consumer protection laws.',
+        sections: [
+            {
+                heading: '1. Subscription Billing & Cancellation',
+                body: 'Roots Tunisia subscriptions are billed on a recurring monthly or annual basis as selected upon checkout. You may cancel your subscription at any time through your User Settings or by contacting customer support at devteam@rootstunisia.com. Once cancelled, your paid subscription will remain active until the end of your current paid billing period, with no further charges.',
+            },
+            {
+                heading: '2. Statutory Right of Withdrawal (14-Day Cooling-Off Period)',
+                body: 'In accordance with consumer protection regulations, customers in the European Union, United Kingdom, and jurisdictions granting statutory withdrawal rights are entitled to a full refund within 14 days of their initial purchase, provided that full digital archival downloads have not commenced with prior express consent.',
+            },
+            {
+                heading: '3. Digital Records and Document Downloads',
+                body: 'Due to the immediate access nature of digitized historical archives, GEDCOM exports, and high-resolution document scans, one-time document processing fees or completed digital download deliveries are generally non-refundable once accessed, unless the file was corrupted, defective, or inaccessible due to verified server failure.',
+            },
+            {
+                heading: '4. Refund Request Process & Processing Times',
+                body: 'To request a refund, submit an email to devteam@rootstunisia.com with your account email address, date of transaction, and reason for the request. Eligible refunds are reviewed within 3 business days and processed back to the original method of payment (or Tunisian bank transfer where applicable) within 5 to 10 business days.',
+            },
+            {
+                heading: '5. Technical or Service Failures',
+                body: 'If you experience prolonged service unavailability or a technical error prevents you from utilizing your paid quota or accessing the platform, we will provide an appropriate billing credit or prorated refund upon verification by our technical team.',
+            },
+            {
+                heading: '6. Consumer Rights & Legal Protections',
+                body: 'Nothing in this policy limits or diminishes any non-waivable statutory rights you hold under applicable Tunisian consumer law or international consumer-protection legislation in your place of residence.',
+            },
+        ],
+    },
 };
 
 @Injectable()

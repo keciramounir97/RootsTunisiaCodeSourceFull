@@ -19,6 +19,8 @@ import {
   Plus,
   Send,
   Headphones,
+  MapPin,
+  Radio,
 } from "lucide-react";
 import { api } from "../api/client";
 import { useTranslation } from "../context/TranslationContext";
@@ -27,7 +29,9 @@ import RootsPageShell from "../components/RootsPageShell";
 
 interface AudioItem {
   id: number | string;
+  titleKey?: string;
   title: string;
+  descriptionKey?: string;
   description?: string;
   audioPath?: string;
   duration?: number;
@@ -40,55 +44,6 @@ interface AudioItem {
   isLiked?: boolean;
 }
 
-const TUNISIAN_INITIAL_AUDIOS: AudioItem[] = [
-  {
-    id: "aud-tn-1",
-    title: "Malouf Heritage & Andalusian Pedigree Songs of Testour",
-    description: "Oral testimony recorded in 1968 detailing family lineages and Andalusian musical traditions brought to Testour in the 17th century.",
-    audioPath: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
-    duration: 380,
-    category: "Oral History & Music",
-    governorate: "Béja / Testour",
-    archiveSource: "Centre des Musiques Arabes et Méditerranéennes (Ennejma Ezzahra)",
-    createdAt: new Date(Date.now() - 86400000 * 10).toISOString(),
-    likes: 54,
-    comments: [
-      {
-        id: "ac1",
-        userName: "Sami Testouri",
-        text: "Preserving this oral heritage is vital for Andalusian families in North Tunisia.",
-        createdAt: new Date(Date.now() - 86400000 * 2).toISOString(),
-      },
-    ],
-  },
-  {
-    id: "aud-tn-2",
-    title: "Memories of the Beylical Majba & Family Taxes in Sfax (1881)",
-    description: "Oral history interview with elders from Sfax sharing generational accounts of Beylical tax registers and coastal maritime trade.",
-    audioPath: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
-    duration: 512,
-    category: "Oral History",
-    governorate: "Sfax",
-    archiveSource: "Société d'Histoire de Sfax & Archives Nationales",
-    createdAt: new Date(Date.now() - 86400000 * 18).toISOString(),
-    likes: 39,
-    comments: [],
-  },
-  {
-    id: "aud-tn-3",
-    title: "Djerban Maritime & Caravan Dialect Memories",
-    description: "Audio recordings capturing older Djerban Arabic idioms, family waqf terms, and island trade routes across Gabès and Tozeur.",
-    audioPath: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3",
-    duration: 420,
-    category: "Dialect & Culture",
-    governorate: "Médenine / Djerba",
-    archiveSource: "Djerba Cultural Heritage Archives",
-    createdAt: new Date(Date.now() - 86400000 * 30).toISOString(),
-    likes: 47,
-    comments: [],
-  },
-];
-
 const formatDuration = (seconds: number) => {
   const mins = Math.floor(seconds / 60);
   const secs = Math.floor(seconds % 60);
@@ -97,7 +52,7 @@ const formatDuration = (seconds: number) => {
 
 export default function GalleryAudios() {
   const { theme } = useTheme();
-  const { t } = useTranslation();
+  const { t, isRtl } = useTranslation();
   const audioRef = useRef<HTMLAudioElement>(null);
 
   const [audios, setAudios] = useState<AudioItem[]>([]);
@@ -112,13 +67,6 @@ export default function GalleryAudios() {
   const [volume, setVolume] = useState(0.8);
   const [showUploadModal, setShowUploadModal] = useState(false);
 
-  // New audio form state
-  const [newTitle, setNewTitle] = useState("");
-  const [newDesc, setNewDesc] = useState("");
-  const [newCategory, setNewCategory] = useState("Oral History");
-  const [newGov, setNewGov] = useState("Tunis");
-  const [newUrl, setNewUrl] = useState("");
-
   useEffect(() => {
     AOS.init({ duration: 800, once: true });
     (async () => {
@@ -126,47 +74,61 @@ export default function GalleryAudios() {
         setLoading(true);
         const { data } = await api.get("/audios");
         const items = Array.isArray(data?.data) ? data.data : Array.isArray(data) ? data : [];
-        if (items.length > 0) {
-          setAudios(items);
-          setCurrentAudio(items[0]);
-        } else {
-          setAudios(TUNISIAN_INITIAL_AUDIOS);
-          setCurrentAudio(TUNISIAN_INITIAL_AUDIOS[0]);
-        }
+        const formatted = items.map((a: any) => ({
+          id: a.id,
+          title: a.title || "Archival Audio",
+          description: a.description || "",
+          audioPath: a.audio_path || a.audioPath || "",
+          duration: a.duration || 300,
+          category: a.category || "Oral History",
+          governorate: a.governorate || "Tunisia",
+          archiveSource: a.archive_source || a.archiveSource || "National Archives",
+          likes: a.likes || 0,
+          comments: [],
+        }));
+        setAudios(formatted);
       } catch {
-        setAudios(TUNISIAN_INITIAL_AUDIOS);
-        setCurrentAudio(TUNISIAN_INITIAL_AUDIOS[0]);
+        setAudios([]);
       } finally {
         setLoading(false);
       }
     })();
   }, []);
 
+  const categoryOptions = [
+    { key: "all", labelKey: "cat_all" },
+    { key: "Oral History", labelKey: "cat_oral_history" },
+    { key: "Oral History & Music", labelKey: "cat_music_heritage" },
+    { key: "Dialect & Culture", labelKey: "cat_dialect_culture" },
+  ];
+
   const filteredAudios = useMemo(() => {
-    return audios.filter((item) => {
+    return audios.filter((a) => {
       const matchQuery =
         !query ||
-        item.title.toLowerCase().includes(query.toLowerCase()) ||
-        (item.description && item.description.toLowerCase().includes(query.toLowerCase())) ||
-        (item.governorate && item.governorate.toLowerCase().includes(query.toLowerCase()));
-      const matchCat = categoryFilter === "all" || item.category === categoryFilter;
+        a.title.toLowerCase().includes(query.toLowerCase()) ||
+        (a.description && a.description.toLowerCase().includes(query.toLowerCase())) ||
+        (a.governorate && a.governorate.toLowerCase().includes(query.toLowerCase()));
+      const matchCat = categoryFilter === "all" || a.category === categoryFilter;
       return matchQuery && matchCat;
     });
   }, [audios, query, categoryFilter]);
 
-  const togglePlay = (audio?: AudioItem) => {
-    if (audio && currentAudio?.id !== audio.id) {
-      setCurrentAudio(audio);
-      setIsPlaying(true);
-      return;
-    }
-    if (audioRef.current) {
+  const playAudio = (item: AudioItem) => {
+    if (currentAudio?.id === item.id) {
       if (isPlaying) {
-        audioRef.current.pause();
+        audioRef.current?.pause();
         setIsPlaying(false);
       } else {
-        audioRef.current.play();
+        audioRef.current?.play();
         setIsPlaying(true);
+      }
+    } else {
+      setCurrentAudio(item);
+      setIsPlaying(true);
+      if (audioRef.current) {
+        audioRef.current.src = item.audioPath || "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3";
+        audioRef.current.play().catch(() => {});
       }
     }
   };
@@ -179,19 +141,10 @@ export default function GalleryAudios() {
   };
 
   const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = Number(e.target.value);
+    const time = Number(e.target.value);
+    setCurrentTime(time);
     if (audioRef.current) {
-      audioRef.current.currentTime = val;
-      setCurrentTime(val);
-    }
-  };
-
-  const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = Number(e.target.value);
-    setVolume(val);
-    if (audioRef.current) {
-      audioRef.current.volume = val;
-      setIsMuted(val === 0);
+      audioRef.current.currentTime = time;
     }
   };
 
@@ -202,286 +155,202 @@ export default function GalleryAudios() {
     }
   };
 
-  const handleUploadAudio = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newTitle.trim()) return;
-
-    const created: AudioItem = {
-      id: Date.now(),
-      title: newTitle.trim(),
-      description: newDesc.trim(),
-      category: newCategory,
-      governorate: newGov,
-      audioPath: newUrl.trim() || "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
-      duration: 300,
-      createdAt: new Date().toISOString(),
-      likes: 0,
-      comments: [],
-    };
-
-    setAudios((prev) => [created, ...prev]);
-    setCurrentAudio(created);
-    setIsPlaying(true);
-    setShowUploadModal(false);
-    setNewTitle("");
-    setNewDesc("");
-  };
-
   return (
     <RootsPageShell
       hero={
         <div className="space-y-4 text-center">
           <p className="eyebrow text-[var(--gold)] text-shadow-gold tracking-widest font-bold">
-            {t("audio_gallery_eyebrow", "Roots Tunisia Audio Archives")}
+            {t("nav_audios")}
           </p>
           <h1 className="display-xl text-white font-bold hero-title-shadow text-shadow-glow tracking-wide">
-            {t("nav_audios", "Oral Histories & Audio Recordings")}
+            {t("voices_before_they_disappear")}
           </h1>
           <div className="gold-rule mt-4 w-28 mx-auto shadow-lg" />
           <p className="max-w-3xl mx-auto text-base text-slate-100/95 font-medium drop-shadow-md">
-            {t(
-              "audio_gallery_desc",
-              "Listen to oral memories, Andalusian Malouf pedigree songs, elders' testimonies, and regional dialect recordings from Tunis to Djerba.",
-            )}
+            {t("access_audio_archives")}
           </p>
         </div>
       }
     >
-      <div className="max-w-6xl mx-auto px-4 py-8 space-y-8">
-        {/* Active Audio Player Bar */}
-        {currentAudio && (
-          <div className="surface-card frame-gold p-6 rounded-lg shadow-xl space-y-4">
-            <audio
-              ref={audioRef}
-              src={currentAudio.audioPath}
-              onTimeUpdate={handleTimeUpdate}
-              onEnded={() => setIsPlaying(false)}
-              autoPlay={isPlaying}
-            />
-            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-              <div className="flex items-center gap-4 w-full md:w-auto">
-                <div className="w-14 h-14 rounded-lg bg-[var(--primary)] text-white flex items-center justify-center shrink-0 shadow-md">
-                  <Headphones className="w-7 h-7" />
-                </div>
-                <div>
-                  <span className="text-[0.65rem] font-bold uppercase tracking-wider text-[var(--gold)]">
-                    {currentAudio.category} {currentAudio.governorate ? `• ${currentAudio.governorate}` : ""}
-                  </span>
-                  <h3 className="text-lg font-serif font-bold text-[var(--foreground)] leading-snug">
-                    {currentAudio.title}
-                  </h3>
-                  <p className="text-xs text-[var(--muted-foreground)] line-clamp-1">
-                    {currentAudio.description}
-                  </p>
-                </div>
-              </div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+        {/* Hidden Audio Engine */}
+        <audio
+          ref={audioRef}
+          onTimeUpdate={handleTimeUpdate}
+          onEnded={() => setIsPlaying(false)}
+          onError={() => setIsPlaying(false)}
+          preload="metadata"
+        />
 
-              {/* Player Controls */}
-              <div className="flex items-center gap-4">
-                <button
-                  onClick={() => togglePlay()}
-                  className="w-12 h-12 rounded-full bg-[var(--gold)] text-[var(--accent-foreground)] font-bold flex items-center justify-center hover:scale-105 transition-transform cursor-pointer shadow-md"
-                >
-                  {isPlaying ? <Pause className="w-6 h-6 fill-current" /> : <Play className="w-6 h-6 fill-current ms-0.5" />}
-                </button>
+        {/* Global Player Banner */}
+        {currentAudio && (
+          <div className="surface-card frame-gold p-4 sm:p-5 rounded-lg bg-[var(--card)]/95 shadow-xl flex flex-col md:flex-row items-center justify-between gap-4 text-start">
+            <div className="flex items-center gap-3 w-full md:w-auto">
+              <button
+                type="button"
+                onClick={() => playAudio(currentAudio)}
+                className="grid h-12 w-12 place-items-center rounded-full bg-[var(--gold)] text-[#1f160f] shadow-md hover:scale-105 transition-transform cursor-pointer shrink-0"
+              >
+                {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5 ml-0.5" />}
+              </button>
+              <div className="min-w-0">
+                <span className="text-[0.65rem] font-bold uppercase tracking-wider text-[var(--gold)]">
+                  {t("audio_player_now_playing")}
+                </span>
+                <h4 className="font-display text-base font-bold text-[var(--foreground)] truncate max-w-sm">
+                  {currentAudio.title}
+                </h4>
+                <p className="text-xs text-[var(--muted-foreground)] truncate">
+                  {currentAudio.governorate} • {formatDuration(currentTime)} / {formatDuration(duration || currentAudio.duration || 0)}
+                </p>
               </div>
             </div>
 
-            {/* Seek Bar */}
-            <div className="space-y-1">
+            {/* Scrubber */}
+            <div className="w-full md:flex-1 max-w-md px-2 flex items-center gap-3">
+              <span className="text-[0.68rem] font-mono text-[var(--muted-foreground)]">
+                {formatDuration(currentTime)}
+              </span>
               <input
                 type="range"
-                min={0}
-                max={duration || 100}
+                min="0"
+                max={duration || currentAudio.duration || 100}
                 value={currentTime}
                 onChange={handleSeek}
-                className="w-full h-1.5 bg-[var(--border)] accent-[var(--gold)] rounded-lg cursor-pointer"
+                className="w-full h-1.5 bg-[var(--background)] rounded-lg appearance-none cursor-pointer accent-[var(--gold)]"
               />
-              <div className="flex justify-between text-[0.65rem] text-[var(--muted-foreground)] font-mono">
-                <span>{formatDuration(currentTime)}</span>
-                <span>{formatDuration(duration || currentAudio.duration || 0)}</span>
-              </div>
+              <span className="text-[0.68rem] font-mono text-[var(--muted-foreground)]">
+                {formatDuration(duration || currentAudio.duration || 0)}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={toggleMute}
+                className="p-2 rounded-full hover:bg-[var(--gold)]/15 text-[var(--foreground)] cursor-pointer"
+              >
+                {isMuted ? <VolumeX className="h-4 w-4 text-rose-400" /> : <Volume2 className="h-4 w-4 text-[var(--gold)]" />}
+              </button>
             </div>
           </div>
         )}
 
-        {/* Filter Controls & Upload Button */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pb-4 border-b border-[var(--border)]">
-          <div className="flex items-center gap-3 w-full sm:w-auto">
-            <div className="relative flex-1 sm:w-64">
-              <Search className="w-4 h-4 text-[var(--muted-foreground)] absolute start-3 top-2.5" />
-              <input
-                type="text"
-                placeholder={t("search_audio_placeholder", "Search audio, region or topic…")}
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                className="w-full ps-9 pe-3 py-1.5 text-xs rounded-sm border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] outline-none focus:border-[var(--gold)]"
-              />
-            </div>
-            <select
-              value={categoryFilter}
-              onChange={(e) => setCategoryFilter(e.target.value)}
-              className="px-3 py-1.5 text-xs rounded-sm border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)]"
-            >
-              <option value="all">{t("all_categories", "All Categories")}</option>
-              <option value="Oral History">{t("oral_history", "Oral History")}</option>
-              <option value="Oral History & Music">{t("music_heritage", "Music Heritage")}</option>
-              <option value="Dialect & Culture">{t("dialect_culture", "Dialect & Culture")}</option>
-            </select>
+        {/* Search & Category Filter */}
+        <div className="surface-card p-4 sm:p-5 rounded-lg border border-[var(--gold)]/35 bg-[var(--card)]/95 shadow-md flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
+          <div className="relative w-full md:w-80">
+            <Search className="w-4 h-4 text-[var(--muted-foreground)] absolute start-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <input
+              type="text"
+              placeholder={t("search_audio_placeholder")}
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              className="w-full ps-9 pe-3 py-2 text-xs rounded-md border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] outline-none focus:border-[var(--gold)]"
+            />
           </div>
 
-          <button
-            onClick={() => setShowUploadModal(true)}
-            className="btn-base btn-gold text-xs px-4 py-2 flex items-center gap-2 cursor-pointer"
-          >
-            <Upload className="w-4 h-4" />
-            <span>{t("upload_audio", "Contribute Audio Record")}</span>
-          </button>
+          <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto pb-1 scrollbar-thin">
+            {categoryOptions.map((catOpt) => (
+              <button
+                key={catOpt.key}
+                type="button"
+                onClick={() => setCategoryFilter(catOpt.key)}
+                className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap cursor-pointer transition-all ${
+                  categoryFilter === catOpt.key
+                    ? "bg-[var(--gold)] text-[#1f160f] shadow-sm font-bold"
+                    : "bg-[var(--card)] text-[var(--foreground)] border border-[var(--border)] hover:border-[var(--gold)]"
+                }`}
+              >
+                {t(catOpt.labelKey)}
+              </button>
+            ))}
+          </div>
         </div>
 
-        {/* Audio Grid */}
+        {/* Audios Grid */}
         {loading ? (
           <div className="flex justify-center py-16">
             <div className="w-10 h-10 border-2 border-[var(--gold)] border-t-transparent rounded-full animate-spin" />
           </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredAudios.map((item) => (
-              <div
-                key={item.id}
-                className={`surface-card p-5 frame-gold rounded-lg transition-all space-y-3 flex flex-col justify-between ${
-                  currentAudio?.id === item.id ? "border-[var(--gold)] ring-1 ring-[var(--gold)]" : ""
-                }`}
-              >
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between text-[0.65rem] font-bold text-[var(--gold)] uppercase">
-                    <span>{item.category}</span>
-                    <span>{item.governorate}</span>
-                  </div>
-                  <h4 className="text-base font-serif font-bold text-[var(--foreground)] line-clamp-2">
-                    {item.title}
-                  </h4>
-                  <p className="text-xs text-[var(--muted-foreground)] line-clamp-3 leading-relaxed">
-                    {item.description}
-                  </p>
-                </div>
-
-                <div className="pt-3 border-t border-[var(--border)] flex items-center justify-between">
-                  <span className="text-[0.65rem] text-[var(--muted-foreground)] flex items-center gap-1 font-mono">
-                    <Clock className="w-3 h-3 text-[var(--gold)]" />
-                    {formatDuration(item.duration || 0)}
-                  </span>
-                  <button
-                    onClick={() => togglePlay(item)}
-                    className="btn-base btn-red text-xs px-3 py-1.5 flex items-center gap-1.5 cursor-pointer"
-                  >
-                    {currentAudio?.id === item.id && isPlaying ? (
-                      <>
-                        <Pause className="w-3.5 h-3.5 fill-current" />
-                        <span>{t("pause", "Pause")}</span>
-                      </>
-                    ) : (
-                      <>
-                        <Play className="w-3.5 h-3.5 fill-current" />
-                        <span>{t("listen", "Listen")}</span>
-                      </>
-                    )}
-                  </button>
-                </div>
-              </div>
-            ))}
+        ) : filteredAudios.length === 0 ? (
+          <div className="surface-card frame-gold p-12 text-center rounded-lg space-y-4 max-w-xl mx-auto my-8">
+            <Headphones className="w-12 h-12 text-[var(--gold)] mx-auto opacity-80" />
+            <h3 className="text-xl font-display font-bold text-[var(--foreground)]">
+              {t("no_records_found")}
+            </h3>
+            <p className="text-sm text-[var(--muted-foreground)]">
+              {t("search_audio_placeholder")}
+            </p>
           </div>
-        )}
-
-        {/* Upload Audio Modal */}
-        {showUploadModal && (
-          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-            <div className="surface-card frame-gold p-6 rounded-lg max-w-lg w-full space-y-4 bg-[var(--card)] shadow-2xl">
-              <div className="flex items-center justify-between border-b border-[var(--border)] pb-3">
-                <h3 className="text-lg font-serif font-bold text-[var(--foreground)]">
-                  {t("upload_audio_title", "Submit Audio Record or Interview")}
-                </h3>
-                <button onClick={() => setShowUploadModal(false)} className="text-[var(--muted-foreground)] hover:text-[var(--foreground)]">
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-
-              <form onSubmit={handleUploadAudio} className="space-y-3">
-                <div>
-                  <label className="block text-xs font-bold mb-1 text-[var(--foreground)]">
-                    {t("audio_title", "Recording Title")}
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. Oral Testimony of Haj Ahmed from Sousse"
-                    value={newTitle}
-                    onChange={(e) => setNewTitle(e.target.value)}
-                    className="w-full px-3 py-2 text-xs rounded-sm border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] outline-none focus:border-[var(--gold)]"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6 items-stretch">
+            {filteredAudios.map((item) => {
+              const isThisPlaying = currentAudio?.id === item.id && isPlaying;
+              return (
+                <article
+                  key={item.id}
+                  className="surface-card frame-gold p-6 sm:p-7 rounded-lg shadow-md flex h-full flex-col justify-between hover:-translate-y-1 transition-all text-start"
+                >
                   <div>
-                    <label className="block text-xs font-bold mb-1 text-[var(--foreground)]">Category</label>
-                    <select
-                      value={newCategory}
-                      onChange={(e) => setNewCategory(e.target.value)}
-                      className="w-full px-3 py-2 text-xs rounded-sm border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)]"
+                    <div className="flex items-center justify-between gap-3 border-b border-[var(--gold)]/20 pb-4">
+                      <div className="flex items-center gap-3">
+                        <button
+                          type="button"
+                          onClick={() => playAudio(item)}
+                          className={`grid h-11 w-11 place-items-center rounded-full transition-all cursor-pointer ${
+                            isThisPlaying
+                              ? "bg-[var(--gold)] text-[#1f160f] scale-105 shadow-md"
+                              : "bg-[var(--gold)]/15 text-[var(--gold)] hover:bg-[var(--gold)]/25 ring-1 ring-[var(--gold)]/40"
+                          }`}
+                        >
+                          {isThisPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4 ml-0.5" />}
+                        </button>
+                        <div>
+                          <span className="text-[0.68rem] font-bold uppercase tracking-[0.16em] text-[var(--gold)] flex items-center gap-1 font-mono">
+                            <Clock className="h-3 w-3" />
+                            <span>{formatDuration(item.duration || 300)}</span>
+                          </span>
+                          {item.governorate && (
+                            <p className="text-xs text-[var(--muted-foreground)] flex items-center gap-1 mt-0.5">
+                              <MapPin className="h-3 w-3 text-[var(--gold)] shrink-0" />
+                              <span>{item.governorate}</span>
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      <span className="text-[0.65rem] font-bold text-[var(--gold)] bg-[var(--gold)]/10 px-2 py-0.5 rounded border border-[var(--gold)]/30">
+                        {item.category}
+                      </span>
+                    </div>
+
+                    <h3 className="mt-4 font-display text-lg sm:text-xl font-bold text-[var(--foreground)] leading-snug">
+                      {item.title}
+                    </h3>
+
+                    {item.description && (
+                      <p className="mt-2.5 text-xs sm:text-sm leading-relaxed text-[var(--muted-foreground)] line-clamp-3">
+                        {item.description}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="mt-6 pt-3 border-t border-[var(--gold)]/15 flex items-center justify-between text-xs">
+                    <span className="text-[0.68rem] text-[var(--muted-foreground)] truncate max-w-[200px]">
+                      {item.archiveSource}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => playAudio(item)}
+                      className="font-bold text-[var(--gold)] hover:underline flex items-center gap-1 cursor-pointer"
                     >
-                      <option value="Oral History">Oral History</option>
-                      <option value="Oral History & Music">Music Heritage</option>
-                      <option value="Dialect & Culture">Dialect & Culture</option>
-                    </select>
+                      {isThisPlaying ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
+                      <span>{isThisPlaying ? "Pause" : "Play Recording"}</span>
+                    </button>
                   </div>
-                  <div>
-                    <label className="block text-xs font-bold mb-1 text-[var(--foreground)]">Governorate</label>
-                    <input
-                      type="text"
-                      placeholder="e.g. Tunis, Kairouan, Sfax"
-                      value={newGov}
-                      onChange={(e) => setNewGov(e.target.value)}
-                      className="w-full px-3 py-2 text-xs rounded-sm border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)]"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold mb-1 text-[var(--foreground)]">Audio File URL / Path</label>
-                  <input
-                    type="text"
-                    placeholder="https://... or audio file URL"
-                    value={newUrl}
-                    onChange={(e) => setNewUrl(e.target.value)}
-                    className="w-full px-3 py-2 text-xs rounded-sm border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)]"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold mb-1 text-[var(--foreground)]">Description & Context</label>
-                  <textarea
-                    rows={3}
-                    placeholder="Provide details about the speaker, period, or lineage referenced..."
-                    value={newDesc}
-                    onChange={(e) => setNewDesc(e.target.value)}
-                    className="w-full px-3 py-2 text-xs rounded-sm border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)]"
-                  />
-                </div>
-
-                <div className="flex justify-end gap-2 pt-2">
-                  <button
-                    type="button"
-                    onClick={() => setShowUploadModal(false)}
-                    className="btn-base btn-outline-ink text-xs px-4 py-2 cursor-pointer"
-                  >
-                    Cancel
-                  </button>
-                  <button type="submit" className="btn-base btn-gold text-xs px-5 py-2 cursor-pointer">
-                    Submit Audio
-                  </button>
-                </div>
-              </form>
-            </div>
+                </article>
+              );
+            })}
           </div>
         )}
       </div>

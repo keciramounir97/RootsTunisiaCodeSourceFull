@@ -17,13 +17,26 @@ export class AllExceptionsFilter implements ExceptionFilter {
         const response = ctx.getResponse<Response>();
         const request = ctx.getRequest<Request>();
 
-        const status =
-            exception instanceof HttpException
+        const rawErrorMsg = exception instanceof Error ? exception.message : String(exception || '');
+        const isDbFailure = (
+            rawErrorMsg.includes('ECONNREFUSED') ||
+            rawErrorMsg.includes('ETIMEDOUT') ||
+            rawErrorMsg.includes('Timeout acquiring a connection') ||
+            rawErrorMsg.includes('pool is probably full') ||
+            rawErrorMsg.includes('getaddrinfo') ||
+            rawErrorMsg.includes('ER_BAD_DB_ERROR') ||
+            rawErrorMsg.includes('ER_ACCESS_DENIED')
+        );
+
+        const status = isDbFailure
+            ? HttpStatus.SERVICE_UNAVAILABLE
+            : exception instanceof HttpException
                 ? exception.getStatus()
                 : HttpStatus.INTERNAL_SERVER_ERROR;
 
-        const message =
-            exception instanceof HttpException
+        const message = isDbFailure
+            ? 'Database service is temporarily unavailable. Please try again shortly or contact support.'
+            : exception instanceof HttpException
                 ? exception.getResponse()
                 : 'Internal server error';
 

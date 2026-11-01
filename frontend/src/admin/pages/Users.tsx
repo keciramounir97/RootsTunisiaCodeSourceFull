@@ -35,6 +35,19 @@ export default function UsersPage() {
   const inputBg = isDark ? "bg-gray-800" : "bg-white";
   const inputText = isDark ? "text-white" : "text-[var(--text-color)]";
 
+  const getRoleLabel = (role: string | number) => {
+    if (typeof role === "number") {
+      if (role === 3) return t("super_admin", "مشرف عام");
+      if (role === 1) return t("admin", "مشرف");
+      return t("user", "مستخدم");
+    }
+    const str = String(role).toLowerCase();
+    if (str.includes("super")) return t("super_admin", "مشرف عام");
+    if (str.includes("admin")) return t("admin", "مشرف");
+    if (str.includes("user") || str.includes("member")) return t("user", "مستخدم");
+    return t(str, String(role));
+  };
+
   const [q, setQ] = useState("");
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -383,7 +396,7 @@ export default function UsersPage() {
                     <td className="py-4 px-5 text-start">
                       <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-[var(--brand-teal)]/10 text-[var(--brand-teal)] border border-[var(--brand-teal)]/20`}>
                         <ShieldCheck className="w-3.5 h-3.5" />
-                        {u.roleName || u.roleId}
+                        {getRoleLabel(u.roleName || u.roleId)}
                       </span>
                     </td>
                     <td className="py-4 px-5 text-start">
@@ -392,10 +405,10 @@ export default function UsersPage() {
                         ? (isDark ? 'bg-green-500/20 text-green-400' : 'bg-green-100 text-green-700')
                         : (isDark ? 'bg-red-500/20 text-red-400' : 'bg-red-100 text-red-700')
                       }`}>
-                        {u.status}
+                        {u.status === 'active' ? t("active", "نشط") : t("inactive", "غير نشط")}
                       </span>
                     </td>
-                    {currentUser?.role === 1 ? (
+                    {currentUser?.role === 1 || currentUser?.role === 3 ? (
                       <td className="py-4 px-5 text-end">
                         <div className="flex justify-end gap-2">
                           <button

@@ -1,8 +1,11 @@
 import { Link } from "react-router-dom";
+import { useTranslation } from "../../context/TranslationContext";
 
 export function Logo({ light = false }: { light?: boolean }) {
+  const { t } = useTranslation();
+
   return (
-    <Link to="/" className="flex items-center gap-2.5 group transition-transform duration-200 hover:scale-[1.02]">
+    <Link to="/" className="flex items-center gap-2.5 shrink-0 text-start group transition-transform duration-200 hover:scale-[1.02]">
       {/* Authentic Roots Tunisia 9-tile geometric mosaic emblem */}
       <span className="grid h-9 w-9 shrink-0 grid-cols-3 grid-rows-3 gap-[2px] rounded-sm p-[3px] ring-1 ring-[var(--gold)]/60 bg-[var(--card)] shadow-sm">
         {Array.from({ length: 9 }).map((_, i) => (
@@ -22,10 +25,10 @@ export function Logo({ light = false }: { light?: boolean }) {
             light ? "text-white" : "text-[var(--foreground)]"
           }`}
         >
-          Roots
+          {t("brand_roots")}
         </span>
         <span className="block font-display text-lg font-semibold tracking-wide text-[var(--gold)]">
-          Tunisia
+          {t("brand_tunisia")}
         </span>
       </span>
     </Link>

@@ -4074,9 +4074,7 @@ export default function TreesBuilder({
                 title={t("legacy.tree_saved_gedcomx",
                   "This tree is saved in GEDCOM X format.",
                 )}
-              >
-                GEDCOM X
-              </span>
+              >{t("legacy.format_gedcomx", "GEDCOM X")}</span>
             ) : null}
             {dataFormat === "gedcom7" ? (
               <span
@@ -4084,9 +4082,7 @@ export default function TreesBuilder({
                 title={t("legacy.tree_saved_gedcom7",
                   "This tree is saved in GEDCOM 7.0 format.",
                 )}
-              >
-                GEDCOM 7.0
-              </span>
+              >{t("legacy.format_gedcom7", "GEDCOM 7.0")}</span>
             ) : null}
           </div>
 
@@ -4686,7 +4682,7 @@ export default function TreesBuilder({
                             {isAudio && (
                               <audio controls className="w-full h-8 mt-1 rounded-md bg-stone-100 dark:bg-stone-800">
                                 <source src={l.url} />
-                                Your browser does not support audio.
+                                {t("legacy.audio_not_supported", "Your browser does not support audio.")}
                               </audio>
                             )}
                           </div>
@@ -4885,9 +4881,9 @@ export default function TreesBuilder({
                     ) : (
                       <div className="text-center p-8 bg-stone-50 dark:bg-[#071827]/50 rounded-xl border border-[#24766f]/15 max-w-md">
                         <FileText className="w-16 h-16 text-[#24766f] mx-auto mb-4" />
-                        <p className="text-sm font-semibold mb-2">Lien externe ou document</p>
+                        <p className="text-sm font-semibold mb-2">{t("external_link_or_doc", "Lien externe ou document")}</p>
                         <p className="text-xs text-stone-500 dark:text-stone-400 mb-4">
-                          Ce type de fichier ou lien ne peut pas être prévisualisé directement.
+                          {t("external_link_preview_unsupported", "Ce type de fichier ou lien ne peut pas être prévisualisé directement.")}
                         </p>
                       </div>
                     )}
@@ -4911,9 +4907,7 @@ export default function TreesBuilder({
                       type="button"
                       onClick={() => setPreviewSource(null)}
                       className="interactive-btn btn-neu px-4 py-2 text-xs text-stone-600 dark:text-stone-300"
-                    >
-                      Fermer
-                    </button>
+                    >{t("common.close", "Fermer")}</button>
                   </div>
                 </div>
               </div>,

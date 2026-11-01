@@ -9,7 +9,9 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test": "vitest"
+    "test": "vitest",
+    "postbuild": "node scripts/seo/generate-seo.mjs",
+    "seo:generate": "node scripts/seo/generate-seo.mjs --public"
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",

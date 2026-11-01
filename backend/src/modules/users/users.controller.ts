@@ -64,4 +64,9 @@ export class MyProfileController {
     async requestAccountDeletion(@Body() body: { reason?: string }, @Request() req) {
         return this.usersService.requestAccountDeletion(req.user.id, body.reason);
     }
+
+    @Post('account/self-delete')
+    async selfDeleteAccount(@Body() body: { password?: string; reason?: string }, @Request() req) {
+        return this.usersService.selfDeleteAccount(req.user.id, body.password || '', body.reason);
+    }
 }

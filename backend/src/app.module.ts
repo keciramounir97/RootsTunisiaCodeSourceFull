@@ -31,7 +31,9 @@ import { SourcesModule } from './modules/sources/sources.module';
     imports: [
         ConfigModule.forRoot({
             isGlobal: true,
-            envFilePath: ['.env.production', '.env', '../.env.production', '../.env'],
+            envFilePath: process.env.NODE_ENV === 'production'
+                ? ['.env.production', '../.env.production', '.env', '../.env']
+                : ['.env', '../.env', '.env.production', '../.env.production'],
         }),
         DatabaseModule,
         ActivityModule,

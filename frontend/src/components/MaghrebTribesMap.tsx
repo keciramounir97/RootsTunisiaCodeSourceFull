@@ -10,6 +10,7 @@ import {
 import "leaflet/dist/leaflet.css";
 import { useState, useEffect } from "react";
 import L from "leaflet";
+import { useTranslation } from "../context/TranslationContext";
 
 // Custom burgundy marker icon
 const burgundyIcon = L.divIcon({
@@ -582,6 +583,8 @@ const maghrebCities: MaghrebCity[] = [
    MAIN COMPONENT
    ======================= */
 export default function MaghrebTribesMap() {
+  const { t, dir } = useTranslation();
+  const isRtl = dir === "rtl";
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -592,7 +595,7 @@ export default function MaghrebTribesMap() {
     return (
       <div className="w-full h-full bg-[#f8f5ef]/10 flex items-center justify-center animate-pulse">
         <span className="text-white/20 text-xs uppercase tracking-widest font-cinzel">
-          Loading Map...
+          {t("loading_map", "Loading Map...")}
         </span>
       </div>
     );
@@ -614,9 +617,8 @@ export default function MaghrebTribesMap() {
         style={{ background: "#aad3df", height: "100%" }}
       >
         <ZoomControl position="bottomright" />
-        {/* @ts-ignore */}
         <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+          attribution={isRtl ? '&copy; <a href="https://www.openstreetmap.org/copyright">خريطة الشارع المفتوحة</a>' : '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'}
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           className="opacity-85"
         />
@@ -664,13 +666,13 @@ export default function MaghrebTribesMap() {
                 <div className="maghreb-popup-content">
                   <h4>{region.name} ({region.country})</h4>
                   <p>
-                    <strong>Histoire :</strong> {region.history}
+                    <strong>{t("history_label", "Histoire :")}</strong> {region.history}
                   </p>
                   <p>
-                    <strong>Familles/Tribus :</strong> {region.tribes}
+                    <strong>{t("families_tribes_label", "Familles/Tribus :")}</strong> {region.tribes}
                   </p>
                   <p>
-                    <strong>Site clé :</strong> {region.attractions}
+                    <strong>{t("key_site_label", "Site clé :")}</strong> {region.attractions}
                   </p>
                 </div>
               </Popup>

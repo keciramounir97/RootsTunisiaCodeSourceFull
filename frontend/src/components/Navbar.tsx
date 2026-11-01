@@ -3,6 +3,7 @@ import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { Logo } from "./site/Logo";
 import LanguageMenu from "./LanguageMenu";
 import { useTranslation } from "../context/TranslationContext";
+import { splitLocaleFromPath } from "../seo/localeRouting";
 import { useTheme } from "../context/ThemeContext";
 import { useAuth } from "../admin/components/AuthContext";
 import {
@@ -15,6 +16,7 @@ import {
   User,
   LayoutDashboard,
   LogOut,
+  Phone,
 } from "lucide-react";
 
 export function Navbar() {
@@ -25,8 +27,9 @@ export function Navbar() {
   const [searchQuery, setSearchQuery] = useState("");
 
   const location = useLocation();
+  const { path: seoPath } = splitLocaleFromPath(location.pathname);
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const { t, isRtl } = useTranslation();
   const { theme, toggleTheme } = useTheme();
   const { user, logout } = useAuth();
 
@@ -40,40 +43,48 @@ export function Navbar() {
   };
 
   const navClass =
-    "text-xs font-semibold uppercase tracking-[0.14em] text-[var(--muted-foreground)] transition-colors hover:text-[var(--gold)]";
+    "text-xs font-semibold uppercase tracking-[0.14em] text-[var(--muted-foreground)] transition-colors hover:text-[var(--gold)] py-1";
 
   const exploreLinks = [
-    { to: "/periods", label: t("nav_periods", "Historical Periods") },
-    { to: "/sources", label: t("nav_sources", "Primary Sources") },
-    { to: "/archives", label: t("nav_archives", "National Archives") },
-    { to: "/subscriptions", label: t("nav_subscriptions", "Plans & Pricing") },
+    { to: "/periods", label: t("nav_periods") },
+    { to: "/sources", label: t("nav_sources") },
+    { to: "/archives", label: t("nav_archives") },
+    { to: "/subscriptions", label: t("nav_subscriptions") },
   ];
 
   const galleryLinks = [
-    { to: "/gallery/trees", label: t("nav_trees", "Family Trees & Pedigrees") },
-    { to: "/gallery", label: t("nav_photos", "Photo & Visual Gallery") },
-    { to: "/library", label: t("nav_library", "Manuscripts & Books") },
-    { to: "/audio", label: t("nav_audios", "Oral Histories & Audio") },
+    { to: "/gallery/trees", label: t("nav_trees") },
+    { to: "/gallery", label: t("nav_photos") },
+    { to: "/library", label: t("nav_library") },
+    { to: "/gallery/articles", label: t("nav_articles") },
+    { to: "/audio", label: t("nav_audios") },
+    { to: "/gallery/documents", label: t("nav_documents") },
   ];
 
   const isExploreActive = ["/periods", "/sources", "/archives", "/subscriptions"].includes(
-    location.pathname
+    seoPath
   );
   const isGalleryActive = [
     "/gallery",
     "/gallery/trees",
     "/gallery/images",
+    "/gallery/articles",
+    "/gallery/documents",
+    "/articles",
     "/library",
     "/audio",
-  ].some((path) => location.pathname.startsWith(path));
+  ].some((path) => seoPath.startsWith(path));
 
   return (
-    <header className="sticky top-0 z-40 px-3 pt-3 sm:px-5">
-      <div className="mx-auto flex max-w-7xl items-center gap-4 rounded-lg border border-[var(--gold)]/30 bg-[var(--card)]/90 px-4 py-2.5 shadow-xl backdrop-blur-md">
+    <header
+      dir={isRtl ? "rtl" : "ltr"}
+      className="sticky top-0 z-40 px-4 pt-3.5 sm:px-6 lg:px-8"
+    >
+      <div className="mx-auto flex max-w-7xl items-center gap-3 sm:gap-6 lg:gap-8 rounded-lg border border-[var(--gold)]/35 bg-[var(--card)]/95 px-3.5 py-3 sm:px-7 shadow-xl backdrop-blur-md">
         <Logo />
 
         {/* Desktop Nav */}
-        <nav className="hidden items-center gap-5 md:flex">
+        <nav className="hidden items-center gap-7 lg:gap-9 ms-2 lg:ms-4 md:flex">
           {/* Home */}
           <NavLink
             to="/"
@@ -82,7 +93,7 @@ export function Navbar() {
               `${navClass} ${isActive ? "!text-[var(--gold)]" : ""}`
             }
           >
-            {t("nav_home", "Home")}
+            {t("nav_home")}
           </NavLink>
 
           {/* Explore Dropdown */}
@@ -92,21 +103,22 @@ export function Navbar() {
             onMouseLeave={() => setExploreOpen(false)}
           >
             <button
-              className={`${navClass} flex items-center gap-1 py-1 cursor-pointer ${
+              className={`${navClass} flex items-center gap-1.5 cursor-pointer ${
                 isExploreActive ? "!text-[var(--gold)]" : ""
               }`}
             >
-              {t("nav_explore", "Explore")} <ChevronDown className="h-3 w-3" />
+              <span>{t("nav_explore")}</span>
+              <ChevronDown className="h-3 w-3 shrink-0" />
             </button>
             {exploreOpen && (
-              <div className="absolute start-0 top-full w-56 pt-2 z-50">
+              <div className="absolute start-0 top-full w-56 pt-2 z-50 text-start">
                 <div className="surface-card overflow-hidden p-1.5 shadow-xl border border-[var(--gold)]/40 rounded-sm">
                   {exploreLinks.map((l) => (
                     <Link
                       key={l.to}
                       to={l.to}
                       onClick={() => setExploreOpen(false)}
-                      className="block rounded-sm px-3 py-2 text-xs font-semibold tracking-wide text-[var(--foreground)] transition-colors hover:bg-[var(--gold)]/15 hover:text-[var(--gold)]"
+                      className="block rounded-sm px-3 py-2 text-xs font-semibold tracking-wide text-[var(--foreground)] text-start transition-colors hover:bg-[var(--gold)]/15 hover:text-[var(--gold)]"
                     >
                       {l.label}
                     </Link>
@@ -123,21 +135,22 @@ export function Navbar() {
             onMouseLeave={() => setGalleryOpen(false)}
           >
             <button
-              className={`${navClass} flex items-center gap-1 py-1 cursor-pointer ${
+              className={`${navClass} flex items-center gap-1.5 cursor-pointer ${
                 isGalleryActive ? "!text-[var(--gold)]" : ""
               }`}
             >
-              {t("nav_gallery", "Gallery")} <ChevronDown className="h-3 w-3" />
+              <span>{t("nav_gallery")}</span>
+              <ChevronDown className="h-3 w-3 shrink-0" />
             </button>
             {galleryOpen && (
-              <div className="absolute start-0 top-full w-56 pt-2 z-50">
+              <div className="absolute start-0 top-full w-56 pt-2 z-50 text-start">
                 <div className="surface-card overflow-hidden p-1.5 shadow-xl border border-[var(--gold)]/40 rounded-sm">
                   {galleryLinks.map((l) => (
                     <Link
                       key={l.to}
                       to={l.to}
                       onClick={() => setGalleryOpen(false)}
-                      className="block rounded-sm px-3 py-2 text-xs font-semibold tracking-wide text-[var(--foreground)] transition-colors hover:bg-[var(--gold)]/15 hover:text-[var(--gold)]"
+                      className="block rounded-sm px-3 py-2 text-xs font-semibold tracking-wide text-[var(--foreground)] text-start transition-colors hover:bg-[var(--gold)]/15 hover:text-[var(--gold)]"
                     >
                       {l.label}
                     </Link>
@@ -147,31 +160,46 @@ export function Navbar() {
             )}
           </div>
 
-          {/* Contact */}
           <NavLink
-            to="/contact"
+            to="/about"
             className={({ isActive }) =>
               `${navClass} ${isActive ? "!text-[var(--gold)]" : ""}`
             }
           >
-            {t("nav_contact", "Contact")}
+            {t("nav_about")}
           </NavLink>
         </nav>
 
-        <div className="ms-auto flex items-center gap-2">
+        <div className="ms-auto flex items-center gap-1.5 sm:gap-2.5">
           {/* Search bar */}
           <form
             onSubmit={handleSearchSubmit}
-            className="hidden items-center gap-2 rounded-sm border border-[var(--border)] bg-[var(--background)]/60 px-3 py-1.5 xl:flex h-[34px]"
+            className="hidden items-center gap-2 rounded-sm border border-[var(--border)] bg-[var(--background)]/70 px-3.5 py-1.5 lg:flex h-[34px]"
           >
             <Search className="h-3.5 w-3.5 text-[var(--muted-foreground)] shrink-0" />
             <input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={t("nav_search_placeholder", "Search records…")}
-              className="w-32 bg-transparent text-xs text-[var(--foreground)] outline-none placeholder:text-[var(--muted-foreground)] focus:w-44 transition-all"
+              placeholder={t("nav_search_placeholder")}
+              className="w-36 bg-transparent text-xs text-[var(--foreground)] text-start outline-none placeholder:text-[var(--muted-foreground)] focus:w-48 transition-all"
             />
           </form>
+
+          {/* Contact Icon Button */}
+          <NavLink
+            to="/contact"
+            aria-label={t("nav_contact")}
+            title={t("nav_contact")}
+            className={({ isActive }) =>
+              `h-[34px] w-[34px] rounded-sm border flex items-center justify-center transition-colors cursor-pointer ${
+                isActive
+                  ? "border-[var(--gold)] bg-[var(--gold)]/20 text-[var(--gold)]"
+                  : "border-[var(--border)] text-[var(--foreground)] hover:border-[var(--gold)] hover:bg-[var(--gold)]/15 hover:text-[var(--gold)]"
+              }`
+            }
+          >
+            <Phone className="h-4 w-4" />
+          </NavLink>
 
           {/* Language Switcher */}
           <LanguageMenu />
@@ -179,8 +207,8 @@ export function Navbar() {
           {/* Theme Toggle */}
           <button
             onClick={toggleTheme}
-            aria-label="Toggle theme"
-            title="Toggle theme"
+            aria-label={t("toggle_theme")}
+            title={t("toggle_theme")}
             className="h-[34px] w-[34px] rounded-sm border border-[var(--border)] flex items-center justify-center text-[var(--foreground)] hover:bg-[var(--gold)]/15 transition-colors cursor-pointer"
           >
             {theme === "dark" ? (
@@ -195,17 +223,17 @@ export function Navbar() {
             <div className="relative">
               <button
                 onClick={() => setUserMenuOpen(!userMenuOpen)}
-                className="h-[34px] flex items-center gap-1.5 rounded-sm bg-[var(--primary)] text-white px-3 text-[0.65rem] font-bold uppercase tracking-[0.14em] hover:opacity-90 transition-opacity cursor-pointer shadow-sm"
+                className="h-[34px] flex items-center gap-1.5 rounded-sm bg-[#b81428] !text-white px-2.5 sm:px-3.5 text-[0.65rem] font-bold uppercase tracking-[0.14em] hover:opacity-90 transition-opacity cursor-pointer shadow-sm"
               >
-                <User className="h-3.5 w-3.5" />
-                <span className="max-w-[90px] truncate">{user.name || t("nav_account", "Account")}</span>
-                <ChevronDown className="h-3 w-3" />
+                <User className="h-3.5 w-3.5 shrink-0" />
+                <span className="hidden sm:inline max-w-[90px] truncate">{user.fullName || t("nav_account")}</span>
+                <ChevronDown className="h-3 w-3 shrink-0" />
               </button>
 
               {userMenuOpen && (
                 <div className="absolute end-0 top-full mt-2 w-48 surface-card p-1.5 shadow-2xl border border-[var(--gold)]/40 z-50 rounded-sm">
                   <div className="px-3 py-2 border-b border-[var(--gold)]/20 mb-1">
-                    <p className="text-xs font-bold text-[var(--foreground)] truncate">{user.name}</p>
+                    <p className="text-xs font-bold text-[var(--foreground)] truncate">{user.fullName}</p>
                     <p className="text-[0.65rem] text-[var(--muted-foreground)] truncate">{user.email}</p>
                   </div>
                   <Link
@@ -214,7 +242,7 @@ export function Navbar() {
                     className="flex items-center gap-2 rounded-sm px-3 py-2 text-xs font-semibold text-[var(--foreground)] hover:bg-[var(--gold)]/15 hover:text-[var(--gold)]"
                   >
                     <LayoutDashboard className="h-3.5 w-3.5 text-[var(--gold)]" />
-                    {user.role === 1 || user.role === 3 ? t("nav_admin", "Admin Portal") : t("nav_dashboard", "Dashboard")}
+                    {user.role === 1 || user.role === 3 ? t("nav_admin") : t("nav_dashboard")}
                   </Link>
                   <button
                     onClick={() => {
@@ -225,7 +253,7 @@ export function Navbar() {
                     className="w-full flex items-center gap-2 rounded-sm px-3 py-2 text-xs font-semibold text-red-500 hover:bg-red-500/10 text-start cursor-pointer"
                   >
                     <LogOut className="h-3.5 w-3.5" />
-                    {t("nav_signout", "Sign Out")}
+                    {t("nav_signout")}
                   </button>
                 </div>
               )}
@@ -233,17 +261,20 @@ export function Navbar() {
           ) : (
             <Link
               to="/login"
-              className="h-[34px] flex items-center gap-1.5 rounded-sm bg-[var(--primary)] text-white px-3.5 text-[0.65rem] font-bold uppercase tracking-[0.14em] hover:opacity-90 transition-opacity shadow-sm"
+              aria-label={t("nav_login")}
+              title={t("nav_login")}
+              className="h-[34px] flex items-center gap-1.5 rounded-sm bg-[#b81428] !text-white px-2.5 sm:px-3.5 text-[0.65rem] font-bold uppercase tracking-[0.14em] hover:opacity-90 transition-opacity shadow-sm"
             >
-              <User className="h-3.5 w-3.5" /> {t("nav_login", "Sign In")}
+              <User className="h-3.5 w-3.5 shrink-0" />
+              <span className="hidden sm:inline">{t("nav_login")}</span>
             </Link>
           )}
 
           {/* Mobile Menu Toggle */}
           <button
-            aria-label="Toggle menu"
+            aria-label={t("toggle_menu")}
             onClick={() => setOpen((v) => !v)}
-            className="h-[34px] w-[34px] flex items-center justify-center rounded-sm border border-[var(--border)] text-[var(--foreground)] lg:hidden cursor-pointer"
+            className="h-[34px] w-[34px] flex items-center justify-center rounded-sm border border-[var(--border)] text-[var(--foreground)] md:hidden cursor-pointer"
           >
             {open ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
           </button>
@@ -252,14 +283,14 @@ export function Navbar() {
 
       {/* Mobile Drawer */}
       {open && (
-        <div className="mx-auto mt-2 max-w-7xl rounded-lg border border-[var(--gold)]/30 bg-[var(--card)] p-4 shadow-xl backdrop-blur-md md:hidden">
+        <div className="mx-auto mt-2 max-w-7xl rounded-lg border border-[var(--gold)]/30 bg-[var(--card)] p-4 text-start shadow-xl backdrop-blur-md md:hidden">
           <form onSubmit={handleSearchSubmit} className="mb-3 flex items-center gap-2 border border-[var(--border)] bg-[var(--background)] px-3 py-2 rounded-sm">
-            <Search className="h-4 w-4 text-[var(--muted-foreground)]" />
+            <Search className="h-4 w-4 text-[var(--muted-foreground)] shrink-0" />
             <input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={t("nav_search_placeholder", "Search records…")}
-              className="w-full bg-transparent text-xs text-[var(--foreground)] outline-none"
+              placeholder={t("nav_search_placeholder")}
+              className="w-full bg-transparent text-xs text-[var(--foreground)] text-start outline-none"
             />
           </form>
 
@@ -276,12 +307,12 @@ export function Navbar() {
                 }`
               }
             >
-              {t("nav_home", "Home")}
+              {t("nav_home")}
             </NavLink>
 
             <div className="py-1">
               <p className="px-3 text-[0.65rem] font-bold uppercase tracking-wider text-[var(--gold)]">
-                {t("nav_explore", "Explore")}
+                {t("nav_explore")}
               </p>
               {exploreLinks.map((l) => (
                 <NavLink
@@ -303,7 +334,7 @@ export function Navbar() {
 
             <div className="py-1">
               <p className="px-3 text-[0.65rem] font-bold uppercase tracking-wider text-[var(--gold)]">
-                {t("nav_gallery", "Heritage Collections")}
+                {t("nav_gallery")}
               </p>
               {galleryLinks.map((l) => (
                 <NavLink
@@ -324,7 +355,7 @@ export function Navbar() {
             </div>
 
             <NavLink
-              to="/contact"
+              to="/about"
               onClick={() => setOpen(false)}
               className={({ isActive }) =>
                 `rounded-sm px-3 py-2 text-xs font-semibold ${
@@ -334,7 +365,22 @@ export function Navbar() {
                 }`
               }
             >
-              {t("nav_contact", "Contact")}
+              {t("nav_about")}
+            </NavLink>
+
+            <NavLink
+              to="/contact"
+              onClick={() => setOpen(false)}
+              className={({ isActive }) =>
+                `inline-flex items-center gap-2 rounded-sm px-3 py-2 text-xs font-semibold ${
+                  isActive
+                    ? "bg-[var(--gold)]/20 text-[var(--gold)]"
+                    : "text-[var(--foreground)] hover:bg-[var(--gold)]/10"
+                }`
+              }
+            >
+              <Phone className="h-3.5 w-3.5 text-[var(--gold)] shrink-0" />
+              <span>{t("nav_contact")}</span>
             </NavLink>
           </nav>
         </div>

@@ -11,7 +11,8 @@ interface FamilyCardModalProps {
 }
 
 export default function FamilyCardModal({ tree, individual, onClose }: FamilyCardModalProps) {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
+  const isArabic = locale === "ar";
   const [activeTab, setActiveTab] = useState<"schema" | "details">("schema");
   const [requestStatus, setRequestStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [statusMessage, setStatusMessage] = useState("");
@@ -43,11 +44,17 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
   const isIndividualModal = Boolean(individual && !tree);
 
   // Extract Tree / Individual metadata
-  const indName = individual ? `${individual.first_name || individual.firstName || ''} ${individual.last_name || individual.lastName || individual.surname || ''}`.trim() : "";
-  const title = tree?.name || tree?.title || indName || "Roots Tunisia Lineage";
-  const governorate = tree?.governorate || tree?.region || individual?.birth_place || individual?.birthPlace || "Tunisia";
+  const rawIndName = individual ? (individual.name || `${individual.first_name || individual.firstName || individual.given || ''} ${individual.last_name || individual.lastName || individual.surname || ''}`).trim() : "";
+  const indName = isArabic && rawIndName && !/[\u0600-\u06FF]/.test(rawIndName)
+    ? (individual?.gender === "F" ? t("ind_default_name_f") : t("ind_default_name_m"))
+    : rawIndName;
+  const rawTitle = tree?.name || tree?.title || indName || "";
+  const title = !rawTitle || (isArabic && !/[\u0600-\u06FF]/.test(rawTitle)) ? t("family_tree") : rawTitle;
+  const rawGov = tree?.governorate || tree?.region || individual?.birth_place || individual?.birthPlace || "";
+  const governorate = !rawGov || (isArabic && !/[\u0600-\u06FF]/.test(rawGov)) ? t("tunisia") : rawGov;
   const rawPeopleList = Array.isArray(tree?.people) ? tree.people : (individual ? [individual] : []);
-  const description = tree?.description || tree?.notes || tree?.provenance || "Notice généalogique documentée conservée dans le catalogue des archives de Tunisie.";
+  const rawDesc = tree?.description || tree?.notes || tree?.provenance || "";
+  const description = !rawDesc || (isArabic && !/[\u0600-\u06FF]/.test(rawDesc)) ? t("tree_default_summary") : rawDesc;
 
   // Initial synchronous check if GEDCOM text is already attached to tree object
   useEffect(() => {
@@ -182,13 +189,16 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
     const p1Id = "p1";
     const p2Id = "p2";
     const p3Id = "p3";
+    const p1Name = t("ind_sample_m_1");
+    const p2Name = t("ind_sample_f_1");
+    const p3Name = t("ind_sample_m_2");
 
     return [
       {
         id: p1Id,
-        given: title,
-        surname: "Patrimoine",
-        names: { fr: `${title} (Patrimoine)`, en: title },
+        given: p1Name,
+        surname: "",
+        names: { fr: p1Name, en: p1Name, ar: p1Name },
         gender: "M",
         birthDate: "1880",
         birthPlace: governorate,
@@ -197,9 +207,9 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
       },
       {
         id: p2Id,
-        given: "Lalla Fatma",
-        surname: title,
-        names: { fr: `Lalla Fatma ${title}`, en: `Lalla Fatma ${title}` },
+        given: p2Name,
+        surname: "",
+        names: { fr: p2Name, en: p2Name, ar: p2Name },
         gender: "F",
         birthDate: "1885",
         birthPlace: governorate,
@@ -208,9 +218,9 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
       },
       {
         id: p3Id,
-        given: "Sidi Mohamed",
-        surname: title,
-        names: { fr: `Sidi Mohamed ${title}`, en: `Sidi Mohamed ${title}` },
+        given: p3Name,
+        surname: "",
+        names: { fr: p3Name, en: p3Name, ar: p3Name },
         gender: "M",
         birthDate: "1915",
         birthPlace: governorate,
@@ -218,7 +228,7 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
         mother: p2Id,
       },
     ];
-  }, [rawPeopleList, title, governorate, fetchedPeople]);
+  }, [rawPeopleList, title, governorate, fetchedPeople, t]);
 
   const membersCount = displayPeople.length;
   const generations = tree?.generations ?? (membersCount > 0 ? Math.ceil(Math.log2(membersCount + 1)) : 1);
@@ -254,36 +264,38 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
         reason: requestReason.trim() || "Genealogical lineage research and record verification.",
       });
       setRequestStatus("success");
-      setStatusMessage("Demande transmise aux archivistes généalogistes !");
+      setStatusMessage(t("modal_request_sent"));
     } catch (err: any) {
       setRequestStatus("error");
-      setStatusMessage(err?.response?.data?.message || "La demande est en cours de traitement.");
+      setStatusMessage(err?.response?.data?.message || t("modal_request_pending"));
     }
   };
 
   return (
     <div
+      dir={isArabic ? "rtl" : "ltr"}
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-3 sm:p-5 animate-in fade-in duration-200"
       onClick={onClose}
     >
       <div
-        className="surface-card frame-gold relative w-full max-w-4xl overflow-hidden rounded-2xl bg-[var(--card)] p-5 sm:p-7 shadow-2xl space-y-5 max-h-[94vh] overflow-y-auto border-2 border-[var(--gold)]/60"
+        className="surface-card frame-gold relative w-full max-w-4xl overflow-hidden rounded-2xl bg-[var(--card)] p-5 sm:p-7 text-start shadow-2xl space-y-5 max-h-[94vh] overflow-y-auto border-2 border-[var(--gold)]/60"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 z-20 rounded-full bg-[var(--background)] p-2 text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-[var(--gold)]/20 transition-colors cursor-pointer"
+          aria-label={t("close")}
+          className="absolute top-4 end-4 z-20 rounded-full bg-[var(--background)] p-2 text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-[var(--gold)]/20 transition-colors cursor-pointer"
         >
           <X className="h-5 w-5" />
         </button>
 
         {/* MODAL HEADER */}
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--gold)]/30 pb-3 pr-10">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--gold)]/30 pb-3 pe-10">
           <div>
             <span className="text-[0.68rem] font-bold uppercase tracking-[0.2em] text-[var(--gold)] flex items-center gap-1.5">
               <Landmark className="h-4 w-4 text-[var(--gold)]" />
-              <span>{isIndividualModal ? "Carte Fiche Individuelle" : "Carte Généalogique Patrimoniale"}</span>
+              <span>{isIndividualModal ? t("individual_profile_card") : t("heritage_genealogy_card")}</span>
             </span>
             <h2 className="text-xl sm:text-2xl font-serif font-bold text-[var(--foreground)] tracking-wide">
               {title}
@@ -302,7 +314,7 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                 }`}
               >
                 <GitBranch className="h-4 w-4" />
-                <span>Schéma Graphique de l'Arbre</span>
+                <span>{t("tree_graph_schema")}</span>
               </button>
 
               <button
@@ -314,7 +326,7 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                 }`}
               >
                 <FileCode className="h-4 w-4" />
-                <span>Fiche & GEDCOM</span>
+                <span>{t("file_and_gedcom")}</span>
               </button>
             </div>
           )}
@@ -334,7 +346,7 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                       individual.gender === "F" ? "bg-rose-600" : "bg-[#0d9488]"
                     }`}
                   >
-                    {indName ? indName.charAt(0).toUpperCase() : "P"}
+                    {indName ? indName.charAt(0).toUpperCase() : "ج"}
                   </div>
                   <div>
                     <h3 className="font-serif text-xl font-bold text-[var(--foreground)]">
@@ -365,28 +377,28 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                   transformStyle: "preserve-3d",
                 }}
               >
-                <div className="absolute -right-6 -bottom-6 opacity-10 pointer-events-none font-serif text-8xl font-bold text-[var(--gold)]">
+                <div className="absolute -end-6 -bottom-6 opacity-10 pointer-events-none font-serif text-8xl font-bold text-[var(--gold)]">
                   جذور
                 </div>
 
                 <div className="flex items-center justify-between text-xs border-b border-[var(--gold)]/20 pb-2">
                   <span className="font-mono text-[0.68rem] uppercase tracking-wider text-[var(--gold)] flex items-center gap-1">
                     <User className="h-3.5 w-3.5" />
-                    <span>Carte Individuelle 3D</span>
+                    <span>{t("card_individual_3d")}</span>
                   </span>
                   <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-semibold text-[0.65rem] flex items-center gap-1">
                     <ShieldCheck className="w-3 h-3" />
-                    <span>Document Registré</span>
+                    <span>{t("registered_document")}</span>
                   </span>
                 </div>
 
                 {/* VITAL INFORMATION GRID */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs pt-1 font-mono">
                   <div className="p-3 rounded-lg bg-black/40 border border-[var(--gold)]/30 space-y-1">
-                    <span className="text-[0.65rem] text-slate-400 block uppercase font-bold">Naissance</span>
+                    <span className="text-[0.65rem] text-slate-400 block uppercase font-bold">{t("birth")}</span>
                     <span className="font-bold text-white block flex items-center gap-1.5">
                       <Sparkles className="h-3.5 w-3.5 text-amber-400" />
-                      <span>{individual.birth_date || individual.birthDate || "Date inconnue"}</span>
+                      <span>{individual.birth_date || individual.birthDate || t("unknown_date")}</span>
                     </span>
                     <span className="text-slate-300 block text-[11px] flex items-center gap-1">
                       <MapPin className="h-3 w-3 text-[var(--gold)]" />
@@ -395,22 +407,22 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                   </div>
 
                   <div className="p-3 rounded-lg bg-black/40 border border-[var(--gold)]/30 space-y-1">
-                    <span className="text-[0.65rem] text-slate-400 block uppercase font-bold">Décès</span>
+                    <span className="text-[0.65rem] text-slate-400 block uppercase font-bold">{t("death")}</span>
                     <span className="font-bold text-white block flex items-center gap-1.5">
                       <Clock className="h-3.5 w-3.5 text-slate-400" />
-                      <span>{individual.death_date || individual.deathDate || "Vivant / Non répertorié"}</span>
+                      <span>{individual.death_date || individual.deathDate || t("living_or_unlisted")}</span>
                     </span>
                     <span className="text-slate-300 block text-[11px] flex items-center gap-1">
                       <MapPin className="h-3 w-3 text-[var(--gold)]" />
-                      <span>{individual.death_place || individual.deathPlace || "N/A"}</span>
+                      <span>{individual.death_place || individual.deathPlace || t("not_applicable")}</span>
                     </span>
                   </div>
                 </div>
 
                 {/* NOTES / DETAILS */}
-                {individual.details && (
+                {individual.details && (!isArabic || /[\u0600-\u06FF]/.test(individual.details)) && (
                   <div className="pt-1">
-                    <span className="text-[0.65rem] text-slate-400 uppercase font-bold block mb-1">Notice & Détails</span>
+                    <span className="text-[0.65rem] text-slate-400 uppercase font-bold block mb-1">{t("notice_and_details")}</span>
                     <p className="text-xs text-slate-300 bg-black/30 p-2.5 rounded-lg border border-[var(--gold)]/20 leading-relaxed font-light">
                       {individual.details}
                     </p>
@@ -418,7 +430,7 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                 )}
 
                 <div className="text-[10px] uppercase tracking-[0.2em] text-center text-slate-400 pt-1">
-                  Survolez la carte avec la souris pour faire pivoter en 3D
+                  {t("hover_card_3d")}
                 </div>
               </div>
             </div>
@@ -434,16 +446,16 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                 <div className="flex items-center justify-between text-xs text-[var(--muted-foreground)] font-mono px-1">
                   <span className="flex items-center gap-1.5">
                     <GitBranch className="h-4 w-4 text-[var(--gold)]" />
-                    <span>Schéma interactif d'arborescence (Molette pour Zoom, Glisser pour Pan)</span>
+                    <span>{t("interactive_tree_schema_hint")}</span>
                   </span>
                   <div className="flex items-center gap-2">
                     {loadingGedcom && (
                       <span className="text-[0.68rem] text-[var(--gold)] animate-pulse flex items-center gap-1">
-                        <RefreshCcw className="h-3 w-3 animate-spin" /> Chargement GEDCOM...
+                        <RefreshCcw className="h-3 w-3 animate-spin" /> {t("loading_gedcom")}
                       </span>
                     )}
                     <span className="bg-[var(--gold)]/10 text-[var(--gold)] px-2.5 py-0.5 rounded-full font-bold">
-                      {displayPeople.length} Cartes Liées
+                      {displayPeople.length} {t("linked_cards")}
                     </span>
                   </div>
                 </div>
@@ -465,7 +477,7 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
               <div className="space-y-5 animate-in fade-in duration-150">
                 <div className="perspective-1000">
                   <div className="transform-gpu transition-all duration-500 rounded-xl bg-gradient-to-br from-[#1e293b] via-[#0f172a] to-[#020617] p-6 text-white border-2 border-[var(--gold)]/70 shadow-2xl relative overflow-hidden">
-                    <div className="absolute -right-8 -bottom-8 opacity-10 pointer-events-none font-serif text-9xl font-bold text-[var(--gold)]">
+                    <div className="absolute -end-8 -bottom-8 opacity-10 pointer-events-none font-serif text-9xl font-bold text-[var(--gold)]">
                       جذور
                     </div>
 
@@ -475,7 +487,7 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                         <span>{governorate}</span>
                       </span>
                       <span className="px-3 py-0.5 rounded-full text-[0.65rem] font-mono font-bold bg-[var(--gold)]/20 text-[var(--gold)] border border-[var(--gold)]/40">
-                        GEDCOM 5.5.1 UTF-8
+                        {t("gedcom_standard")}
                       </span>
                     </div>
 
@@ -491,7 +503,7 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                         <div className="p-2.5 rounded-lg bg-black/40 border border-[var(--gold)]/30 flex items-center gap-2">
                           <Layers className="h-4 w-4 text-[var(--gold)]" />
                           <div>
-                            <span className="text-[0.65rem] text-slate-400 block uppercase">Générations</span>
+                            <span className="text-[0.65rem] text-slate-400 block uppercase">{t("generations")}</span>
                             <strong className="text-sm text-white">{generations}</strong>
                           </div>
                         </div>
@@ -499,7 +511,7 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                         <div className="p-2.5 rounded-lg bg-black/40 border border-[var(--gold)]/30 flex items-center gap-2">
                           <Users className="h-4 w-4 text-[var(--gold)]" />
                           <div>
-                            <span className="text-[0.65rem] text-slate-400 block uppercase">Personnes</span>
+                            <span className="text-[0.65rem] text-slate-400 block uppercase">{t("persons")}</span>
                             <strong className="text-sm text-white">{membersCount}</strong>
                           </div>
                         </div>
@@ -507,8 +519,8 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                         <div className="p-2.5 rounded-lg bg-black/40 border border-[var(--gold)]/30 flex items-center gap-2 col-span-2 sm:col-span-1">
                           <FileCode className="h-4 w-4 text-teal-400" />
                           <div>
-                            <span className="text-[0.65rem] text-slate-400 block uppercase">Registre</span>
-                            <strong className="text-xs text-teal-300">Archives Tunisiennes</strong>
+                            <span className="text-[0.65rem] text-slate-400 block uppercase">{t("registry")}</span>
+                            <strong className="text-xs text-teal-300">{t("tunisian_archives")}</strong>
                           </div>
                         </div>
                       </div>
@@ -525,13 +537,13 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
           <form onSubmit={handleSubmitDownloadRequest} className="space-y-3 p-4 rounded-xl bg-[var(--background)] border border-[var(--gold)]/40 animate-in fade-in">
             <h4 className="font-semibold text-xs text-[var(--foreground)] flex items-center gap-2">
               <ShieldCheck className="h-4 w-4 text-[var(--gold)]" />
-              <span>Demande d'Accès aux Archives ({isIndividualModal ? "Individu" : "Arbre"})</span>
+              <span>{t("request_archive_access")} ({isIndividualModal ? t("individual") : t("tree")})</span>
             </h4>
             <textarea
               value={requestReason}
               onChange={(e) => setRequestReason(e.target.value)}
-              placeholder="Indiquez le motif de votre recherche généalogique..."
-              className="w-full p-2.5 text-xs rounded border border-[var(--border)] bg-[var(--card)] text-[var(--foreground)] outline-none focus:border-[var(--gold)]"
+              placeholder={t("placeholder_archive_reason")}
+              className="w-full p-2.5 text-xs rounded border border-[var(--border)] bg-[var(--card)] text-[var(--foreground)] outline-none focus:border-[var(--gold)] rtl:text-right"
               rows={2}
             />
             <button
@@ -540,7 +552,7 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
               className="btn-base btn-gold text-xs py-2 px-4 w-full flex items-center justify-center gap-2 cursor-pointer"
             >
               <Download className="h-3.5 w-3.5" />
-              <span>Envoyer la Demande d'Accès</span>
+              <span>{t("submit_access_request")}</span>
             </button>
           </form>
         )}
@@ -559,14 +571,14 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
             className="btn-base btn-gold text-xs py-2.5 px-4 flex items-center gap-2 cursor-pointer"
           >
             <Download className="h-4 w-4" />
-            <span>{isIndividualModal ? "Télécharger Fiche / Extrait" : "Télécharger / Demander GEDCOM"}</span>
+            <span>{isIndividualModal ? t("download_profile_extract") : t("download_or_request_gedcom")}</span>
           </button>
 
           <button
             onClick={onClose}
             className="btn-base btn-outline-ink text-xs py-2.5 px-5 cursor-pointer"
           >
-            Fermer la Carte
+            {t("close_card")}
           </button>
         </div>
       </div>

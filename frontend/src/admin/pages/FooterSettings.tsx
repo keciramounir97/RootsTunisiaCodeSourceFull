@@ -78,8 +78,8 @@ export const DEFAULT_FOOTER_CONFIG: FooterConfig = {
   ],
   location: "Rue de la Kasbah, Médina de Tunis, Tunisie",
   email: "contact@rootstunisia.com",
-  phone: "+216 71 000 000",
-  whatsapp: "+216 71 000 000",
+  phone: "+961 36 26 082",
+  whatsapp: "+961 36 26 082",
 };
 
 function normalizeFooterConfig(value: Partial<FooterConfig> | null): FooterConfig {
@@ -368,7 +368,7 @@ export default function FooterSettings() {
             </h2>
 
             <div className={`mt-5 rounded-md border ${subtlePanel} p-4`}>
-              <p className="text-lg font-bold">RootsTunisia</p>
+              <p className="text-lg font-bold">{t("app_name", "جذور تونس")}</p>
               <p className="mt-2 text-sm leading-6 opacity-70">
                 {t(
                   "footer_preview_desc",

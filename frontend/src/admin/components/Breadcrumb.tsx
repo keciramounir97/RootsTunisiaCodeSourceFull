@@ -16,16 +16,20 @@ const LABELS: Record<string, string> = {
 export default function Breadcrumb() {
   const { pathname } = useLocation();
   const { theme } = useThemeStore();
-  const { t } = useTranslation();
+  const { t, isRtl } = useTranslation();
   const isDark = theme === "dark";
 
   const parts = pathname.split("/").filter(Boolean);
 
-  const segments = parts.map((p, i) => ({
-    raw: p,
-    label: t(p) || LABELS[p] || p.charAt(0).toUpperCase() + p.slice(1),
-    to: "/" + parts.slice(0, i + 1).join("/"),
-  }));
+  const segments = parts.map((p, i) => {
+    const norm = p.replace(/-/g, "_").toLowerCase();
+    const translated = t(norm, t(p, LABELS[p] || LABELS[norm]));
+    return {
+      raw: p,
+      label: translated,
+      to: "/" + parts.slice(0, i + 1).join("/"),
+    };
+  });
 
   const baseText = "!text-white";
   const accent = "!text-white/90 hover:!text-white";
@@ -48,7 +52,7 @@ export default function Breadcrumb() {
         {/* Segments */}
         {segments.map((s, i) => (
           <li key={s.to} className="flex items-center gap-2">
-            <ChevronRight className={`w-4 h-4 ${muted}`} />
+            <ChevronRight className={`w-4 h-4 ${muted} rtl:rotate-180`} />
 
             {i === segments.length - 1 ? (
               <span className="font-bold text-white">

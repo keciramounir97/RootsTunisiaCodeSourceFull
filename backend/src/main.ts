@@ -670,8 +670,46 @@ async function ensureCriticalSchema(knex: Knex) {
         }
 
         console.log('🟢 Schema verification complete');
+        await ensurePerformanceIndexes(knex);
     } catch (err: any) {
         console.warn('⚠️ ensureCriticalSchema warning:', err?.message || err);
+    }
+}
+
+/** Automatically create performance indexes on most queried tables */
+async function ensurePerformanceIndexes(knex: Knex) {
+    const safeIndex = async (table: string, cols: string[], indexName: string) => {
+        try {
+            if (!(await knex.schema.hasTable(table))) return;
+            const hasCols = await Promise.all(cols.map((c) => knex.schema.hasColumn(table, c)));
+            if (!hasCols.every(Boolean)) return;
+
+            const [existing] = (await knex.raw(`SHOW INDEX FROM \`${table}\` WHERE Key_name = ?`, [indexName])) as any;
+            if (existing && existing.length > 0) return;
+
+            await knex.raw(`CREATE INDEX \`${indexName}\` ON \`${table}\` (${cols.map((c) => `\`${c}\``).join(', ')})`);
+            console.log(`⚡ Performance Index Created: ${table}.${indexName}`);
+        } catch (e: any) {
+            // Silently ignore if already exists or db unsupported
+        }
+    };
+
+    try {
+        await safeIndex('notes', ['user_id', 'is_archived'], 'idx_notes_user_archive');
+        await safeIndex('tasks', ['user_id', 'status'], 'idx_tasks_user_status');
+        await safeIndex('reminders', ['user_id', 'is_completed'], 'idx_reminders_user_completed');
+        await safeIndex('user_sources', ['user_id'], 'idx_user_sources_user_id');
+        await safeIndex('password_resets', ['email', 'expires_at'], 'idx_password_resets_email_exp');
+        await safeIndex('refresh_tokens', ['user_id', 'expires_at'], 'idx_refresh_tokens_user_exp');
+        await safeIndex('activity_logs', ['actor_user_id', 'created_at'], 'idx_activity_logs_actor_created');
+        await safeIndex('gallery', ['is_public', 'category'], 'idx_gallery_public_cat');
+        await safeIndex('books', ['is_public', 'category'], 'idx_books_public_cat');
+        await safeIndex('articles', ['is_published', 'created_at'], 'idx_articles_pub_created');
+        await safeIndex('download_requests', ['user_id', 'status'], 'idx_download_requests_user_status');
+        await safeIndex('account_deletion_requests', ['user_id', 'status'], 'idx_account_del_user_status');
+        console.log('⚡ All query performance indexes verified');
+    } catch (err: any) {
+        console.warn('⚠️ Performance indexing note:', err?.message || err);
     }
 }
 
@@ -1119,16 +1157,66 @@ async function bootstrap() {
             next();
         });
 
-        // Rate Limiter
-        const limiter = rateLimit({
+        // Rate Limiters - Tiered for security and fair use
+        const globalLimiter = rateLimit({
             windowMs: 15 * 60 * 1000,
-            max: process.env.NODE_ENV === 'production' ? 5000 : 20000,
+            max: process.env.NODE_ENV === 'production' ? 1000 : 5000,
             standardHeaders: true,
             legacyHeaders: false,
             skip: (req) => req.method === 'OPTIONS',
-            message: { error: 'Too many requests, please try again later.' },
+            message: { statusCode: 429, message: 'Too many requests, please try again later.' },
         });
-        app.use('/api/', limiter);
+        app.use('/api/', globalLimiter);
+
+        const authLimiter = rateLimit({
+            windowMs: 15 * 60 * 1000,
+            max: 15,
+            standardHeaders: true,
+            legacyHeaders: false,
+            skip: (req) => req.method === 'OPTIONS',
+            message: { statusCode: 429, message: 'Too many login attempts. Please wait 15 minutes before trying again.' },
+        });
+        app.use('/api/auth/login', authLimiter);
+
+        const signupLimiter = rateLimit({
+            windowMs: 60 * 60 * 1000,
+            max: 10,
+            standardHeaders: true,
+            legacyHeaders: false,
+            skip: (req) => req.method === 'OPTIONS',
+            message: { statusCode: 429, message: 'Too many registration requests from this network. Please try again later.' },
+        });
+        app.use('/api/auth/signup', signupLimiter);
+
+        const resetLimiter = rateLimit({
+            windowMs: 15 * 60 * 1000,
+            max: 5,
+            standardHeaders: true,
+            legacyHeaders: false,
+            skip: (req) => req.method === 'OPTIONS',
+            message: { statusCode: 429, message: 'Too many password reset attempts. Please check your inbox or wait 15 minutes.' },
+        });
+        app.use('/api/auth/reset', resetLimiter);
+
+        const contactLimiter = rateLimit({
+            windowMs: 60 * 60 * 1000,
+            max: 10,
+            standardHeaders: true,
+            legacyHeaders: false,
+            skip: (req) => req.method === 'OPTIONS',
+            message: { statusCode: 429, message: 'Too many contact messages sent. Please wait before sending another inquiry.' },
+        });
+        app.use('/api/contact', contactLimiter);
+
+        const newsletterLimiter = rateLimit({
+            windowMs: 60 * 60 * 1000,
+            max: 10,
+            standardHeaders: true,
+            legacyHeaders: false,
+            skip: (req) => req.method === 'OPTIONS',
+            message: { statusCode: 429, message: 'Too many subscription requests. Please try again later.' },
+        });
+        app.use('/api/newsletter/subscribe', newsletterLimiter);
 
         // Security with Helmet
         app.use(helmet.default({
@@ -1136,6 +1224,18 @@ async function bootstrap() {
             crossOriginEmbedderPolicy: false,
             crossOriginResourcePolicy: { policy: 'cross-origin' },
         }));
+
+        // Universal Input Sanitization Middleware to strip XSS and dangerous script tags
+        const { sanitizeInput } = await import('./common/utils/sanitize.util');
+        app.use((req: any, _res: any, next: () => void) => {
+            if (req.body && typeof req.body === 'object') {
+                req.body = sanitizeInput(req.body);
+            }
+            if (req.query && typeof req.query === 'object') {
+                req.query = sanitizeInput(req.query);
+            }
+            next();
+        });
 
         // Validation
         app.useGlobalPipes(new ValidationPipe({

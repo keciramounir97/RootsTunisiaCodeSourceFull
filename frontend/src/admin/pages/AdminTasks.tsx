@@ -29,12 +29,13 @@ interface TaskItem {
   id: number;
   title: string;
   description?: string;
-  user_id: number;
+  user_id?: number;
   user_email?: string;
   status: "todo" | "in_progress" | "done";
   priority?: "low" | "medium" | "high";
   image_url?: string;
   created_at: string;
+  updated_at?: string;
 }
 
 export default function AdminTasks() {
@@ -133,7 +134,7 @@ export default function AdminTasks() {
   const submitForm = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formTitle.trim()) {
-      showToast("Task title is required", "error");
+      showToast(t("task_title_required", "Task title is required"), "error");
       return;
     }
 
@@ -152,10 +153,10 @@ export default function AdminTasks() {
     // Instant optimistic update
     if (editingTask) {
       setTasks((prev) => prev.map((t) => (t.id === editingTask.id ? optimisticTask : t)));
-      showToast("Task updated successfully!");
+      showToast(t("task_updated_success", "Task updated successfully!"));
     } else {
       setTasks((prev) => [optimisticTask, ...prev]);
-      showToast("New task created!");
+      showToast(t("new_task_created", "New task created!"));
     }
     setModalOpen(false);
 
@@ -194,17 +195,17 @@ export default function AdminTasks() {
       const isUserMode = !isAdmin || viewMode === "my";
       const endpoint = isUserMode ? `/my/tasks/${task.id}` : `/admin/tasks/${task.id}`;
       await api.patch(endpoint, { status: nextStatus });
-      showToast(`Task status updated to ${nextStatus.replace("_", " ")}`);
+      showToast(t("task_status_updated", "Task status updated"));
     } catch {
       fetchTasks();
     }
   };
 
   const deleteTask = async (id: number) => {
-    if (!window.confirm("Are you sure you want to delete this task?")) return;
+    if (!window.confirm(t("confirm_delete_task", "Are you sure you want to delete this task?"))) return;
     // Instant optimistic removal
     setTasks((prev) => prev.filter((t) => t.id !== id));
-    showToast("Task deleted");
+    showToast(t("task_deleted", "Task deleted"));
     if (viewTask?.id === id) setViewTask(null);
 
     try {
@@ -233,21 +234,21 @@ export default function AdminTasks() {
         return (
           <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 flex items-center gap-1">
             <Clock className="w-3 h-3 text-gray-400" />
-            To Do
+            {t("status_todo", "To Do")}
           </span>
         );
       case "in_progress":
         return (
           <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center gap-1">
             <AlertCircle className="w-3 h-3 text-amber-500" />
-            In Progress
+            {t("status_in_progress", "In Progress")}
           </span>
         );
       case "done":
         return (
           <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-green-500/15 text-green-600 dark:text-green-400 flex items-center gap-1">
             <CheckCircle2 className="w-3 h-3 text-green-500" />
-            Done
+            {t("status_done", "Done")}
           </span>
         );
     }
@@ -256,12 +257,12 @@ export default function AdminTasks() {
   const getPriorityBadge = (priority?: string) => {
     switch (priority) {
       case "high":
-        return <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300">High Priority</span>;
+        return <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300">{t("high_priority", "High Priority")}</span>;
       case "medium":
-        return <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">Med Priority</span>;
+        return <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">{t("med_priority", "Med Priority")}</span>;
       case "low":
       default:
-        return <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">Low Priority</span>;
+        return <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">{t("low_priority", "Low Priority")}</span>;
     }
   };
 
@@ -280,7 +281,7 @@ export default function AdminTasks() {
               {t("research_tasks", "Research Tasks")}
             </h1>
             <p className="text-xs text-[var(--text-color)] opacity-70">
-              Track genealogy tasks e.g. "Find birth record", "Verify marriage", "Check civil registers".
+              {t("tasks_desc_long", "Track genealogy tasks e.g. Find birth record, Verify marriage, Check civil registers.")}
             </p>
           </div>
         </div>
@@ -294,7 +295,7 @@ export default function AdminTasks() {
                   viewMode === "my" ? "bg-white dark:bg-[#1a2e2d] shadow text-[#0d9488]" : "opacity-60"
                 }`}
               >
-                My Tasks
+                {t("my_tasks", "My Tasks")}
               </button>
               <button
                 onClick={() => setViewMode("all")}
@@ -302,7 +303,7 @@ export default function AdminTasks() {
                   viewMode === "all" ? "bg-white dark:bg-[#1a2e2d] shadow text-[#0d9488]" : "opacity-60"
                 }`}
               >
-                All System Tasks
+                {t("all_system_tasks", "All System Tasks")}
               </button>
             </div>
           )}
@@ -322,24 +323,24 @@ export default function AdminTasks() {
       <div className="p-4 rounded-2xl border border-[var(--border-color)] bg-white dark:bg-[#1a2e2d] shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3 text-xs">
           <span className="font-bold text-gray-900 dark:text-white">
-            Tasks Created: <b className="text-[#d9a441]">{tasksQuota.used}</b> / {tasksQuota.max === -1 ? "∞" : tasksQuota.max}
+            {t("tasks_created", "Tasks Created:")} <b className="text-[#d9a441]">{tasksQuota.used}</b> / {tasksQuota.max === -1 ? "∞" : tasksQuota.max}
           </span>
           {tasksQuota.max === 25 && (
             <span className="px-2 py-0.5 rounded-full bg-teal-500/15 text-[#0d9488] font-bold text-[10px]">
-              Free Tier (Limit: 25 Tasks)
+              {t("free_tier_task_limit", "Free Tier (Limit: 25 Tasks)")}
             </span>
           )}
         </div>
 
         {isMaxReached && (
           <div className="flex items-center gap-2">
-            <span className="text-xs text-red-500 font-bold">Quota Reached (100/100)</span>
+            <span className="text-xs text-red-500 font-bold">{t("quota_reached", "Quota Reached")} (100/100)</span>
             <Link
               to="/admin/user-upgrade"
               className="px-3 py-1 rounded-lg bg-gradient-to-r from-[#d9a441] to-[#e8c377] text-[#092C2B] font-bold text-xs inline-flex items-center gap-1 shadow"
             >
               <Crown className="w-3.5 h-3.5" />
-              <span>Upgrade Plan</span>
+              <span>{t("upgrade_plan", "Upgrade Plan")}</span>
             </Link>
           </div>
         )}
@@ -355,7 +356,7 @@ export default function AdminTasks() {
               statusFilter === "all" ? "bg-white dark:bg-[#1a2e2d] shadow text-[#0d9488]" : "opacity-60"
             }`}
           >
-            All ({tasks.length})
+            {t("all", "All")} ({tasks.length})
           </button>
           <button
             onClick={() => setStatusFilter("todo")}
@@ -363,7 +364,7 @@ export default function AdminTasks() {
               statusFilter === "todo" ? "bg-white dark:bg-[#1a2e2d] shadow text-[#0d9488]" : "opacity-60"
             }`}
           >
-            To Do ({tasks.filter((t) => t.status === "todo").length})
+            {t("status_todo", "To Do")} ({tasks.filter((t) => t.status === "todo").length})
           </button>
           <button
             onClick={() => setStatusFilter("in_progress")}
@@ -371,7 +372,7 @@ export default function AdminTasks() {
               statusFilter === "in_progress" ? "bg-white dark:bg-[#1a2e2d] shadow text-[#0d9488]" : "opacity-60"
             }`}
           >
-            In Progress ({tasks.filter((t) => t.status === "in_progress").length})
+            {t("status_in_progress", "In Progress")} ({tasks.filter((t) => t.status === "in_progress").length})
           </button>
           <button
             onClick={() => setStatusFilter("done")}
@@ -379,7 +380,7 @@ export default function AdminTasks() {
               statusFilter === "done" ? "bg-white dark:bg-[#1a2e2d] shadow text-[#0d9488]" : "opacity-60"
             }`}
           >
-            Completed ({tasks.filter((t) => t.status === "done").length})
+            {t("status_completed", "Completed")} ({tasks.filter((t) => t.status === "done").length})
           </button>
         </div>
 
@@ -390,7 +391,7 @@ export default function AdminTasks() {
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search tasks..."
+            placeholder={t("placeholder_search_tasks", "Search tasks...")}
             className="w-full ltr:pl-9 rtl:pr-9 pr-4 py-2.5 text-xs rounded-xl border border-[var(--border-color)] bg-white dark:bg-[#1a2e2d] text-gray-900 dark:text-white focus:ring-2 focus:ring-[#0d9488]/40"
           />
         </div>
@@ -404,16 +405,16 @@ export default function AdminTasks() {
       ) : filtered.length === 0 ? (
         <div className="py-12 text-center rounded-2xl border border-dashed border-[var(--border-color)] bg-white/50 dark:bg-black/20 p-8 space-y-3">
           <ListChecks className="w-12 h-12 mx-auto text-gray-400 opacity-60" />
-          <h3 className="font-bold text-base text-gray-800 dark:text-gray-200">No tasks found</h3>
+          <h3 className="font-bold text-base text-gray-800 dark:text-gray-200">{t("no_tasks_found", "No tasks found")}</h3>
           <p className="text-xs text-gray-500 dark:text-gray-400 max-w-md mx-auto">
-            Organize your research action items e.g. "Obtain death certificate from Archives Nationales", "Verify birth year".
+            {t("tasks_empty_state_desc", "Organize your research action items e.g. Obtain death certificate from Archives Nationales, Verify birth year.")}
           </p>
           <button
             onClick={openAddModal}
             className="mt-2 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#0d9488] text-white text-xs font-bold"
           >
             <Plus className="w-4 h-4" />
-            <span>Create First Task</span>
+            <span>{t("create_first_task", "Create First Task")}</span>
           </button>
         </div>
       ) : (
@@ -446,21 +447,21 @@ export default function AdminTasks() {
                     <button
                       onClick={() => setViewTask(task)}
                       className="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-[#0d9488]"
-                      title="View Task Details"
+                      title={t("view_task_details", "عرض تفاصيل المهمة")}
                     >
                       <Eye className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => openEditModal(task)}
                       className="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-blue-500"
-                      title="Edit Task"
+                      title={t("edit_task", "تعديل المهمة")}
                     >
                       <Edit3 className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => deleteTask(task.id)}
                       className="p-1.5 rounded-lg text-gray-400 hover:bg-red-50 dark:hover:bg-red-900/30 hover:text-red-500"
-                      title="Delete Task"
+                      title={t("delete_task", "حذف المهمة")}
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -485,7 +486,7 @@ export default function AdminTasks() {
                   className="px-3 py-1.5 rounded-xl border border-[var(--border-color)] bg-gray-50 dark:bg-gray-800 text-[11px] font-bold text-gray-700 dark:text-gray-200 hover:bg-[#0d9488] hover:text-white transition-colors inline-flex items-center gap-1.5"
                 >
                   <Check className="w-3.5 h-3.5 text-green-500" />
-                  <span>Cycle Status</span>
+                  <span>{t("admin.tasks.cycle_status", "تغيير الحالة")}</span>
                 </button>
 
                 <span className="text-[11px] text-gray-400 flex items-center gap-1">
@@ -504,7 +505,7 @@ export default function AdminTasks() {
           <div className="w-full max-w-xl rounded-2xl bg-white dark:bg-[#1a2e2d] text-gray-900 dark:text-white p-6 shadow-2xl border border-[var(--border-color)] space-y-4">
             <div className="flex items-center justify-between border-b border-[var(--border-color)] pb-3">
               <h3 className="font-bold text-lg font-cinzel text-[#0d9488]">
-                {editingTask ? "Edit Research Task" : "+ Add Research Task"}
+                {editingTask ? t("edit_research_task", "Edit Research Task") : t("add_research_task", "+ Add Research Task")}
               </h3>
               <button
                 onClick={() => setModalOpen(false)}
@@ -517,24 +518,24 @@ export default function AdminTasks() {
             <form onSubmit={submitForm} className="space-y-4 text-xs">
               <div>
                 <label className="block font-bold mb-1">
-                  Task Title <span className="text-red-500">*</span>
+                  {t("task_title", "Task Title")} <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
                   value={formTitle}
                   onChange={(e) => setFormTitle(e.target.value)}
-                  placeholder="e.g. Find birth certificate for Mohamed Ben Ali"
+                  placeholder={t("placeholder_task_title", "e.g. Find birth certificate for Mohamed Ben Ali")}
                   required
                   className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--border-color)] bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#0d9488]/40"
                 />
               </div>
 
               <div>
-                <label className="block font-bold mb-1">Description / Notes</label>
+                <label className="block font-bold mb-1">{t("description_notes", "Description / Notes")}</label>
                 <textarea
                   value={formDesc}
                   onChange={(e) => setFormDesc(e.target.value)}
-                  placeholder="Details, archive location, record reference..."
+                  placeholder={t("placeholder_task_desc", "Details, archive location, record reference...")}
                   rows={4}
                   className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--border-color)] bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white resize-none"
                 />
@@ -542,40 +543,40 @@ export default function AdminTasks() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block font-bold mb-1">Status</label>
+                  <label className="block font-bold mb-1">{t("status", "Status")}</label>
                   <select
                     value={formStatus}
                     onChange={(e: any) => setFormStatus(e.target.value)}
                     className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--border-color)] bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white"
                   >
-                    <option value="todo">To Do</option>
-                    <option value="in_progress">In Progress</option>
-                    <option value="done">Completed</option>
+                    <option value="todo">{t("status_todo", "To Do")}</option>
+                    <option value="in_progress">{t("status_in_progress", "In Progress")}</option>
+                    <option value="done">{t("status_completed", "Completed")}</option>
                   </select>
                 </div>
 
                 <div>
-                  <label className="block font-bold mb-1">Priority</label>
+                  <label className="block font-bold mb-1">{t("priority", "Priority")}</label>
                   <select
                     value={formPriority}
                     onChange={(e: any) => setFormPriority(e.target.value)}
                     className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--border-color)] bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white"
                   >
-                    <option value="low">Low Priority</option>
-                    <option value="medium">Medium Priority</option>
-                    <option value="high">High Priority</option>
+                    <option value="low">{t("low_priority", "Low Priority")}</option>
+                    <option value="medium">{t("med_priority", "Med Priority")}</option>
+                    <option value="high">{t("high_priority", "High Priority")}</option>
                   </select>
                 </div>
               </div>
 
               {/* Upload Image Attachment */}
               <div>
-                <label className="block font-bold mb-1">Attachment Image</label>
+                <label className="block font-bold mb-1">{t("attachment_image", "Attachment Image")}</label>
                 <div className="flex items-center gap-4">
                   {formPreview ? (
                     <img
                       src={formPreview}
-                      alt="Preview"
+                      alt={t("preview", "معاينة")}
                       className="w-16 h-16 rounded-xl object-cover border border-[var(--border-color)]"
                     />
                   ) : (
@@ -589,7 +590,7 @@ export default function AdminTasks() {
                     onClick={() => fileRef.current?.click()}
                     className="px-3.5 py-2 rounded-xl bg-stone-500/15 hover:bg-stone-500/25 font-bold transition"
                   >
-                    {formPreview ? "Change Image" : "Upload File"}
+                    {formPreview ? t("change_image", "Change Image") : t("upload_file", "Upload File")}
                   </button>
                   <input
                     ref={fileRef}
@@ -607,7 +608,7 @@ export default function AdminTasks() {
                   onClick={() => setModalOpen(false)}
                   className="px-4 py-2.5 rounded-xl border border-[var(--border-color)] font-semibold"
                 >
-                  Cancel
+                  {t("cancel", "Cancel")}
                 </button>
                 <button
                   type="submit"
@@ -615,7 +616,7 @@ export default function AdminTasks() {
                   className="px-6 py-2.5 rounded-xl bg-[#0d9488] text-white font-bold inline-flex items-center gap-2 hover:bg-[#0d9488]/90 shadow transition-all"
                 >
                   {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-                  <span>{submitting ? "Saving..." : editingTask ? "Update Task" : "Save Task"}</span>
+                  <span>{submitting ? t("saving", "Saving...") : editingTask ? t("update_task", "Update Task") : t("save_task", "Save Task")}</span>
                 </button>
               </div>
             </form>

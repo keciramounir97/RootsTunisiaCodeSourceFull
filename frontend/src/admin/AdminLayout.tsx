@@ -4,8 +4,10 @@ import AdminHeader from "./components/AdminHeader";
 import AdminSidebar from "./components/AdminSidebar";
 import Breadcrumb from "./components/Breadcrumb";
 import { useSiteImages } from "../hooks/useSiteImages";
+import { useTranslation } from "../context/TranslationContext";
 
 export default function AdminLayout() {
+  const { dir } = useTranslation();
   const [open, setOpen] = useState(() => {
     if (typeof window === "undefined") return true;
     const saved = localStorage.getItem("admin_sidebar_open");
@@ -22,6 +24,8 @@ export default function AdminLayout() {
     }
   }, [open]);
 
+  const isRtl = dir === "rtl";
+
   return (
     <div
       className="bg-[var(--background)] text-[var(--foreground)] min-h-screen bg-cover bg-center bg-fixed bg-no-repeat transition-colors duration-300 relative"
@@ -35,7 +39,11 @@ export default function AdminLayout() {
         <AdminSidebar open={open} onClose={() => setOpen(false)} onToggle={() => setOpen((v) => !v)} />
         <main
           className={`transition-all duration-300 pt-20 pb-12 px-4 sm:px-8 ${
-            open ? "lg:pl-72" : "lg:pl-0"
+            open
+              ? isRtl
+                ? "lg:pr-72 lg:pl-0"
+                : "lg:pl-72 lg:pr-0"
+              : "lg:pl-0 lg:pr-0"
           }`}
         >
           <div className={`mx-auto space-y-6 transition-all duration-300 ${open ? "max-w-7xl" : "max-w-[98%] w-full"}`}>

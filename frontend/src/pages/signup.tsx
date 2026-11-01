@@ -14,7 +14,11 @@ const signupFormSchema = z.object({
   name: z.string().min(1, "Name is required"),
   email: z.string().email("Valid email is required"),
   password: z.string().min(6, "Password must be at least 6 characters"),
-  role: z.number().default(2),
+  role: z.number().optional(),
+  agreeTermsAndAge: z.boolean().refine((val) => val === true, {
+    message: "You must be at least 16 years old and agree to the Terms of Service and Privacy Policy",
+  }),
+  marketingConsent: z.boolean().optional(),
 });
 
 type RegisterFormData = z.infer<typeof signupFormSchema>;
@@ -46,6 +50,8 @@ export default function SignUp() {
       email: "",
       password: "",
       role: 2,
+      agreeTermsAndAge: false,
+      marketingConsent: false,
     },
   });
 
@@ -53,11 +59,18 @@ export default function SignUp() {
     setError("");
     setLoading(true);
     try {
-      await registerAuth({
-        fullName: data.name.trim(),
-        email: data.email.trim().toLowerCase(),
-        password: data.password,
-      });
+      await registerAuth(data.name.trim(), undefined, data.email.trim().toLowerCase(), data.password);
+      if (data.marketingConsent) {
+        try {
+          await fetch("/api/newsletter/subscribe", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email: data.email.trim().toLowerCase() }),
+          });
+        } catch {
+          // Non-blocking newsletter subscription
+        }
+      }
       navigate("/admin", { replace: true });
     } catch (err: any) {
       const errorMessage =
@@ -73,7 +86,7 @@ export default function SignUp() {
   return (
     <div className="bg-[var(--background)] text-[var(--foreground)] min-h-[85vh] py-8 sm:py-12">
       <SEO
-        title="Create Account — Roots Tunisia"
+        title={t("seo_signup_title", "إنشاء حساب — جذور تونس")}
         description="Join Roots Tunisia to document your family tree, search archive registers and preserve Tunisian heritage."
         keywords={["Register Roots Tunisia", "Create Tunisian genealogy account"]}
       />
@@ -84,19 +97,19 @@ export default function SignUp() {
           <div className="relative hidden lg:block overflow-hidden min-h-[600px]">
             <img
               src={kairouan}
-              alt="Great Mosque of Kairouan courtyard"
+              alt={t("kairouan_courtyard_alt", "صحن جامع القيروان الكبير")}
               width={1600}
               height={1000}
               className="h-full w-full object-cover"
             />
             <div className="hero-scrim absolute inset-0" />
-            <div className="absolute bottom-12 left-12 right-12 max-w-md z-10">
-              <p className="eyebrow text-[var(--gold)]">Roots Tunisia</p>
+            <div className="absolute bottom-12 left-12 right-12 max-w-md z-10 rtl:text-right">
+              <p className="eyebrow text-[var(--gold)]">{t("roots_tunisia", "Roots Tunisia")}</p>
               <p className="mt-3 font-display text-3xl text-white font-semibold leading-snug">
-                Preserve your family story for generations to come.
+                {t("signup_hero_title", "Preserve your family story for generations to come.")}
               </p>
               <p className="mt-2 text-xs text-white/80 leading-relaxed">
-                Build multi-generational lineages with verified archival citations from across 24 Tunisian governorates.
+                {t("signup_hero_desc", "Build multi-generational lineages with verified archival citations from across 24 Tunisian governorates.")}
               </p>
             </div>
           </div>
@@ -105,9 +118,9 @@ export default function SignUp() {
           <div className="flex items-center justify-center p-8 sm:p-12 lg:p-16 bg-[var(--card)]">
             <form className="w-full max-w-md" onSubmit={handleSubmit(onSubmit)}>
               <Logo />
-              <h1 className="display-lg mt-8 text-[var(--foreground)]">Create your account</h1>
+              <h1 className="display-lg mt-8 text-[var(--foreground)]">{t("create_account", "Create your account")}</h1>
               <p className="mt-2 text-sm text-[var(--muted-foreground)]">
-                Start building your Tunisian family tree with verified records.
+                {t("signup_subtitle", "Start building your Tunisian family tree with verified records.")}
               </p>
 
               {error && (
@@ -120,48 +133,48 @@ export default function SignUp() {
               <div className="mt-8 grid gap-4">
                 <label className="grid gap-1.5">
                   <span className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
-                    Full Name
+                    {t("full_name", "Full Name")}
                   </span>
                   <input
                     {...register("name")}
                     type="text"
                     required
-                    className="rounded-sm border border-[var(--border)] bg-[var(--background)] px-4 py-2.5 text-sm text-[var(--foreground)] outline-none focus:border-[var(--gold)]"
-                    placeholder="Mohamed Ben Amor"
+                    className="rounded-sm border border-[var(--border)] bg-[var(--background)] px-4 py-2.5 text-sm text-[var(--foreground)] outline-none focus:border-[var(--gold)] rtl:text-right"
+                    placeholder={t("placeholder_name_example", "Mohamed Ben Amor")}
                   />
                   {errors.name && <p className="text-xs text-red-500">{errors.name.message}</p>}
                 </label>
 
                 <label className="grid gap-1.5">
                   <span className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
-                    Email Address
+                    {t("email_address", "Email Address")}
                   </span>
                   <input
                     {...register("email")}
                     type="email"
                     required
-                    className="rounded-sm border border-[var(--border)] bg-[var(--background)] px-4 py-2.5 text-sm text-[var(--foreground)] outline-none focus:border-[var(--gold)]"
-                    placeholder="you@example.tn"
+                    className="rounded-sm border border-[var(--border)] bg-[var(--background)] px-4 py-2.5 text-sm text-[var(--foreground)] outline-none focus:border-[var(--gold)] rtl:text-right"
+                    placeholder={t("placeholder_email_example", "you@example.tn")}
                   />
                   {errors.email && <p className="text-xs text-red-500">{errors.email.message}</p>}
                 </label>
 
                 <label className="grid gap-1.5">
                   <span className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
-                    Password
+                    {t("password", "Password")}
                   </span>
                   <div className="relative">
                     <input
                       {...register("password")}
                       type={showPassword ? "text" : "password"}
                       required
-                      className="w-full rounded-sm border border-[var(--border)] bg-[var(--background)] px-4 py-2.5 text-sm text-[var(--foreground)] outline-none focus:border-[var(--gold)]"
-                      placeholder="At least 6 characters"
+                      className="w-full rounded-sm border border-[var(--border)] bg-[var(--background)] px-4 py-2.5 text-sm text-[var(--foreground)] outline-none focus:border-[var(--gold)] rtl:text-right"
+                      placeholder={t("placeholder_min_chars", "At least 6 characters")}
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-3 text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
+                      className="absolute right-3 rtl:right-auto rtl:left-3 top-3 text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
                     >
                       {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
@@ -169,15 +182,53 @@ export default function SignUp() {
                   {errors.password && <p className="text-xs text-red-500">{errors.password.message}</p>}
                 </label>
 
+                {/* Explicit Consent & Age Controls */}
+                <div className="space-y-3 pt-2 text-xs text-[var(--muted-foreground)]">
+                  <label className="flex items-start gap-2.5 cursor-pointer select-none">
+                    <input
+                      {...register("agreeTermsAndAge")}
+                      type="checkbox"
+                      id="signup-agree-terms"
+                      className="mt-0.5 h-4 w-4 rounded border-[var(--border)] text-[var(--gold)] focus:ring-[var(--gold)]"
+                    />
+                    <span className="leading-snug">
+                      {t("signup_agree_age_prefix", "I confirm that I am at least 16 years of age and agree to the")}{" "}
+                      <Link to="/terms" target="_blank" className="text-[var(--gold)] underline hover:text-[var(--foreground)]">
+                        {t("terms_of_service", "Terms of Service")}
+                      </Link>{" "}
+                      {t("and", "and")}{" "}
+                      <Link to="/privacy" target="_blank" className="text-[var(--gold)] underline hover:text-[var(--foreground)]">
+                        {t("privacy_policy", "Privacy Policy")}
+                      </Link>
+                      . <span className="text-red-500">*</span>
+                    </span>
+                  </label>
+                  {errors.agreeTermsAndAge && (
+                    <p className="text-xs text-red-500 pl-6.5">{errors.agreeTermsAndAge.message}</p>
+                  )}
+
+                  <label className="flex items-start gap-2.5 cursor-pointer select-none">
+                    <input
+                      {...register("marketingConsent")}
+                      type="checkbox"
+                      id="signup-marketing-consent"
+                      className="mt-0.5 h-4 w-4 rounded border-[var(--border)] text-[var(--gold)] focus:ring-[var(--gold)]"
+                    />
+                    <span className="leading-snug">
+                      {t("signup_marketing_optin", "(Optional) I would like to receive occasional email updates about newly indexed Tunisian archives and historical records. You can unsubscribe at any time.")}
+                    </span>
+                  </label>
+                </div>
+
                 <button type="submit" disabled={loading} className="btn-base btn-red w-full mt-3">
-                  {loading ? "Creating account…" : "Create free account"}
+                  {loading ? t("creating_account", "Creating account…") : t("create_free_account", "Create free account")}
                 </button>
               </div>
 
               <p className="mt-6 text-sm text-[var(--muted-foreground)] text-center">
-                Already have an account?{" "}
+                {t("already_have_account", "Already have an account?")}{" "}
                 <Link to="/login" className="font-semibold text-[var(--gold)] hover:underline">
-                  Sign in
+                  {t("login", "Sign in")}
                 </Link>
               </p>
             </form>

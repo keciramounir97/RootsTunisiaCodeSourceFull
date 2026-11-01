@@ -161,7 +161,7 @@ export default function AccountDeletionRequests() {
                       <Clock className="w-4 h-4" />
                       {t("legacy.requested", "Requested")}: {formatDate(request.requested_at)}
                     </span>
-                    <span>{t("legacy.status", "Status")}: {request.status}</span>
+                    <span>{t("legacy.status", "الحالة")}: {t(`legacy.status_${request.status}`, request.status)}</span>
                     {request.processed_at ? <span>{t("legacy.processed", "Processed")}: {formatDate(request.processed_at)}</span> : null}
                     {request.processorFullName ? <span>{t("legacy.by", "By")}: {request.processorFullName}</span> : null}
                   </div>

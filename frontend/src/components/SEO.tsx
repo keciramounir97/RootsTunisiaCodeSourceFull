@@ -1,3 +1,4 @@
+import { useTranslation } from "../context/TranslationContext";
 import { useEffect } from "react";
 
 interface SEOProps {
@@ -19,10 +20,12 @@ export default function SEO({
   canonical,
   jsonLd,
 }: SEOProps) {
+  const { t, locale } = useTranslation();
+  const isAr = locale === "ar";
   useEffect(() => {
     // 1. Update Title
     if (title) {
-      document.title = `${title} | Roots Tunisia`;
+      document.title = `${title} | ${isAr ? "جذور تونس" : "Roots Tunisia"}`;
     }
 
     // Helper to get or create meta tag

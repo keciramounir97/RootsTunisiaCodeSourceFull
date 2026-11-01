@@ -14,6 +14,7 @@ import {
   FileCode,
   MapPin,
   ExternalLink,
+  BookOpen,
 } from "lucide-react";
 import { api } from "../api/client";
 import { useTranslation } from "../context/TranslationContext";
@@ -23,62 +24,23 @@ import manuscriptImage from "../assets/family-archive.jpg";
 
 interface DocumentItem {
   id: number | string;
+  titleKey?: string;
   title: string;
   type: string;
+  typeKey?: string;
   governorate?: string;
   dateStr?: string;
+  archiveFondsKey?: string;
   archiveFonds?: string;
+  summaryKey?: string;
   summary: string;
   documentUrl?: string;
   previewImage?: string;
 }
 
-const TUNISIAN_INITIAL_DOCS: DocumentItem[] = [
-  {
-    id: "doc-tn-1",
-    title: "Beylical Sijill Decrees — Tunis Medina (1852)",
-    type: "Beylical Decree",
-    governorate: "Tunis",
-    dateStr: "1268 AH / 1852 AD",
-    archiveFonds: "Archives Nationales de Tunisie (Fonds Sadiki / Beylical)",
-    summary: "Royal decree bearing the seal of Ahmed I Bey granting waqf exemptions and naming lineage leaders in Tunis Medina.",
-    previewImage: manuscriptImage,
-  },
-  {
-    id: "doc-tn-2",
-    title: "Habous Land Deed — Olive Groves of Sfax & Mahdia",
-    type: "Habous & Property",
-    governorate: "Sfax / Mahdia",
-    dateStr: "1874 AD",
-    archiveFonds: "Registres Charaïques de Sfax",
-    summary: "Endowment deed detailing family inheritance, olive grove boundaries (ghaba), and patron lineage names in coastal Tunisia.",
-    previewImage: manuscriptImage,
-  },
-  {
-    id: "doc-tn-3",
-    title: "Etat Civil Civil Extract — Protectorate Register (1894)",
-    type: "Etat Civil",
-    governorate: "Bizerte",
-    dateStr: "1894 AD",
-    archiveFonds: "Archives du Protectorat & ANOM",
-    summary: "Civil registry extract recording birth, parent names, occupation, and residence in Bizerte under late 19th century registers.",
-    previewImage: manuscriptImage,
-  },
-  {
-    id: "doc-tn-4",
-    title: "Kairouan Waqf Charter for Al-Zaytuna Scholars",
-    type: "Waqf & Education",
-    governorate: "Kairouan",
-    dateStr: "1782 AD",
-    archiveFonds: "Bibliothèque Nationale de Tunisie",
-    summary: "Scholar waqf certificate establishing family lineage ties and scholarship stipends for Kairouani scholars studying in Zaytuna.",
-    previewImage: manuscriptImage,
-  },
-];
-
 export default function GalleryDocuments() {
   const { theme } = useTheme();
-  const { t } = useTranslation();
+  const { t, isRtl } = useTranslation();
 
   const [documents, setDocuments] = useState<DocumentItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -93,22 +55,34 @@ export default function GalleryDocuments() {
         setLoading(true);
         const { data } = await api.get("/documents");
         const items = Array.isArray(data?.data) ? data.data : Array.isArray(data) ? data : [];
-        if (items.length > 0) {
-          setDocuments(items);
-        } else {
-          setDocuments(TUNISIAN_INITIAL_DOCS);
-        }
+        const formatted = items.map((d: any) => ({
+          id: d.id,
+          title: d.title || "Archival Document",
+          type: d.type || "Historical Deed",
+          governorate: d.governorate || "Tunisia",
+          dateStr: d.date || d.dateStr || "19th Century",
+          archiveFonds: d.archive_fonds || d.archiveFonds || "Archives Nationales de Tunisie",
+          summary: d.summary || d.description || "",
+          previewImage: d.preview_image || d.previewImage || manuscriptImage,
+        }));
+        setDocuments(formatted);
       } catch {
-        setDocuments(TUNISIAN_INITIAL_DOCS);
+        setDocuments([]);
       } finally {
         setLoading(false);
       }
     })();
   }, []);
 
-  const documentTypes = ["All", "Beylical Decree", "Habous & Property", "Etat Civil", "Waqf & Education"];
+  const typeOptions = [
+    { key: "All", labelKey: "cat_all" },
+    { key: "Beylical Decree", labelKey: "doc_beylical_decree" },
+    { key: "Habous & Property", labelKey: "doc_habous_property" },
+    { key: "Etat Civil", labelKey: "doc_etat_civil" },
+    { key: "Waqf & Education", labelKey: "doc_waqf_education" },
+  ];
 
-  const filteredDocs = useMemo(() => {
+  const filteredDocuments = useMemo(() => {
     return documents.filter((item) => {
       const matchQuery =
         !query ||
@@ -125,48 +99,49 @@ export default function GalleryDocuments() {
       hero={
         <div className="space-y-4 text-center">
           <p className="eyebrow text-[var(--gold)] text-shadow-gold tracking-widest font-bold">
-            {t("nav_documents", "Roots Tunisia Legal & Archival Records")}
+            {t("nav_documents")}
           </p>
           <h1 className="display-xl text-white font-bold hero-title-shadow text-shadow-glow tracking-wide">
-            {t("gallery_docs_title", "Historical Documents & Civil Extracts")}
+            {t("doc_inspector_title")}
           </h1>
           <div className="gold-rule mt-4 w-28 mx-auto shadow-lg" />
           <p className="max-w-3xl mx-auto text-base text-slate-100/95 font-medium drop-shadow-md">
             {t(
-              "gallery_docs_desc",
-              "Search digitized Beylical sijillat, habous property deeds, Ottoman decrees, and Protectorate civil extracts from the Archives Nationales de Tunisie.",
+              "documents_desc",
+              "Explore high-resolution digitized extracts of Beylical decrees, Sijillat Charaïques, Habous deeds, and municipal civil status records.",
             )}
           </p>
         </div>
       }
     >
-      <div className="max-w-6xl mx-auto px-4 py-8 space-y-8">
-        {/* Controls */}
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4 pb-4 border-b border-[var(--border)]">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+        {/* Search & Filter Bar */}
+        <div className="surface-card p-4 sm:p-5 rounded-lg border border-[var(--gold)]/35 bg-[var(--card)]/95 shadow-md flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
           <div className="relative w-full md:w-80">
-            <Search className="w-4 h-4 text-[var(--muted-foreground)] absolute start-3 top-2.5" />
+            <Search className="w-4 h-4 text-[var(--muted-foreground)] absolute start-3 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
               type="text"
-              placeholder={t("search_docs_placeholder", "Search document title, region, or summary…")}
+              placeholder={t("search_docs_placeholder")}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              className="w-full ps-9 pe-3 py-1.5 text-xs rounded-sm border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] outline-none focus:border-[var(--gold)]"
+              className="w-full ps-9 pe-3 py-2 text-xs rounded-md border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] outline-none focus:border-[var(--gold)]"
             />
           </div>
 
-          <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto">
+          <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto pb-1 scrollbar-thin">
             <Filter className="w-4 h-4 text-[var(--gold)] shrink-0" />
-            {documentTypes.map((type) => (
+            {typeOptions.map((tOpt) => (
               <button
-                key={type}
-                onClick={() => setTypeFilter(type)}
-                className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap cursor-pointer transition-all ${
-                  typeFilter === type
-                    ? "bg-[var(--primary)] text-white shadow-sm"
+                key={tOpt.key}
+                type="button"
+                onClick={() => setTypeFilter(tOpt.key)}
+                className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap cursor-pointer transition-all ${
+                  typeFilter === tOpt.key
+                    ? "bg-[var(--gold)] text-[#1f160f] shadow-sm font-bold"
                     : "bg-[var(--card)] text-[var(--foreground)] border border-[var(--border)] hover:border-[var(--gold)]"
                 }`}
               >
-                {type}
+                {t(tOpt.labelKey)}
               </button>
             ))}
           </div>
@@ -177,102 +152,178 @@ export default function GalleryDocuments() {
           <div className="flex justify-center py-16">
             <div className="w-10 h-10 border-2 border-[var(--gold)] border-t-transparent rounded-full animate-spin" />
           </div>
+        ) : filteredDocuments.length === 0 ? (
+          <div className="surface-card frame-gold p-12 text-center rounded-lg space-y-4 max-w-xl mx-auto my-8">
+            <FileText className="w-12 h-12 text-[var(--gold)] mx-auto opacity-80" />
+            <h3 className="text-xl font-display font-bold text-[var(--foreground)]">
+              {t("no_records_found")}
+            </h3>
+            <p className="text-sm text-[var(--muted-foreground)]">
+              {t("search_docs_placeholder")}
+            </p>
+          </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {filteredDocs.map((doc) => (
-              <div
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6 items-stretch">
+            {filteredDocuments.map((doc) => (
+              <article
                 key={doc.id}
-                className="surface-card frame-gold p-5 rounded-lg shadow-md space-y-3 flex flex-col justify-between"
+                className="surface-card frame-gold p-6 sm:p-7 rounded-lg shadow-md flex h-full flex-col justify-between space-y-4 hover:-translate-y-1 transition-all text-start"
               >
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between gap-3 border-b border-[var(--gold)]/20 pb-3">
                     <span className="px-2.5 py-0.5 rounded-sm text-[0.65rem] font-bold uppercase tracking-wider bg-[var(--gold)]/15 text-[var(--gold)] border border-[var(--gold)]/30">
-                      {doc.type}
+                      {doc.typeKey ? t(doc.typeKey) : doc.type}
                     </span>
-                    <span className="text-[0.65rem] font-mono text-[var(--muted-foreground)] flex items-center gap-1">
-                      <MapPin className="w-3 h-3 text-[var(--primary)]" />
-                      {doc.governorate}
+                    <span className="text-[0.68rem] font-mono text-[var(--muted-foreground)] font-bold">
+                      {doc.dateStr}
                     </span>
                   </div>
 
-                  <h3 className="text-base font-serif font-bold text-[var(--foreground)] leading-snug">
-                    {doc.title}
-                  </h3>
+                  <div className="flex gap-4 items-start">
+                    <div className="w-24 h-24 rounded-md overflow-hidden border border-[var(--gold)]/30 shrink-0 bg-black/30">
+                      <img
+                        src={doc.previewImage || manuscriptImage}
+                        alt={doc.title}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-display font-bold text-base sm:text-lg text-[var(--foreground)] leading-snug">
+                        {doc.title}
+                      </h3>
+                      {doc.governorate && (
+                        <p className="text-xs text-[var(--gold)] font-semibold flex items-center gap-1 mt-1">
+                          <MapPin className="h-3 w-3 shrink-0" />
+                          <span>{doc.governorate}</span>
+                        </p>
+                      )}
+                    </div>
+                  </div>
 
-                  <p className="text-xs text-[var(--foreground)]/80 leading-relaxed line-clamp-3">
+                  <p className="text-xs sm:text-sm text-[var(--muted-foreground)] line-clamp-3 leading-relaxed">
                     {doc.summary}
                   </p>
                 </div>
 
-                <div className="pt-3 border-t border-[var(--border)] space-y-2">
-                  <div className="flex items-center justify-between text-[0.65rem] text-[var(--muted-foreground)] font-mono">
-                    <span className="flex items-center gap-1">
-                      <Calendar className="w-3 h-3 text-[var(--gold)]" />
-                      {doc.dateStr || "Historical Era"}
-                    </span>
-                    <span className="truncate max-w-[200px]">{doc.archiveFonds}</span>
+                <div className="pt-3 border-t border-[var(--border)] space-y-3">
+                  <div className="flex items-center justify-between text-[0.68rem] text-[var(--muted-foreground)] font-mono">
+                    <span className="truncate max-w-[260px]">{doc.archiveFonds}</span>
                   </div>
 
-                  <button
-                    onClick={() => setActiveDoc(doc)}
-                    className="w-full btn-base btn-gold text-xs py-1.5 flex items-center justify-center gap-1.5 cursor-pointer"
-                  >
-                    <Eye className="w-3.5 h-3.5" />
-                    <span>{t("view_document", "Inspect Document Details")}</span>
-                  </button>
+                  <div className="flex items-center gap-2 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => setActiveDoc(doc)}
+                      className="btn-base btn-gold flex-1 text-xs py-2 flex items-center justify-center gap-1.5 cursor-pointer"
+                    >
+                      <Eye className="w-3.5 h-3.5" />
+                      <span>{t("preview_extract")}</span>
+                    </button>
+                    <a
+                      href="http://www.archives.nat.tn"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn-base btn-outline text-xs py-2 px-3 flex items-center justify-center cursor-pointer"
+                      title={t("official_portal_link")}
+                    >
+                      <ExternalLink className="w-3.5 h-3.5 text-[var(--gold)]" />
+                    </a>
+                  </div>
                 </div>
-              </div>
+              </article>
             ))}
           </div>
         )}
+      </div>
 
-        {/* Inspection Modal */}
-        {activeDoc && (
-          <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4">
-            <div className="surface-card frame-gold p-6 rounded-lg max-w-xl w-full space-y-4 bg-[var(--card)] shadow-2xl">
-              <div className="flex items-center justify-between border-b border-[var(--border)] pb-3">
-                <div>
-                  <span className="text-[0.65rem] font-bold uppercase text-[var(--gold)]">{activeDoc.type}</span>
-                  <h3 className="text-lg font-serif font-bold text-[var(--foreground)]">{activeDoc.title}</h3>
-                </div>
-                <button onClick={() => setActiveDoc(null)} className="text-[var(--muted-foreground)] hover:text-[var(--foreground)] cursor-pointer">
-                  <X className="w-5 h-5" />
-                </button>
+      {/* Document Inspector Modal */}
+      {activeDoc && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 overflow-y-auto animate-fade-in"
+          onClick={() => setActiveDoc(null)}
+        >
+          <div
+            className="surface-card frame-gold relative w-full max-w-3xl max-h-[90vh] overflow-y-auto p-6 sm:p-8 rounded-xl bg-[var(--card)] shadow-2xl text-start"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              aria-label={t("close")}
+              onClick={() => setActiveDoc(null)}
+              className="absolute top-4 end-4 text-[var(--muted-foreground)] hover:text-[var(--foreground)] p-1 rounded-full hover:bg-[var(--gold)]/15 transition cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="flex items-center gap-3 border-b border-[var(--gold)]/25 pb-4">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--gold)]/15 text-[var(--gold)] ring-1 ring-[var(--gold)]/40 shrink-0">
+                <FileText className="h-6 w-6" />
               </div>
-
-              <div className="overflow-hidden rounded-md border border-[var(--border)] max-h-60">
-                <img src={activeDoc.previewImage || manuscriptImage} alt={activeDoc.title} className="w-full object-cover" />
-              </div>
-
-              <div className="space-y-2 text-xs text-[var(--foreground)]">
-                <h4 className="font-bold text-sm text-[var(--gold)]">Document Summary</h4>
-                <p className="leading-relaxed">{activeDoc.summary}</p>
-                <div className="p-3 rounded-sm bg-[var(--background)] border border-[var(--border)] font-mono text-[0.7rem] space-y-1">
-                  <div><strong>Governorate:</strong> {activeDoc.governorate}</div>
-                  <div><strong>Date / Period:</strong> {activeDoc.dateStr}</div>
-                  <div><strong>Archival Fonds:</strong> {activeDoc.archiveFonds}</div>
-                </div>
-              </div>
-
-              <div className="flex justify-end gap-2 pt-2 border-t border-[var(--border)]">
-                <button
-                  onClick={() => setActiveDoc(null)}
-                  className="btn-base btn-outline-ink text-xs px-4 py-2 cursor-pointer"
-                >
-                  Close
-                </button>
-                <a
-                  href="/my-download-requests"
-                  className="btn-base btn-gold text-xs px-5 py-2 flex items-center gap-1.5 cursor-pointer"
-                >
-                  <Download className="w-3.5 h-3.5" />
-                  <span>Request Full Copy</span>
-                </a>
+              <div>
+                <span className="text-[0.68rem] font-bold uppercase tracking-[0.16em] text-[var(--gold)]">
+                  {activeDoc.typeKey ? t(activeDoc.typeKey) : activeDoc.type}
+                </span>
+                <h3 className="font-display text-xl sm:text-2xl font-bold text-[var(--foreground)]">
+                  {activeDoc.title}
+                </h3>
+                <p className="text-xs text-[var(--gold)] font-bold mt-0.5">
+                  {activeDoc.dateStr} • {activeDoc.governorate}
+                </p>
               </div>
             </div>
+
+            <div className="mt-5 space-y-4">
+              <div className="h-64 sm:h-80 w-full rounded-lg overflow-hidden border border-[var(--gold)]/30 bg-black/40">
+                <img
+                  src={activeDoc.previewImage || manuscriptImage}
+                  alt={activeDoc.title}
+                  className="w-full h-full object-contain"
+                />
+              </div>
+
+              <div className="p-4 rounded-md bg-[var(--background)]/70 border border-[var(--gold)]/20">
+                <p className="text-[0.68rem] font-bold uppercase text-[var(--gold)] mb-1">
+                  {t("doc_diplomatic_transcript")}
+                </p>
+                <p className="text-xs sm:text-sm text-[var(--foreground)] leading-relaxed">
+                  {activeDoc.summary}
+                </p>
+              </div>
+
+              <div className="p-4 rounded-md bg-[var(--background)]/70 border border-[var(--gold)]/20">
+                <p className="text-[0.68rem] font-bold uppercase text-[var(--gold)] mb-1">
+                  {t("doc_fonds_label")}
+                </p>
+                <p className="text-xs font-mono text-[var(--muted-foreground)]">
+                  {activeDoc.archiveFonds}
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-6 pt-4 border-t border-[var(--gold)]/20 flex flex-wrap items-center justify-between gap-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <a
+                  href="http://www.archives.nat.tn"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn-base btn-gold text-xs py-2 px-4 flex items-center gap-1.5"
+                >
+                  <ExternalLink className="h-3.5 w-3.5" />
+                  <span>{t("official_portal_link")}</span>
+                </a>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setActiveDoc(null)}
+                className="btn-base btn-outline text-xs py-2 px-4"
+              >
+                {t("close")}
+              </button>
+            </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </RootsPageShell>
   );
 }

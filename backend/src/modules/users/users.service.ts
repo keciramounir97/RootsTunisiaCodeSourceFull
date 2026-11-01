@@ -201,4 +201,67 @@ export class UsersService {
         await this.activityService.log(userId, 'auth', 'Requested account deletion');
         return { message: 'Account deletion request submitted to Super Admin.' };
     }
+
+    async selfDeleteAccount(userId: number, passwordConfirm: string, reason?: string) {
+        const user = await this.knex('users').where({ id: userId }).first();
+        if (!user) throw new NotFoundException('User not found');
+
+        if (user.password) {
+            const isValid = await bcrypt.compare(passwordConfirm || '', user.password);
+            if (!isValid) throw new BadRequestException('Incorrect password confirmation. Account deletion aborted.');
+        }
+
+        // Full cascading deletion of user personal data
+        await User.transaction(this.knex, async (trx) => {
+            // Remove user personal content
+            await trx('notes').where({ user_id: userId }).delete();
+            await trx('task_comments').where({ user_id: userId }).delete();
+            await trx('tasks').where({ user_id: userId }).delete();
+            await trx('reminders').where({ user_id: userId }).delete();
+            await trx('user_sources').where({ user_id: userId }).delete();
+            await trx('download_requests').where({ user_id: userId }).delete();
+            if (await trx.schema.hasTable('account_deletion_requests')) {
+                await trx('account_deletion_requests').where({ user_id: userId }).delete();
+            }
+            await trx('refresh_tokens').where({ user_id: userId }).delete();
+            await trx('password_resets').where({ email: user.email }).delete();
+            await trx('newsletter_subscribers').where({ email: user.email }).delete();
+
+            // Handle family trees & associated individuals
+            const trees = await trx('family_trees').where({ user_id: userId }).select('id');
+            const treeIds = trees.map((t: any) => t.id);
+            if (treeIds.length > 0) {
+                if (await trx.schema.hasTable('person_links')) {
+                    await trx('person_links').whereIn('person_id', trx('persons').select('id').whereIn('tree_id', treeIds)).delete();
+                }
+                if (await trx.schema.hasTable('persons')) {
+                    await trx('persons').whereIn('tree_id', treeIds).delete();
+                }
+                if (await trx.schema.hasTable('individuals')) {
+                    await trx('individuals').whereIn('tree_id', treeIds).delete();
+                }
+                await trx('family_trees').whereIn('id', treeIds).delete();
+            }
+
+            // Anonymize shared contributions (books/gallery uploaded)
+            await trx('books').where({ uploaded_by: userId }).update({ uploaded_by: null });
+            await trx('gallery').where({ uploaded_by: userId }).update({ uploaded_by: null });
+            await trx('documents').where({ uploaded_by: userId }).update({ uploaded_by: null });
+            await trx('audios').where({ uploaded_by: userId }).update({ uploaded_by: null });
+            await trx('activity_logs').where({ actor_user_id: userId }).update({ actor_user_id: null });
+
+            // Finally remove the user account record
+            await trx('users').where({ id: userId }).delete();
+        });
+
+        try {
+            await this.mailerService.sendMail({
+                to: user.email,
+                subject: 'Account and Personal Data Erased - Roots Tunisia',
+                text: `Hello ${user.full_name || 'User'},\n\nYour Roots Tunisia account and associated personal data have been completely deleted as requested in accordance with applicable privacy regulations.\n\nThank you for using Roots Tunisia.`,
+            });
+        } catch {}
+
+        return { message: 'Your account and personal data have been completely deleted.' };
+    }
 }

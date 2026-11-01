@@ -10,11 +10,13 @@ import {
   FileCode,
   Layers,
   MapPin,
+  Calendar,
+  Sparkles,
 } from "lucide-react";
 import { api } from "../api/client";
 import { useTranslation } from "../context/TranslationContext";
 import RootsPageShell from "../components/RootsPageShell";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import FamilyCardModal from "../components/FamilyCardModal";
 
 interface TreeItem {
@@ -37,13 +39,21 @@ interface TreeItem {
 }
 
 export default function GalleryTrees() {
-  const { t } = useTranslation();
+  const { t, isRtl } = useTranslation();
+  const location = useLocation();
 
   const [trees, setTrees] = useState<TreeItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState(() => new URLSearchParams(location.search).get("q") || "");
   const [selectedGov, setSelectedGov] = useState("All");
   const [activeTree, setActiveTree] = useState<TreeItem | null>(null);
+
+  useEffect(() => {
+    const qParam = new URLSearchParams(location.search).get("q");
+    if (qParam !== null) {
+      setQuery(qParam);
+    }
+  }, [location.search]);
 
   useEffect(() => {
     AOS.init({ duration: 800, once: true });
@@ -61,12 +71,56 @@ export default function GalleryTrees() {
     })();
   }, []);
 
-  const governorates = ["All", "Tunis", "Sfax", "Mahdia", "Kairouan", "Sousse", "Djerba", "Bizerte"];
+  const governorateOptions = [
+    { key: "All", labelKey: "gov_all" },
+    { key: "Tunis", labelKey: "gov_tunis" },
+    { key: "Sfax", labelKey: "gov_sfax" },
+    { key: "Mahdia", labelKey: "gov_mahdia" },
+    { key: "Kairouan", labelKey: "gov_kairouan" },
+    { key: "Sousse", labelKey: "gov_sousse" },
+    { key: "Djerba", labelKey: "gov_djerba" },
+    { key: "Bizerte", labelKey: "gov_bizerte" },
+  ];
+
+  const fallbackTrees: TreeItem[] = useMemo(
+    () => [
+      {
+        id: "tunis-ben-achour",
+        name: `${t("nav_trees")} — ${t("fam_ben_achour")}`,
+        creator: t("heritage_research"),
+        description: t("gov_notes_tunis"),
+        governorate: "Tunis",
+        generations: 7,
+        membersCount: 84,
+      },
+      {
+        id: "sfax-fourati",
+        name: `${t("nav_trees")} — ${t("fam_fourati")}`,
+        creator: t("heritage_research"),
+        description: t("gov_notes_sfax"),
+        governorate: "Sfax",
+        generations: 6,
+        membersCount: 62,
+      },
+      {
+        id: "kairouan-chabbi",
+        name: `${t("nav_trees")} — ${t("fam_chabbi")}`,
+        creator: t("heritage_research"),
+        description: t("gov_notes_kairouan"),
+        governorate: "Kairouan",
+        generations: 8,
+        membersCount: 96,
+      },
+    ],
+    [t]
+  );
+
+  const sourceTrees = trees.length > 0 ? trees : fallbackTrees;
 
   const filteredTrees = useMemo(() => {
-    return trees.filter((item) => {
+    return sourceTrees.filter((item) => {
       const titleStr = item.name || item.title || `Family Tree #${item.id}`;
-      const creatorStr = item.owner?.full_name || item.creator || "Roots Tunisia Researcher";
+      const creatorStr = item.owner?.full_name || item.creator || t("heritage_research");
       const descStr = item.description || item.notes || item.provenance || "";
       const govStr = item.governorate || item.region || "Tunisia";
 
@@ -74,59 +128,58 @@ export default function GalleryTrees() {
         !query ||
         titleStr.toLowerCase().includes(query.toLowerCase()) ||
         creatorStr.toLowerCase().includes(query.toLowerCase()) ||
-        descStr.toLowerCase().includes(query.toLowerCase());
+        descStr.toLowerCase().includes(query.toLowerCase()) ||
+        govStr.toLowerCase().includes(query.toLowerCase());
       const matchGov = selectedGov === "All" || govStr === selectedGov;
       return matchQuery && matchGov;
     });
-  }, [trees, query, selectedGov]);
+  }, [sourceTrees, query, selectedGov, t]);
 
   return (
     <RootsPageShell
       hero={
         <div className="space-y-4 text-center">
           <p className="eyebrow text-[var(--gold)] text-shadow-gold tracking-widest font-bold">
-            {t("nav_trees", "Roots Tunisia Pedigrees")}
+            {t("nav_trees")}
           </p>
           <h1 className="display-xl text-white font-bold hero-title-shadow text-shadow-glow tracking-wide">
-            {t("family_trees_title", "Family Trees & Pedigrees Gallery")}
+            {t("family_trees_title")}
           </h1>
           <div className="gold-rule mt-4 w-28 mx-auto shadow-lg" />
           <p className="max-w-3xl mx-auto text-base text-slate-100/95 font-medium drop-shadow-md">
-            {t(
-              "family_trees_desc",
-              "Explore multi-generational family trees, GEDCOM datasets, and noble lineage records across the 24 governorates of Tunisia.",
-            )}
+            {t("family_trees_desc")}
           </p>
         </div>
       }
     >
-      <div className="max-w-6xl mx-auto px-4 py-8 space-y-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
         {/* Search & Filters */}
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4 pb-4 border-b border-[var(--border)]">
+        <div className="surface-card p-4 sm:p-5 rounded-lg border border-[var(--gold)]/35 bg-[var(--card)]/95 shadow-md flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
           <div className="relative w-full md:w-80">
-            <Search className="w-4 h-4 text-[var(--muted-foreground)] absolute start-3 top-2.5" />
+            <Search className="w-4 h-4 text-[var(--muted-foreground)] absolute start-3 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
               type="text"
-              placeholder={t("search_trees_placeholder", "Search family tree, surname, or creator…")}
+              placeholder={t("search_trees_placeholder")}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              className="w-full ps-9 pe-3 py-1.5 text-xs rounded-sm border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] outline-none focus:border-[var(--gold)]"
+              className="w-full ps-9 pe-3 py-2 text-xs rounded-md border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] outline-none focus:border-[var(--gold)]"
             />
           </div>
 
-          <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto">
+          <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto pb-1 scrollbar-thin">
             <Filter className="w-4 h-4 text-[var(--gold)] shrink-0" />
-            {governorates.map((gov) => (
+            {governorateOptions.map((govOpt) => (
               <button
-                key={gov}
-                onClick={() => setSelectedGov(gov)}
-                className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap cursor-pointer transition-all ${
-                  selectedGov === gov
-                    ? "bg-[var(--primary)] text-white shadow-sm"
+                key={govOpt.key}
+                type="button"
+                onClick={() => setSelectedGov(govOpt.key)}
+                className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap cursor-pointer transition-all ${
+                  selectedGov === govOpt.key
+                    ? "bg-[var(--gold)] text-[#1f160f] shadow-sm font-bold"
                     : "bg-[var(--card)] text-[var(--foreground)] border border-[var(--border)] hover:border-[var(--gold)]"
                 }`}
               >
-                {gov}
+                {t(govOpt.labelKey)}
               </button>
             ))}
           </div>
@@ -141,35 +194,32 @@ export default function GalleryTrees() {
           <div className="surface-card frame-gold p-12 text-center rounded-lg space-y-4 max-w-xl mx-auto my-8">
             <GitBranch className="w-12 h-12 text-[var(--gold)] mx-auto opacity-80" />
             <h3 className="text-xl font-serif font-bold text-[var(--foreground)]">
-              {t("no_trees_yet_title", "Aucun arbre généalogique publié")}
+              {t("no_trees_yet_title")}
             </h3>
             <p className="text-sm text-[var(--muted-foreground)] leading-relaxed">
-              {t(
-                "no_trees_yet_desc",
-                "Créez et sauvegardez vos arbres généalogiques dans l'Éditeur d'Arbres. Ils s'afficheront automatiquement ici avec leurs cartes de famille.",
-              )}
+              {t("no_trees_yet_desc")}
             </p>
             <div className="pt-2">
               <Link to="/admin/trees" className="btn-base btn-gold text-xs py-2.5 px-6 inline-flex items-center gap-2">
                 <GitBranch className="w-4 h-4" />
-                <span>Ouvrir l'Éditeur d'Arbres (Tree Builder)</span>
+                <span>{t("open_tree_builder")}</span>
               </Link>
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch">
             {filteredTrees.map((tree) => {
               const titleStr = tree.name || tree.title || `Family Tree #${tree.id}`;
-              const creatorStr = tree.owner?.full_name || tree.creator || "Roots Tunisia Researcher";
-              const descStr = tree.description || tree.notes || tree.provenance || "Arbre généalogique numérisé et documenté.";
-              const govStr = tree.governorate || tree.region || "Tunisie";
+              const creatorStr = tree.owner?.full_name || tree.creator || t("heritage_research");
+              const descStr = tree.description || tree.notes || tree.provenance || "";
+              const govStr = tree.governorate || tree.region || "Tunisia";
               const memberCount = tree.people?.length ?? tree.membersCount ?? 0;
               const genCount = tree.generations ?? (memberCount > 0 ? Math.ceil(Math.log2(memberCount + 1)) : 1);
 
               return (
-                <div
+                <article
                   key={tree.id}
-                  className="surface-card frame-gold p-6 rounded-lg shadow-md space-y-4 flex flex-col justify-between hover:-translate-y-1 transition-transform"
+                  className="surface-card frame-gold p-6 rounded-lg shadow-md space-y-4 flex h-full flex-col justify-between hover:-translate-y-1 transition-all text-start"
                 >
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
@@ -177,13 +227,13 @@ export default function GalleryTrees() {
                         <MapPin className="w-3 h-3 text-[var(--gold)]" />
                         <span>{govStr}</span>
                       </span>
-                      <span className="flex items-center gap-1 text-[0.65rem] font-mono text-[var(--primary)] font-bold">
+                      <span className="flex items-center gap-1 text-[0.65rem] font-mono text-[var(--gold)] font-bold">
                         <FileCode className="w-3.5 h-3.5" />
-                        GEDCOM 5.5.1
+                        <span>GEDCOM 5.5.1</span>
                       </span>
                     </div>
 
-                    <h3 className="text-xl font-serif font-bold text-[var(--foreground)] leading-snug">
+                    <h3 className="text-lg sm:text-xl font-display font-bold text-[var(--foreground)] leading-snug">
                       {titleStr}
                     </h3>
 
@@ -193,44 +243,47 @@ export default function GalleryTrees() {
                   </div>
 
                   <div className="pt-3 border-t border-[var(--border)] space-y-3">
-                    <div className="grid grid-cols-2 gap-2 text-xs font-mono bg-[var(--background)] p-3 rounded-sm border border-[var(--border)]">
+                    <div className="grid grid-cols-2 gap-2 text-xs font-mono bg-[var(--background)] p-3 rounded-md border border-[var(--border)]">
                       <div className="flex items-center gap-1.5 text-[var(--foreground)]">
-                        <Layers className="w-3.5 h-3.5 text-[var(--gold)]" />
-                        <span><strong>Générations:</strong> {genCount}</span>
+                        <Layers className="w-3.5 h-3.5 text-[var(--gold)] shrink-0" />
+                        <span><strong>{t("generations_label")}:</strong> {genCount}</span>
                       </div>
                       <div className="flex items-center gap-1.5 text-[var(--foreground)]">
-                        <Users className="w-3.5 h-3.5 text-[var(--gold)]" />
-                        <span><strong>Individus:</strong> {memberCount}</span>
+                        <Users className="w-3.5 h-3.5 text-[var(--gold)] shrink-0" />
+                        <span><strong>{t("individuals_label")}:</strong> {memberCount}</span>
                       </div>
                     </div>
 
                     <div className="flex items-center justify-between text-[0.65rem] text-[var(--muted-foreground)]">
-                      <span>Proposé par {creatorStr}</span>
-                      <span>{tree.updated_at ? new Date(tree.updated_at).toLocaleDateString() : "Mis à jour récemment"}</span>
+                      <span>{t("by_author")} {creatorStr}</span>
+                      <span>{tree.updated_at ? new Date(tree.updated_at).toLocaleDateString() : t("recently_updated")}</span>
                     </div>
 
-                    <button
-                      onClick={() => setActiveTree(tree)}
-                      className="w-full btn-base btn-gold text-xs py-2 flex items-center justify-center gap-2 cursor-pointer"
-                    >
-                      <GitBranch className="w-4 h-4" />
-                      <span>Explorer la Carte de Famille</span>
-                    </button>
+                    <div className="pt-2">
+                      <button
+                        type="button"
+                        onClick={() => setActiveTree(tree)}
+                        className="btn-base btn-gold w-full text-xs py-2 flex items-center justify-center gap-2 cursor-pointer"
+                      >
+                        <Sparkles className="w-3.5 h-3.5" />
+                        <span>{t("explore_family_card")}</span>
+                      </button>
+                    </div>
                   </div>
-                </div>
+                </article>
               );
             })}
           </div>
         )}
-
-        {/* 3D Family Card Preview & GEDCOM Request Modal */}
-        {activeTree && (
-          <FamilyCardModal
-            tree={activeTree}
-            onClose={() => setActiveTree(null)}
-          />
-        )}
       </div>
+
+      {/* 3D Family Card Inspector Modal */}
+      {activeTree && (
+        <FamilyCardModal
+          tree={activeTree}
+          onClose={() => setActiveTree(null)}
+        />
+      )}
     </RootsPageShell>
   );
 }

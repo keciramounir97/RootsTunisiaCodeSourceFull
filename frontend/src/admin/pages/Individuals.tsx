@@ -763,7 +763,7 @@ export default function Individuals() {
                 </div>
                 <div className="flex items-center gap-1.5">
                   {item.isBackedUp !== false && (
-                    <span className="px-1.5 py-0.5 rounded text-[10px] bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-0.5" title="Sauvegardé en BDD">
+                    <span className="px-1.5 py-0.5 rounded text-[10px] bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-0.5" title={t("admin.individuals.saved_in_db", "محفوظ في قاعدة البيانات")}>
                       <ShieldCheck className="w-3 h-3" />
                       DB
                     </span>
@@ -880,10 +880,10 @@ export default function Individuals() {
                       <button
                         type="button"
                         onClick={() => gedcomFileInputRef.current?.click()}
-                        className="neu-inset p-4 rounded-xl text-left hover:border-[#0d9488] transition-colors"
+                        className="neu-inset p-4 rounded-xl text-left rtl:text-right hover:border-[#0d9488] transition-colors"
                       >
                         <Upload className="w-5 h-5 text-[#0d9488] mb-2" />
-                        <div className="text-sm font-semibold">Importer un fichier</div>
+                        <div className="text-sm font-semibold">{t("import_file", "Importer un fichier")}</div>
                         <div className="text-[11px] text-stone-500 dark:text-stone-400">.ged, .gedcom</div>
                       </button>
                       <button
@@ -892,28 +892,28 @@ export default function Individuals() {
                           const el = document.getElementById("individual-gedcom-editor");
                           if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
                         }}
-                        className="neu-inset p-4 rounded-xl text-left hover:border-[#0d9488] transition-colors"
+                        className="neu-inset p-4 rounded-xl text-left rtl:text-right hover:border-[#0d9488] transition-colors"
                       >
                         <FileText className="w-5 h-5 text-[#0d9488] mb-2" />
-                        <div className="text-sm font-semibold">Éditer / coller</div>
-                        <div className="text-[11px] text-stone-500 dark:text-stone-400">Modifier le texte GEDCOM</div>
+                        <div className="text-sm font-semibold">{t("edit_or_paste", "Éditer / coller")}</div>
+                        <div className="text-[11px] text-stone-500 dark:text-stone-400">{t("modify_gedcom_text", "Modifier le texte GEDCOM")}</div>
                       </button>
                       <button
                         type="button"
                         onClick={() => downloadGedcomText(currentGedcomText, `${(formData.name || "individual").replace(/\s+/g, "-").toLowerCase()}.ged`)}
                         disabled={!currentGedcomText}
-                        className="neu-inset p-4 rounded-xl text-left hover:border-[#0d9488] transition-colors disabled:opacity-50"
+                        className="neu-inset p-4 rounded-xl text-left rtl:text-right hover:border-[#0d9488] transition-colors disabled:opacity-50"
                       >
                         <FileCode2 className="w-5 h-5 text-[#0d9488] mb-2" />
-                        <div className="text-sm font-semibold">Exporter GEDCOM</div>
-                        <div className="text-[11px] text-stone-500 dark:text-stone-400">Télécharger le fichier</div>
+                        <div className="text-sm font-semibold">{t("export_gedcom", "Exporter GEDCOM")}</div>
+                        <div className="text-[11px] text-stone-500 dark:text-stone-400">{t("download_file", "Télécharger le fichier")}</div>
                       </button>
                     </div>
                     <textarea
                       id="individual-gedcom-editor"
                       value={gedcomText}
                       onChange={(e) => syncGedcomText(e.target.value)}
-                      placeholder="0 @I1@ INDI&#10;1 NAME Ahmed /Ben Mohamed/&#10;1 SEX M&#10;1 BIRT&#10;2 DATE 1905"
+                      placeholder={t("admin.individuals.gedcom_snippet_placeholder", "0 @I1@ INDI\n1 NAME Ahmed /Ben Mohamed/\n1 SEX M\n1 BIRT\n2 DATE 1905")}
                       className="neu-field w-full min-h-80 rounded-xl px-4 py-3 text-xs leading-6"
                     />
                   </div>
@@ -942,80 +942,80 @@ export default function Individuals() {
                   {/* BASIC INFO */}
                   <div className="space-y-4">
                     <h4 className="text-xs font-bold uppercase tracking-widest text-[#0c4a6e] dark:text-[#0d9488] border-b border-[#0d9488]/30 pb-1">
-                      Informations Personnelles
+                      {t("personal_information", "Informations Personnelles")}
                     </h4>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="sm:col-span-2">
-                        <label className="text-xs font-bold mb-1 block">Nom complet *</label>
+                        <label className="text-xs font-bold mb-1 block">{t("full_name", "Nom complet")} *</label>
                         <input
                           required
                           value={formData.name}
                           onChange={(e) => setFormData((s: any) => ({ ...s, name: e.target.value }))}
-                          placeholder="ex. Ahmed Ben Mohamed"
-                          className="neu-field w-full px-3 py-2 text-xs"
+                          placeholder={t("placeholder_name_example", "ex. Ahmed Ben Mohamed")}
+                          className="neu-field w-full px-3 py-2 text-xs rtl:text-right"
                         />
                       </div>
 
                       <div>
-                        <label className="text-xs font-bold mb-1 block">Genre</label>
+                        <label className="text-xs font-bold mb-1 block">{t("gender", "Genre")}</label>
                         <select
                           value={formData.gender}
                           onChange={(e) => setFormData((s: any) => ({ ...s, gender: e.target.value }))}
                           className="neu-field w-full px-3 py-2 text-xs"
                         >
-                          <option value="">Sélectionner...</option>
-                          <option value="M">Masculin</option>
-                          <option value="F">Féminin</option>
+                          <option value="">{t("select_option", "Sélectionner...")}</option>
+                          <option value="M">{t("male", "Masculin")}</option>
+                          <option value="F">{t("female", "Féminin")}</option>
                         </select>
                       </div>
 
                       <div>
-                        <label className="text-xs font-bold mb-1 block">Profession</label>
+                        <label className="text-xs font-bold mb-1 block">{t("admin.individuals.profession", "المهنة")}</label>
                         <input
                           value={formData.profession}
                           onChange={(e) => setFormData((s: any) => ({ ...s, profession: e.target.value }))}
-                          placeholder="ex. Historien"
+                          placeholder={t("admin.individuals.profession_placeholder", "مثال: مؤرخ")}
                           className="neu-field w-full px-3 py-2 text-xs"
                         />
                       </div>
 
                       <div>
-                        <label className="text-xs font-bold mb-1 block">Année de naissance</label>
+                        <label className="text-xs font-bold mb-1 block">{t("admin.individuals.birth_year", "سنة الولادة")}</label>
                         <input
                           value={formData.birthYear}
                           onChange={(e) => setFormData((s: any) => ({ ...s, birthYear: e.target.value }))}
-                          placeholder="ex. 1905"
+                          placeholder={t("admin.individuals.birth_year_placeholder", "مثال: 1905")}
                           className="neu-field w-full px-3 py-2 text-xs"
                         />
                       </div>
 
                       <div>
-                        <label className="text-xs font-bold mb-1 block">Lieu de naissance</label>
+                        <label className="text-xs font-bold mb-1 block">{t("admin.individuals.birth_place", "مكان الولادة")}</label>
                         <input
                           value={formData.birthPlace}
                           onChange={(e) => setFormData((s: any) => ({ ...s, birthPlace: e.target.value }))}
-                          placeholder="ex. Le Caire"
+                          placeholder={t("admin.individuals.birth_place_placeholder", "مثال: تونس العاصمة")}
                           className="neu-field w-full px-3 py-2 text-xs"
                         />
                       </div>
 
                       <div>
-                        <label className="text-xs font-bold mb-1 block">Date/Année de décès</label>
+                        <label className="text-xs font-bold mb-1 block">{t("admin.individuals.death_date", "تاريخ/سنة الوفاة")}</label>
                         <input
                           value={formData.deathDate}
                           onChange={(e) => setFormData((s: any) => ({ ...s, deathDate: e.target.value }))}
-                          placeholder="ex. 1978"
+                          placeholder={t("admin.individuals.death_date_placeholder", "مثال: 1978")}
                           className="neu-field w-full px-3 py-2 text-xs"
                         />
                       </div>
 
                       <div>
-                        <label className="text-xs font-bold mb-1 block">Lieu de décès</label>
+                        <label className="text-xs font-bold mb-1 block">{t("admin.individuals.death_place", "مكان الوفاة")}</label>
                         <input
                           value={formData.deathPlace}
                           onChange={(e) => setFormData((s: any) => ({ ...s, deathPlace: e.target.value }))}
-                          placeholder="ex. Alexandrie"
+                          placeholder={t("admin.individuals.death_place_placeholder", "مثال: سوسة")}
                           className="neu-field w-full px-3 py-2 text-xs"
                         />
                       </div>
@@ -1044,13 +1044,13 @@ export default function Individuals() {
                         <input
                           value={field.name}
                           onChange={(e) => updateCustomField(field.id, "name", e.target.value)}
-                          placeholder="Nom du champ (ex. Tribu)"
+                          placeholder={t("admin.individuals.field_name_placeholder", "اسم الحقل (مثال: القبيلة)")}
                           className="neu-field w-1/3 px-3 py-2 text-xs"
                         />
                         <input
                           value={field.value}
                           onChange={(e) => updateCustomField(field.id, "value", e.target.value)}
-                          placeholder="Valeur du champ"
+                          placeholder={t("admin.individuals.field_value_placeholder", "قيمة الحقل")}
                           className="neu-field flex-1 px-3 py-2 text-xs"
                         />
                         <button
@@ -1067,9 +1067,7 @@ export default function Individuals() {
                   {/* SOURCES & MEDIA LINKING */}
                   <div className="space-y-3 pt-2">
                     <div className="flex items-center justify-between border-b border-[#0d9488]/30 pb-1">
-                      <h4 className="text-xs font-bold uppercase tracking-widest text-[#0c4a6e] dark:text-[#0d9488]">
-                        Documents et Liens de Source
-                      </h4>
+                      <h4 className="text-xs font-bold uppercase tracking-widest text-[#0c4a6e] dark:text-[#0d9488]">{t("admin.individuals.documents_and_sources", "الوثائق ومصادر الإسناد")}</h4>
                       <div className="flex gap-1.5 flex-wrap">
                         <button
                           type="button"
@@ -1077,24 +1075,21 @@ export default function Individuals() {
                           className="interactive-btn btn-neu text-[11px] !px-2.5 !py-1"
                         >
                           <FileText className="w-3.5 h-3.5 inline mr-1 text-[#0d9488]" />
-                          Document
-                        </button>
+                          {t("common.document", "وثيقة")}</button>
                         <button
                           type="button"
                           onClick={() => openMediaPanel("image")}
                           className="interactive-btn btn-neu text-[11px] !px-2.5 !py-1"
                         >
                           <ImageIcon className="w-3.5 h-3.5 inline mr-1 text-[#0d9488]" />
-                          Photo/Image
-                        </button>
+                          {t("common.photo_image", "صورة")}</button>
                         <button
                           type="button"
                           onClick={() => openMediaPanel("audio")}
                           className="interactive-btn btn-neu text-[11px] !px-2.5 !py-1"
                         >
                           <Music className="w-3.5 h-3.5 inline mr-1 text-[#0d9488]" />
-                          Audio
-                        </button>
+                          {t("common.audio", "تسجيل صوتي")}</button>
                         <button
                           type="button"
                           onClick={() => {
@@ -1104,8 +1099,7 @@ export default function Individuals() {
                           className="interactive-btn btn-neu btn-neu--primary text-[11px] !px-2.5 !py-1"
                         >
                           <Link2 className="w-3.5 h-3.5 inline mr-1" />
-                          Lien Externe
-                        </button>
+                          {t("common.external_link", "رابط خارجي")}</button>
                       </div>
                     </div>
 
@@ -1113,22 +1107,21 @@ export default function Individuals() {
                     {mediaPanelOpen && (
                       <div className="neu-inset p-3 rounded-lg space-y-2">
                         <div className="flex justify-between items-center text-xs font-bold text-[#0c4a6e] dark:text-[#0d9488]">
-                          <span>Lier un élément existant ({mediaLinkType})</span>
+                          <span>{t("admin.individuals.link_existing_item", "ربط عنصر موجود")} ({mediaLinkType})</span>
                           <div className="flex gap-2">
                             <button
                               type="button"
                               onClick={() => loadExistingMedia(mediaLinkType)}
                               className="text-[11px] underline text-[#0d9488]"
                             >
-                              {mediaLoading ? "Chargement..." : "Rafraîchir"}
+                              {mediaLoading ? t("common.loading", "جاري التحميل...") : t("common.refresh", "تحديث")}
                             </button>
                             <button
                               type="button"
                               onClick={() => setMediaPanelOpen(false)}
                               className="text-[11px] underline text-red-500"
                             >
-                              Fermer
-                            </button>
+                              {t("common.close", "إغلاق")}</button>
                           </div>
                         </div>
                         <div className="flex gap-2">
@@ -1145,7 +1138,7 @@ export default function Individuals() {
                                 </option>
                               ))
                             ) : (
-                              <option value="">Aucun élément disponible</option>
+                              <option value="">{t("common.no_items_available", "لا توجد عناصر متاحة")}</option>
                             )}
                           </select>
                           <button
@@ -1153,9 +1146,7 @@ export default function Individuals() {
                             onClick={attachSelectedMedia}
                             disabled={!selectedMediaLink}
                             className="interactive-btn btn-neu btn-neu--primary px-3 py-2 text-xs"
-                          >
-                            Lier
-                          </button>
+                          >{t("common.link", "ربط")}</button>
                         </div>
                       </div>
                     )}
@@ -1163,20 +1154,18 @@ export default function Individuals() {
                     {/* ADD EXTERNAL LINK WITH PAGE NAME */}
                     {externalPanelOpen && (
                       <div className="neu-inset p-3 rounded-lg space-y-2">
-                        <span className="block text-xs font-bold text-[#0c4a6e] dark:text-[#0d9488]">
-                          Ajouter un lien externe avec nom de page
-                        </span>
+                        <span className="block text-xs font-bold text-[#0c4a6e] dark:text-[#0d9488]">{t("admin.individuals.add_external_link", "إضافة رابط خارجي مع تسمية")}</span>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                           <input
                             value={externalTitle}
                             onChange={(e) => setExternalTitle(e.target.value)}
-                            placeholder="Nom de la page / Titre (ex. Registre d'état civil)"
+                            placeholder={t("admin.individuals.page_title_placeholder", "اسم الصفحة / العنوان (مثال: سجل الحالة المدنية)")}
                             className="neu-field px-3 py-2 text-xs"
                           />
                           <input
                             value={externalUrl}
                             onChange={(e) => setExternalUrl(e.target.value)}
-                            placeholder="Lien externe URL (https://...)"
+                            placeholder={t("admin.individuals.url_placeholder", "رابط خارجي (https://...)")}
                             className="neu-field px-3 py-2 text-xs"
                           />
                         </div>
@@ -1185,16 +1174,12 @@ export default function Individuals() {
                             type="button"
                             onClick={() => setExternalPanelOpen(false)}
                             className="interactive-btn btn-neu px-3 py-1.5 text-xs"
-                          >
-                            Annuler
-                          </button>
+                          >{t("common.cancel", "إلغاء")}</button>
                           <button
                             type="button"
                             onClick={attachExternalLink}
                             className="interactive-btn btn-neu btn-neu--primary px-3 py-1.5 text-xs"
-                          >
-                            Enregistrer le lien
-                          </button>
+                          >{t("admin.individuals.save_link", "حفظ الرابط")}</button>
                         </div>
                       </div>
                     )}
@@ -1256,7 +1241,7 @@ export default function Individuals() {
                           ) : (
                             <Lock className="w-4 h-4 text-amber-500" />
                           )}
-                          Statut de visibilité :
+                          {t("admin.individuals.visibility_status", "حالة الظهور:")}
                         </span>
                         <select
                           value={formData.isPublic !== false ? "public" : "private"}
@@ -1265,8 +1250,8 @@ export default function Individuals() {
                           }
                           className="neu-field px-2.5 py-1 text-xs font-semibold"
                         >
-                          <option value="public">Public</option>
-                          <option value="private">Privé</option>
+                          <option value="public">{t("common.public", "عام")}</option>
+                          <option value="private">{t("common.private", "خاص")}</option>
                         </select>
                       </div>
                     </div>
@@ -1278,15 +1263,11 @@ export default function Individuals() {
                       type="button"
                       onClick={closeModal}
                       className="interactive-btn btn-neu px-4 py-2 text-xs"
-                    >
-                      Annuler
-                    </button>
+                    >{t("common.cancel", "إلغاء")}</button>
                     <button
                       type="submit"
                       className="interactive-btn btn-neu btn-neu--primary px-5 py-2 text-xs font-bold"
-                    >
-                      Sauvegarder les changements
-                    </button>
+                    >{t("admin.individuals.save_changes", "حفظ التغييرات")}</button>
                   </div>
                 </form>
               )}
@@ -1350,13 +1331,11 @@ export default function Individuals() {
                   {selectedIndividual.isBackedUp !== false && (
                     <span className="px-2 py-1 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1">
                       <ShieldCheck className="w-3 h-3" />
-                      GEDCOM sauvegardé
+                      {t("admin.individuals.gedcom_saved", "محفوظ في جيدكول/GEDCOM")}
                     </span>
                   )}
                   {selectedIndividual.gedcomText ? (
-                    <span className="px-2 py-1 rounded-full bg-[#0d9488]/10 text-[#0d9488] font-semibold">
-                      GEDCOM en base
-                    </span>
+                    <span className="px-2 py-1 rounded-full bg-[#0d9488]/10 text-[#0d9488] font-semibold">{t("admin.individuals.gedcom_in_db", "GEDCOM في قاعدة البيانات")}</span>
                   ) : null}
                 </div>
                 {selectedIndividual.gedcomText ? (
@@ -1369,17 +1348,15 @@ export default function Individuals() {
                     </pre>
                   </div>
                 ) : null}
-                <div className="text-[10px] uppercase tracking-[0.2em] text-stone-500 dark:text-stone-400">
-                  Faites glisser pour incliner la carte 3D
-                </div>
+                <div className="text-[10px] uppercase tracking-[0.2em] text-stone-500 dark:text-stone-400">{t("admin.individuals.drag_3d_card", "اسحب لتدوير البطاقة ثلاثية الأبعاد")}</div>
               </div>
 
               {/* VITAL INFO GRID */}
               <div className="grid grid-cols-2 gap-3 text-xs">
                 <div className="neu-inset p-3 rounded-lg">
-                  <span className="neu-label text-[10px] block uppercase tracking-wider font-bold">Naissance</span>
+                  <span className="neu-label text-[10px] block uppercase tracking-wider font-bold">{t("genealogy.birth", "الولادة")}</span>
                   <span className="font-semibold block mt-0.5">
-                    {selectedIndividual.birthYear || "Inconnue"}
+                    {selectedIndividual.birthYear || t("common.unknown", "غير معروف")}
                   </span>
                   {selectedIndividual.birthPlace && (
                     <span className="text-stone-400 block text-[11px]">{selectedIndividual.birthPlace}</span>
@@ -1387,9 +1364,9 @@ export default function Individuals() {
                 </div>
 
                 <div className="neu-inset p-3 rounded-lg">
-                  <span className="neu-label text-[10px] block uppercase tracking-wider font-bold">Décès</span>
+                  <span className="neu-label text-[10px] block uppercase tracking-wider font-bold">{t("genealogy.death", "الوفاة")}</span>
                   <span className="font-semibold block mt-0.5">
-                    {selectedIndividual.deathDate || "Inconnu / En vie"}
+                    {selectedIndividual.deathDate || t("genealogy.unknown_or_living", "غير معروف / على قيد الحياة")}
                   </span>
                   {selectedIndividual.deathPlace && (
                     <span className="text-stone-400 block text-[11px]">{selectedIndividual.deathPlace}</span>
@@ -1472,16 +1449,14 @@ export default function Individuals() {
                 className="text-red-500 text-xs font-semibold hover:underline flex items-center gap-1"
               >
                 <Trash2 className="w-3.5 h-3.5" />
-                Supprimer
-              </button>
+                {t("common.delete", "حذف")}</button>
               <div className="flex gap-2">
                 <button
                   onClick={() => openEditModal(selectedIndividual)}
                   className="interactive-btn btn-neu btn-neu--primary px-4 py-2 text-xs flex items-center gap-1.5"
                 >
                   <Pencil className="w-3.5 h-3.5" />
-                  Modifier
-                </button>
+                  {t("common.edit", "تعديل")}</button>
               </div>
             </div>
           </div>
@@ -1536,9 +1511,9 @@ export default function Individuals() {
               ) : (
                 <div className="text-center p-8 bg-stone-50 dark:bg-[#071827]/50 rounded-xl border border-[#0d9488]/15 max-w-md">
                   <FileText className="w-16 h-16 text-[#0d9488] mx-auto mb-4" />
-                  <p className="text-sm font-semibold mb-2">Lien externe ou document</p>
+                  <p className="text-sm font-semibold mb-2">{t("admin.individuals.external_link_or_doc", "رابط خارجي أو وثيقة")}</p>
                   <p className="text-xs text-stone-500 dark:text-stone-400 mb-4">
-                    Ce type de fichier ou lien ne peut pas être prévisualisé directement.
+                    {t("admin.individuals.cannot_preview", "لا يمكن معاينة هذا النوع من الملفات أو الروابط مباشرة.")}
                   </p>
                 </div>
               )}
@@ -1561,8 +1536,7 @@ export default function Individuals() {
                 onClick={() => setPreviewSource(null)}
                 className="interactive-btn btn-neu px-4 py-2 text-xs text-stone-600 dark:text-stone-300"
               >
-                Fermer
-              </button>
+                {t("common.close", "إغلاق")}</button>
             </div>
           </div>
         </div>

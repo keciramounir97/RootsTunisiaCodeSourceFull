@@ -7,8 +7,11 @@ import manuscript from "../assets/family-archive.jpg";
 import TreesBuilder, { parseGedcom, parseGedcomX } from "../admin/components/TreesBuilder";
 import ErrorBoundary from "../components/ErrorBoundary";
 import SEO from "../components/SEO";
+import { useTranslation } from "../context/TranslationContext";
 
 export default function Research() {
+  const { t, locale } = useTranslation();
+  const isArabic = locale === "ar";
   const location = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
   const [results, setResults] = useState<{ trees: any[]; books: any[]; people: any[] }>({
@@ -55,7 +58,7 @@ export default function Research() {
       const people = isGedcomX ? parseGedcomX(raw) : parseGedcom(raw);
       setViewPeople(Array.isArray(people) ? people : []);
     } catch (err: any) {
-      setViewTreeError("Failed to load pedigree data.");
+      setViewTreeError(t("pedigree_load_failed", "Failed to load pedigree data."));
     } finally {
       setViewLoading(false);
     }
@@ -64,14 +67,14 @@ export default function Research() {
   return (
     <div className="bg-[var(--background)] text-[var(--foreground)] min-h-screen">
       <SEO
-        title="Research & Archive Search — Roots Tunisia"
-        description="Search across all digitized Tunisian manuscripts, civil registers, and community family trees."
+        title={t("research_seo_title", "Research & Archive Search — Roots Tunisia")}
+        description={t("research_seo_desc", "Search across all digitized Tunisian manuscripts, civil registers, and community family trees.")}
       />
 
       <PageHero
-        eyebrow="Universal Research"
-        title="Search Across the Archives"
-        subtitle="Search across family names, tribes, ancestral places, digitized books, civil extracts and oral history indices."
+        eyebrow={t("universal_research", "Universal Research")}
+        title={t("search_across_archives", "Search Across the Archives")}
+        subtitle={t("research_subtitle", "Search across family names, tribes, ancestral places, digitized books, civil extracts and oral history indices.")}
         image={manuscript}
       />
 
@@ -83,11 +86,11 @@ export default function Research() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search family name, tribe, archive or governorate…"
+              placeholder={t("research_input_placeholder", isArabic ? "ابحث عن اسم عائلة، قبيلة، أرشيف أو ولاية…" : "Search family name, tribe, archive or governorate…")}
               className="flex-1 bg-transparent px-4 py-3 text-sm text-[var(--foreground)] outline-none placeholder:text-[var(--muted-foreground)]"
             />
             <button type="submit" disabled={loading} className="btn-base btn-gold text-xs">
-              {loading ? "Searching…" : "Search"}
+              {loading ? t("searching", "Searching…") : t("search", "Search")}
             </button>
           </form>
         </div>
@@ -96,22 +99,22 @@ export default function Research() {
           <div className="mt-12 space-y-12">
             {/* Family Trees */}
             <div>
-              <h3 className="eyebrow mb-4">Family Trees ({results.trees.length})</h3>
+              <h3 className="eyebrow mb-4">{t("family_trees", "Family Trees")} ({results.trees.length})</h3>
               {results.trees.length === 0 ? (
-                <p className="text-sm text-[var(--muted-foreground)]">No matching trees found.</p>
+                <p className="text-sm text-[var(--muted-foreground)]">{t("no_matching_trees", isArabic ? "لم يتم العثور على أشجار عائلية مطابقة لبحثك." : "No matching trees found.")}</p>
               ) : (
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                  {results.trees.map((t) => (
-                    <article key={t.id} className="surface-card p-6">
+                  {results.trees.map((tItem) => (
+                    <article key={tItem.id} className="surface-card p-6">
                       <GitBranch className="h-5 w-5 text-[var(--gold)]" />
-                      <h4 className="mt-3 font-display text-xl text-[var(--foreground)]">{t.title}</h4>
-                      <p className="mt-1 text-xs text-[var(--muted-foreground)]">{t.owner_name}</p>
-                      <p className="mt-3 text-sm text-[var(--muted-foreground)] line-clamp-2">{t.description}</p>
+                      <h4 className="mt-3 font-display text-xl text-[var(--foreground)]">{tItem.title}</h4>
+                      <p className="mt-1 text-xs text-[var(--muted-foreground)]">{tItem.owner_name}</p>
+                      <p className="mt-3 text-sm text-[var(--muted-foreground)] line-clamp-2">{tItem.description}</p>
                       <button
-                        onClick={() => handleViewTree(t)}
+                        onClick={() => handleViewTree(tItem)}
                         className="btn-base btn-red mt-5 text-[0.65rem] py-2 px-3"
                       >
-                        View Tree
+                        {t("view_tree", "View Tree")}
                       </button>
                     </article>
                   ))}
@@ -121,9 +124,9 @@ export default function Research() {
 
             {/* Books & Documents */}
             <div>
-              <h3 className="eyebrow mb-4">Digitized Books & Documents ({results.books.length})</h3>
+              <h3 className="eyebrow mb-4">{t("digitized_books_docs", "Digitized Books & Documents")} ({results.books.length})</h3>
               {results.books.length === 0 ? (
-                <p className="text-sm text-[var(--muted-foreground)]">No matching library documents found.</p>
+                <p className="text-sm text-[var(--muted-foreground)]">{t("no_matching_books", isArabic ? "لم يتم العثور على وثائق مكتبية مطابقة لبحثك." : "No matching library documents found.")}</p>
               ) : (
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                   {results.books.map((b) => (
@@ -133,7 +136,7 @@ export default function Research() {
                       <p className="mt-1 text-xs text-[var(--muted-foreground)]">{b.author}</p>
                       <p className="mt-3 text-sm text-[var(--muted-foreground)] line-clamp-2">{b.description}</p>
                       <Link to="/subscriptions" className="btn-base btn-outline-ink mt-5 text-[0.65rem] py-2 px-3">
-                        Consult Document
+                        {t("consult_document", "Consult Document")}
                       </Link>
                     </article>
                   ))}
@@ -159,7 +162,7 @@ export default function Research() {
             </div>
             <div className="flex-1 overflow-y-auto p-6">
               {viewLoading ? (
-                <p className="py-20 text-center text-[var(--gold)] font-display text-lg">Loading…</p>
+                <p className="py-20 text-center text-[var(--gold)] font-display text-lg">{t("loading", isArabic ? "جاري التحميل..." : "Loading…")}</p>
               ) : (
                 <ErrorBoundary>
                   <TreesBuilder readOnly={true} initialPeople={viewPeople} title={viewTree.title} />

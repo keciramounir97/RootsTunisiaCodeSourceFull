@@ -1,0 +1,5971 @@
+{
+  "pages/MyDownloadRequests.tsx": {
+    "missingArKeys": [],
+    "latinFallbacksInT": [
+      {
+        "key": "family_tree",
+        "fallback": "Family Tree"
+      },
+      {
+        "key": "books",
+        "fallback": "Books"
+      },
+      {
+        "key": "gallery",
+        "fallback": "Gallery"
+      },
+      {
+        "key": "audios",
+        "fallback": "Audios"
+      },
+      {
+        "key": "documents",
+        "fallback": "Documents"
+      },
+      {
+        "key": "download_requests_failed",
+        "fallback": "Failed to load download requests"
+      },
+      {
+        "key": "download_request_decision_failed",
+        "fallback": "Failed to update download request"
+      },
+      {
+        "key": "my_download_requests",
+        "fallback": "My Download Requests"
+      },
+      {
+        "key": "requests_i_made",
+        "fallback": "Requests I"
+      },
+      {
+        "key": "loading",
+        "fallback": "Loading..."
+      },
+      {
+        "key": "no_download_requests",
+        "fallback": "No download requests"
+      },
+      {
+        "key": "requested",
+        "fallback": "Requested"
+      },
+      {
+        "key": "requests_for_my_content",
+        "fallback": "Requests for My Content"
+      },
+      {
+        "key": "loading",
+        "fallback": "Loading..."
+      },
+      {
+        "key": "no_download_requests",
+        "fallback": "No download requests"
+      },
+      {
+        "key": "unknown_user",
+        "fallback": "Unknown user"
+      },
+      {
+        "key": "requested_to_download",
+        "fallback": "requested to download"
+      },
+      {
+        "key": "content_uploaded_on",
+        "fallback": "Uploaded"
+      },
+      {
+        "key": "approve",
+        "fallback": "Approve"
+      },
+      {
+        "key": "reject",
+        "fallback": "Reject"
+      }
+    ],
+    "hardcodedAttributes": [],
+    "hardcodedButtons": [],
+    "hardcodedHeadings": []
+  },
+  "pages/tasks.tsx": {
+    "missingArKeys": [],
+    "latinFallbacksInT": [
+      {
+        "key": "task_board",
+        "fallback": "Task Board"
+      },
+      {
+        "key": "task_create",
+        "fallback": "Create Task"
+      },
+      {
+        "key": "task_create",
+        "fallback": "Create Task"
+      },
+      {
+        "key": "task_title",
+        "fallback": "Task title"
+      },
+      {
+        "key": "task_description",
+        "fallback": "Description"
+      },
+      {
+        "key": "task_create",
+        "fallback": "Create Task"
+      },
+      {
+        "key": "status_todo",
+        "fallback": "Todo"
+      },
+      {
+        "key": "status_in_progress",
+        "fallback": "In Progress"
+      },
+      {
+        "key": "status_done",
+        "fallback": "Done"
+      },
+      {
+        "key": "task_no_tasks",
+        "fallback": "No tasks yet"
+      }
+    ],
+    "hardcodedAttributes": [],
+    "hardcodedButtons": [],
+    "hardcodedHeadings": []
+  },
+  "pages/notes.tsx": {
+    "missingArKeys": [],
+    "latinFallbacksInT": [
+      {
+        "key": "notes",
+        "fallback": "Notes"
+      },
+      {
+        "key": "note_new",
+        "fallback": "New Note"
+      },
+      {
+        "key": "note_title",
+        "fallback": "Note title"
+      },
+      {
+        "key": "note_content",
+        "fallback": "Start writing your note..."
+      },
+      {
+        "key": "note_save",
+        "fallback": "Save"
+      },
+      {
+        "key": "cancel",
+        "fallback": "Cancel"
+      },
+      {
+        "key": "note_no_notes",
+        "fallback": "No notes yet. Create one!"
+      },
+      {
+        "key": "note_created",
+        "fallback": "Created"
+      },
+      {
+        "key": "note_updated",
+        "fallback": "Updated"
+      },
+      {
+        "key": "note_select",
+        "fallback": "Select a note or create a new one"
+      }
+    ],
+    "hardcodedAttributes": [],
+    "hardcodedButtons": [],
+    "hardcodedHeadings": []
+  },
+  "pages/reminders.tsx": {
+    "missingArKeys": [],
+    "latinFallbacksInT": [
+      {
+        "key": "reminders",
+        "fallback": "Reminders"
+      },
+      {
+        "key": "reminder_new",
+        "fallback": "New Reminder"
+      },
+      {
+        "key": "reminder_new",
+        "fallback": "New Reminder"
+      },
+      {
+        "key": "reminder_title",
+        "fallback": "Reminder title"
+      },
+      {
+        "key": "reminder_date",
+        "fallback": "Date"
+      },
+      {
+        "key": "reminder_time",
+        "fallback": "Time"
+      },
+      {
+        "key": "reminder_type_custom",
+        "fallback": "Custom"
+      },
+      {
+        "key": "reminder_type_birthday",
+        "fallback": "Birthday"
+      },
+      {
+        "key": "reminder_type_event",
+        "fallback": "Event"
+      },
+      {
+        "key": "reminder_type_task",
+        "fallback": "Task"
+      },
+      {
+        "key": "reminder_create",
+        "fallback": "Create Reminder"
+      },
+      {
+        "key": "reminder_no_reminders",
+        "fallback": "No reminders yet"
+      }
+    ],
+    "hardcodedAttributes": [],
+    "hardcodedButtons": [],
+    "hardcodedHeadings": []
+  },
+  "admin/pages/AccountDeletionRequests.tsx": {
+    "missingArKeys": [],
+    "latinFallbacksInT": [
+      {
+        "key": "legacy.account_deletion_requests_failed",
+        "fallback": "Failed to load account deletion requests"
+      },
+      {
+        "key": "legacy.confirm_account_deletion_approval",
+        "fallback": "Approve this account deletion request? This will delete the user account."
+      },
+      {
+        "key": "legacy.confirm_account_deletion_rejection",
+        "fallback": "Reject this account deletion request?"
+      },
+      {
+        "key": "legacy.account_deletion_approved",
+        "fallback": "Account deletion request approved."
+      },
+      {
+        "key": "legacy.account_deletion_rejected",
+        "fallback": "Account deletion request rejected."
+      },
+      {
+        "key": "legacy.account_deletion_decision_failed",
+        "fallback": "Failed to update account deletion request"
+      },
+      {
+        "key": "legacy.approvals",
+        "fallback": "Approvals"
+      },
+      {
+        "key": "legacy.account_deletion_requests",
+        "fallback": "Account Deletion Requests"
+      },
+      {
+        "key": "legacy.account_deletion_requests_desc",
+        "fallback": "Review account deletion requests and approve or reject them from one place."
+      },
+      {
+        "key": "legacy.refresh",
+        "fallback": "Refresh"
+      },
+      {
+        "key": "legacy.loading",
+        "fallback": "Loading..."
+      },
+      {
+        "key": "legacy.no_account_deletion_requests",
+        "fallback": "No account deletion requests"
+      },
+      {
+        "key": "legacy.unknown_user",
+        "fallback": "Unknown user"
+      },
+      {
+        "key": "legacy.requested",
+        "fallback": "Requested"
+      },
+      {
+        "key": "legacy.status",
+        "fallback": "Status"
+      },
+      {
+        "key": "legacy.processed",
+        "fallback": "Processed"
+      },
+      {
+        "key": "legacy.reason",
+        "fallback": "Reason"
+      },
+      {
+        "key": "legacy.no_reason_provided",
+        "fallback": "No reason provided"
+      },
+      {
+        "key": "legacy.approve",
+        "fallback": "Approve"
+      },
+      {
+        "key": "legacy.reject",
+        "fallback": "Reject"
+      }
+    ],
+    "hardcodedAttributes": [],
+    "hardcodedButtons": [],
+    "hardcodedHeadings": []
+  },
+  "admin/pages/ActivityLog.tsx": {
+    "missingArKeys": [],
+    "latinFallbacksInT": [
+      {
+        "key": "activity_load_failed",
+        "fallback": "Failed to load activity"
+      },
+      {
+        "key": "activity",
+        "fallback": "Activity Log"
+      },
+      {
+        "key": "activity_desc",
+        "fallback": "Track what happens across your platform."
+      },
+      {
+        "key": "search_activity",
+        "fallback": "Search activity..."
+      },
+      {
+        "key": "all_types",
+        "fallback": "All types"
+      },
+      {
+        "key": "security",
+        "fallback": "Security"
+      },
+      {
+        "key": "users",
+        "fallback": "Users"
+      },
+      {
+        "key": "books",
+        "fallback": "Books"
+      },
+      {
+        "key": "trees",
+        "fallback": "Family Trees"
+      },
+      {
+        "key": "events_count",
+        "fallback": "event(s)"
+      },
+      {
+        "key": "type",
+        "fallback": "Type"
+      },
+      {
+        "key": "description",
+        "fallback": "Description"
+      },
+      {
+        "key": "user",
+        "fallback": "User"
+      },
+      {
+        "key": "date",
+        "fallback": "Date"
+      },
+      {
+        "key": "loading",
+        "fallback": "Loading..."
+      },
+      {
+        "key": "admin_required",
+        "fallback": "This page requires an admin account."
+      },
+      {
+        "key": "no_activity_found",
+        "fallback": "No activity found."
+      }
+    ],
+    "hardcodedAttributes": [],
+    "hardcodedButtons": [],
+    "hardcodedHeadings": []
+  },
+  "admin/pages/AdminManagement.tsx": {
+    "missingArKeys": [],
+    "latinFallbacksInT": [
+      {
+        "key": "legacy.fill_required_fields",
+        "fallback": "Please fill all required fields"
+      },
+      {
+        "key": "legacy.password_required",
+        "fallback": "Password is required for new admin"
+      },
+      {
+        "key": "legacy.passwords_dont_match",
+        "fallback": "Passwords do not match"
+      },
+      {
+        "key": "legacy.admin_updated",
+        "fallback": "Admin updated successfully!"
+      },
+      {
+        "key": "legacy.admin_created",
+        "fallback": "Admin created successfully!"
+      },
+      {
+        "key": "legacy.cannot_delete_self",
+        "fallback": "You cannot delete your own account"
+      },
+      {
+        "key": "legacy.confirm_delete_admin",
+        "fallback": "Are you sure you want to delete this admin?"
+      },
+      {
+        "key": "legacy.admin_deleted",
+        "fallback": "Admin deleted successfully."
+      },
+      {
+        "key": "legacy.access_denied",
+        "fallback": "Access Denied"
+      },
+      {
+        "key": "legacy.super_admin_only",
+        "fallback": "Only Super Admin can access this page."
+      },
+      {
+        "key": "legacy.admin_management",
+        "fallback": "Admin Management"
+      },
+      {
+        "key": "legacy.admin_management_desc",
+        "fallback": "Create and manage admin accounts with custom privileges"
+      },
+      {
+        "key": "legacy.create_admin",
+        "fallback": "Create Admin"
+      },
+      {
+        "key": "legacy.super_admins",
+        "fallback": "Super Admins"
+      },
+      {
+        "key": "legacy.admins",
+        "fallback": "Admins"
+      },
+      {
+        "key": "legacy.total",
+        "fallback": "Total"
+      },
+      {
+        "key": "legacy.loading",
+        "fallback": "Loading..."
+      },
+      {
+        "key": "legacy.no_admins",
+        "fallback": "No admins found."
+      },
+      {
+        "key": "legacy.admin",
+        "fallback": "Admin"
+      },
+      {
+        "key": "legacy.role",
+        "fallback": "Role"
+      },
+      {
+        "key": "legacy.privileges",
+        "fallback": "Privileges"
+      },
+      {
+        "key": "legacy.created",
+        "fallback": "Created"
+      },
+      {
+        "key": "legacy.actions",
+        "fallback": "Actions"
+      },
+      {
+        "key": "legacy.super_admin",
+        "fallback": "Super Admin"
+      },
+      {
+        "key": "legacy.admin",
+        "fallback": "Admin"
+      },
+      {
+        "key": "legacy.more",
+        "fallback": "more"
+      },
+      {
+        "key": "legacy.edit",
+        "fallback": "Edit"
+      },
+      {
+        "key": "legacy.delete",
+        "fallback": "Delete"
+      },
+      {
+        "key": "legacy.edit_admin",
+        "fallback": "Edit Admin"
+      },
+      {
+        "key": "legacy.create_new_admin",
+        "fallback": "Create New Admin"
+      },
+      {
+        "key": "legacy.full_name",
+        "fallback": "Full Name"
+      },
+      {
+        "key": "legacy.full_name_placeholder",
+        "fallback": "Enter full name"
+      },
+      {
+        "key": "legacy.email",
+        "fallback": "Email"
+      },
+      {
+        "key": "legacy.email_placeholder",
+        "fallback": "admin@example.com"
+      },
+      {
+        "key": "legacy.phone",
+        "fallback": "Phone"
+      },
+      {
+        "key": "legacy.password",
+        "fallback": "Password"
+      },
+      {
+        "key": "legacy.confirm_password",
+        "fallback": "Confirm Password"
+      },
+      {
+        "key": "legacy.privileges",
+        "fallback": "Admin Privileges"
+      },
+      {
+        "key": "legacy.privileges_desc",
+        "fallback": "Select which pages this admin can access"
+      },
+      {
+        "key": "legacy.cancel",
+        "fallback": "Cancel"
+      },
+      {
+        "key": "legacy.saving",
+        "fallback": "Saving..."
+      },
+      {
+        "key": "legacy.save",
+        "fallback": "Save"
+      }
+    ],
+    "hardcodedAttributes": [],
+    "hardcodedButtons": [],
+    "hardcodedHeadings": []
+  },
+  "admin/pages/AdminNotes.tsx": {
+    "missingArKeys": [],
+    "latinFallbacksInT": [
+      {
+        "key": "research_notes",
+        "fallback": "Research Notes"
+      },
+      {
+        "key": "add_note",
+        "fallback": "+ Add Note"
+      },
+      {
+        "key": "quota_reached",
+        "fallback": "Quota Reached"
+      },
+      {
+        "key": "upgrade_plan",
+        "fallback": "Upgrade Plan"
+      },
+      {
+        "key": "placeholder_search_notes",
+        "fallback": "Search research notes..."
+      },
+      {
+        "key": "no_notes_found",
+        "fallback": "No notes found"
+      },
+      {
+        "key": "notes_empty_desc",
+        "fallback": "Create private research notes to track family archives, document sources, and personal research ideas."
+      },
+      {
+        "key": "create_first_note",
+        "fallback": "Create First Note"
+      }
+    ],
+    "hardcodedAttributes": [],
+    "hardcodedButtons": [],
+    "hardcodedHeadings": []
+  },
+  "admin/pages/AdminTasks.tsx": {
+    "missingArKeys": [],
+    "latinFallbacksInT": [
+      {
+        "key": "task_title_required",
+        "fallback": "Task title is required"
+      },
+      {
+        "key": "task_updated_success",
+        "fallback": "Task updated successfully!"
+      },
+      {
+        "key": "new_task_created",
+        "fallback": "New task created!"
+      },
+      {
+        "key": "task_status_updated",
+        "fallback": "Task status updated"
+      },
+      {
+        "key": "confirm_delete_task",
+        "fallback": "Are you sure you want to delete this task?"
+      },
+      {
+        "key": "task_deleted",
+        "fallback": "Task deleted"
+      },
+      {
+        "key": "status_in_progress",
+        "fallback": "In Progress"
+      },
+      {
+        "key": "status_done",
+        "fallback": "Done"
+      },
+      {
+        "key": "high_priority",
+        "fallback": "High Priority"
+      },
+      {
+        "key": "med_priority",
+        "fallback": "Med Priority"
+      },
+      {
+        "key": "low_priority",
+        "fallback": "Low Priority"
+      },
+      {
+        "key": "research_tasks",
+        "fallback": "Research Tasks"
+      },
+      {
+        "key": "tasks_desc_long",
+        "fallback": "Track genealogy tasks e.g. Find birth record, Verify marriage, Check civil registers."
+      },
+      {
+        "key": "my_tasks",
+        "fallback": "My Tasks"
+      },
+      {
+        "key": "all_system_tasks",
+        "fallback": "All System Tasks"
+      },
+      {
+        "key": "add_task",
+        "fallback": "+ Add Task"
+      },
+      {
+        "key": "tasks_created",
+        "fallback": "Tasks Created:"
+      },
+      {
+        "key": "free_tier_task_limit",
+        "fallback": "Free Tier (Limit: 25 Tasks)"
+      },
+      {
+        "key": "quota_reached",
+        "fallback": "Quota Reached"
+      },
+      {
+        "key": "upgrade_plan",
+        "fallback": "Upgrade Plan"
+      },
+      {
+        "key": "all",
+        "fallback": "All"
+      },
+      {
+        "key": "status_in_progress",
+        "fallback": "In Progress"
+      },
+      {
+        "key": "status_completed",
+        "fallback": "Completed"
+      },
+      {
+        "key": "placeholder_search_tasks",
+        "fallback": "Search tasks..."
+      },
+      {
+        "key": "no_tasks_found",
+        "fallback": "No tasks found"
+      },
+      {
+        "key": "tasks_empty_state_desc",
+        "fallback": "Organize your research action items e.g. Obtain death certificate from Archives Nationales, Verify birth year."
+      },
+      {
+        "key": "create_first_task",
+        "fallback": "Create First Task"
+      },
+      {
+        "key": "edit_research_task",
+        "fallback": "Edit Research Task"
+      },
+      {
+        "key": "add_research_task",
+        "fallback": "+ Add Research Task"
+      },
+      {
+        "key": "task_title",
+        "fallback": "Task Title"
+      },
+      {
+        "key": "placeholder_task_title",
+        "fallback": "e.g. Find birth certificate for Mohamed Ben Ali"
+      },
+      {
+        "key": "description_notes",
+        "fallback": "Description / Notes"
+      },
+      {
+        "key": "placeholder_task_desc",
+        "fallback": "Details, archive location, record reference..."
+      },
+      {
+        "key": "status",
+        "fallback": "Status"
+      },
+      {
+        "key": "status_in_progress",
+        "fallback": "In Progress"
+      },
+      {
+        "key": "status_completed",
+        "fallback": "Completed"
+      },
+      {
+        "key": "priority",
+        "fallback": "Priority"
+      },
+      {
+        "key": "low_priority",
+        "fallback": "Low Priority"
+      },
+      {
+        "key": "med_priority",
+        "fallback": "Med Priority"
+      },
+      {
+        "key": "high_priority",
+        "fallback": "High Priority"
+      },
+      {
+        "key": "attachment_image",
+        "fallback": "Attachment Image"
+      },
+      {
+        "key": "change_image",
+        "fallback": "Change Image"
+      },
+      {
+        "key": "upload_file",
+        "fallback": "Upload File"
+      },
+      {
+        "key": "cancel",
+        "fallback": "Cancel"
+      },
+      {
+        "key": "saving",
+        "fallback": "Saving..."
+      },
+      {
+        "key": "update_task",
+        "fallback": "Update Task"
+      },
+      {
+        "key": "save_task",
+        "fallback": "Save Task"
+      }
+    ],
+    "hardcodedAttributes": [],
+    "hardcodedButtons": [],
+    "hardcodedHeadings": []
+  },
+  "admin/pages/Articles.tsx": {
+    "missingArKeys": [],
+    "latinFallbacksInT": [
+      {
+        "key": "user",
+        "fallback": "User"
+      },
+      {
+        "key": "posts_load_failed",
+        "fallback": "Failed to load posts"
+      },
+      {
+        "key": "content_required",
+        "fallback": "Please enter content"
+      },
+      {
+        "key": "article_updated",
+        "fallback": "Post updated."
+      },
+      {
+        "key": "article_created",
+        "fallback": "Post published."
+      },
+      {
+        "key": "post_save_failed",
+        "fallback": "Failed to save post"
+      },
+      {
+        "key": "confirm_delete",
+        "fallback": "Are you sure you want to delete this item?"
+      },
+      {
+        "key": "article_deleted",
+        "fallback": "Post deleted."
+      },
+      {
+        "key": "post_delete_failed",
+        "fallback": "Failed to delete post"
+      },
+      {
+        "key": "article_management",
+        "fallback": "Genealogy articles"
+      },
+      {
+        "key": "article_desc",
+        "fallback": "Publish discoveries, stories, and media-rich family updates."
+      },
+      {
+        "key": "posts",
+        "fallback": "Posts"
+      },
+      {
+        "key": "with_media",
+        "fallback": "With Media"
+      },
+      {
+        "key": "community",
+        "fallback": "Community"
+      },
+      {
+        "key": "post_title",
+        "fallback": "Post title"
+      },
+      {
+        "key": "custom_category_placeholder",
+        "fallback": "Name this category..."
+      },
+      {
+        "key": "share_story_placeholder",
+        "fallback": "Share a family discovery, migration story, or archival finding..."
+      },
+      {
+        "key": "image_url",
+        "fallback": "Image URL"
+      },
+      {
+        "key": "add",
+        "fallback": "Add"
+      },
+      {
+        "key": "video_url",
+        "fallback": "Video URL"
+      },
+      {
+        "key": "add",
+        "fallback": "Add"
+      },
+      {
+        "key": "public",
+        "fallback": "Public"
+      },
+      {
+        "key": "community",
+        "fallback": "Community"
+      },
+      {
+        "key": "private",
+        "fallback": "Private"
+      },
+      {
+        "key": "posting",
+        "fallback": "Posting..."
+      },
+      {
+        "key": "update",
+        "fallback": "Update"
+      },
+      {
+        "key": "post",
+        "fallback": "Post"
+      },
+      {
+        "key": "cancel",
+        "fallback": "Cancel"
+      },
+      {
+        "key": "loading",
+        "fallback": "Loading..."
+      },
+      {
+        "key": "no_articles",
+        "fallback": "No posts yet."
+      },
+      {
+        "key": "article_image",
+        "fallback": "Article image"
+      },
+      {
+        "key": "user",
+        "fallback": "User"
+      },
+      {
+        "key": "user",
+        "fallback": "User"
+      },
+      {
+        "key": "article_image",
+        "fallback": "Article image"
+      },
+      {
+        "key": "likes",
+        "fallback": "likes"
+      }
+    ],
+    "hardcodedAttributes": [],
+    "hardcodedButtons": [],
+    "hardcodedHeadings": []
+  },
+  "admin/pages/Audios.tsx": {
+    "missingArKeys": [],
+    "latinFallbacksInT": [
+      {
+        "key": "legacy.audio_required",
+        "fallback": "Please select an audio file"
+      },
+      {
+        "key": "legacy.file_too_large",
+        "fallback": "File is too large (max 50MB)."
+      },
+      {
+        "key": "legacy.invalid_audio_type",
+        "fallback": "Only audio files are allowed."
+      },
+      {
+        "key": "legacy.audios_loaded",
+        "fallback": "Audio archives loaded."
+      },
+      {
+        "key": "legacy.audios_load_failed",
+        "fallback": "Failed to load audios"
+      },
+      {
+        "key": "legacy.fill_required_fields",
+        "fallback": "Please fill all required fields"
+      },
+      {
+        "key": "legacy.audio_required",
+        "fallback": "Please select an audio file"
+      },
+      {
+        "key": "legacy.audio_updated",
+        "fallback": "Audio updated."
+      },
+      {
+        "key": "legacy.audio_created",
+        "fallback": "Audio uploaded."
+      },
+      {
+        "key": "legacy.operation_failed",
+        "fallback": "Operation failed"
+      },
+      {
+        "key": "legacy.confirm_delete",
+        "fallback": "Are you sure you want to delete this item?"
+      },
+      {
+        "key": "legacy.audio_deleted",
+        "fallback": "Audio deleted."
+      },
+      {
+        "key": "legacy.audio_management",
+        "fallback": "Audio Archives Management"
+      },
+      {
+        "key": "legacy.audio_desc",
+        "fallback": "Upload and manage oral histories, songs, and audio recordings"
+      },
+      {
+        "key": "legacy.total",
+        "fallback": "Total"
+      },
+      {
+        "key": "legacy.public",
+        "fallback": "Public"
+      },
+      {
+        "key": "legacy.timed",
+        "fallback": "Timed"
+      },
+      {
+        "key": "legacy.edit_audio",
+        "fallback": "Edit Audio"
+      },
+      {
+        "key": "legacy.upload_new_audio",
+        "fallback": "Upload New Audio"
+      },
+      {
+        "key": "legacy.cancel",
+        "fallback": "Cancel"
+      },
+      {
+        "key": "legacy.select_audio",
+        "fallback": "Select Audio File"
+      },
+      {
+        "key": "legacy.click_to_upload_audio",
+        "fallback": "Click to upload audio"
+      },
+      {
+        "key": "legacy.audio_file_formats",
+        "fallback": "MP3, WAV, M4A, OGG (max 50MB)"
+      },
+      {
+        "key": "legacy.title",
+        "fallback": "Title"
+      },
+      {
+        "key": "legacy.title_placeholder",
+        "fallback": "Audio title"
+      },
+      {
+        "key": "legacy.category",
+        "fallback": "Category"
+      },
+      {
+        "key": "legacy.custom_category_placeholder",
+        "fallback": "Name this category..."
+      },
+      {
+        "key": "legacy.description",
+        "fallback": "Description"
+      },
+      {
+        "key": "legacy.description_placeholder",
+        "fallback": "Description"
+      },
+      {
+        "key": "legacy.make_public",
+        "fallback": "Make Public"
+      },
+      {
+        "key": "legacy.uploading",
+        "fallback": "Uploading..."
+      },
+      {
+        "key": "legacy.update",
+        "fallback": "Update"
+      },
+      {
+        "key": "legacy.upload",
+        "fallback": "Upload"
+      },
+      {
+        "key": "legacy.audio_list",
+        "fallback": "Audio Archives"
+      },
+      {
+        "key": "legacy.loading",
+        "fallback": "Loading..."
+      },
+      {
+        "key": "legacy.no_audios",
+        "fallback": "No audio archives yet."
+      },
+      {
+        "key": "legacy.edit",
+        "fallback": "Edit"
+      },
+      {
+        "key": "legacy.delete",
+        "fallback": "Delete"
+      }
+    ],
+    "hardcodedAttributes": [],
+    "hardcodedButtons": [],
+    "hardcodedHeadings": []
+  },
+  "admin/pages/BackgroundImages.tsx": {
+    "missingArKeys": [],
+    "latinFallbacksInT": [
+      {
+        "key": "legacy.site_images_load_failed",
+        "fallback": "Failed to load site images."
+      },
+      {
+        "key": "legacy.background_images_saved",
+        "fallback": "Background image settings saved."
+      },
+      {
+        "key": "legacy.background_images_save_failed",
+        "fallback": "Failed to save background image."
+      },
+      {
+        "key": "legacy.image_required",
+        "fallback": "Please select an image"
+      },
+      {
+        "key": "legacy.background_image_uploaded",
+        "fallback": "Background image uploaded."
+      },
+      {
+        "key": "legacy.background_image_upload_failed",
+        "fallback": "Failed to upload background image."
+      },
+      {
+        "key": "legacy.confirm_delete",
+        "fallback": "Are you sure you want to delete this item?"
+      },
+      {
+        "key": "legacy.background_image_deleted",
+        "fallback": "Background image deleted."
+      },
+      {
+        "key": "legacy.delete_failed",
+        "fallback": "Failed to delete"
+      },
+      {
+        "key": "legacy.background_images",
+        "fallback": "Background Images"
+      },
+      {
+        "key": "legacy.background_image_page_title",
+        "fallback": "Arriere Plan Image"
+      },
+      {
+        "key": "legacy.background_image_page_desc",
+        "fallback": "Upload one or more background images for the site sections. Multiple images rotate as a slideshow."
+      },
+      {
+        "key": "legacy.refresh",
+        "fallback": "Refresh"
+      },
+      {
+        "key": "legacy.show_default_background_image",
+        "fallback": "Show default background image"
+      },
+      {
+        "key": "legacy.background_diaporama_hint",
+        "fallback": "Keep the default visible to include it in the background slideshow, or hide it to use only uploaded images."
+      },
+      {
+        "key": "legacy.saving",
+        "fallback": "Saving..."
+      },
+      {
+        "key": "legacy.upload",
+        "fallback": "Upload"
+      },
+      {
+        "key": "legacy.uploaded_background_images",
+        "fallback": "Uploaded background images"
+      },
+      {
+        "key": "legacy.loading",
+        "fallback": "Loading..."
+      },
+      {
+        "key": "legacy.background_image",
+        "fallback": "Background image"
+      },
+      {
+        "key": "legacy.delete",
+        "fallback": "Delete"
+      },
+      {
+        "key": "legacy.no_background_images",
+        "fallback": "No custom background images uploaded yet."
+      }
+    ],
+    "hardcodedAttributes": [],
+    "hardcodedButtons": [],
+    "hardcodedHeadings": []
+  },
+  "admin/pages/Backups.tsx": {
+    "missingArKeys": [],
+    "latinFallbacksInT": [
+      {
+        "key": "backups_load_failed",
+        "fallback": "Unable to load backups."
+      },
+      {
+        "key": "restore_backup_confirm",
+        "fallback": "Restore this backup as a new tree?"
+      },
+      {
+        "key": "backup_restored",
+        "fallback": "Backup restored."
+      },
+      {
+        "key": "backups",
+        "fallback": "Backups"
+      },
+      {
+        "key": "tree",
+        "fallback": "Tree"
+      },
+      {
+        "key": "reason",
+        "fallback": "Reason"
+      },
+      {
+        "key": "date",
+        "fallback": "Date"
+      },
+      {
+        "key": "actions",
+        "fallback": "Actions"
+      },
+      {
+        "key": "restored",
+        "fallback": "Restored"
+      },
+      {
+        "key": "restore",
+        "fallback": "Restore"
+      },
+      {
+        "key": "no_backups",
+        "fallback": "No backups found."
+      }
+    ],
+    "hardcodedAttributes": [],
+    "hardcodedButtons": [],
+    "hardcodedHeadings": []
+  },
+  "admin/pages/Books.tsx": {
+    "missingArKeys": [
+      {
+        "key": "invalid_book_type",
+        "issue": "ar.json contains latin: نوع ملف الكتاب غير صالح. يرجى رفع ملف بصيغة PDF أو EPUB."
+      }
+    ],
+    "latinFallbacksInT": [
+      {
+        "key": "file_required",
+        "fallback": "File is required"
+      },
+      {
+        "key": "file_too_large",
+        "fallback": "File is too large (max 50MB)."
+      },
+      {
+        "key": "invalid_book_type",
+        "fallback": "Unsupported file type. Use PDF, DOC, DOCX, TXT, EPUB, or MOBI."
+      },
+      {
+        "key": "cover_required",
+        "fallback": "Cover image is required"
+      },
+      {
+        "key": "file_too_large",
+        "fallback": "File is too large (max 50MB)."
+      },
+      {
+        "key": "invalid_image_type",
+        "fallback": "Only image files are allowed."
+      },
+      {
+        "key": "books_loaded",
+        "fallback": "Books loaded."
+      },
+      {
+        "key": "books_loaded",
+        "fallback": "Books loaded."
+      },
+      {
+        "key": "title_required",
+        "fallback": "Title is required"
+      },
+      {
+        "key": "file_required",
+        "fallback": "File is required"
+      },
+      {
+        "key": "cover_required",
+        "fallback": "Cover image is required"
+      },
+      {
+        "key": "book_uploaded",
+        "fallback": "Book uploaded."
+      },
+      {
+        "key": "book_deleted",
+        "fallback": "Book deleted."
+      },
+      {
+        "key": "book_deleted",
+        "fallback": "Book deleted."
+      },
+      {
+        "key": "books",
+        "fallback": "Books"
+      },
+      {
+        "key": "add_book",
+        "fallback": "Add Book"
+      },
+      {
+        "key": "upload_book",
+        "fallback": "Upload Book"
+      },
+      {
+        "key": "books_admin_desc",
+        "fallback": "Upload and manage your genealogy library."
+      },
+      {
+        "key": "books_user_desc",
+        "fallback": "Browse public books or upload private books for your account."
+      },
+      {
+        "key": "public_books",
+        "fallback": "Public Books"
+      },
+      {
+        "key": "my_books",
+        "fallback": "My Books"
+      },
+      {
+        "key": "search_books",
+        "fallback": "Search books..."
+      },
+      {
+        "key": "loading",
+        "fallback": "Loading..."
+      },
+      {
+        "key": "no_books_found",
+        "fallback": "No books found."
+      },
+      {
+        "key": "title",
+        "fallback": "Title"
+      },
+      {
+        "key": "author",
+        "fallback": "Author"
+      },
+      {
+        "key": "category",
+        "fallback": "Category"
+      },
+      {
+        "key": "public",
+        "fallback": "Public"
+      },
+      {
+        "key": "downloads",
+        "fallback": "Downloads"
+      },
+      {
+        "key": "uploaded_by",
+        "fallback": "Uploaded By"
+      },
+      {
+        "key": "date",
+        "fallback": "Date"
+      },
+      {
+        "key": "actions",
+        "fallback": "Actions"
+      },
+      {
+        "key": "yes",
+        "fallback": "Yes"
+      },
+      {
+        "key": "upload_book",
+        "fallback": "Upload Book"
+      },
+      {
+        "key": "upload_book",
+        "fallback": "Upload Book"
+      },
+      {
+        "key": "upload_book_desc",
+        "fallback": "Add a PDF or document to the library."
+      },
+      {
+        "key": "cover_image",
+        "fallback": "Cover Image"
+      },
+      {
+        "key": "add_cover",
+        "fallback": "Add cover"
+      },
+      {
+        "key": "file",
+        "fallback": "File"
+      },
+      {
+        "key": "public_visible",
+        "fallback": "Public (visible on website)"
+      },
+      {
+        "key": "title",
+        "fallback": "Title"
+      },
+      {
+        "key": "placeholder_book_title",
+        "fallback": "Book title"
+      },
+      {
+        "key": "author",
+        "fallback": "Author"
+      },
+      {
+        "key": "author",
+        "fallback": "Author"
+      },
+      {
+        "key": "category",
+        "fallback": "Category"
+      },
+      {
+        "key": "category",
+        "fallback": "Category"
+      },
+      {
+        "key": "archive_source",
+        "fallback": "Archive Source"
+      },
+      {
+        "key": "archive_source",
+        "fallback": "Archive Source"
+      },
+      {
+        "key": "document_code",
+        "fallback": "Document Code"
+      },
+      {
+        "key": "document_code",
+        "fallback": "Document Code"
+      },
+      {
+        "key": "description",
+        "fallback": "Description"
+      },
+      {
+        "key": "cancel",
+        "fallback": "Cancel"
+      },
+      {
+        "key": "uploading",
+        "fallback": "Uploading..."
+      },
+      {
+        "key": "upload",
+        "fallback": "Upload"
+      }
+    ],
+    "hardcodedAttributes": [],
+    "hardcodedButtons": [],
+    "hardcodedHeadings": []
+  },
+  "admin/pages/ContactMessages.tsx": {
+    "missingArKeys": [],
+    "latinFallbacksInT": [
+      {
+        "key": "legacy.contactMessages",
+        "fallback": "Contact Messages"
+      },
+      {
+        "key": "legacy.noMessages",
+        "fallback": "No messages yet"
+      }
+    ],
+    "hardcodedAttributes": [],
+    "hardcodedButtons": [],
+    "hardcodedHeadings": []
+  },
+  "admin/pages/ContactSupport.tsx": {
+    "missingArKeys": [],
+    "latinFallbacksInT": [
+      {
+        "key": "enter_support_message",
+        "fallback": "Please enter your support complaint or message."
+      },
+      {
+        "key": "registered_user",
+        "fallback": "Registered User"
+      },
+      {
+        "key": "no_subject",
+        "fallback": "No Subject"
+      },
+      {
+        "key": "support_message_delivered",
+        "fallback": "Your complaint/support message has been delivered to Super Admin support and dispatched via SMTP email!"
+      },
+      {
+        "key": "support_delivery_failed",
+        "fallback": "Failed to deliver support message. Please try again."
+      },
+      {
+        "key": "contact_support",
+        "fallback": "Contact Support & Complaints"
+      },
+      {
+        "key": "contact_support_desc",
+        "fallback": "Directly submit support inquiries or complaints to Super Admin. Messages are dispatched directly to admin SMTP email and logged in the admin panel."
+      },
+      {
+        "key": "your_full_name",
+        "fallback": "Your Full Name:"
+      },
+      {
+        "key": "registered_user",
+        "fallback": "Registered User"
+      },
+      {
+        "key": "your_email_address",
+        "fallback": "Your Email Address:"
+      },
+      {
+        "key": "complaint_ticket_category",
+        "fallback": "Complaint / Ticket Category:"
+      },
+      {
+        "key": "cat_billing_complaint",
+        "fallback": "Billing & Subscription Complaint"
+      },
+      {
+        "key": "cat_tech_issue",
+        "fallback": "Technical Issue / Bug Report"
+      },
+      {
+        "key": "cat_account_quotas",
+        "fallback": "Account & Quotas Inquiry"
+      },
+      {
+        "key": "cat_feature_request",
+        "fallback": "Feature Request"
+      },
+      {
+        "key": "cat_general_support",
+        "fallback": "General Support"
+      },
+      {
+        "key": "subject",
+        "fallback": "Subject:"
+      },
+      {
+        "key": "placeholder_subject",
+        "fallback": "Brief summary of your inquiry..."
+      },
+      {
+        "key": "complaint_detailed_message",
+        "fallback": "Complaint / Detailed Message:"
+      },
+      {
+        "key": "placeholder_message",
+        "fallback": "Please describe your complaint or support request in detail..."
+      },
+      {
+        "key": "submit_support_ticket",
+        "fallback": "Submit Support Ticket"
+      },
+      {
+        "key": "super_admin_support",
+        "fallback": "Super Admin Support"
+      },
+      {
+        "key": "super_admin_support_desc",
+        "fallback": "Your support ticket will be delivered directly to the Super Admin control panel for assistance."
+      },
+      {
+        "key": "need_payment_help",
+        "fallback": "Need Payment Help?"
+      },
+      {
+        "key": "need_payment_help_desc",
+        "fallback": "If you have submitted a bank payment proof for subscription upgrade, you can check review status in your account or send a message here with your transaction reference."
+      }
+    ],
+    "hardcodedAttributes": [],
+    "hardcodedButtons": [],
+    "hardcodedHeadings": []
+  },
+  "admin/pages/Dashboard.tsx": {
+    "missingArKeys": [],
+    "latinFallbacksInT": [
+      {
+        "key": "dashboard_load_failed",
+        "fallback": "Failed to load dashboard data."
+      },
+      {
+        "key": "total_users",
+        "fallback": "Members"
+      },
+      {
+        "key": "registered_users",
+        "fallback": "registered users"
+      },
+      {
+        "key": "family_trees",
+        "fallback": "Family Trees"
+      },
+      {
+        "key": "lineage_workspaces",
+        "fallback": "lineage workspaces"
+      },
+      {
+        "key": "total_people",
+        "fallback": "People"
+      },
+      {
+        "key": "indexed_relatives",
+        "fallback": "indexed relatives"
+      },
+      {
+        "key": "total_books",
+        "fallback": "Library Items"
+      },
+      {
+        "key": "books_and_records",
+        "fallback": "books and records"
+      },
+      {
+        "key": "my_trees",
+        "fallback": "My Trees"
+      },
+      {
+        "key": "private_workspace",
+        "fallback": "your workspace"
+      },
+      {
+        "key": "public_trees",
+        "fallback": "Public Trees"
+      },
+      {
+        "key": "shared_lineages",
+        "fallback": "shared lineages"
+      },
+      {
+        "key": "public_books",
+        "fallback": "Library Items"
+      },
+      {
+        "key": "research_materials",
+        "fallback": "research materials"
+      },
+      {
+        "key": "my_activity",
+        "fallback": "Activity"
+      },
+      {
+        "key": "recent_updates",
+        "fallback": "recent updates"
+      },
+      {
+        "key": "manage_family_trees",
+        "fallback": "Family Trees"
+      },
+      {
+        "key": "manage_family_trees_desc",
+        "fallback": "Create, edit, and import GEDCOM lineage files."
+      },
+      {
+        "key": "curate_collections",
+        "fallback": "Gallery"
+      },
+      {
+        "key": "curate_collections_desc",
+        "fallback": "Manage family photos and archive scans."
+      },
+      {
+        "key": "library_records",
+        "fallback": "Library"
+      },
+      {
+        "key": "library_records_desc",
+        "fallback": "Publish books and research materials."
+      },
+      {
+        "key": "audio_records",
+        "fallback": "Audio"
+      },
+      {
+        "key": "audio_records_desc",
+        "fallback": "Upload and manage oral history recordings."
+      },
+      {
+        "key": "research_notes",
+        "fallback": "Research Notes"
+      },
+      {
+        "key": "research_notes_desc",
+        "fallback": "Private notes attached to people, trees & historical events."
+      },
+      {
+        "key": "research_tasks",
+        "fallback": "Research Tasks"
+      },
+      {
+        "key": "research_tasks_desc",
+        "fallback": "Track tasks e.g. "
+      },
+      {
+        "key": "my_sources_archives",
+        "fallback": "My Sources & Archives"
+      },
+      {
+        "key": "my_sources_desc",
+        "fallback": "Saved reference sources with custom links & uploaded icons."
+      },
+      {
+        "key": "users",
+        "fallback": "Users"
+      },
+      {
+        "key": "manage_users_desc",
+        "fallback": "Manage members and their permissions."
+      },
+      {
+        "key": "tunisia_control_panel",
+        "fallback": "Roots Tunisia Control Panel"
+      },
+      {
+        "key": "easy_panel_title",
+        "fallback": "Your Tunisia heritage, organized"
+      },
+      {
+        "key": "easy_panel_admin_desc",
+        "fallback": "Manage the community, curate family records, and keep North African lineage data organized from one clear panel."
+      },
+      {
+        "key": "easy_panel_user_desc",
+        "fallback": "Build your family tree, collect archive sources, and preserve your Tunisia family history."
+      },
+      {
+        "key": "new_tree",
+        "fallback": "New Tree"
+      },
+      {
+        "key": "browse_library",
+        "fallback": "Browse Library"
+      },
+      {
+        "key": "account_quotas",
+        "fallback": "Account Quotas"
+      },
+      {
+        "key": "plan",
+        "fallback": "Plan"
+      },
+      {
+        "key": "trees",
+        "fallback": "Trees"
+      },
+      {
+        "key": "individuals",
+        "fallback": "Individuals"
+      },
+      {
+        "key": "gallery",
+        "fallback": "Gallery"
+      },
+      {
+        "key": "view_full_quotas",
+        "fallback": "View Full Quotas"
+      },
+      {
+        "key": "upgrade",
+        "fallback": "Upgrade"
+      },
+      {
+        "key": "quick_actions",
+        "fallback": "Quick Actions"
+      },
+      {
+        "key": "keep_work_moving",
+        "fallback": "Manage Content"
+      },
+      {
+        "key": "recent_activity",
+        "fallback": "Recent Activity"
+      },
+      {
+        "key": "log_status",
+        "fallback": "Log:"
+      },
+      {
+        "key": "off_status",
+        "fallback": "OFF"
+      },
+      {
+        "key": "refresh",
+        "fallback": "Refresh"
+      },
+      {
+        "key": "activity_logging_off_notice",
+        "fallback": "Activity logging is currently turned OFF for your account. Turn it ON to resume tracking."
+      },
+      {
+        "key": "loading",
+        "fallback": "Loading..."
+      },
+      {
+        "key": "no_activity_yet",
+        "fallback": "No activity yet."
+      },
+      {
+        "key": "system",
+        "fallback": "System"
+      }
+    ],
+    "hardcodedAttributes": [],
+    "hardcodedButtons": [],
+    "hardcodedHeadings": []
+  },
+  "admin/pages/Documents.tsx": {
+    "missingArKeys": [
+      {
+        "key": "legacy.invalid_doc_type",
+        "issue": "ar.json contains latin: نوع المستند غير مدعوم. يُسمح فقط بملفات PDF و DOC و DOCX و TXT و XLS و XLSX."
+      },
+      {
+        "key": "legacy.document_file_formats",
+        "issue": "ar.json contains latin: دعم ملفات PDF، DOC، DOCX، TXT، XLS، XLSX (الحد الأقصى 25 ميغابايت)"
+      }
+    ],
+    "latinFallbacksInT": [
+      {
+        "key": "legacy.file_too_large",
+        "fallback": "File is too large (max 25MB)."
+      },
+      {
+        "key": "legacy.invalid_doc_type",
+        "fallback": "Only PDF, DOC, DOCX, TXT, XLS, XLSX files are allowed."
+      },
+      {
+        "key": "legacy.documents_loaded",
+        "fallback": "Documents loaded."
+      },
+      {
+        "key": "legacy.documents_load_failed",
+        "fallback": "Failed to load documents"
+      },
+      {
+        "key": "legacy.fill_required_fields",
+        "fallback": "Please fill all required fields"
+      },
+      {
+        "key": "legacy.file_required",
+        "fallback": "Please select a file"
+      },
+      {
+        "key": "legacy.document_updated",
+        "fallback": "Document updated."
+      },
+      {
+        "key": "legacy.document_created",
+        "fallback": "Document uploaded."
+      },
+      {
+        "key": "legacy.operation_failed",
+        "fallback": "Operation failed"
+      },
+      {
+        "key": "legacy.confirm_delete",
+        "fallback": "Are you sure you want to delete this item?"
+      },
+      {
+        "key": "legacy.document_deleted",
+        "fallback": "Document deleted."
+      },
+      {
+        "key": "legacy.document_management",
+        "fallback": "Documents Management"
+      },
+      {
+        "key": "legacy.document_desc",
+        "fallback": "Upload and manage vital records, certificates, and historical documents"
+      },
+      {
+        "key": "legacy.total",
+        "fallback": "Total"
+      },
+      {
+        "key": "legacy.public",
+        "fallback": "Public"
+      },
+      {
+        "key": "legacy.coded",
+        "fallback": "Coded"
+      },
+      {
+        "key": "legacy.edit_document",
+        "fallback": "Edit Document"
+      },
+      {
+        "key": "legacy.upload_new_document",
+        "fallback": "Upload New Document"
+      },
+      {
+        "key": "legacy.cancel",
+        "fallback": "Cancel"
+      },
+      {
+        "key": "legacy.select_file",
+        "fallback": "Select File"
+      },
+      {
+        "key": "legacy.click_to_upload_document",
+        "fallback": "Click to upload document"
+      },
+      {
+        "key": "legacy.document_file_formats",
+        "fallback": "PDF, DOC, DOCX, TXT, XLS, XLSX (max 25MB)"
+      },
+      {
+        "key": "legacy.title",
+        "fallback": "Title"
+      },
+      {
+        "key": "legacy.category",
+        "fallback": "Category"
+      },
+      {
+        "key": "legacy.custom_category_placeholder",
+        "fallback": "Name this category..."
+      },
+      {
+        "key": "legacy.archive_source",
+        "fallback": "Archive Source"
+      },
+      {
+        "key": "legacy.document_code",
+        "fallback": "Document Code"
+      },
+      {
+        "key": "legacy.description",
+        "fallback": "Description"
+      },
+      {
+        "key": "legacy.make_public",
+        "fallback": "Make Public"
+      },
+      {
+        "key": "legacy.uploading",
+        "fallback": "Uploading..."
+      },
+      {
+        "key": "legacy.update",
+        "fallback": "Update"
+      },
+      {
+        "key": "legacy.upload",
+        "fallback": "Upload"
+      },
+      {
+        "key": "legacy.document_list",
+        "fallback": "Documents"
+      },
+      {
+        "key": "legacy.no_documents",
+        "fallback": "No documents yet."
+      },
+      {
+        "key": "legacy.document",
+        "fallback": "Document"
+      },
+      {
+        "key": "legacy.edit",
+        "fallback": "Edit"
+      },
+      {
+        "key": "legacy.delete",
+        "fallback": "Delete"
+      },
+      {
+        "key": "legacy.download",
+        "fallback": "Download"
+      }
+    ],
+    "hardcodedAttributes": [],
+    "hardcodedButtons": [],
+    "hardcodedHeadings": []
+  },
+  "admin/pages/DownloadRequests.tsx": {
+    "missingArKeys": [],
+    "latinFallbacksInT": [
+      {
+        "key": "download_requests_failed",
+        "fallback": "Failed to load download requests"
+      },
+      {
+        "key": "download_request_approved",
+        "fallback": "Download request approved."
+      },
+      {
+        "key": "download_request_rejected",
+        "fallback": "Download request rejected."
+      },
+      {
+        "key": "download_request_decision_failed",
+        "fallback": "Failed to update download request"
+      },
+      {
+        "key": "family_tree",
+        "fallback": "Family Tree"
+      },
+      {
+        "key": "books",
+        "fallback": "Books"
+      },
+      {
+        "key": "gallery",
+        "fallback": "Gallery"
+      },
+      {
+        "key": "audios",
+        "fallback": "Audios"
+      },
+      {
+        "key": "documents",
+        "fallback": "Documents"
+      },
+      {
+        "key": "approvals",
+        "fallback": "Approvals"
+      },
+      {
+        "key": "download_requests",
+        "fallback": "Download Requests"
+      },
+      {
+        "key": "download_requests_desc",
+        "fallback": "Review requests to download trees, books, gallery photos, audios, and documents that people don"
+      },
+      {
+        "key": "refresh",
+        "fallback": "Refresh"
+      },
+      {
+        "key": "loading",
+        "fallback": "Loading..."
+      },
+      {
+        "key": "no_download_requests",
+        "fallback": "No download requests"
+      },
+      {
+        "key": "unknown_user",
+        "fallback": "Unknown user"
+      },
+      {
+        "key": "requested_to_download",
+        "fallback": "requested to download"
+      },
+      {
+        "key": "from_content_type",
+        "fallback": "from"
+      },
+      {
+        "key": "requested",
+        "fallback": "Requested"
+      },
+      {
+        "key": "content_uploaded_on",
+        "fallback": "Uploaded"
+      },
+      {
+        "key": "status",
+        "fallback": "Status"
+      },
+      {
+        "key": "processed",
+        "fallback": "Processed"
+      },
+      {
+        "key": "approve",
+        "fallback": "Approve"
+      },
+      {
+        "key": "reject",
+        "fallback": "Reject"
+      }
+    ],
+    "hardcodedAttributes": [],
+    "hardcodedButtons": [],
+    "hardcodedHeadings": []
+  },
+  "admin/pages/FooterSettings.tsx": {
+    "missingArKeys": [],
+    "latinFallbacksInT": [
+      {
+        "key": "settings_saved",
+        "fallback": "Saved."
+      },
+      {
+        "key": "admin",
+        "fallback": "Admin"
+      },
+      {
+        "key": "footer_settings",
+        "fallback": "Footer Settings"
+      },
+      {
+        "key": "footer_settings_desc",
+        "fallback": "Manage the public footer contact details and social links from one clean control surface."
+      },
+      {
+        "key": "settings_saved",
+        "fallback": "Saved"
+      },
+      {
+        "key": "save_settings",
+        "fallback": "Save Settings"
+      },
+      {
+        "key": "footer_social_links",
+        "fallback": "Social Links"
+      },
+      {
+        "key": "active_of",
+        "fallback": "active of"
+      },
+      {
+        "key": "configured",
+        "fallback": "configured"
+      },
+      {
+        "key": "add_social_link",
+        "fallback": "Add Social Link"
+      },
+      {
+        "key": "no_social_links",
+        "fallback": "No social links yet."
+      },
+      {
+        "key": "disable",
+        "fallback": "Disable"
+      },
+      {
+        "key": "enable",
+        "fallback": "Enable"
+      },
+      {
+        "key": "disable_social_link",
+        "fallback": "Disable social link"
+      },
+      {
+        "key": "enable_social_link",
+        "fallback": "Enable social link"
+      },
+      {
+        "key": "open_url",
+        "fallback": "Open URL"
+      },
+      {
+        "key": "remove",
+        "fallback": "Remove"
+      },
+      {
+        "key": "remove",
+        "fallback": "Remove"
+      },
+      {
+        "key": "footer_contact_info",
+        "fallback": "Contact Info"
+      },
+      {
+        "key": "location",
+        "fallback": "Location"
+      },
+      {
+        "key": "city_country_placeholder",
+        "fallback": "City, Country"
+      },
+      {
+        "key": "email",
+        "fallback": "Email"
+      },
+      {
+        "key": "contact_email_placeholder",
+        "fallback": "contact@example.com"
+      },
+      {
+        "key": "phone",
+        "fallback": "Phone"
+      },
+      {
+        "key": "whatsapp",
+        "fallback": "WhatsApp"
+      },
+      {
+        "key": "live_preview",
+        "fallback": "Live Preview"
+      },
+      {
+        "key": "footer_preview_desc",
+        "fallback": "A modern home for Tunisian lineage, archive research, and community memory."
+      },
+      {
+        "key": "no_active_links",
+        "fallback": "No active links"
+      },
+      {
+        "key": "location_not_set",
+        "fallback": "Location not set"
+      },
+      {
+        "key": "email_not_set",
+        "fallback": "Email not set"
+      },
+      {
+        "key": "phone_not_set",
+        "fallback": "Phone not set"
+      },
+      {
+        "key": "whatsapp_not_set",
+        "fallback": "WhatsApp not set"
+      }
+    ],
+    "hardcodedAttributes": [],
+    "hardcodedButtons": [],
+    "hardcodedHeadings": []
+  },
+  "admin/pages/Gallery.tsx": {
+    "missingArKeys": [
+      {
+        "key": "legacy.image_file_formats",
+        "issue": "ar.json contains latin: دعم ملفات JPG، PNG، GIF، WEBP (الحد الأقصى 10 ميغابايت)"
+      },
+      {
+        "key": "legacy.document_code_placeholder",
+        "issue": "ar.json contains latin: مثال: DOC-12345"
+      }
+    ],
+    "latinFallbacksInT": [
+      {
+        "key": "legacy.image_required",
+        "fallback": "Please select an image"
+      },
+      {
+        "key": "legacy.file_too_large",
+        "fallback": "File is too large (max 10MB)."
+      },
+      {
+        "key": "legacy.invalid_image_type",
+        "fallback": "Only image files are allowed."
+      },
+      {
+        "key": "legacy.gallery_loaded",
+        "fallback": "Images loaded."
+      },
+      {
+        "key": "legacy.gallery_load_failed",
+        "fallback": "Failed to load gallery"
+      },
+      {
+        "key": "legacy.gallery_assets_need_backend",
+        "fallback": "Start the backend once to import bundled gallery images before editing them."
+      },
+      {
+        "key": "legacy.fill_required_fields",
+        "fallback": "Please fill all required fields"
+      },
+      {
+        "key": "legacy.gallery_updated",
+        "fallback": "Image updated."
+      },
+      {
+        "key": "legacy.image_required",
+        "fallback": "Please select an image"
+      },
+      {
+        "key": "legacy.gallery_created",
+        "fallback": "Image uploaded."
+      },
+      {
+        "key": "legacy.operation_failed",
+        "fallback": "Operation failed"
+      },
+      {
+        "key": "legacy.confirm_delete",
+        "fallback": "Are you sure you want to delete this item?"
+      },
+      {
+        "key": "legacy.gallery_deleted",
+        "fallback": "Image deleted."
+      },
+      {
+        "key": "legacy.image_not_found",
+        "fallback": "Image not found"
+      },
+      {
+        "key": "legacy.gallery_management",
+        "fallback": "Gallery Management"
+      },
+      {
+        "key": "legacy.gallery_desc",
+        "fallback": "Upload and manage photos with archive metadata"
+      },
+      {
+        "key": "legacy.total",
+        "fallback": "Total"
+      },
+      {
+        "key": "legacy.public",
+        "fallback": "Public"
+      },
+      {
+        "key": "legacy.archived",
+        "fallback": "Archived"
+      },
+      {
+        "key": "legacy.edit_photo",
+        "fallback": "Edit Photo"
+      },
+      {
+        "key": "legacy.upload_new_photo",
+        "fallback": "Upload New Photo"
+      },
+      {
+        "key": "legacy.cancel",
+        "fallback": "Cancel"
+      },
+      {
+        "key": "legacy.select_image",
+        "fallback": "Select Image"
+      },
+      {
+        "key": "legacy.preview",
+        "fallback": "Preview"
+      },
+      {
+        "key": "legacy.current_image",
+        "fallback": "Current Image"
+      },
+      {
+        "key": "legacy.click_to_upload",
+        "fallback": "Click to upload image"
+      },
+      {
+        "key": "legacy.image_file_formats",
+        "fallback": "JPG, PNG, GIF, WEBP (max 10MB)"
+      },
+      {
+        "key": "legacy.title",
+        "fallback": "Title"
+      },
+      {
+        "key": "legacy.enter_title",
+        "fallback": "Enter photo title..."
+      },
+      {
+        "key": "legacy.custom_category",
+        "fallback": "Custom Category"
+      },
+      {
+        "key": "legacy.custom_category_placeholder",
+        "fallback": "Name this category..."
+      },
+      {
+        "key": "legacy.make_public",
+        "fallback": "Make public (visible to all users)"
+      },
+      {
+        "key": "legacy.show_details",
+        "fallback": "Show details (archive metadata) in card"
+      },
+      {
+        "key": "legacy.description",
+        "fallback": "Description"
+      },
+      {
+        "key": "legacy.enter_description",
+        "fallback": "Enter description..."
+      },
+      {
+        "key": "legacy.archive_metadata",
+        "fallback": "Archive Metadata"
+      },
+      {
+        "key": "legacy.optional",
+        "fallback": "Optional"
+      },
+      {
+        "key": "legacy.archive_source",
+        "fallback": "Archive Source"
+      },
+      {
+        "key": "legacy.archive_source_placeholder",
+        "fallback": "e.g. Archives Nationales de Tunisie"
+      },
+      {
+        "key": "legacy.document_code",
+        "fallback": "Document Code"
+      },
+      {
+        "key": "legacy.document_code_placeholder",
+        "fallback": "e.g. ALG-1920-042"
+      },
+      {
+        "key": "legacy.location",
+        "fallback": "Location"
+      },
+      {
+        "key": "legacy.location_placeholder",
+        "fallback": "e.g. Beirut"
+      },
+      {
+        "key": "legacy.year",
+        "fallback": "Year"
+      },
+      {
+        "key": "legacy.photographer",
+        "fallback": "Photographer"
+      },
+      {
+        "key": "legacy.photographer_placeholder",
+        "fallback": "e.g. Family archive"
+      },
+      {
+        "key": "legacy.saving",
+        "fallback": "Saving..."
+      },
+      {
+        "key": "legacy.save_changes",
+        "fallback": "Save Changes"
+      },
+      {
+        "key": "legacy.uploading",
+        "fallback": "Uploading..."
+      },
+      {
+        "key": "legacy.upload",
+        "fallback": "Upload Photo"
+      },
+      {
+        "key": "legacy.uploaded_photos",
+        "fallback": "Uploaded Photos"
+      },
+      {
+        "key": "legacy.no_photos_yet",
+        "fallback": "No photos uploaded yet"
+      },
+      {
+        "key": "legacy.edit",
+        "fallback": "Edit"
+      },
+      {
+        "key": "legacy.edit",
+        "fallback": "Edit"
+      },
+      {
+        "key": "legacy.delete",
+        "fallback": "Delete"
+      },
+      {
+        "key": "legacy.close_image",
+        "fallback": "Close image"
+      },
+      {
+        "key": "legacy.close_image",
+        "fallback": "Close image"
+      },
+      {
+        "key": "legacy.gallery",
+        "fallback": "Gallery"
+      }
+    ],
+    "hardcodedAttributes": [],
+    "hardcodedButtons": [],
+    "hardcodedHeadings": []
+  },
+  "admin/pages/HeroImages.tsx": {
+    "missingArKeys": [],
+    "latinFallbacksInT": [
+      {
+        "key": "legacy.site_images_load_failed",
+        "fallback": "Failed to load site images."
+      },
+      {
+        "key": "legacy.hero_images_saved",
+        "fallback": "Hero image settings saved."
+      },
+      {
+        "key": "legacy.hero_images_save_failed",
+        "fallback": "Failed to save hero images."
+      },
+      {
+        "key": "legacy.image_required",
+        "fallback": "Please select an image"
+      },
+      {
+        "key": "legacy.hero_images_uploaded",
+        "fallback": "Hero image uploaded."
+      },
+      {
+        "key": "legacy.hero_images_upload_failed",
+        "fallback": "Failed to upload hero image."
+      },
+      {
+        "key": "legacy.confirm_delete",
+        "fallback": "Are you sure you want to delete this item?"
+      },
+      {
+        "key": "legacy.hero_image_deleted",
+        "fallback": "Hero image deleted."
+      },
+      {
+        "key": "legacy.delete_failed",
+        "fallback": "Failed to delete"
+      },
+      {
+        "key": "legacy.hero_image_updated",
+        "fallback": "Hero image updated."
+      },
+      {
+        "key": "legacy.update_failed",
+        "fallback": "Failed to update"
+      },
+      {
+        "key": "legacy.hero_images_reordered",
+        "fallback": "Hero images reordered."
+      },
+      {
+        "key": "legacy.reorder_failed",
+        "fallback": "Failed to reorder"
+      },
+      {
+        "key": "legacy.hero_images",
+        "fallback": "Hero Images"
+      },
+      {
+        "key": "legacy.hero_image_page_title",
+        "fallback": "Hero Image"
+      },
+      {
+        "key": "legacy.hero_image_page_desc",
+        "fallback": "Upload one or more hero images. Multiple images rotate as a slideshow."
+      },
+      {
+        "key": "legacy.refresh",
+        "fallback": "Refresh"
+      },
+      {
+        "key": "legacy.show_default_hero_image",
+        "fallback": "Show default hero image"
+      },
+      {
+        "key": "legacy.saving",
+        "fallback": "Saving..."
+      },
+      {
+        "key": "legacy.upload",
+        "fallback": "Upload"
+      },
+      {
+        "key": "legacy.uploaded_hero_images",
+        "fallback": "Uploaded hero images"
+      },
+      {
+        "key": "legacy.loading",
+        "fallback": "Loading..."
+      },
+      {
+        "key": "legacy.title",
+        "fallback": "Title"
+      },
+      {
+        "key": "legacy.enter_title",
+        "fallback": "Enter title..."
+      },
+      {
+        "key": "legacy.caption",
+        "fallback": "Caption"
+      },
+      {
+        "key": "legacy.enter_caption",
+        "fallback": "Enter caption..."
+      },
+      {
+        "key": "legacy.save",
+        "fallback": "Save"
+      },
+      {
+        "key": "legacy.cancel",
+        "fallback": "Cancel"
+      },
+      {
+        "key": "legacy.no_details",
+        "fallback": "No details"
+      },
+      {
+        "key": "legacy.move_up",
+        "fallback": "Move up"
+      },
+      {
+        "key": "legacy.move_down",
+        "fallback": "Move down"
+      },
+      {
+        "key": "legacy.edit",
+        "fallback": "Edit"
+      },
+      {
+        "key": "legacy.delete",
+        "fallback": "Delete"
+      },
+      {
+        "key": "legacy.no_hero_images",
+        "fallback": "No hero images uploaded yet."
+      }
+    ],
+    "hardcodedAttributes": [],
+    "hardcodedButtons": [],
+    "hardcodedHeadings": []
+  },
+  "admin/pages/Individuals.tsx": {
+    "missingArKeys": [
+      {
+        "key": "admin.individuals.gedcom_snippet_placeholder",
+        "issue": "ar.json contains latin: 0 @I1@ INDI\n1 NAME أحمد /بن محمد/\n1 SEX M\n1 BIRT\n2 DATE 1905"
+      }
+    ],
+    "latinFallbacksInT": [
+      {
+        "key": "legacy.individuals_page_title",
+        "fallback": "Individus"
+      },
+      {
+        "key": "legacy.individuals_page_subtitle",
+        "fallback": "Gérer et explorer les individus et leurs documents rattachés"
+      },
+      {
+        "key": "legacy.add_person_btn",
+        "fallback": "Ajouter une personne"
+      },
+      {
+        "key": "legacy.search_individuals_placeholder",
+        "fallback": "Rechercher par nom, métier, lieu, champ personnalisé..."
+      },
+      {
+        "key": "legacy.records",
+        "fallback": "enregistrements"
+      },
+      {
+        "key": "legacy.no_individuals_found",
+        "fallback": "Aucun individu trouvé."
+      },
+      {
+        "key": "legacy.edit_person",
+        "fallback": "Modifier la personne"
+      },
+      {
+        "key": "legacy.add_person_btn",
+        "fallback": "Ajouter une personne"
+      },
+      {
+        "key": "legacy.import_gedcom_title",
+        "fallback": "Importer par GEDCOM"
+      },
+      {
+        "key": "legacy.import_gedcom_desc",
+        "fallback": "Importer un fichier, coller du texte GEDCOM, ou exporter le contenu enregistré."
+      },
+      {
+        "key": "legacy.by_form_title",
+        "fallback": "Par Formulaire"
+      },
+      {
+        "key": "legacy.by_form_desc",
+        "fallback": "Saisir les informations d"
+      },
+      {
+        "key": "legacy.import_gedcom_title",
+        "fallback": "Importer par GEDCOM"
+      },
+      {
+        "key": "legacy.import_gedcom_desc",
+        "fallback": "Choisissez un fichier, collez du GEDCOM, ou exportez le contenu actuel."
+      },
+      {
+        "key": "back",
+        "fallback": "Retour"
+      },
+      {
+        "key": "import_file",
+        "fallback": "Importer un fichier"
+      },
+      {
+        "key": "edit_or_paste",
+        "fallback": "Éditer / coller"
+      },
+      {
+        "key": "modify_gedcom_text",
+        "fallback": "Modifier le texte GEDCOM"
+      },
+      {
+        "key": "export_gedcom",
+        "fallback": "Exporter GEDCOM"
+      },
+      {
+        "key": "download_file",
+        "fallback": "Télécharger le fichier"
+      },
+      {
+        "key": "admin.individuals.gedcom_snippet_placeholder",
+        "fallback": "0 @I1@ INDI\\n1 NAME Ahmed /Ben Mohamed/\\n1 SEX M\\n1 BIRT\\n2 DATE 1905"
+      },
+      {
+        "key": "cancel",
+        "fallback": "Annuler"
+      },
+      {
+        "key": "legacy.import_gedcom",
+        "fallback": "Importer par GEDCOM"
+      },
+      {
+        "key": "personal_information",
+        "fallback": "Informations Personnelles"
+      },
+      {
+        "key": "full_name",
+        "fallback": "Nom complet"
+      },
+      {
+        "key": "placeholder_name_example",
+        "fallback": "ex. Ahmed Ben Mohamed"
+      },
+      {
+        "key": "gender",
+        "fallback": "Genre"
+      },
+      {
+        "key": "select_option",
+        "fallback": "Sélectionner..."
+      },
+      {
+        "key": "male",
+        "fallback": "Masculin"
+      },
+      {
+        "key": "female",
+        "fallback": "Féminin"
+      },
+      {
+        "key": "legacy.person_card",
+        "fallback": "Carte de personne"
+      },
+      {
+        "key": "legacy.import_gedcom_title",
+        "fallback": "Importer par GEDCOM"
+      }
+    ],
+    "hardcodedAttributes": [],
+    "hardcodedButtons": [],
+    "hardcodedHeadings": []
+  },
+  "admin/pages/LegalContent.tsx": {
+    "missingArKeys": [],
+    "latinFallbacksInT": [
+      {
+        "key": "legal_content_load_failed",
+        "fallback": "Échec du chargement du document légal."
+      },
+      {
+        "key": "settings_saved",
+        "fallback": "Modifications enregistrées."
+      },
+      {
+        "key": "legal_content_save_failed",
+        "fallback": "Échec de la sauvegarde"
+      },
+      {
+        "key": "admin",
+        "fallback": "Administration"
+      },
+      {
+        "key": "legal_content",
+        "fallback": "Gestion des Textes Légaux"
+      },
+      {
+        "key": "legal_content_desc",
+        "fallback": "Éditez les conditions d"
+      },
+      {
+        "key": "settings_saved",
+        "fallback": "Enregistré"
+      },
+      {
+        "key": "saving",
+        "fallback": "Enregistrement..."
+      },
+      {
+        "key": "save_settings",
+        "fallback": "Enregistrer"
+      },
+      {
+        "key": "legal_content_disclaimer",
+        "fallback": "Ces textes servent de modèles de référence (conformes RGPD/CCPA). Assurez-vous d"
+      },
+      {
+        "key": "legal_content_not_translated",
+        "fallback": "Aucun contenu traduit trouvé pour cette langue — affichage de la version par défaut."
+      },
+      {
+        "key": "loading",
+        "fallback": "Chargement en cours..."
+      },
+      {
+        "key": "legal_content_title",
+        "fallback": "Titre du Document"
+      },
+      {
+        "key": "legal_content_intro",
+        "fallback": "Introduction / Préambule"
+      },
+      {
+        "key": "legal_content_sections",
+        "fallback": "Articles & Sections Légales"
+      },
+      {
+        "key": "add_section",
+        "fallback": "Ajouter une section"
+      },
+      {
+        "key": "delete",
+        "fallback": "Supprimer"
+      },
+      {
+        "key": "section_heading_placeholder",
+        "fallback": "Intitulé du chapitre (ex. Collecte des données)"
+      },
+      {
+        "key": "section_body_placeholder",
+        "fallback": "Texte détaillé du chapitre..."
+      }
+    ],
+    "hardcodedAttributes": [],
+    "hardcodedButtons": [],
+    "hardcodedHeadings": []
+  },
+  "admin/pages/NewsletterSubscribers.tsx": {
+    "missingArKeys": [],
+    "latinFallbacksInT": [
+      {
+        "key": "failed_load_subscribers",
+        "fallback": "Failed to load subscribers"
+      },
+      {
+        "key": "campaign_sent_success",
+        "fallback": "Campaign sent successfully!"
+      },
+      {
+        "key": "failed_send_campaign",
+        "fallback": "Failed to send newsletter campaign"
+      },
+      {
+        "key": "email_sent_to",
+        "fallback": "Email sent to"
+      },
+      {
+        "key": "failed_send_email_to",
+        "fallback": "Failed to send email to"
+      },
+      {
+        "key": "newsletter_subscribers",
+        "fallback": "Newsletter Subscribers"
+      },
+      {
+        "key": "newsletter_subscribers_desc",
+        "fallback": "Manage newsletter subscribers and dispatch emails or campaign broadcasts."
+      },
+      {
+        "key": "send_campaign_to_all",
+        "fallback": "Send Campaign to All"
+      },
+      {
+        "key": "no_subscribers_yet",
+        "fallback": "No subscribers yet"
+      },
+      {
+        "key": "email",
+        "fallback": "Email"
+      },
+      {
+        "key": "subscribed_at",
+        "fallback": "Subscribed At"
+      },
+      {
+        "key": "actions",
+        "fallback": "Actions"
+      },
+      {
+        "key": "send_email",
+        "fallback": "Send Email"
+      },
+      {
+        "key": "send_newsletter_campaign",
+        "fallback": "Send Newsletter Campaign"
+      },
+      {
+        "key": "broadcast_campaign_desc",
+        "fallback": "Broadcast an email to all"
+      },
+      {
+        "key": "subscribers",
+        "fallback": "subscribers"
+      },
+      {
+        "key": "subject",
+        "fallback": "Subject"
+      },
+      {
+        "key": "placeholder_campaign_subject",
+        "fallback": "e.g. Monthly Roots Tunisia Archives Update"
+      },
+      {
+        "key": "content",
+        "fallback": "Content"
+      },
+      {
+        "key": "placeholder_campaign_content",
+        "fallback": "Write your email content here..."
+      },
+      {
+        "key": "cancel",
+        "fallback": "Cancel"
+      },
+      {
+        "key": "sending_broadcast",
+        "fallback": "Sending Broadcast…"
+      },
+      {
+        "key": "send_campaign",
+        "fallback": "Send Campaign"
+      },
+      {
+        "key": "send_individual_email",
+        "fallback": "Send Individual Email"
+      },
+      {
+        "key": "recipient",
+        "fallback": "Recipient:"
+      },
+      {
+        "key": "subject",
+        "fallback": "Subject"
+      },
+      {
+        "key": "placeholder_email_subject",
+        "fallback": "Email subject"
+      },
+      {
+        "key": "message",
+        "fallback": "Message"
+      },
+      {
+        "key": "placeholder_email_message",
+        "fallback": "Write message content..."
+      },
+      {
+        "key": "cancel",
+        "fallback": "Cancel"
+      },
+      {
+        "key": "sending_email",
+        "fallback": "Sending Email…"
+      },
+      {
+        "key": "send_email",
+        "fallback": "Send Email"
+      }
+    ],
+    "hardcodedAttributes": [],
+    "hardcodedButtons": [],
+    "hardcodedHeadings": []
+  },
+  "admin/pages/PasswordResetRequests.tsx": {
+    "missingArKeys": [],
+    "latinFallbacksInT": [
+      {
+        "key": "legacy.password_reset_requests_failed",
+        "fallback": "Failed to load password reset requests"
+      },
+      {
+        "key": "legacy.password_reset_approved",
+        "fallback": "Password reset approved. A 24-hour OTP email was sent."
+      },
+      {
+        "key": "legacy.password_reset_rejected",
+        "fallback": "Password reset request rejected."
+      },
+      {
+        "key": "legacy.password_reset_decision_failed",
+        "fallback": "Failed to update password reset request"
+      },
+      {
+        "key": "legacy.approvals",
+        "fallback": "Approvals"
+      },
+      {
+        "key": "legacy.password_reset_requests",
+        "fallback": "Password Reset Requests"
+      },
+      {
+        "key": "legacy.password_reset_requests_desc",
+        "fallback": "Review password reset requests. Approving sends the user a 24-hour one-time code by email."
+      },
+      {
+        "key": "legacy.refresh",
+        "fallback": "Refresh"
+      },
+      {
+        "key": "legacy.loading",
+        "fallback": "Loading..."
+      },
+      {
+        "key": "legacy.no_password_reset_requests",
+        "fallback": "No password reset requests"
+      },
+      {
+        "key": "legacy.unknown_user",
+        "fallback": "Unknown user"
+      },
+      {
+        "key": "legacy.requested",
+        "fallback": "Requested"
+      },
+      {
+        "key": "legacy.status",
+        "fallback": "Status"
+      },
+      {
+        "key": "legacy.processed",
+        "fallback": "Processed"
+      },
+      {
+        "key": "legacy.expires",
+        "fallback": "Expires"
+      },
+      {
+        "key": "legacy.approve",
+        "fallback": "Approve"
+      },
+      {
+        "key": "legacy.reject",
+        "fallback": "Reject"
+      }
+    ],
+    "hardcodedAttributes": [],
+    "hardcodedButtons": [],
+    "hardcodedHeadings": []
+  },
+  "admin/pages/PaymentSettings.tsx": {
+    "missingArKeys": [],
+    "latinFallbacksInT": [
+      {
+        "key": "payment_settings_load_failed",
+        "fallback": "Unable to load payment settings."
+      },
+      {
+        "key": "payment_settings_saved",
+        "fallback": "Payment settings saved."
+      },
+      {
+        "key": "payment_settings_save_failed",
+        "fallback": "Unable to save payment settings."
+      },
+      {
+        "key": "payment_settings",
+        "fallback": "Payment Settings"
+      },
+      {
+        "key": "payment_settings_help",
+        "fallback": "These details are shown before a user submits payment proof."
+      },
+      {
+        "key": "payment_instructions",
+        "fallback": "Instructions"
+      },
+      {
+        "key": "payment_enabled",
+        "fallback": "Accept payment requests"
+      },
+      {
+        "key": "payment_proof_required",
+        "fallback": "Require payment proof"
+      },
+      {
+        "key": "save",
+        "fallback": "Save"
+      }
+    ],
+    "hardcodedAttributes": [],
+    "hardcodedButtons": [],
+    "hardcodedHeadings": []
+  },
+  "admin/pages/RoleDistribution.tsx": {
+    "missingArKeys": [],
+    "latinFallbacksInT": [
+      {
+        "key": "legacy.role_distribution_failed",
+        "fallback": "Failed to load role distribution"
+      },
+      {
+        "key": "legacy.select_user_and_role",
+        "fallback": "Select a user and role first."
+      },
+      {
+        "key": "legacy.role_distribution_saved",
+        "fallback": "Role distribution updated."
+      },
+      {
+        "key": "legacy.role_distribution_save_failed",
+        "fallback": "Failed to save role distribution"
+      },
+      {
+        "key": "legacy.roles",
+        "fallback": "Roles"
+      },
+      {
+        "key": "legacy.role_distribution",
+        "fallback": "Role Distribution"
+      },
+      {
+        "key": "legacy.role_distribution_desc",
+        "fallback": "Select a user, assign a role, and choose which admin pages they can see and manage."
+      },
+      {
+        "key": "legacy.refresh",
+        "fallback": "Refresh"
+      },
+      {
+        "key": "legacy.loading",
+        "fallback": "Loading..."
+      },
+      {
+        "key": "legacy.select_user",
+        "fallback": "Select User"
+      },
+      {
+        "key": "legacy.select_user",
+        "fallback": "Select User"
+      },
+      {
+        "key": "legacy.select_role",
+        "fallback": "Select Role"
+      },
+      {
+        "key": "legacy.select_role",
+        "fallback": "Select Role"
+      },
+      {
+        "key": "legacy.current_role",
+        "fallback": "Current role"
+      },
+      {
+        "key": "legacy.page_permissions",
+        "fallback": "Page Permissions"
+      },
+      {
+        "key": "legacy.saving",
+        "fallback": "Saving..."
+      },
+      {
+        "key": "legacy.save_changes",
+        "fallback": "Save Changes"
+      }
+    ],
+    "hardcodedAttributes": [],
+    "hardcodedButtons": [],
+    "hardcodedHeadings": []
+  },
+  "admin/pages/Settings.tsx": {
+    "missingArKeys": [],
+    "latinFallbacksInT": [
+      {
+        "key": "settings",
+        "fallback": "Settings"
+      },
+      {
+        "key": "settings_desc",
+        "fallback": "Control security, notifications, and platform preferences."
+      },
+      {
+        "key": "loading",
+        "fallback": "Loading..."
+      },
+      {
+        "key": "security",
+        "fallback": "Security"
+      },
+      {
+        "key": "manage_signup_rules",
+        "fallback": "Manage sign-up rules"
+      },
+      {
+        "key": "allow_registration",
+        "fallback": "Allow Registration"
+      },
+      {
+        "key": "localization",
+        "fallback": "Localization"
+      },
+      {
+        "key": "default_language",
+        "fallback": "Default language"
+      },
+      {
+        "key": "default_language",
+        "fallback": "Default Language"
+      },
+      {
+        "key": "notifications",
+        "fallback": "Notifications"
+      },
+      {
+        "key": "admin_alerts",
+        "fallback": "Admin alerts"
+      },
+      {
+        "key": "notify_admins",
+        "fallback": "Notify admins on critical actions"
+      },
+      {
+        "key": "logs_retention",
+        "fallback": "Logs & Retention"
+      },
+      {
+        "key": "how_long_activity_stored",
+        "fallback": "How long activity stays stored"
+      },
+      {
+        "key": "activity_retention_days",
+        "fallback": "Activity retention (days)"
+      },
+      {
+        "key": "my_profile",
+        "fallback": "My Profile"
+      },
+      {
+        "key": "update_own_account_info",
+        "fallback": "Update your own account info"
+      },
+      {
+        "key": "email",
+        "fallback": "Email"
+      },
+      {
+        "key": "full_name",
+        "fallback": "Full Name"
+      },
+      {
+        "key": "phone",
+        "fallback": "Phone"
+      },
+      {
+        "key": "saving",
+        "fallback": "Saving..."
+      },
+      {
+        "key": "save_profile",
+        "fallback": "Save Profile"
+      },
+      {
+        "key": "saving",
+        "fallback": "Saving..."
+      },
+      {
+        "key": "save_settings",
+        "fallback": "Save Settings"
+      }
+    ],
+    "hardcodedAttributes": [],
+    "hardcodedButtons": [],
+    "hardcodedHeadings": []
+  },
+  "admin/pages/SourcesAndArchives.tsx": {
+    "missingArKeys": [],
+    "latinFallbacksInT": [
+      {
+        "key": "my_sources",
+        "fallback": "My Sources & Archives"
+      },
+      {
+        "key": "add_source",
+        "fallback": "+ Add Source"
+      },
+      {
+        "key": "limit_reached",
+        "fallback": "Limit Reached"
+      },
+      {
+        "key": "upgrade_to_add_more",
+        "fallback": "Upgrade to Add More"
+      },
+      {
+        "key": "placeholder_search_my_sources",
+        "fallback": "Search my sources..."
+      },
+      {
+        "key": "no_sources_added",
+        "fallback": "No sources added yet"
+      },
+      {
+        "key": "sources_empty_desc",
+        "fallback": "Click + Add Source to bookmark public archives, Ottoman registries, civil records, or flag sources."
+      },
+      {
+        "key": "add_your_first_source",
+        "fallback": "Add Your First Source"
+      },
+      {
+        "key": "visit_my_source",
+        "fallback": "Visit My Source"
+      },
+      {
+        "key": "no_url_provided",
+        "fallback": "No URL Provided"
+      },
+      {
+        "key": "edit_source",
+        "fallback": "Edit Source"
+      },
+      {
+        "key": "add_new_source",
+        "fallback": "+ Add New Source"
+      },
+      {
+        "key": "source_name",
+        "fallback": "Source Name"
+      },
+      {
+        "key": "placeholder_source_name",
+        "fallback": "e.g. Turkish Public Archive"
+      },
+      {
+        "key": "source_website_url",
+        "fallback": "Source Website / Link (URL)"
+      },
+      {
+        "key": "description_notes",
+        "fallback": "Description / Notes"
+      },
+      {
+        "key": "placeholder_source_desc",
+        "fallback": "e.g. Contains Ottoman registries for Tunisian family lineages"
+      },
+      {
+        "key": "source_icon_flag",
+        "fallback": "Source Icon / Flag Image"
+      },
+      {
+        "key": "change_icon",
+        "fallback": "Change Icon"
+      },
+      {
+        "key": "upload_file",
+        "fallback": "Upload File"
+      },
+      {
+        "key": "cancel",
+        "fallback": "Cancel"
+      },
+      {
+        "key": "saving",
+        "fallback": "Saving..."
+      },
+      {
+        "key": "update_source",
+        "fallback": "Update Source"
+      },
+      {
+        "key": "save_source",
+        "fallback": "Save Source"
+      }
+    ],
+    "hardcodedAttributes": [],
+    "hardcodedButtons": [],
+    "hardcodedHeadings": []
+  },
+  "admin/pages/SubscriptionPayments.tsx": {
+    "missingArKeys": [],
+    "latinFallbacksInT": [
+      {
+        "key": "subscription_payments",
+        "fallback": "Subscription Payments"
+      },
+      {
+        "key": "search",
+        "fallback": "Search..."
+      },
+      {
+        "key": "no_payments",
+        "fallback": "No payments found"
+      },
+      {
+        "key": "user",
+        "fallback": "User"
+      },
+      {
+        "key": "tier",
+        "fallback": "Tier"
+      },
+      {
+        "key": "amount",
+        "fallback": "Amount"
+      },
+      {
+        "key": "status",
+        "fallback": "Status"
+      },
+      {
+        "key": "date",
+        "fallback": "Date"
+      },
+      {
+        "key": "actions",
+        "fallback": "Actions"
+      },
+      {
+        "key": "proof",
+        "fallback": "Proof"
+      },
+      {
+        "key": "notes",
+        "fallback": "Notes"
+      },
+      {
+        "key": "approve",
+        "fallback": "Approve"
+      },
+      {
+        "key": "reject",
+        "fallback": "Reject"
+      },
+      {
+        "key": "reviewed_by",
+        "fallback": "Reviewed by"
+      }
+    ],
+    "hardcodedAttributes": [],
+    "hardcodedButtons": [],
+    "hardcodedHeadings": []
+  },
+  "admin/pages/Subscriptions.tsx": {
+    "missingArKeys": [],
+    "latinFallbacksInT": [
+      {
+        "key": "subscription_tiers_quotas",
+        "fallback": "Subscription Tiers & Creation Limits"
+      },
+      {
+        "key": "search_tiers",
+        "fallback": "Search tiers..."
+      },
+      {
+        "key": "active",
+        "fallback": "Active"
+      },
+      {
+        "key": "cancel",
+        "fallback": "Cancel"
+      },
+      {
+        "key": "save_quotas",
+        "fallback": "Save Quotas"
+      },
+      {
+        "key": "edit_creation_quotas",
+        "fallback": "Edit Creation Quotas"
+      }
+    ],
+    "hardcodedAttributes": [],
+    "hardcodedButtons": [],
+    "hardcodedHeadings": []
+  },
+  "admin/pages/Suggestions.tsx": {
+    "missingArKeys": [],
+    "latinFallbacksInT": [
+      {
+        "key": "suggestion_approved",
+        "fallback": "Suggestion approved successfully!"
+      },
+      {
+        "key": "suggestion_rejected",
+        "fallback": "Suggestion rejected."
+      },
+      {
+        "key": "suggestions_management",
+        "fallback": "Suggestions & Requests"
+      },
+      {
+        "key": "suggestions_desc",
+        "fallback": "Review and approve user-submitted category suggestions and content requests"
+      },
+      {
+        "key": "pending",
+        "fallback": "Pending"
+      },
+      {
+        "key": "approved",
+        "fallback": "Approved"
+      },
+      {
+        "key": "rejected",
+        "fallback": "Rejected"
+      },
+      {
+        "key": "total",
+        "fallback": "Total"
+      },
+      {
+        "key": "status",
+        "fallback": "Status"
+      },
+      {
+        "key": "type",
+        "fallback": "Type"
+      },
+      {
+        "key": "all_types",
+        "fallback": "All Types"
+      },
+      {
+        "key": "audio",
+        "fallback": "Audio"
+      },
+      {
+        "key": "images",
+        "fallback": "Images"
+      },
+      {
+        "key": "books",
+        "fallback": "Books"
+      },
+      {
+        "key": "documents",
+        "fallback": "Documents"
+      },
+      {
+        "key": "articles",
+        "fallback": "Articles"
+      },
+      {
+        "key": "trees",
+        "fallback": "Trees"
+      },
+      {
+        "key": "loading",
+        "fallback": "Loading..."
+      },
+      {
+        "key": "no_suggestions",
+        "fallback": "No suggestions found."
+      },
+      {
+        "key": "user",
+        "fallback": "User"
+      },
+      {
+        "key": "type",
+        "fallback": "Type"
+      },
+      {
+        "key": "category",
+        "fallback": "Category"
+      },
+      {
+        "key": "message",
+        "fallback": "Message"
+      },
+      {
+        "key": "date",
+        "fallback": "Date"
+      },
+      {
+        "key": "actions",
+        "fallback": "Actions"
+      },
+      {
+        "key": "approve",
+        "fallback": "Approve"
+      },
+      {
+        "key": "reject",
+        "fallback": "Reject"
+      },
+      {
+        "key": "approved",
+        "fallback": "Approved"
+      },
+      {
+        "key": "rejected",
+        "fallback": "Rejected"
+      }
+    ],
+    "hardcodedAttributes": [],
+    "hardcodedButtons": [],
+    "hardcodedHeadings": []
+  },
+  "admin/pages/SuperAdminApprovals.tsx": {
+    "missingArKeys": [],
+    "latinFallbacksInT": [
+      {
+        "key": "legacy.requestApproved",
+        "fallback": "Request approved"
+      },
+      {
+        "key": "legacy.requestRejected",
+        "fallback": "Request rejected"
+      },
+      {
+        "key": "legacy.requestApproved",
+        "fallback": "Request approved"
+      },
+      {
+        "key": "legacy.requestRejected",
+        "fallback": "Request rejected"
+      },
+      {
+        "key": "legacy.superAdminApprovals",
+        "fallback": "Super Admin Approvals"
+      },
+      {
+        "key": "legacy.passwordResetRequests",
+        "fallback": "Password Reset Requests"
+      },
+      {
+        "key": "legacy.noPendingRequests",
+        "fallback": "No pending requests"
+      },
+      {
+        "key": "legacy.accountDeletionRequests",
+        "fallback": "Account Deletion Requests"
+      },
+      {
+        "key": "legacy.noPendingRequests",
+        "fallback": "No pending requests"
+      },
+      {
+        "key": "legacy.allUsers",
+        "fallback": "All Users"
+      },
+      {
+        "key": "legacy.noUsers",
+        "fallback": "No users"
+      },
+      {
+        "key": "legacy.name",
+        "fallback": "Name"
+      },
+      {
+        "key": "legacy.email",
+        "fallback": "Email"
+      },
+      {
+        "key": "legacy.role",
+        "fallback": "Role"
+      }
+    ],
+    "hardcodedAttributes": [],
+    "hardcodedButtons": [],
+    "hardcodedHeadings": []
+  },
+  "admin/pages/TierFeatures.tsx": {
+    "missingArKeys": [
+      {
+        "key": "feature_key_placeholder",
+        "issue": "ar.json contains latin: رمز الميزة (مثال: export_gedcom)"
+      }
+    ],
+    "latinFallbacksInT": [
+      {
+        "key": "tier_features_failed",
+        "fallback": "Failed to load feature flags"
+      },
+      {
+        "key": "tier_feature_update_failed",
+        "fallback": "Failed to update feature flag"
+      },
+      {
+        "key": "feature_added",
+        "fallback": "Feature added."
+      },
+      {
+        "key": "feature_add_failed",
+        "fallback": "Failed to add feature"
+      },
+      {
+        "key": "feature_remove_failed",
+        "fallback": "Failed to remove feature"
+      },
+      {
+        "key": "tier_features_title",
+        "fallback": "Tier Features"
+      },
+      {
+        "key": "tier_features_desc",
+        "fallback": "Toggle which features and pages each subscription tier unlocks. Only \\"
+      },
+      {
+        "key": "refresh",
+        "fallback": "Refresh"
+      },
+      {
+        "key": "add_feature",
+        "fallback": "Add Feature"
+      },
+      {
+        "key": "feature_key_placeholder",
+        "fallback": "feature_key (e.g. priority_support)"
+      },
+      {
+        "key": "feature_label_placeholder",
+        "fallback": "Display label"
+      },
+      {
+        "key": "add",
+        "fallback": "Add"
+      },
+      {
+        "key": "no_features_yet",
+        "fallback": "No feature flags yet."
+      },
+      {
+        "key": "feature",
+        "fallback": "Feature"
+      },
+      {
+        "key": "delete",
+        "fallback": "Delete"
+      }
+    ],
+    "hardcodedAttributes": [],
+    "hardcodedButtons": [],
+    "hardcodedHeadings": []
+  },
+  "admin/pages/Trees.tsx": {
+    "missingArKeys": [
+      {
+        "key": "legacy.code_mode",
+        "issue": "ar.json contains latin: كود GEDCOM المباشر (INDI)"
+      },
+      {
+        "key": "legacy.gedcomx_format_xml",
+        "issue": "ar.json contains latin: صيغة XML"
+      },
+      {
+        "key": "legacy.gedcomx_format_gedx",
+        "issue": "ar.json contains latin: ملف .gedx"
+      },
+      {
+        "key": "placeholder_doc_code",
+        "issue": "ar.json contains latin: مثال: DOC-12345"
+      }
+    ],
+    "latinFallbacksInT": [
+      {
+        "key": "legacy.trees_loaded",
+        "fallback": "Trees loaded."
+      },
+      {
+        "key": "legacy.tree_loaded",
+        "fallback": "Arbre chargé."
+      },
+      {
+        "key": "legacy.tree_loaded",
+        "fallback": "Arbre chargé."
+      },
+      {
+        "key": "legacy.gedcom7_build_failed",
+        "fallback": "Failed to build GEDCOM 7.0"
+      },
+      {
+        "key": "legacy.gedcom_build_failed",
+        "fallback": "Failed to build GEDCOM"
+      },
+      {
+        "key": "legacy.gedcomx_build_failed",
+        "fallback": "Failed to build GEDCOM X"
+      },
+      {
+        "key": "legacy.file_too_large",
+        "fallback": "File is too large (max 50MB)."
+      },
+      {
+        "key": "legacy.download_failed",
+        "fallback": "Download failed"
+      },
+      {
+        "key": "legacy.auto_saved",
+        "fallback": "Auto-sauvegardé."
+      },
+      {
+        "key": "legacy.cannot_edit_others_tree",
+        "fallback": "You cannot edit a tree that is not yours."
+      },
+      {
+        "key": "legacy.save_empty_tree_confirm",
+        "fallback": "Save this tree without any people yet?"
+      },
+      {
+        "key": "legacy.cannot_delete_others_tree",
+        "fallback": "You cannot delete a tree that is not yours."
+      },
+      {
+        "key": "legacy.confirm_delete_tree",
+        "fallback": "Delete this tree? This action cannot be undone."
+      },
+      {
+        "key": "legacy.tree_deleted",
+        "fallback": "Tree deleted."
+      },
+      {
+        "key": "legacy.tree_deleted",
+        "fallback": "Tree deleted."
+      },
+      {
+        "key": "legacy.delete_failed",
+        "fallback": "Delete failed"
+      },
+      {
+        "key": "legacy.trees_builder",
+        "fallback": "Family Tree Builder"
+      },
+      {
+        "key": "legacy.trees_builder_desc",
+        "fallback": "Public trees are visible to everyone; private trees are only for you."
+      },
+      {
+        "key": "legacy.auto_saving",
+        "fallback": "Sauvegarde automatique..."
+      },
+      {
+        "key": "legacy.see_my_trees",
+        "fallback": "See My Trees"
+      },
+      {
+        "key": "legacy.see_my_trees",
+        "fallback": "See My Trees"
+      },
+      {
+        "key": "legacy.add_tree",
+        "fallback": "Add Tree"
+      },
+      {
+        "key": "legacy.add_tree",
+        "fallback": "Add Tree"
+      },
+      {
+        "key": "legacy.edit_tree",
+        "fallback": "Edit Tree"
+      },
+      {
+        "key": "legacy.edit_tree",
+        "fallback": "Edit Tree"
+      },
+      {
+        "key": "legacy.read_only_tree",
+        "fallback": "Read-Only (Public Tree)"
+      },
+      {
+        "key": "legacy.refresh",
+        "fallback": "Refresh"
+      },
+      {
+        "key": "legacy.canvas",
+        "fallback": "Family Tree Canvas"
+      },
+      {
+        "key": "legacy.my_tree_badge",
+        "fallback": "Your Tree"
+      },
+      {
+        "key": "legacy.read_only_badge",
+        "fallback": "Read-Only Public Tree"
+      },
+      {
+        "key": "legacy.active_tree",
+        "fallback": "Currently active tree."
+      },
+      {
+        "key": "read_only_mode_notice",
+        "fallback": "You are viewing another user"
+      },
+      {
+        "key": "legacy.canvas_hint",
+        "fallback": "Click "
+      },
+      {
+        "key": "legacy.clear_canvas",
+        "fallback": "Vider le canevas"
+      },
+      {
+        "key": "legacy.clear_canvas",
+        "fallback": "Vider le canevas"
+      },
+      {
+        "key": "legacy.tree_builder_error",
+        "fallback": "Tree builder failed to load."
+      },
+      {
+        "key": "legacy.tree_builder_try_again",
+        "fallback": "Please try again."
+      },
+      {
+        "key": "legacy.retry",
+        "fallback": "Retry"
+      },
+      {
+        "key": "legacy.see_my_trees",
+        "fallback": "See My Trees"
+      },
+      {
+        "key": "legacy.my_trees",
+        "fallback": "My Trees"
+      },
+      {
+        "key": "legacy.public_trees",
+        "fallback": "Public Trees"
+      },
+      {
+        "key": "legacy.search_trees",
+        "fallback": "Search trees..."
+      },
+      {
+        "key": "legacy.loading",
+        "fallback": "Loading trees..."
+      },
+      {
+        "key": "legacy.no_trees_found",
+        "fallback": "No trees found."
+      },
+      {
+        "key": "legacy.unknown",
+        "fallback": "Unknown"
+      },
+      {
+        "key": "legacy.public",
+        "fallback": "Public"
+      },
+      {
+        "key": "legacy.private",
+        "fallback": "Private"
+      },
+      {
+        "key": "read_only",
+        "fallback": "Read-Only"
+      },
+      {
+        "key": "legacy.has_file",
+        "fallback": "GEDCOM Available"
+      },
+      {
+        "key": "legacy.no_file",
+        "fallback": "No File"
+      },
+      {
+        "key": "legacy.view_tree",
+        "fallback": "Select & View"
+      },
+      {
+        "key": "legacy.download",
+        "fallback": "Download"
+      },
+      {
+        "key": "legacy.edit_tree",
+        "fallback": "Edit Tree"
+      },
+      {
+        "key": "legacy.create_tree",
+        "fallback": "Create New Family Tree"
+      },
+      {
+        "key": "legacy.form_mode",
+        "fallback": "1. Formulaire"
+      },
+      {
+        "key": "legacy.code_mode",
+        "fallback": "2. Code GEDCOM Direct"
+      },
+      {
+        "key": "legacy.cannot_edit_others_title",
+        "fallback": "Read-Only Public Tree"
+      },
+      {
+        "key": "legacy.cannot_edit_others_desc",
+        "fallback": "This tree belongs to another user. You can view its family connections on the canvas, but you cannot edit or save changes to it."
+      },
+      {
+        "key": "legacy.create_your_own_tree",
+        "fallback": "Create Your Own Tree"
+      },
+      {
+        "key": "legacy.gedcom_code_editor",
+        "fallback": "Éditeur de Code GEDCOM (5.5.1 / 7.0 / GEDCOM X)"
+      },
+      {
+        "key": "legacy.individuals_count",
+        "fallback": "individus synchronisés"
+      },
+      {
+        "key": "legacy.gedcom_synced",
+        "fallback": "GEDCOM / GEDCOM X code parsed and synchronized with canvas!"
+      },
+      {
+        "key": "no_valid_gedcom_records",
+        "fallback": "No valid individual records found in the provided GEDCOM text."
+      },
+      {
+        "key": "invalid_gedcom_syntax",
+        "fallback": "Invalid GEDCOM / GEDCOM X syntax."
+      },
+      {
+        "key": "legacy.apply_and_sync",
+        "fallback": "Appliquer au canevas & Enregistrer"
+      },
+      {
+        "key": "legacy.tree_title",
+        "fallback": "Tree title"
+      },
+      {
+        "key": "legacy.tree_title",
+        "fallback": "e.g. Famille Ben Mohamed"
+      },
+      {
+        "key": "legacy.custom_category",
+        "fallback": "Category"
+      },
+      {
+        "key": "placeholder_tree_category",
+        "fallback": "e.g. Royal / Family"
+      },
+      {
+        "key": "legacy.save_file_as",
+        "fallback": "Save Format"
+      },
+      {
+        "key": "legacy.gedcomx_format_xml",
+        "fallback": "GEDCOM X (XML)"
+      },
+      {
+        "key": "legacy.gedcomx_format_gedx",
+        "fallback": "GEDCOM X (.gedx)"
+      },
+      {
+        "key": "legacy.description",
+        "fallback": "Description"
+      },
+      {
+        "key": "legacy.description",
+        "fallback": "Description (optional)"
+      },
+      {
+        "key": "legacy.archive_source",
+        "fallback": "Archive Source"
+      },
+      {
+        "key": "archive_source",
+        "fallback": "Archives..."
+      },
+      {
+        "key": "legacy.document_code",
+        "fallback": "Document Code"
+      },
+      {
+        "key": "placeholder_doc_code",
+        "fallback": "DOC-12345"
+      },
+      {
+        "key": "legacy.public",
+        "fallback": "Public Tree"
+      },
+      {
+        "key": "legacy.private",
+        "fallback": "Private Tree"
+      },
+      {
+        "key": "legacy.save_to_db_label",
+        "fallback": "Save this tree to the database"
+      },
+      {
+        "key": "legacy.save_to_db_hint",
+        "fallback": "Stores the tree structure and data safely in the database."
+      },
+      {
+        "key": "legacy.saving",
+        "fallback": "Saving..."
+      },
+      {
+        "key": "legacy.update_tree",
+        "fallback": "Update Tree"
+      },
+      {
+        "key": "legacy.save_tree",
+        "fallback": "Save Tree"
+      },
+      {
+        "key": "legacy.clear",
+        "fallback": "Clear"
+      },
+      {
+        "key": "legacy.deleting",
+        "fallback": "Deleting..."
+      },
+      {
+        "key": "legacy.delete",
+        "fallback": "Delete"
+      }
+    ],
+    "hardcodedAttributes": [],
+    "hardcodedButtons": [],
+    "hardcodedHeadings": []
+  },
+  "admin/pages/Usage.tsx": {
+    "missingArKeys": [],
+    "latinFallbacksInT": [
+      {
+        "key": "family_trees",
+        "fallback": "Family Trees"
+      },
+      {
+        "key": "trees_desc",
+        "fallback": "Trees created in your account"
+      },
+      {
+        "key": "individuals",
+        "fallback": "Individuals"
+      },
+      {
+        "key": "ind_desc",
+        "fallback": "Persons created in your family trees"
+      },
+      {
+        "key": "my_sources",
+        "fallback": "My Sources"
+      },
+      {
+        "key": "sources_desc",
+        "fallback": "Custom saved archive sources"
+      },
+      {
+        "key": "research_notes",
+        "fallback": "Research Notes"
+      },
+      {
+        "key": "notes_desc",
+        "fallback": "Private notes attached to people/events"
+      },
+      {
+        "key": "research_tasks",
+        "fallback": "Research Tasks"
+      },
+      {
+        "key": "tasks_desc",
+        "fallback": "Genealogy tasks (e.g. find birth record)"
+      },
+      {
+        "key": "gallery_images",
+        "fallback": "Gallery Images"
+      },
+      {
+        "key": "gallery_desc",
+        "fallback": "Photos & archive images uploaded"
+      },
+      {
+        "key": "audio_files",
+        "fallback": "Audio Files"
+      },
+      {
+        "key": "audio_desc",
+        "fallback": "Audio recordings & oral histories"
+      },
+      {
+        "key": "documents",
+        "fallback": "Documents"
+      },
+      {
+        "key": "doc_desc",
+        "fallback": "Historical documents & PDFs"
+      },
+      {
+        "key": "usage_and_quotas",
+        "fallback": "Usage & Quotas"
+      },
+      {
+        "key": "usage_subtitle",
+        "fallback": "Monitor your account creation limits and resource usage"
+      },
+      {
+        "key": "upgrade_subscription",
+        "fallback": "Upgrade Subscription"
+      },
+      {
+        "key": "unlimited_super_admin",
+        "fallback": "Unlimited Super Admin"
+      },
+      {
+        "key": "active_plan",
+        "fallback": "Active Plan"
+      },
+      {
+        "key": "super_admin_unlimited_tier",
+        "fallback": "Super Admin Unlimited Tier"
+      },
+      {
+        "key": "basic",
+        "fallback": "Basic"
+      },
+      {
+        "key": "tier_features",
+        "fallback": "Tier Features"
+      },
+      {
+        "key": "super_admin_quota_unrestricted",
+        "fallback": "As an Administrator, your account possesses unrestricted unlimited creation rights across all platform resources."
+      },
+      {
+        "key": "user_quota_info",
+        "fallback": "Your account creation quotas are determined by your active subscription plan. Upgrade anytime to unlock higher limits."
+      },
+      {
+        "key": "view_plans",
+        "fallback": "View Upgrade Plans"
+      },
+      {
+        "key": "quota_limit_reached",
+        "fallback": "Quota Limit Reached!"
+      },
+      {
+        "key": "quota_limit_reached_desc",
+        "fallback": "One or more creation limits on your account are currently maxed out. Upgrade your plan to continue creating trees and uploading files."
+      },
+      {
+        "key": "upgrade_plan",
+        "fallback": "Upgrade Plan"
+      },
+      {
+        "key": "full",
+        "fallback": "Full"
+      },
+      {
+        "key": "unlimited",
+        "fallback": "Unlimited"
+      },
+      {
+        "key": "unlimited_access",
+        "fallback": "Unlimited Access"
+      },
+      {
+        "key": "used",
+        "fallback": "used"
+      },
+      {
+        "key": "manage_resource",
+        "fallback": "Manage"
+      },
+      {
+        "key": "custom_admin_quota",
+        "fallback": "Custom Admin Quota"
+      }
+    ],
+    "hardcodedAttributes": [],
+    "hardcodedButtons": [],
+    "hardcodedHeadings": []
+  },
+  "admin/pages/UserApprovals.tsx": {
+    "missingArKeys": [],
+    "latinFallbacksInT": [
+      {
+        "key": "legacy.only_super_admin",
+        "fallback": "Only super admin can approve users"
+      },
+      {
+        "key": "legacy.user_approved",
+        "fallback": "User approved! They now have a validated badge."
+      },
+      {
+        "key": "legacy.user_approved",
+        "fallback": "User approved! They now have a validated badge."
+      },
+      {
+        "key": "legacy.only_super_admin",
+        "fallback": "Only super admin can reject users"
+      },
+      {
+        "key": "legacy.user_rejected",
+        "fallback": "User registration rejected."
+      },
+      {
+        "key": "legacy.user_rejected",
+        "fallback": "User registration rejected."
+      },
+      {
+        "key": "legacy.user_approvals",
+        "fallback": "User Approvals"
+      },
+      {
+        "key": "legacy.user_approvals_desc",
+        "fallback": "Review and approve new user registrations. Approved users receive a validated badge."
+      },
+      {
+        "key": "legacy.super_admin_only_notice",
+        "fallback": "Only Super Admin can approve or reject users."
+      },
+      {
+        "key": "legacy.pending",
+        "fallback": "Pending"
+      },
+      {
+        "key": "legacy.validated",
+        "fallback": "Validated"
+      },
+      {
+        "key": "legacy.rejected",
+        "fallback": "Rejected"
+      },
+      {
+        "key": "legacy.total_signups",
+        "fallback": "Total Signups"
+      },
+      {
+        "key": "legacy.status",
+        "fallback": "Status"
+      },
+      {
+        "key": "legacy.loading",
+        "fallback": "Loading..."
+      },
+      {
+        "key": "legacy.no_pending_users",
+        "fallback": "No users found."
+      },
+      {
+        "key": "legacy.full_name",
+        "fallback": "Full Name"
+      },
+      {
+        "key": "legacy.email",
+        "fallback": "Email"
+      },
+      {
+        "key": "legacy.phone",
+        "fallback": "Phone"
+      },
+      {
+        "key": "legacy.signed_up",
+        "fallback": "Signed Up"
+      },
+      {
+        "key": "legacy.validation",
+        "fallback": "Validation"
+      },
+      {
+        "key": "legacy.validated",
+        "fallback": "Validated"
+      },
+      {
+        "key": "legacy.approve_validate",
+        "fallback": "Approve & Validate"
+      },
+      {
+        "key": "legacy.reject",
+        "fallback": "Reject"
+      },
+      {
+        "key": "legacy.pending_approval",
+        "fallback": "Pending Approval"
+      },
+      {
+        "key": "legacy.validated",
+        "fallback": "Validated"
+      },
+      {
+        "key": "legacy.rejected",
+        "fallback": "Rejected"
+      }
+    ],
+    "hardcodedAttributes": [],
+    "hardcodedButtons": [],
+    "hardcodedHeadings": []
+  },
+  "admin/pages/Users.tsx": {
+    "missingArKeys": [
+      {
+        "key": "email_placeholder_example",
+        "issue": "ar.json contains latin: you@example.tn"
+      }
+    ],
+    "latinFallbacksInT": [
+      {
+        "key": "users_loaded",
+        "fallback": "Users loaded."
+      },
+      {
+        "key": "user_created",
+        "fallback": "User created."
+      },
+      {
+        "key": "user_updated",
+        "fallback": "User updated."
+      },
+      {
+        "key": "cannot_delete_self",
+        "fallback": "You cannot delete your own account."
+      },
+      {
+        "key": "user_deleted",
+        "fallback": "User deleted."
+      },
+      {
+        "key": "users",
+        "fallback": "Users"
+      },
+      {
+        "key": "users_page_desc",
+        "fallback": "Registered users (name, email, phone) - passwords are never shown."
+      },
+      {
+        "key": "admin_only",
+        "fallback": "Admin only"
+      },
+      {
+        "key": "add_user_hint",
+        "fallback": "Add a new user"
+      },
+      {
+        "key": "add_user",
+        "fallback": "Add User"
+      },
+      {
+        "key": "search_users",
+        "fallback": "Search users..."
+      },
+      {
+        "key": "loading",
+        "fallback": "Loading..."
+      },
+      {
+        "key": "no_results",
+        "fallback": "No results."
+      },
+      {
+        "key": "full_name",
+        "fallback": "Full Name"
+      },
+      {
+        "key": "email",
+        "fallback": "Email"
+      },
+      {
+        "key": "phone",
+        "fallback": "Phone"
+      },
+      {
+        "key": "role",
+        "fallback": "Role"
+      },
+      {
+        "key": "status",
+        "fallback": "Status"
+      },
+      {
+        "key": "actions",
+        "fallback": "Actions"
+      },
+      {
+        "key": "edit",
+        "fallback": "Edit"
+      },
+      {
+        "key": "delete",
+        "fallback": "Delete"
+      },
+      {
+        "key": "add_user",
+        "fallback": "Add User"
+      },
+      {
+        "key": "add_user_email_hint",
+        "fallback": "We will email them a password-reset code to set their password."
+      },
+      {
+        "key": "full_name",
+        "fallback": "Full Name"
+      },
+      {
+        "key": "full_name_placeholder",
+        "fallback": "Full name"
+      },
+      {
+        "key": "email",
+        "fallback": "Email"
+      },
+      {
+        "key": "email_placeholder_example",
+        "fallback": "email@example.com"
+      },
+      {
+        "key": "phone",
+        "fallback": "Phone"
+      },
+      {
+        "key": "optional",
+        "fallback": "Optional"
+      },
+      {
+        "key": "role",
+        "fallback": "Role"
+      },
+      {
+        "key": "cancel",
+        "fallback": "Cancel"
+      },
+      {
+        "key": "creating",
+        "fallback": "Creating..."
+      },
+      {
+        "key": "create_user",
+        "fallback": "Create User"
+      },
+      {
+        "key": "edit_user",
+        "fallback": "Edit User"
+      },
+      {
+        "key": "full_name",
+        "fallback": "Full Name"
+      },
+      {
+        "key": "phone",
+        "fallback": "Phone"
+      },
+      {
+        "key": "optional",
+        "fallback": "Optional"
+      },
+      {
+        "key": "role",
+        "fallback": "Role"
+      },
+      {
+        "key": "status",
+        "fallback": "Status"
+      },
+      {
+        "key": "active",
+        "fallback": "Active"
+      },
+      {
+        "key": "disabled",
+        "fallback": "Disabled"
+      },
+      {
+        "key": "cancel",
+        "fallback": "Cancel"
+      },
+      {
+        "key": "saving",
+        "fallback": "Saving..."
+      },
+      {
+        "key": "save",
+        "fallback": "Save"
+      }
+    ],
+    "hardcodedAttributes": [],
+    "hardcodedButtons": [],
+    "hardcodedHeadings": []
+  },
+  "admin/pages/UserSettings.tsx": {
+    "missingArKeys": [],
+    "latinFallbacksInT": [
+      {
+        "key": "user_settings",
+        "fallback": "User Dashboard Settings"
+      },
+      {
+        "key": "user_settings_desc",
+        "fallback": "Manage your preferences, security, language, theme mode, and personal activity log."
+      },
+      {
+        "key": "language_and_appearance",
+        "fallback": "Language & Appearance"
+      },
+      {
+        "key": "interface_language",
+        "fallback": "Interface Language:"
+      },
+      {
+        "key": "theme_mode",
+        "fallback": "Theme Mode:"
+      },
+      {
+        "key": "dark_mode_active",
+        "fallback": "Dark Mode Active"
+      },
+      {
+        "key": "light_mode_active",
+        "fallback": "Light Mode Active"
+      },
+      {
+        "key": "toggle_theme_desc",
+        "fallback": "Toggle website color theme display"
+      },
+      {
+        "key": "switch_theme",
+        "fallback": "Switch Theme"
+      },
+      {
+        "key": "password_and_security",
+        "fallback": "Password & Security"
+      },
+      {
+        "key": "forgot_password_q",
+        "fallback": "Forgot Password?"
+      },
+      {
+        "key": "current_password",
+        "fallback": "Current Password:"
+      },
+      {
+        "key": "placeholder_current_password",
+        "fallback": "Enter current password..."
+      },
+      {
+        "key": "new_password",
+        "fallback": "New Password:"
+      },
+      {
+        "key": "placeholder_new_password",
+        "fallback": "Enter new password (min 6 chars)..."
+      },
+      {
+        "key": "confirm_new_password",
+        "fallback": "Confirm New Password:"
+      },
+      {
+        "key": "placeholder_confirm_password",
+        "fallback": "Re-enter new password..."
+      },
+      {
+        "key": "update_password",
+        "fallback": "Update Password"
+      },
+      {
+        "key": "activity_log_controls",
+        "fallback": "Activity Log & Controls"
+      },
+      {
+        "key": "activity_log_desc",
+        "fallback": "Track your actions or turn activity logging ON/OFF for your account."
+      },
+      {
+        "key": "activity_log",
+        "fallback": "Activity Log:"
+      },
+      {
+        "key": "off",
+        "fallback": "OFF"
+      },
+      {
+        "key": "turn_off",
+        "fallback": "Turn OFF"
+      },
+      {
+        "key": "turn_on",
+        "fallback": "Turn ON"
+      },
+      {
+        "key": "recent_account_activity",
+        "fallback": "Recent Account Activity"
+      },
+      {
+        "key": "refresh_log",
+        "fallback": "Refresh Log"
+      },
+      {
+        "key": "no_activity_logs",
+        "fallback": "No activity logs recorded yet."
+      },
+      {
+        "key": "date_time",
+        "fallback": "Date & Time"
+      },
+      {
+        "key": "category",
+        "fallback": "Category"
+      },
+      {
+        "key": "description",
+        "fallback": "Description"
+      },
+      {
+        "key": "danger_zone_delete",
+        "fallback": "Danger Zone — Delete Account"
+      },
+      {
+        "key": "danger_zone_desc",
+        "fallback": "Permanently delete or request account removal. This action will cancel your subscription and remove your profile."
+      },
+      {
+        "key": "delete_my_account",
+        "fallback": "Delete My Account"
+      },
+      {
+        "key": "account_erasure_title",
+        "fallback": "Account & Personal Data Erasure"
+      },
+      {
+        "key": "target_account",
+        "fallback": "Target account:"
+      },
+      {
+        "key": "instant_erasure",
+        "fallback": "Instant Erasure"
+      },
+      {
+        "key": "admin_review_request",
+        "fallback": "Admin Review Request"
+      },
+      {
+        "key": "gdpr_erasure_policy",
+        "fallback": "GDPR Article 17 / Data Erasure Policy:"
+      },
+      {
+        "key": "erasure_warning_text",
+        "fallback": "Confirming erasure will permanently delete your user profile, personal family trees, individuals, private research notes, tasks, comments, reminders, and reset tokens."
+      },
+      {
+        "key": "erasure_tax_notice",
+        "fallback": "Statutory billing invoices and payment references may be retained strictly for required accounting and tax auditing periods. Active sessions will be terminated immediately."
+      },
+      {
+        "key": "enter_password_authorize_deletion",
+        "fallback": "Enter your current password to authorize permanent deletion:"
+      },
+      {
+        "key": "placeholder_password",
+        "fallback": "Your account password"
+      },
+      {
+        "key": "reason_for_leaving_optional",
+        "fallback": "Reason for leaving (Optional):"
+      },
+      {
+        "key": "placeholder_reason_leaving",
+        "fallback": "Tell us why you are requesting account deletion..."
+      },
+      {
+        "key": "cancel",
+        "fallback": "Cancel"
+      },
+      {
+        "key": "permanently_erase_data",
+        "fallback": "Permanently Erase My Data"
+      },
+      {
+        "key": "submit_deletion_request",
+        "fallback": "Submit Deletion Request"
+      }
+    ],
+    "hardcodedAttributes": [],
+    "hardcodedButtons": [],
+    "hardcodedHeadings": []
+  },
+  "admin/pages/UserUpgrade.tsx": {
+    "missingArKeys": [],
+    "latinFallbacksInT": [
+      {
+        "key": "subscription_plans",
+        "fallback": "Subscription Plans & Upgrades"
+      },
+      {
+        "key": "user_upgrade_desc",
+        "fallback": "Upgrade your account tier to increase tree, photo, audio, and document upload quotas."
+      },
+      {
+        "key": "current_active_plan",
+        "fallback": "Current Active Plan"
+      },
+      {
+        "key": "month",
+        "fallback": "month"
+      },
+      {
+        "key": "max_trees",
+        "fallback": "Max Trees:"
+      },
+      {
+        "key": "unlimited",
+        "fallback": "Unlimited"
+      },
+      {
+        "key": "max_individuals",
+        "fallback": "Max Individuals:"
+      },
+      {
+        "key": "unlimited",
+        "fallback": "Unlimited"
+      },
+      {
+        "key": "max_saved_sources",
+        "fallback": "Max Saved Sources:"
+      },
+      {
+        "key": "unlimited",
+        "fallback": "Unlimited"
+      },
+      {
+        "key": "max_research_notes",
+        "fallback": "Max Research Notes:"
+      },
+      {
+        "key": "unlimited",
+        "fallback": "Unlimited"
+      },
+      {
+        "key": "max_research_tasks",
+        "fallback": "Max Research Tasks:"
+      },
+      {
+        "key": "unlimited",
+        "fallback": "Unlimited"
+      },
+      {
+        "key": "max_gallery_images",
+        "fallback": "Max Gallery Images:"
+      },
+      {
+        "key": "unlimited",
+        "fallback": "Unlimited"
+      },
+      {
+        "key": "max_audio_files",
+        "fallback": "Max Audio Files:"
+      },
+      {
+        "key": "unlimited",
+        "fallback": "Unlimited"
+      },
+      {
+        "key": "max_documents",
+        "fallback": "Max Documents:"
+      },
+      {
+        "key": "unlimited",
+        "fallback": "Unlimited"
+      },
+      {
+        "key": "active_plan",
+        "fallback": "Active Plan"
+      },
+      {
+        "key": "freemium_tier",
+        "fallback": "Freemium Tier"
+      },
+      {
+        "key": "upgrade_to",
+        "fallback": "Upgrade to"
+      },
+      {
+        "key": "bank_transfer_title",
+        "fallback": "Bank Transfer & Payment Proof"
+      },
+      {
+        "key": "upgrade_plan_label",
+        "fallback": "Upgrade Plan:"
+      },
+      {
+        "key": "bank_instructions_heading",
+        "fallback": "Super Admin Bank Transfer Instructions:"
+      },
+      {
+        "key": "bank_name",
+        "fallback": "Bank Name:"
+      },
+      {
+        "key": "beneficiary",
+        "fallback": "Beneficiary:"
+      },
+      {
+        "key": "account_iban",
+        "fallback": "Account / IBAN:"
+      },
+      {
+        "key": "reference_code",
+        "fallback": "Reference Code:"
+      },
+      {
+        "key": "currency",
+        "fallback": "Currency:"
+      },
+      {
+        "key": "upload_payment_proof",
+        "fallback": "Upload Payment Proof Receipt (Image / Screenshot):"
+      },
+      {
+        "key": "choose_receipt_image",
+        "fallback": "Choose Receipt Image"
+      },
+      {
+        "key": "tx_notes_optional",
+        "fallback": "Transaction Notes / Reference Message (Optional):"
+      },
+      {
+        "key": "placeholder_tx_notes",
+        "fallback": "Enter bank transaction code, date of transfer, or note for support..."
+      },
+      {
+        "key": "cancel",
+        "fallback": "Cancel"
+      },
+      {
+        "key": "submit_payment_proof",
+        "fallback": "Submit Payment Proof"
+      },
+      {
+        "key": "super_admin_subscriptions_title",
+        "fallback": "Super Admin: User Subscriptions & Custom Limits"
+      },
+      {
+        "key": "super_admin_subscriptions_desc",
+        "fallback": "Directly upgrade user subscriptions or configure custom creation quota overrides per user account."
+      },
+      {
+        "key": "name",
+        "fallback": "Name"
+      },
+      {
+        "key": "email",
+        "fallback": "Email"
+      },
+      {
+        "key": "role",
+        "fallback": "Role"
+      },
+      {
+        "key": "actions",
+        "fallback": "Actions"
+      },
+      {
+        "key": "super_admin",
+        "fallback": "Super Admin"
+      },
+      {
+        "key": "user",
+        "fallback": "User"
+      },
+      {
+        "key": "upgrade_tier",
+        "fallback": "Upgrade Tier"
+      },
+      {
+        "key": "custom_quotas",
+        "fallback": "Custom Quotas"
+      },
+      {
+        "key": "super_admin_tier_upgrade",
+        "fallback": "Super Admin Tier Upgrade"
+      },
+      {
+        "key": "select_subscription_tier",
+        "fallback": "Select Subscription Tier"
+      },
+      {
+        "key": "month",
+        "fallback": "month"
+      },
+      {
+        "key": "apply_tier_upgrade",
+        "fallback": "Apply Tier Upgrade"
+      },
+      {
+        "key": "set_custom_user_quotas",
+        "fallback": "Set Custom User Quotas"
+      },
+      {
+        "key": "active_plan_usage",
+        "fallback": "Active Plan Usage"
+      },
+      {
+        "key": "trees",
+        "fallback": "Trees"
+      },
+      {
+        "key": "gallery",
+        "fallback": "Gallery"
+      },
+      {
+        "key": "audios",
+        "fallback": "Audios"
+      },
+      {
+        "key": "documents",
+        "fallback": "Docs"
+      },
+      {
+        "key": "individuals",
+        "fallback": "Individuals"
+      },
+      {
+        "key": "custom_limit_overrides_desc",
+        "fallback": "Custom Limit Overrides (leave blank for tier default, -1 for unlimited):"
+      },
+      {
+        "key": "trees_limit",
+        "fallback": "Trees Limit:"
+      },
+      {
+        "key": "tier_default",
+        "fallback": "Tier default"
+      },
+      {
+        "key": "gallery_limit",
+        "fallback": "Gallery Limit:"
+      },
+      {
+        "key": "tier_default",
+        "fallback": "Tier default"
+      },
+      {
+        "key": "audios_limit",
+        "fallback": "Audios Limit:"
+      },
+      {
+        "key": "tier_default",
+        "fallback": "Tier default"
+      },
+      {
+        "key": "docs_limit",
+        "fallback": "Docs Limit:"
+      },
+      {
+        "key": "tier_default",
+        "fallback": "Tier default"
+      },
+      {
+        "key": "individuals_limit",
+        "fallback": "Individuals Limit:"
+      },
+      {
+        "key": "tier_default",
+        "fallback": "Tier default"
+      },
+      {
+        "key": "cancel",
+        "fallback": "Cancel"
+      },
+      {
+        "key": "save_custom_limits",
+        "fallback": "Save Custom Limits"
+      }
+    ],
+    "hardcodedAttributes": [],
+    "hardcodedButtons": [],
+    "hardcodedHeadings": []
+  },
+  "admin/pages/ValidationApprovals.tsx": {
+    "missingArKeys": [],
+    "latinFallbacksInT": [
+      {
+        "key": "legacy.validation_users_failed",
+        "fallback": "Failed to load validation approvals"
+      },
+      {
+        "key": "legacy.user_validated",
+        "fallback": "User validated. The account now has a validated badge."
+      },
+      {
+        "key": "legacy.user_validation_rejected",
+        "fallback": "User validation rejected."
+      },
+      {
+        "key": "legacy.validation_decision_failed",
+        "fallback": "Failed to update validation request"
+      },
+      {
+        "key": "legacy.validation",
+        "fallback": "Validation"
+      },
+      {
+        "key": "legacy.validation_approvals",
+        "fallback": "Validation Approvals"
+      },
+      {
+        "key": "legacy.validation_approvals_desc",
+        "fallback": "Approve user accounts so validated members receive the check badge in the navbar."
+      },
+      {
+        "key": "legacy.refresh",
+        "fallback": "Refresh"
+      },
+      {
+        "key": "legacy.loading",
+        "fallback": "Loading..."
+      },
+      {
+        "key": "legacy.no_validation_requests",
+        "fallback": "No validation requests"
+      },
+      {
+        "key": "legacy.unknown_user",
+        "fallback": "Unknown user"
+      },
+      {
+        "key": "legacy.validated_account",
+        "fallback": "Validated Account"
+      },
+      {
+        "key": "legacy.created",
+        "fallback": "Created"
+      },
+      {
+        "key": "legacy.status",
+        "fallback": "Status"
+      },
+      {
+        "key": "legacy.role",
+        "fallback": "Role"
+      },
+      {
+        "key": "legacy.phone",
+        "fallback": "Phone"
+      },
+      {
+        "key": "legacy.approve_validate",
+        "fallback": "Approve & Validate"
+      },
+      {
+        "key": "legacy.reject",
+        "fallback": "Reject"
+      }
+    ],
+    "hardcodedAttributes": [],
+    "hardcodedButtons": [],
+    "hardcodedHeadings": []
+  },
+  "admin/components/AdminHeader.tsx": {
+    "missingArKeys": [],
+    "latinFallbacksInT": [
+      {
+        "key": "toggle_sidebar",
+        "fallback": "Toggle sidebar"
+      },
+      {
+        "key": "close_sidebar",
+        "fallback": "Close Sidebar"
+      },
+      {
+        "key": "open_sidebar",
+        "fallback": "Open Sidebar"
+      },
+      {
+        "key": "nav_search_placeholder",
+        "fallback": "Search records or trees…"
+      },
+      {
+        "key": "view_public_site",
+        "fallback": "View Public Site"
+      },
+      {
+        "key": "nav_signout",
+        "fallback": "Sign Out"
+      }
+    ],
+    "hardcodedAttributes": [],
+    "hardcodedButtons": [],
+    "hardcodedHeadings": []
+  },
+  "admin/components/AdminSidebar.tsx": {
+    "missingArKeys": [],
+    "latinFallbacksInT": [
+      {
+        "key": "close_sidebar",
+        "fallback": "Close Sidebar"
+      },
+      {
+        "key": "super_admin",
+        "fallback": "Super Admin"
+      },
+      {
+        "key": "researcher",
+        "fallback": "Researcher"
+      },
+      {
+        "key": "navigation",
+        "fallback": "Navigation"
+      },
+      {
+        "key": "nav_signout",
+        "fallback": "Sign Out"
+      }
+    ],
+    "hardcodedAttributes": [],
+    "hardcodedButtons": [],
+    "hardcodedHeadings": []
+  },
+  "admin/components/AuthContext.tsx": {
+    "missingArKeys": [],
+    "latinFallbacksInT": [],
+    "hardcodedAttributes": [],
+    "hardcodedButtons": [],
+    "hardcodedHeadings": []
+  },
+  "admin/components/Breadcrumb.tsx": {
+    "missingArKeys": [],
+    "latinFallbacksInT": [
+      {
+        "key": "home",
+        "fallback": "Home"
+      }
+    ],
+    "hardcodedAttributes": [],
+    "hardcodedButtons": [],
+    "hardcodedHeadings": []
+  },
+  "admin/components/protectedRoute.tsx": {
+    "missingArKeys": [],
+    "latinFallbacksInT": [
+      {
+        "key": "auth_checking",
+        "fallback": "Checking authentication..."
+      }
+    ],
+    "hardcodedAttributes": [],
+    "hardcodedButtons": [],
+    "hardcodedHeadings": []
+  },
+  "admin/components/ThemeToggle.tsx": {
+    "missingArKeys": [],
+    "latinFallbacksInT": [],
+    "hardcodedAttributes": [],
+    "hardcodedButtons": [],
+    "hardcodedHeadings": []
+  },
+  "admin/components/trees.tsx": {
+    "missingArKeys": [],
+    "latinFallbacksInT": [],
+    "hardcodedAttributes": [],
+    "hardcodedButtons": [],
+    "hardcodedHeadings": []
+  },
+  "admin/components/TreesBuilder.tsx": {
+    "missingArKeys": [
+      {
+        "key": "legacy.invalid_gedcom_type",
+        "issue": "ar.json contains latin: نوع الملف غير مدعوم. يرجى استخدام .ged أو .gedcom."
+      },
+      {
+        "key": "legacy.invalid_gedcomx_type",
+        "issue": "ar.json contains latin: نوع الملف غير مدعوم. استخدم .gedx أو .xml أو .json."
+      },
+      {
+        "key": "legacy.gedcomx_format_xml",
+        "issue": "ar.json contains latin: صيغة XML"
+      },
+      {
+        "key": "legacy.gedcomx_format_gedx",
+        "issue": "ar.json contains latin: ملف .gedx"
+      },
+      {
+        "key": "legacy.gedcomx_format_xml",
+        "issue": "ar.json contains latin: صيغة XML"
+      },
+      {
+        "key": "legacy.gedcomx_format_gedx",
+        "issue": "ar.json contains latin: ملف .gedx"
+      },
+      {
+        "key": "legacy.source_link_placeholder",
+        "issue": "ar.json contains latin: https://... أو /uploads/documents/file.pdf"
+      },
+      {
+        "key": "legacy.code_mode",
+        "issue": "ar.json contains latin: كود GEDCOM المباشر (INDI)"
+      },
+      {
+        "key": "legacy.paste_indi_gedcom",
+        "issue": "ar.json contains latin: لصق أو كتابة كود GEDCOM للفرد (INDI)"
+      },
+      {
+        "key": "legacy.document_code_placeholder",
+        "issue": "ar.json contains latin: مثال: DOC-12345"
+      }
+    ],
+    "latinFallbacksInT": [
+      {
+        "key": "legacy.unknown",
+        "fallback": "Unknown"
+      },
+      {
+        "key": "legacy.unknown",
+        "fallback": "Unknown"
+      },
+      {
+        "key": "legacy.tree_builder_read_only",
+        "fallback": "Tree builder is read-only."
+      },
+      {
+        "key": "legacy.unknown",
+        "fallback": "Unknown"
+      },
+      {
+        "key": "legacy.unknown",
+        "fallback": "Unknown"
+      },
+      {
+        "key": "legacy.male",
+        "fallback": "Male"
+      },
+      {
+        "key": "legacy.female",
+        "fallback": "Female"
+      },
+      {
+        "key": "legacy.parent_relationship",
+        "fallback": "Parent Relationship"
+      },
+      {
+        "key": "legacy.parents_connected",
+        "fallback": "Parents connected"
+      },
+      {
+        "key": "legacy.parent_to_child",
+        "fallback": "Parent to Child"
+      },
+      {
+        "key": "legacy.descendant_relationship",
+        "fallback": "Descendant Relationship"
+      },
+      {
+        "key": "legacy.parent_children",
+        "fallback": "Parent-Child"
+      },
+      {
+        "key": "legacy.parent_descendant",
+        "fallback": "Parent-Descendant"
+      },
+      {
+        "key": "legacy.open_details",
+        "fallback": "Open details"
+      },
+      {
+        "key": "legacy.tree_render_failed",
+        "fallback": "Failed to render tree"
+      },
+      {
+        "key": "legacy.invalid_gedcom_type",
+        "fallback": "Unsupported file type. Use .ged or .gedcom."
+      },
+      {
+        "key": "legacy.file_too_large",
+        "fallback": "File is too large (max 50MB)."
+      },
+      {
+        "key": "legacy.gedcom_empty",
+        "fallback": "GEDCOM file is empty."
+      },
+      {
+        "key": "legacy.gedcom_no_people",
+        "fallback": "No individuals found in GEDCOM."
+      },
+      {
+        "key": "legacy.gedcom_no_people",
+        "fallback": "No individuals found in GEDCOM."
+      },
+      {
+        "key": "legacy.gedcom7_imported",
+        "fallback": "GEDCOM 7.0 imported."
+      },
+      {
+        "key": "legacy.gedcom_imported",
+        "fallback": "GEDCOM imported."
+      },
+      {
+        "key": "legacy.import_gedcom_failed",
+        "fallback": "Failed to import GEDCOM"
+      },
+      {
+        "key": "legacy.invalid_gedcomx_type",
+        "fallback": "Unsupported file type. Use .gedx, .xml, or .json."
+      },
+      {
+        "key": "legacy.file_too_large",
+        "fallback": "File is too large (max 50MB)."
+      },
+      {
+        "key": "legacy.gedcom_empty",
+        "fallback": "GEDCOM X file is empty."
+      },
+      {
+        "key": "legacy.gedcomx_invalid_json",
+        "fallback": "Invalid GEDCOM X JSON."
+      },
+      {
+        "key": "legacy.gedcom_no_people",
+        "fallback": "No individuals found in GEDCOM X."
+      },
+      {
+        "key": "legacy.gedcomx_imported",
+        "fallback": "GEDCOM X imported."
+      },
+      {
+        "key": "legacy.import_gedcomx_failed",
+        "fallback": "Failed to import GEDCOM X."
+      },
+      {
+        "key": "legacy.gedcomx_build_failed",
+        "fallback": "Failed to build GEDCOM X."
+      },
+      {
+        "key": "legacy.name_required",
+        "fallback": "Name is required"
+      },
+      {
+        "key": "legacy.parents_conflict",
+        "fallback": "Father and mother cannot be the same person."
+      },
+      {
+        "key": "legacy.invalid_relation_self",
+        "fallback": "A person cannot be their own parent, spouse, or child."
+      },
+      {
+        "key": "legacy.person_not_found",
+        "fallback": "Person not found."
+      },
+      {
+        "key": "legacy.person_updated",
+        "fallback": "Person updated."
+      },
+      {
+        "key": "legacy.person_added",
+        "fallback": "Person added."
+      },
+      {
+        "key": "legacy.delete_person_confirm",
+        "fallback": "Are you sure you want to delete this person?"
+      },
+      {
+        "key": "legacy.person_deleted",
+        "fallback": "Person deleted."
+      },
+      {
+        "key": "legacy.gedcom_build_failed",
+        "fallback": "Failed to build GEDCOM"
+      },
+      {
+        "key": "legacy.gedcom7_build_failed",
+        "fallback": "Failed to build GEDCOM 7.0."
+      },
+      {
+        "key": "legacy.source_link_required",
+        "fallback": "Add a document or source link first."
+      },
+      {
+        "key": "legacy.source_link_saved",
+        "fallback": "Source link saved."
+      },
+      {
+        "key": "legacy.source_link_deleted",
+        "fallback": "Source link deleted."
+      },
+      {
+        "key": "legacy.media_type_image",
+        "fallback": "Image"
+      },
+      {
+        "key": "legacy.media_type_audio",
+        "fallback": "Audio"
+      },
+      {
+        "key": "legacy.media_type_document",
+        "fallback": "Document"
+      },
+      {
+        "key": "legacy.select_media_first",
+        "fallback": "Select an item first."
+      },
+      {
+        "key": "legacy.media_linked",
+        "fallback": "Source linked to person."
+      },
+      {
+        "key": "legacy.zoom_in",
+        "fallback": "Zoom In"
+      },
+      {
+        "key": "legacy.zoom_in",
+        "fallback": "Zoom In"
+      },
+      {
+        "key": "legacy.zoom_out",
+        "fallback": "Zoom Out"
+      },
+      {
+        "key": "legacy.zoom_out",
+        "fallback": "Zoom Out"
+      },
+      {
+        "key": "legacy.center",
+        "fallback": "Center"
+      },
+      {
+        "key": "legacy.tree_saved_gedcomx",
+        "fallback": "This tree is saved in GEDCOM X format."
+      },
+      {
+        "key": "legacy.tree_saved_gedcom7",
+        "fallback": "This tree is saved in GEDCOM 7.0 format."
+      },
+      {
+        "key": "legacy.import_gedcom",
+        "fallback": "Import GEDCOM"
+      },
+      {
+        "key": "legacy.export_gedcom",
+        "fallback": "Export GEDCOM"
+      },
+      {
+        "key": "legacy.import_gedcomx",
+        "fallback": "Import GEDCOM X"
+      },
+      {
+        "key": "legacy.gedcomx_format_xml",
+        "fallback": "XML format"
+      },
+      {
+        "key": "legacy.gedcomx_format_json",
+        "fallback": "JSON format"
+      },
+      {
+        "key": "legacy.gedcomx_format_gedx",
+        "fallback": ".gedx file"
+      },
+      {
+        "key": "legacy.export_gedcomx",
+        "fallback": "Export GEDCOM X"
+      },
+      {
+        "key": "legacy.gedcomx_format_xml",
+        "fallback": "XML format"
+      },
+      {
+        "key": "legacy.gedcomx_format_json",
+        "fallback": "JSON format"
+      },
+      {
+        "key": "legacy.gedcomx_format_gedx",
+        "fallback": ".gedx file"
+      },
+      {
+        "key": "legacy.tree_empty",
+        "fallback": "No people to display yet."
+      },
+      {
+        "key": "legacy.tree_empty_prompt",
+        "fallback": "Start building your family tree."
+      },
+      {
+        "key": "legacy.tree_empty_readonly_hint",
+        "fallback": "There is no GEDCOM data for this tree yet."
+      },
+      {
+        "key": "legacy.tree_empty_hint",
+        "fallback": "Add a person manually or import a GEDCOM file."
+      },
+      {
+        "key": "legacy.add_person",
+        "fallback": "Add Person"
+      },
+      {
+        "key": "legacy.import_gedcom",
+        "fallback": "Import GEDCOM"
+      },
+      {
+        "key": "legacy.import_gedcomx",
+        "fallback": "Import GEDCOM X"
+      },
+      {
+        "key": "legacy.person_card",
+        "fallback": "Person card"
+      },
+      {
+        "key": "legacy.person_card",
+        "fallback": "Person card"
+      },
+      {
+        "key": "legacy.gedcom_version",
+        "fallback": "GEDCOM version"
+      },
+      {
+        "key": "legacy.gedcom_version",
+        "fallback": "GEDCOM version"
+      },
+      {
+        "key": "legacy.close",
+        "fallback": "Close"
+      },
+      {
+        "key": "legacy.close",
+        "fallback": "Close"
+      },
+      {
+        "key": "legacy.link_with",
+        "fallback": "Link with:"
+      },
+      {
+        "key": "legacy.media_type_external",
+        "fallback": "External link (URL)"
+      },
+      {
+        "key": "legacy.birth_year",
+        "fallback": "Birth Year"
+      },
+      {
+        "key": "legacy.birth_place",
+        "fallback": "Birth Place"
+      },
+      {
+        "key": "legacy.death_date",
+        "fallback": "Death Date"
+      },
+      {
+        "key": "legacy.death_place",
+        "fallback": "Death Place"
+      },
+      {
+        "key": "legacy.gender",
+        "fallback": "Gender"
+      },
+      {
+        "key": "legacy.profession",
+        "fallback": "Profession"
+      },
+      {
+        "key": "legacy.father",
+        "fallback": "Father"
+      },
+      {
+        "key": "legacy.mother",
+        "fallback": "Mother"
+      },
+      {
+        "key": "legacy.spouse",
+        "fallback": "Spouse"
+      },
+      {
+        "key": "legacy.children",
+        "fallback": "Children"
+      },
+      {
+        "key": "legacy.archive_source",
+        "fallback": "Archive Source"
+      },
+      {
+        "key": "legacy.document_code",
+        "fallback": "Document Code"
+      },
+      {
+        "key": "legacy.reliability",
+        "fallback": "Reliability"
+      },
+      {
+        "key": "legacy.details",
+        "fallback": "Details / Biography"
+      },
+      {
+        "key": "legacy.sources_documents",
+        "fallback": "Sources & Documents"
+      },
+      {
+        "key": "legacy.add",
+        "fallback": "Add"
+      },
+      {
+        "key": "legacy.open",
+        "fallback": "Open"
+      },
+      {
+        "key": "legacy.delete",
+        "fallback": "Delete"
+      },
+      {
+        "key": "legacy.delete",
+        "fallback": "Delete"
+      },
+      {
+        "key": "legacy.audio_not_supported",
+        "fallback": "Your browser does not support audio."
+      },
+      {
+        "key": "legacy.no_sources_yet",
+        "fallback": "No sources linked yet. Use \\"
+      },
+      {
+        "key": "legacy.add_source_link",
+        "fallback": "Add external link"
+      },
+      {
+        "key": "legacy.edit_source_link",
+        "fallback": "Edit external link"
+      },
+      {
+        "key": "legacy.page_name_title",
+        "fallback": "Page Name / Title"
+      },
+      {
+        "key": "legacy.page_name_placeholder",
+        "fallback": "e.g. Birth Archive Entry"
+      },
+      {
+        "key": "legacy.external_url",
+        "fallback": "External Link (URL)"
+      },
+      {
+        "key": "legacy.source_link_placeholder",
+        "fallback": "https://... or /uploads/documents/file.pdf"
+      },
+      {
+        "key": "legacy.cancel",
+        "fallback": "Cancel"
+      },
+      {
+        "key": "save_link_with_this_person",
+        "fallback": "Save link with this person"
+      },
+      {
+        "key": "legacy.link_media",
+        "fallback": "Link with..."
+      },
+      {
+        "key": "legacy.loading",
+        "fallback": "Loading..."
+      },
+      {
+        "key": "legacy.refresh",
+        "fallback": "Refresh"
+      },
+      {
+        "key": "legacy.close",
+        "fallback": "Close"
+      },
+      {
+        "key": "legacy.loading",
+        "fallback": "Loading..."
+      },
+      {
+        "key": "legacy.no_media_found",
+        "fallback": "No items found for this type."
+      },
+      {
+        "key": "save_link_with_this_person",
+        "fallback": "Save link with this person"
+      },
+      {
+        "key": "external_link_or_doc",
+        "fallback": "Lien externe ou document"
+      },
+      {
+        "key": "external_link_preview_unsupported",
+        "fallback": "Ce type de fichier ou lien ne peut pas être prévisualisé directement."
+      },
+      {
+        "key": "common.close",
+        "fallback": "Fermer"
+      },
+      {
+        "key": "legacy.edit_tree_person",
+        "fallback": "Edit Tree / Person"
+      },
+      {
+        "key": "legacy.add_person",
+        "fallback": "Add Person to Family Tree"
+      },
+      {
+        "key": "legacy.form_mode",
+        "fallback": "1. Formulaire Individu"
+      },
+      {
+        "key": "legacy.code_mode",
+        "fallback": "2. Code GEDCOM Direct (INDI)"
+      },
+      {
+        "key": "legacy.paste_indi_gedcom",
+        "fallback": "Coller ou écrire le code GEDCOM de l"
+      },
+      {
+        "key": "legacy.paste_indi_hint",
+        "fallback": "Le système extrait automatiquement le nom, prénom, genre, dates de naissance/décès et liens de parenté."
+      },
+      {
+        "key": "legacy.cancel",
+        "fallback": "Cancel"
+      },
+      {
+        "key": "legacy.person_added",
+        "fallback": "Individu(s) ajouté(s) via GEDCOM / GEDCOM X avec succès!"
+      },
+      {
+        "key": "legacy.import_and_add",
+        "fallback": "Importer et Ajouter à l"
+      },
+      {
+        "key": "legacy.personal_info",
+        "fallback": "Personal Info"
+      },
+      {
+        "key": "legacy.full_name",
+        "fallback": "Full Name"
+      },
+      {
+        "key": "legacy.name_placeholder",
+        "fallback": "e.g. Ahmed Ben Mohamed"
+      },
+      {
+        "key": "legacy.gender",
+        "fallback": "Gender"
+      },
+      {
+        "key": "legacy.select_gender",
+        "fallback": "Select..."
+      },
+      {
+        "key": "legacy.male",
+        "fallback": "Male"
+      },
+      {
+        "key": "legacy.female",
+        "fallback": "Female"
+      },
+      {
+        "key": "legacy.select_color",
+        "fallback": "Select a Color:"
+      },
+      {
+        "key": "legacy.color_on_tree_hint",
+        "fallback": "This color will appear on the family tree card"
+      },
+      {
+        "key": "legacy.details_biography",
+        "fallback": "Details / Biography"
+      },
+      {
+        "key": "legacy.additional_notes",
+        "fallback": "Additional notes..."
+      },
+      {
+        "key": "legacy.profession",
+        "fallback": "Profession"
+      },
+      {
+        "key": "legacy.profession_placeholder",
+        "fallback": "e.g. Doctor, Teacher, Engineer..."
+      },
+      {
+        "key": "legacy.dates_places",
+        "fallback": "Dates & Places"
+      },
+      {
+        "key": "legacy.birth_year",
+        "fallback": "Birth Year"
+      },
+      {
+        "key": "legacy.birth_place",
+        "fallback": "Birth Place"
+      },
+      {
+        "key": "legacy.birth_place_placeholder",
+        "fallback": "e.g. Tunis"
+      },
+      {
+        "key": "legacy.death_date",
+        "fallback": "Death Date"
+      },
+      {
+        "key": "legacy.death_place",
+        "fallback": "Death Place"
+      },
+      {
+        "key": "legacy.death_place_placeholder",
+        "fallback": "e.g. Sousse"
+      },
+      {
+        "key": "legacy.archive_source",
+        "fallback": "Archive & Source"
+      },
+      {
+        "key": "legacy.archive_source",
+        "fallback": "Archive Source"
+      },
+      {
+        "key": "legacy.archive_source_placeholder",
+        "fallback": "e.g. Archives Nationales de Tunisie"
+      },
+      {
+        "key": "legacy.document_code",
+        "fallback": "Document Code"
+      },
+      {
+        "key": "legacy.document_code_placeholder",
+        "fallback": "e.g. DOC-12345"
+      },
+      {
+        "key": "legacy.delete",
+        "fallback": "Delete"
+      },
+      {
+        "key": "legacy.cancel",
+        "fallback": "Cancel"
+      },
+      {
+        "key": "legacy.edit_tree_person",
+        "fallback": "Edit Tree / Person"
+      },
+      {
+        "key": "legacy.add_person",
+        "fallback": "Add Person"
+      }
+    ],
+    "hardcodedAttributes": [],
+    "hardcodedButtons": [],
+    "hardcodedHeadings": []
+  }
+}

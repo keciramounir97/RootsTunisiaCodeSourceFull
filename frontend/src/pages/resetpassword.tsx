@@ -78,7 +78,7 @@ export default function ResetPassword() {
   return (
     <div className="bg-[var(--background)] text-[var(--foreground)] min-h-[85vh] py-8 sm:py-12">
       <SEO
-        title="Reset Password — Roots Tunisia"
+        title={t("seo_reset_title", "إعادة تعيين كلمة المرور — جذور تونس")}
         description="Reset your password to regain access to your Roots Tunisia account."
       />
 
@@ -88,19 +88,19 @@ export default function ResetPassword() {
           <div className="relative hidden lg:block overflow-hidden min-h-[600px]">
             <img
               src={carthage}
-              alt="Ruins of Carthage overlooking the Mediterranean"
+              alt={t("carthage_ruins_alt", "آثار قرطاج المطلة على البحر الأبيض المتوسط")}
               width={1600}
               height={1000}
               className="h-full w-full object-cover"
             />
             <div className="hero-scrim absolute inset-0" />
-            <div className="absolute bottom-12 left-12 right-12 max-w-md z-10">
-              <p className="eyebrow text-[var(--gold)]">Roots Tunisia</p>
+            <div className="absolute bottom-12 left-12 right-12 max-w-md z-10 rtl:text-right">
+              <p className="eyebrow text-[var(--gold)]">{t("roots_tunisia", "Roots Tunisia")}</p>
               <p className="mt-3 font-display text-3xl text-white font-semibold leading-snug">
-                Account recovery for researchers and genealogists.
+                {t("reset_hero_title", "Account recovery for researchers and genealogists.")}
               </p>
               <p className="mt-2 text-xs text-white/80 leading-relaxed">
-                Secure access to your family tree pedigrees, uploaded oral histories, and digitized manuscripts.
+                {t("reset_hero_desc", "Secure access to your family tree pedigrees, uploaded oral histories, and digitized manuscripts.")}
               </p>
             </div>
           </div>
@@ -116,22 +116,23 @@ export default function ResetPassword() {
                     <KeyRound className="h-6 w-6 text-emerald-500" />
                   </div>
                   <h2 className="display-lg text-2xl text-[var(--foreground)]">
-                    Password Reset Complete
+                    {t("password_reset_complete", "Password Reset Complete")}
                   </h2>
                   <p className="mt-2 text-sm text-[var(--muted-foreground)] leading-relaxed">
-                    Your password has been updated successfully. You can now log in with your new password.
+                    {t("password_reset_success_desc", "Your password has been updated successfully. You can now log in with your new password.")}
                   </p>
                   <div className="mt-6">
                     <Link to="/login" className="btn-base btn-gold text-xs">
-                      <ArrowLeft className="h-3.5 w-3.5" /> Sign In Now
+                      <ArrowLeft className="h-3.5 w-3.5 rtl:rotate-180" /> {t("signin_now", "Sign In Now")}
                     </Link>
                   </div>
                 </div>
               ) : step === "verify" ? (
                 <form onSubmit={handleVerifyReset} className="mt-8">
-                  <h1 className="display-lg text-[var(--foreground)]">Enter Reset Code</h1>
+                  <h1 className="display-lg text-[var(--foreground)]">{t("enter_reset_code", "Enter Reset Code")}</h1>
                   <p className="mt-2 text-sm text-[var(--muted-foreground)]">
-                    We sent a verification code to <strong className="text-[var(--gold)]">{email}</strong>.
+                    {t("reset_code_sent_to", "We sent a verification code to")}{" "}
+                    <strong className="text-[var(--gold)]">{email}</strong>.
                   </p>
 
                   {error && (
@@ -144,7 +145,7 @@ export default function ResetPassword() {
                   <div className="mt-6 grid gap-5">
                     <label className="grid gap-2">
                       <span className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
-                        Reset Code
+                        {t("reset_code", "Reset Code")}
                       </span>
                       <input
                         type="text"
@@ -152,13 +153,13 @@ export default function ResetPassword() {
                         value={code}
                         onChange={(e) => setCode(e.target.value)}
                         className="w-full rounded-sm border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm text-[var(--foreground)] outline-none focus:border-[var(--gold)] font-mono tracking-widest text-center text-lg uppercase"
-                        placeholder="6-DIGIT CODE"
+                        placeholder={t("six_digit_code", "6-DIGIT CODE")}
                       />
                     </label>
 
                     <label className="grid gap-2">
                       <span className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
-                        New Password
+                        {t("new_password", "New Password")}
                       </span>
                       <input
                         type="password"
@@ -166,13 +167,13 @@ export default function ResetPassword() {
                         minLength={6}
                         value={newPassword}
                         onChange={(e) => setNewPassword(e.target.value)}
-                        className="w-full rounded-sm border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm text-[var(--foreground)] outline-none focus:border-[var(--gold)]"
+                        className="w-full rounded-sm border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm text-[var(--foreground)] outline-none focus:border-[var(--gold)] rtl:text-right"
                         placeholder="••••••••"
                       />
                     </label>
 
                     <button type="submit" disabled={loading} className="btn-base btn-gold w-full py-3 font-semibold">
-                      {loading ? "Verifying…" : "Reset Password"}
+                      {loading ? t("verifying", "Verifying…") : t("reset_password", "Reset Password")}
                     </button>
 
                     <button
@@ -180,15 +181,15 @@ export default function ResetPassword() {
                       onClick={() => setStep("request")}
                       className="text-xs text-[var(--muted-foreground)] hover:underline text-center"
                     >
-                      ← Change Email Address
+                      {t("change_email_address", "← Change Email Address")}
                     </button>
                   </div>
                 </form>
               ) : (
                 <form onSubmit={handleSubmit(handleRequestReset)}>
-                  <h1 className="display-lg mt-8 text-[var(--foreground)]">Reset Password</h1>
+                  <h1 className="display-lg mt-8 text-[var(--foreground)]">{t("reset_password", "Reset Password")}</h1>
                   <p className="mt-2 text-sm text-[var(--muted-foreground)]">
-                    Enter your account email to receive a password reset verification code.
+                    {t("reset_password_instruction", "Enter your account email to receive a password reset verification code.")}
                   </p>
 
                   {error && (
@@ -201,30 +202,30 @@ export default function ResetPassword() {
                   <div className="mt-8 grid gap-5">
                     <label className="grid gap-2">
                       <span className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
-                        Email Address
+                        {t("email_address", "Email Address")}
                       </span>
                       <div className="relative">
                         <input
                           {...register("email")}
                           type="email"
                           required
-                          className="w-full rounded-sm border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm text-[var(--foreground)] outline-none focus:border-[var(--gold)]"
-                          placeholder="you@example.tn"
+                          className="w-full rounded-sm border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm text-[var(--foreground)] outline-none focus:border-[var(--gold)] rtl:text-right"
+                          placeholder={t("placeholder_email_example", "you@example.tn")}
                         />
-                        <Mail className="absolute right-3 top-3.5 h-4 w-4 text-[var(--muted-foreground)] pointer-events-none" />
+                        <Mail className="absolute right-3 rtl:right-auto rtl:left-3 top-3.5 h-4 w-4 text-[var(--muted-foreground)] pointer-events-none" />
                       </div>
                       {errors.email && <p className="text-xs text-red-500">{errors.email.message}</p>}
                     </label>
 
                     <button type="submit" disabled={loading} className="btn-base btn-red w-full">
-                      {loading ? "Sending code…" : "Send Reset Code"}
+                      {loading ? t("sending_code", "Sending code…") : t("send_reset_code", "Send Reset Code")}
                     </button>
                   </div>
 
                   <p className="mt-6 text-sm text-[var(--muted-foreground)] text-center">
-                    Remember your password?{" "}
+                    {t("remember_password", "Remember your password?")}{" "}
                     <Link to="/login" className="font-semibold text-[var(--gold)] hover:underline">
-                      Sign in
+                      {t("login", "Sign in")}
                     </Link>
                   </p>
                 </form>

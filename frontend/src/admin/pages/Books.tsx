@@ -751,7 +751,7 @@ export default function Books() {
                                 type="button"
                                 className={`px-3 py-2 rounded-md border ${border} hover:opacity-90`}
                                 onClick={() => openFile(b)}
-                                title="Open file"
+                                title={t("open_file", "فتح الملف")}
                               >
                                 <ExternalLink className="w-4 h-4" />
                               </button>
@@ -762,7 +762,7 @@ export default function Books() {
                                 href={downloadUrl(b.id)}
                                 target="_blank"
                                 rel="noreferrer"
-                                title="Download"
+                                title={t("download", "تحميل")}
                               >
                                 <Download className="w-4 h-4" />
                               </a>
@@ -772,7 +772,7 @@ export default function Books() {
                                 className={`px-3 py-2 rounded-md border ${border} hover:opacity-90 disabled:opacity-60`}
                                 onClick={() => void downloadProtected(b)}
                                 disabled={saving}
-                                title="Download"
+                                title={t("download", "تحميل")}
                               >
                                 <Download className="w-4 h-4" />
                               </button>
@@ -784,7 +784,7 @@ export default function Books() {
                                 className="px-3 py-2 rounded-md bg-[#a0552a] text-white hover:bg-[#a0552a] disabled:opacity-60"
                                 onClick={() => deleteBook(b)}
                                 disabled={saving}
-                                title="Delete"
+                                title={t("common.delete", "حذف")}
                               >
                                 <Trash2 className="w-4 h-4" />
                               </button>
@@ -855,7 +855,7 @@ export default function Books() {
                       {coverPreview ? (
                         <img
                           src={coverPreview}
-                          alt="Cover preview"
+                          alt={t("cover_preview", "معاينة الغلاف")}
                           className="h-full w-full object-cover"
                         />
                       ) : (
@@ -931,8 +931,8 @@ export default function Books() {
                       setForm((s) => ({ ...s, title: e.target.value }))
                     }
                     required
-                    className={`heritage-input mt-2 w-full px-3 py-2 rounded-md border ${inputBg} ${inputText} ${border}`}
-                    placeholder="Book title"
+                    className={`heritage-input mt-2 w-full px-3 py-2 rounded-md border ${inputBg} ${inputText} ${border} rtl:text-right`}
+                    placeholder={t("placeholder_book_title", "Book title")}
                     disabled={saving}
                   />
                 </label>
@@ -947,8 +947,8 @@ export default function Books() {
                       onChange={(e) =>
                         setForm((s) => ({ ...s, author: e.target.value }))
                       }
-                      className={`heritage-input mt-2 w-full px-3 py-2 rounded-md border ${inputBg} ${inputText} ${border}`}
-                      placeholder="Author"
+                      className={`heritage-input mt-2 w-full px-3 py-2 rounded-md border ${inputBg} ${inputText} ${border} rtl:text-right`}
+                      placeholder={t("author", "Author")}
                       disabled={saving}
                     />
                   </label>
@@ -962,8 +962,8 @@ export default function Books() {
                       onChange={(e) =>
                         setForm((s) => ({ ...s, category: e.target.value }))
                       }
-                      className={`heritage-input mt-2 w-full px-3 py-2 rounded-md border ${inputBg} ${inputText} ${border}`}
-                      placeholder="Category"
+                      className={`heritage-input mt-2 w-full px-3 py-2 rounded-md border ${inputBg} ${inputText} ${border} rtl:text-right`}
+                      placeholder={t("category", "Category")}
                       disabled={saving}
                     />
                   </label>
@@ -982,8 +982,8 @@ export default function Books() {
                           archiveSource: e.target.value,
                         }))
                       }
-                      className={`heritage-input mt-2 w-full px-3 py-2 rounded-md border ${inputBg} ${inputText} ${border}`}
-                      placeholder="Archive Source"
+                      className={`heritage-input mt-2 w-full px-3 py-2 rounded-md border ${inputBg} ${inputText} ${border} rtl:text-right`}
+                      placeholder={t("archive_source", "Archive Source")}
                       disabled={saving}
                     />
                   </label>
@@ -997,8 +997,8 @@ export default function Books() {
                       onChange={(e) =>
                         setForm((s) => ({ ...s, documentCode: e.target.value }))
                       }
-                      className={`heritage-input mt-2 w-full px-3 py-2 rounded-md border ${inputBg} ${inputText} ${border}`}
-                      placeholder="Document Code"
+                      className={`heritage-input mt-2 w-full px-3 py-2 rounded-md border ${inputBg} ${inputText} ${border} rtl:text-right`}
+                      placeholder={t("document_code", "Document Code")}
                       disabled={saving}
                     />
                   </label>
@@ -1014,7 +1014,7 @@ export default function Books() {
                       setForm((s) => ({ ...s, description: e.target.value }))
                     }
                     className={`heritage-input mt-2 w-full px-3 py-2 rounded-md border ${inputBg} ${inputText} ${border}`}
-                    placeholder="Short description"
+                    placeholder={t("admin.books.short_description", "وصف موجز")}
                     rows={2}
                     disabled={saving}
                   />

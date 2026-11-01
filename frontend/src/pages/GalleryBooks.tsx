@@ -13,6 +13,9 @@ import {
   Calendar,
   UserCheck,
   ShieldCheck,
+  Copy,
+  Check,
+  ExternalLink,
 } from "lucide-react";
 import { api } from "../api/client";
 import { useTranslation } from "../context/TranslationContext";
@@ -22,57 +25,27 @@ import manuscriptImage from "../assets/family-archive.jpg";
 
 interface BookItem {
   id: number | string;
+  titleKey?: string;
   title: string;
+  authorKey?: string;
   author: string;
+  centuryKey?: string;
   century?: string;
   category: string;
+  categoryKey?: string;
+  descriptionKey?: string;
   description: string;
   pages?: number;
   pdfUrl?: string;
   coverImage?: string;
+  archiveReferenceKey?: string;
   archiveReference?: string;
   isBookmarked?: boolean;
 }
 
-const TUNISIAN_INITIAL_BOOKS: BookItem[] = [
-  {
-    id: "book-tn-1",
-    title: "Ithaf Ahl al-Zaman bi-Akhbar Muluk Tunis wa'l-Ahan (Chronicles of Tunis Beys)",
-    author: "Ahmad ibn Abi Diyaf (1804–1874)",
-    century: "19th Century",
-    category: "Historical Chronicles",
-    description: "The primary historical and genealogical chronicle of Husainid Tunisia, documenting royal lineages, administrative decrees, notables, and tribal relations.",
-    pages: 420,
-    coverImage: manuscriptImage,
-    archiveReference: "Bibliothèque Nationale de Tunisie, MSS 14820",
-  },
-  {
-    id: "book-tn-2",
-    title: "Sijillat al-Mahkama al-Shara'iyya bi-Tunis (Charaïques Court Registers)",
-    author: "Tunis Ottoman Chancery",
-    century: "18th–19th Century",
-    category: "Legal & Court Sijillat",
-    description: "Digitized judicial records of marriages, inheritances, waqf deeds, and property sales in the Medina of Tunis from 1750 to 1881.",
-    pages: 310,
-    coverImage: manuscriptImage,
-    archiveReference: "Archives Nationales de Tunisie, Serie H",
-  },
-  {
-    id: "book-tn-3",
-    title: "Nasab & Waqf Records of Kairouan Lineages",
-    author: "Al-Kairowani Jurists",
-    century: "17th Century",
-    category: "Genealogy & Habous",
-    description: "Detailed waqf endowments, noble nasab trees, and scholar lineages recorded in Kairouan and Mahdia during the Hafsid and early Ottoman eras.",
-    pages: 265,
-    coverImage: manuscriptImage,
-    archiveReference: "Archives des Habous, Tunis",
-  },
-];
-
 export default function GalleryBooks() {
   const { theme } = useTheme();
-  const { t } = useTranslation();
+  const { t, isRtl } = useTranslation();
 
   const [books, setBooks] = useState<BookItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -80,6 +53,7 @@ export default function GalleryBooks() {
   const [categoryFilter, setCategoryFilter] = useState("All");
   const [activeBook, setActiveBook] = useState<BookItem | null>(null);
   const [showReaderModal, setShowReaderModal] = useState(false);
+  const [copiedCitation, setCopiedCitation] = useState(false);
 
   useEffect(() => {
     AOS.init({ duration: 800, once: true });
@@ -88,20 +62,33 @@ export default function GalleryBooks() {
         setLoading(true);
         const { data } = await api.get("/books");
         const items = Array.isArray(data?.data) ? data.data : Array.isArray(data) ? data : [];
-        if (items.length > 0) {
-          setBooks(items);
-        } else {
-          setBooks(TUNISIAN_INITIAL_BOOKS);
-        }
+        const formatted = items.map((b: any) => ({
+          id: b.id,
+          title: b.title || "Archival Manuscript",
+          author: b.author || "Tunisian Scholar",
+          century: b.century || "19th Century",
+          category: b.category || "Historical Chronicles",
+          description: b.description || "",
+          pages: b.pages || 180,
+          coverImage: b.cover_image || b.coverImage || manuscriptImage,
+          archiveReference: b.archive_reference || b.archiveReference || "Archives Nationales de Tunisie",
+        }));
+        setBooks(formatted);
       } catch {
-        setBooks(TUNISIAN_INITIAL_BOOKS);
+        setBooks([]);
       } finally {
         setLoading(false);
       }
     })();
   }, []);
 
-  const categories = ["All", "Historical Chronicles", "Legal & Court Sijillat", "Genealogy & Habous", "Manuscripts"];
+  const categoryOptions = [
+    { key: "All", labelKey: "cat_all" },
+    { key: "Historical Chronicles", labelKey: "cat_chronicles" },
+    { key: "Legal & Court Sijillat", labelKey: "cat_sijillat" },
+    { key: "Genealogy & Habous", labelKey: "cat_genealogy_habous" },
+    { key: "Manuscripts", labelKey: "cat_manuscripts" },
+  ];
 
   const filteredBooks = useMemo(() => {
     return books.filter((item) => {
@@ -121,15 +108,22 @@ export default function GalleryBooks() {
     );
   };
 
+  const handleCopyCitation = (book: BookItem) => {
+    const citation = `${book.author}. ${book.title}. ${book.century}. [Archival Preservation: ${book.archiveReference}]. Roots Tunisia Manuscript Repository.`;
+    navigator.clipboard.writeText(citation);
+    setCopiedCitation(true);
+    setTimeout(() => setCopiedCitation(false), 3000);
+  };
+
   return (
     <RootsPageShell
       hero={
         <div className="space-y-4 text-center">
           <p className="eyebrow text-[var(--gold)] text-shadow-gold tracking-widest font-bold">
-            {t("nav_library", "Roots Tunisia Digital Library")}
+            {t("nav_library")}
           </p>
           <h1 className="display-xl text-white font-bold hero-title-shadow text-shadow-glow tracking-wide">
-            {t("library_title", "Manuscripts & Heritage Books")}
+            {t("library_title", "Tunisian Manuscripts & Digitized Books")}
           </h1>
           <div className="gold-rule mt-4 w-28 mx-auto shadow-lg" />
           <p className="max-w-3xl mx-auto text-base text-slate-100/95 font-medium drop-shadow-md">
@@ -141,33 +135,34 @@ export default function GalleryBooks() {
         </div>
       }
     >
-      <div className="max-w-6xl mx-auto px-4 py-8 space-y-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
         {/* Search & Category Filter */}
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4 pb-4 border-b border-[var(--border)]">
+        <div className="surface-card p-4 sm:p-5 rounded-lg border border-[var(--gold)]/35 bg-[var(--card)]/95 shadow-md flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
           <div className="relative w-full md:w-80">
-            <Search className="w-4 h-4 text-[var(--muted-foreground)] absolute start-3 top-2.5" />
+            <Search className="w-4 h-4 text-[var(--muted-foreground)] absolute start-3 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
               type="text"
-              placeholder={t("search_books_placeholder", "Search title, author, or archive ref…")}
+              placeholder={t("search_books_placeholder")}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              className="w-full ps-9 pe-3 py-1.5 text-xs rounded-sm border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] outline-none focus:border-[var(--gold)]"
+              className="w-full ps-9 pe-3 py-2 text-xs rounded-md border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] outline-none focus:border-[var(--gold)]"
             />
           </div>
 
-          <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto">
+          <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto pb-1 scrollbar-thin">
             <Filter className="w-4 h-4 text-[var(--gold)] shrink-0" />
-            {categories.map((cat) => (
+            {categoryOptions.map((catOpt) => (
               <button
-                key={cat}
-                onClick={() => setCategoryFilter(cat)}
-                className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap cursor-pointer transition-all ${
-                  categoryFilter === cat
-                    ? "bg-[var(--primary)] text-white shadow-sm"
+                key={catOpt.key}
+                type="button"
+                onClick={() => setCategoryFilter(catOpt.key)}
+                className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap cursor-pointer transition-all ${
+                  categoryFilter === catOpt.key
+                    ? "bg-[var(--gold)] text-[#1f160f] shadow-sm font-bold"
                     : "bg-[var(--card)] text-[var(--foreground)] border border-[var(--border)] hover:border-[var(--gold)]"
                 }`}
               >
-                {cat}
+                {t(catOpt.labelKey)}
               </button>
             ))}
           </div>
@@ -178,12 +173,22 @@ export default function GalleryBooks() {
           <div className="flex justify-center py-16">
             <div className="w-10 h-10 border-2 border-[var(--gold)] border-t-transparent rounded-full animate-spin" />
           </div>
+        ) : filteredBooks.length === 0 ? (
+          <div className="surface-card frame-gold p-12 text-center rounded-lg space-y-4 max-w-xl mx-auto my-8">
+            <BookOpen className="w-12 h-12 text-[var(--gold)] mx-auto opacity-80" />
+            <h3 className="text-xl font-display font-bold text-[var(--foreground)]">
+              {t("no_records_found")}
+            </h3>
+            <p className="text-sm text-[var(--muted-foreground)]">
+              {t("search_books_placeholder")}
+            </p>
+          </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch">
             {filteredBooks.map((book) => (
-              <div
+              <article
                 key={book.id}
-                className="surface-card frame-gold p-5 rounded-lg shadow-md flex flex-col justify-between space-y-4 hover:-translate-y-1 transition-transform"
+                className="surface-card frame-gold p-6 rounded-lg shadow-md flex h-full flex-col justify-between space-y-4 hover:-translate-y-1 transition-all text-start"
               >
                 <div className="space-y-3">
                   <div className="relative h-48 overflow-hidden rounded-md border border-[var(--border)] bg-[var(--background)]">
@@ -193,13 +198,14 @@ export default function GalleryBooks() {
                       className="w-full h-full object-cover"
                     />
                     <button
+                      type="button"
                       onClick={() => toggleBookmark(book.id)}
                       className="absolute top-2 end-2 p-1.5 rounded-full bg-black/60 text-white hover:text-[var(--gold)] transition-colors cursor-pointer"
                     >
                       <Bookmark className={`w-4 h-4 ${book.isBookmarked ? "fill-[var(--gold)] text-[var(--gold)]" : ""}`} />
                     </button>
                     {book.century && (
-                      <span className="absolute bottom-2 start-2 px-2 py-0.5 rounded-sm bg-black/70 text-[0.65rem] font-bold text-[var(--gold)]">
+                      <span className="absolute bottom-2 start-2 px-2 py-0.5 rounded-sm bg-black/75 text-[0.65rem] font-bold text-[var(--gold)] border border-[var(--gold)]/30 backdrop-blur-sm">
                         {book.century}
                       </span>
                     )}
@@ -207,95 +213,153 @@ export default function GalleryBooks() {
 
                   <div>
                     <span className="text-[0.65rem] font-bold uppercase tracking-wider text-[var(--gold)]">
-                      {book.category}
+                      {book.categoryKey ? t(book.categoryKey) : book.category}
                     </span>
-                    <h3 className="text-base font-serif font-bold text-[var(--foreground)] line-clamp-2 mt-0.5">
+                    <h3 className="text-base sm:text-lg font-display font-bold text-[var(--foreground)] line-clamp-2 mt-0.5">
                       {book.title}
                     </h3>
-                    <p className="text-xs text-[var(--muted-foreground)] font-semibold mt-1">
+                    <p className="text-xs text-[var(--gold)] font-semibold mt-1">
                       {book.author}
                     </p>
-                    <p className="text-xs text-[var(--foreground)]/80 line-clamp-3 mt-2 leading-relaxed">
+                    <p className="text-xs text-[var(--muted-foreground)] line-clamp-3 mt-2 leading-relaxed">
                       {book.description}
                     </p>
                   </div>
                 </div>
 
-                <div className="pt-3 border-t border-[var(--border)] space-y-2">
-                  <div className="flex items-center justify-between text-[0.65rem] text-[var(--muted-foreground)] font-mono">
+                <div className="pt-3 border-t border-[var(--border)] space-y-3">
+                  <div className="flex items-center justify-between text-[0.68rem] text-[var(--muted-foreground)] font-mono">
                     <span className="flex items-center gap-1">
                       <FileText className="w-3 h-3 text-[var(--gold)]" />
-                      {book.pages ? `${book.pages} pages` : "Manuscript"}
+                      {book.pages ? `${book.pages} ${t("pages_count")}` : t("manuscript_tag")}
                     </span>
                     <span className="truncate max-w-[150px]">{book.archiveReference}</span>
                   </div>
 
                   <div className="flex items-center gap-2 pt-1">
                     <button
+                      type="button"
                       onClick={() => {
                         setActiveBook(book);
                         setShowReaderModal(true);
                       }}
-                      className="flex-1 btn-base btn-gold text-xs py-1.5 flex items-center justify-center gap-1.5 cursor-pointer"
+                      className="btn-base btn-gold flex-1 text-xs py-2 flex items-center justify-center gap-1.5 cursor-pointer"
                     >
                       <Eye className="w-3.5 h-3.5" />
-                      <span>{t("view_manuscript", "Read Register")}</span>
+                      <span>{t("book_view_folio")}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleCopyCitation(book)}
+                      className="btn-base btn-outline text-xs py-2 px-3 flex items-center justify-center cursor-pointer"
+                      title={t("copy_citation_btn")}
+                    >
+                      <Copy className="w-3.5 h-3.5 text-[var(--gold)]" />
                     </button>
                   </div>
                 </div>
-              </div>
+              </article>
             ))}
           </div>
         )}
+      </div>
 
-        {/* Reader Modal */}
-        {showReaderModal && activeBook && (
-          <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4">
-            <div className="surface-card frame-gold p-6 rounded-lg max-w-2xl w-full space-y-4 bg-[var(--card)] shadow-2xl max-h-[90vh] overflow-y-auto">
-              <div className="flex items-center justify-between border-b border-[var(--border)] pb-3">
-                <div>
-                  <span className="text-[0.65rem] font-bold uppercase text-[var(--gold)]">{activeBook.category}</span>
-                  <h3 className="text-lg font-serif font-bold text-[var(--foreground)]">{activeBook.title}</h3>
-                  <p className="text-xs text-[var(--muted-foreground)]">{activeBook.author}</p>
-                </div>
-                <button onClick={() => setShowReaderModal(false)} className="text-[var(--muted-foreground)] hover:text-[var(--foreground)] cursor-pointer">
-                  <X className="w-5 h-5" />
-                </button>
+      {/* Reader / Folio Inspection Modal */}
+      {showReaderModal && activeBook && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 overflow-y-auto animate-fade-in"
+          onClick={() => setShowReaderModal(false)}
+        >
+          <div
+            className="surface-card frame-gold relative w-full max-w-3xl max-h-[90vh] overflow-y-auto p-6 sm:p-8 rounded-xl bg-[var(--card)] shadow-2xl text-start"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              aria-label={t("close")}
+              onClick={() => setShowReaderModal(false)}
+              className="absolute top-4 end-4 text-[var(--muted-foreground)] hover:text-[var(--foreground)] p-1 rounded-full hover:bg-[var(--gold)]/15 transition cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="flex items-center gap-3 border-b border-[var(--gold)]/25 pb-4">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--gold)]/15 text-[var(--gold)] ring-1 ring-[var(--gold)]/40 shrink-0">
+                <BookOpen className="h-6 w-6" />
               </div>
-
-              <div className="overflow-hidden rounded-md border border-[var(--border)] max-h-80">
-                <img src={activeBook.coverImage || manuscriptImage} alt={activeBook.title} className="w-full object-cover" />
-              </div>
-
-              <div className="space-y-2 text-xs text-[var(--foreground)]">
-                <h4 className="font-bold text-sm text-[var(--gold)]">Archival Summary & Record Note</h4>
-                <p className="leading-relaxed">{activeBook.description}</p>
-                <div className="p-3 rounded-sm bg-[var(--background)] border border-[var(--border)] font-mono text-[0.7rem] space-y-1">
-                  <div><strong>Archive Reference:</strong> {activeBook.archiveReference || "Archives Nationales de Tunisie"}</div>
-                  <div><strong>Period:</strong> {activeBook.century || "Beylical Era"}</div>
-                  <div><strong>Access Tier:</strong> Full Digital Index Available</div>
-                </div>
-              </div>
-
-              <div className="flex justify-end gap-2 pt-2 border-t border-[var(--border)]">
-                <button
-                  onClick={() => setShowReaderModal(false)}
-                  className="btn-base btn-outline-ink text-xs px-4 py-2 cursor-pointer"
-                >
-                  Close
-                </button>
-                <a
-                  href="/my-download-requests"
-                  className="btn-base btn-gold text-xs px-5 py-2 flex items-center gap-1.5 cursor-pointer"
-                >
-                  <Download className="w-3.5 h-3.5" />
-                  <span>Request Full PDF</span>
-                </a>
+              <div>
+                <span className="text-[0.68rem] font-bold uppercase tracking-[0.16em] text-[var(--gold)]">
+                  {activeBook.categoryKey ? t(activeBook.categoryKey) : activeBook.category}
+                </span>
+                <h3 className="font-display text-xl sm:text-2xl font-bold text-[var(--foreground)]">
+                  {activeBook.title}
+                </h3>
+                <p className="text-xs text-[var(--gold)] font-bold mt-0.5">
+                  {activeBook.author} • {activeBook.century}
+                </p>
               </div>
             </div>
+
+            <div className="mt-5 space-y-4">
+              <div className="h-64 sm:h-80 w-full rounded-lg overflow-hidden border border-[var(--gold)]/30 bg-black/40">
+                <img
+                  src={activeBook.coverImage || manuscriptImage}
+                  alt={activeBook.title}
+                  className="w-full h-full object-contain"
+                />
+              </div>
+
+              <div className="p-4 rounded-md bg-[var(--background)]/70 border border-[var(--gold)]/20">
+                <p className="text-[0.68rem] font-bold uppercase text-[var(--gold)] mb-1">
+                  {t("description")}
+                </p>
+                <p className="text-xs sm:text-sm text-[var(--foreground)] leading-relaxed">
+                  {activeBook.description}
+                </p>
+              </div>
+
+              <div className="p-4 rounded-md bg-[var(--background)]/70 border border-[var(--gold)]/20">
+                <p className="text-[0.68rem] font-bold uppercase text-[var(--gold)] mb-1">
+                  {t("repository_label")}
+                </p>
+                <p className="text-xs font-mono text-[var(--muted-foreground)]">
+                  {activeBook.archiveReference}
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-6 pt-4 border-t border-[var(--gold)]/20 flex flex-wrap items-center justify-between gap-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleCopyCitation(activeBook)}
+                  className="btn-base btn-gold text-xs py-2 px-4 flex items-center gap-2 cursor-pointer"
+                >
+                  {copiedCitation ? <Check className="h-3.5 w-3.5 text-emerald-300" /> : <Copy className="h-3.5 w-3.5" />}
+                  <span>{copiedCitation ? t("book_citation_copied") : t("copy_citation_btn")}</span>
+                </button>
+                <a
+                  href="http://www.bnt.nat.tn"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn-base btn-outline text-xs py-2 px-4 flex items-center gap-1.5"
+                >
+                  <ExternalLink className="h-3.5 w-3.5 text-[var(--gold)]" />
+                  <span>{t("official_portal_link")}</span>
+                </a>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowReaderModal(false)}
+                className="btn-base btn-outline text-xs py-2 px-4"
+              >
+                {t("close")}
+              </button>
+            </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </RootsPageShell>
   );
 }

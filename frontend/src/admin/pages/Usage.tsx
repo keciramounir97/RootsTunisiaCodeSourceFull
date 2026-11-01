@@ -122,8 +122,8 @@ export default function Usage() {
             <div className="flex items-center gap-2 mb-2">
               <span className="px-3 py-1 rounded-full text-[0.65rem] font-extrabold uppercase tracking-widest bg-[#d9a441] text-[#092C2B]">
                 {isSuperAdmin
-                  ? "Unlimited Super Admin"
-                  : quotas?.tierName || "Active Plan"}
+                  ? t("unlimited_super_admin", "Unlimited Super Admin")
+                  : quotas?.tierName || t("active_plan", "Active Plan")}
               </span>
             </div>
             <h2
@@ -131,16 +131,16 @@ export default function Usage() {
               style={{ color: "#ffffff", textShadow: "none" }}
             >
               {isSuperAdmin
-                ? "Super Admin Unlimited Tier"
-                : `${quotas?.tierName || "Basic"} Tier Features`}
+                ? t("super_admin_unlimited_tier", "Super Admin Unlimited Tier")
+                : `${quotas?.tierName || t("basic", "Basic")} ${t("tier_features", "Tier Features")}`}
             </h2>
             <p
               className="text-xs !text-white/90 mt-1 max-w-xl"
               style={{ color: "rgba(255, 255, 255, 0.9)", textShadow: "none" }}
             >
               {isSuperAdmin
-                ? "As an Administrator, your account possesses unrestricted unlimited creation rights across all platform resources."
-                : "Your account creation quotas are determined by your active subscription plan. Upgrade anytime to unlock higher limits."}
+                ? t("super_admin_quota_unrestricted", "As an Administrator, your account possesses unrestricted unlimited creation rights across all platform resources.")
+                : t("user_quota_info", "Your account creation quotas are determined by your active subscription plan. Upgrade anytime to unlock higher limits.")}
             </p>
           </div>
 
@@ -151,7 +151,7 @@ export default function Usage() {
             >
               <Sparkles className="w-4 h-4 text-[#d9a441]" />
               <span>{t("view_plans", "View Upgrade Plans")}</span>
-              <ArrowRight className="w-4 h-4" />
+              <ArrowRight className="w-4 h-4 rtl:rotate-180" />
             </Link>
           )}
         </div>
@@ -163,9 +163,9 @@ export default function Usage() {
           <div className="flex items-center gap-3">
             <AlertTriangle className="w-6 h-6 text-amber-500 shrink-0" />
             <div>
-              <p className="font-bold text-sm">Quota Limit Reached!</p>
+              <p className="font-bold text-sm">{t("quota_limit_reached", "Quota Limit Reached!")}</p>
               <p className="text-xs opacity-90">
-                One or more creation limits on your account are currently maxed out. Upgrade your plan to continue creating trees and uploading files.
+                {t("quota_limit_reached_desc", "One or more creation limits on your account are currently maxed out. Upgrade your plan to continue creating trees and uploading files.")}
               </p>
             </div>
           </div>
@@ -173,7 +173,7 @@ export default function Usage() {
             to="/admin/user-upgrade"
             className="px-4 py-2 rounded-xl bg-amber-500 text-white font-bold text-xs hover:bg-amber-600 transition shrink-0 text-center"
           >
-            Upgrade Plan
+            {t("upgrade_plan", "Upgrade Plan")}
           </Link>
         </div>
       )}
@@ -227,13 +227,13 @@ export default function Usage() {
 
                   {isFull && (
                     <span className="px-2.5 py-0.5 rounded-full text-[0.65rem] font-extrabold uppercase bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300">
-                      Full
+                      {t("full", "Full")}
                     </span>
                   )}
                   {isUnlimited && (
                     <span className="px-2.5 py-0.5 rounded-full text-[0.65rem] font-extrabold uppercase bg-teal-500/15 text-[#0d9488] flex items-center gap-1">
                       <CheckCircle2 className="w-3 h-3 text-[#0d9488]" />
-                      Unlimited
+                      {t("unlimited", "Unlimited")}
                     </span>
                   )}
                 </div>
@@ -248,8 +248,9 @@ export default function Usage() {
                       / {isUnlimited ? "∞" : max}
                     </span>
                   </div>
+
                   <span className="text-xs font-semibold text-gray-500">
-                    {isUnlimited ? "Unlimited Access" : `${percentage}% used`}
+                    {isUnlimited ? t("unlimited_access", "Unlimited Access") : `${percentage}% ${t("used", "used")}`}
                   </span>
                 </div>
 
@@ -280,13 +281,13 @@ export default function Usage() {
                   to={createUrl}
                   className="text-xs font-bold text-[#0d9488] dark:text-[#2dd4bf] hover:underline inline-flex items-center gap-1"
                 >
-                  <span>Manage {title}</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
+                  <span>{t("manage_resource", "Manage")} {title}</span>
+                  <ArrowRight className="w-3.5 h-3.5 rtl:rotate-180" />
                 </Link>
 
                 {isCustom && !isSuperAdmin && (
                   <span className="text-[0.65rem] font-bold text-purple-600 dark:text-purple-400 bg-purple-500/10 px-2 py-0.5 rounded">
-                    Custom Admin Quota
+                    {t("custom_admin_quota", "Custom Admin Quota")}
                   </span>
                 )}
               </div>

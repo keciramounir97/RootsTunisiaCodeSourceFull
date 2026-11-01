@@ -19,6 +19,16 @@ import { api } from "../../api/client";
 import { useTranslation } from "../../context/TranslationContext";
 import Toast from "../../components/Toast";
 
+type SourceItem = {
+  id: number | string;
+  title: string;
+  url?: string;
+  description?: string;
+  icon_url?: string;
+  created_at?: string;
+  updated_at?: string;
+};
+
 export default function SourcesAndArchives() {
   const { t } = useTranslation();
   const [sources, setSources] = useState<any[]>([]);
@@ -102,7 +112,7 @@ export default function SourcesAndArchives() {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) {
-      showToast("Source title is required", "error");
+      showToast(t("source_title_required", "عنوان المصدر مطلوب"), "error");
       return;
     }
 
@@ -120,10 +130,10 @@ export default function SourcesAndArchives() {
     // Instant optimistic update
     if (editingSource) {
       setSources((prev) => prev.map((s) => (s.id === editingSource.id ? optimisticSource : s)));
-      showToast("Source updated successfully!");
+      showToast(t("source_updated_success", "تم تحديث المصدر بنجاح!"));
     } else {
       setSources((prev) => [optimisticSource, ...prev]);
-      showToast("New source created successfully!");
+      showToast(t("new_source_created", "تم إنشاء مصدر جديد بنجاح!"));
     }
     setModalOpen(false);
 
@@ -150,10 +160,10 @@ export default function SourcesAndArchives() {
   };
 
   const handleDelete = async (id: number) => {
-    if (!window.confirm("Are you sure you want to delete this source?")) return;
+    if (!window.confirm(t("confirm_delete_source", "هل أنت متأكد من حذف هذا المصدر؟"))) return;
     // Instant optimistic removal
     setSources((prev) => prev.filter((s) => s.id !== id));
-    showToast("Source deleted.");
+    showToast(t("source_deleted", "تم حذف المصدر بنجاح."));
 
     try {
       await api.delete(`/my/sources/${id}`);
@@ -221,13 +231,13 @@ export default function SourcesAndArchives() {
 
         {isMaxReached && (
           <div className="flex items-center gap-2">
-            <span className="text-xs text-red-500 font-bold">Limit Reached (5/5)</span>
+            <span className="text-xs text-red-500 font-bold">{t("limit_reached", "Limit Reached")} (5/5)</span>
             <Link
               to="/admin/user-upgrade"
               className="px-3 py-1 rounded-lg bg-gradient-to-r from-[#d9a441] to-[#e8c377] text-[#092C2B] font-bold text-xs inline-flex items-center gap-1 shadow"
             >
               <Crown className="w-3.5 h-3.5" />
-              <span>Upgrade to Add More</span>
+              <span>{t("upgrade_to_add_more", "Upgrade to Add More")}</span>
             </Link>
           </div>
         )}
@@ -240,7 +250,7 @@ export default function SourcesAndArchives() {
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Search my sources..."
+          placeholder={t("placeholder_search_my_sources", "Search my sources...")}
           className="w-full ltr:pl-9 rtl:pr-9 pr-4 py-2 text-xs rounded-xl border border-[var(--border-color)] bg-white dark:bg-[#1a2e2d] text-gray-900 dark:text-white focus:ring-2 focus:ring-[#0d9488]/40"
         />
       </div>
@@ -253,16 +263,16 @@ export default function SourcesAndArchives() {
       ) : filteredSources.length === 0 ? (
         <div className="py-12 text-center rounded-2xl border border-dashed border-[var(--border-color)] bg-white/50 dark:bg-black/20 p-8 space-y-3">
           <Archive className="w-12 h-12 mx-auto text-gray-400 opacity-60" />
-          <h3 className="font-bold text-base text-gray-800 dark:text-gray-200">No sources added yet</h3>
+          <h3 className="font-bold text-base text-gray-800 dark:text-gray-200">{t("no_sources_added", "No sources added yet")}</h3>
           <p className="text-xs text-gray-500 dark:text-gray-400 max-w-md mx-auto">
-            Click "+ Add Source" to bookmark public archives, Ottoman registries, civil records, or flag sources.
+            {t("sources_empty_desc", "Click + Add Source to bookmark public archives, Ottoman registries, civil records, or flag sources.")}
           </p>
           <button
             onClick={openAddModal}
             className="mt-2 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#0d9488] text-white text-xs font-bold"
           >
             <Plus className="w-4 h-4" />
-            <span>Add Your First Source</span>
+            <span>{t("add_your_first_source", "Add Your First Source")}</span>
           </button>
         </div>
       ) : (
@@ -310,7 +320,7 @@ export default function SourcesAndArchives() {
                       <button
                         onClick={() => openEditModal(source)}
                         className="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-200"
-                        title="Edit Source"
+                        title={t("edit_source", "تعديل المصدر")}
                       >
                         <Edit className="w-4 h-4" />
                       </button>
@@ -318,7 +328,7 @@ export default function SourcesAndArchives() {
                         onClick={() => handleDelete(source.id)}
                         disabled={deletingId === source.id}
                         className="p-1.5 rounded-lg text-gray-400 hover:bg-red-50 dark:hover:bg-red-900/30 hover:text-red-500"
-                        title="Delete Source"
+                        title={t("delete_source", "حذف المصدر")}
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -349,7 +359,7 @@ export default function SourcesAndArchives() {
                       disabled
                       className="w-full py-2.5 px-4 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-400 font-semibold text-xs flex items-center justify-center gap-2 cursor-not-allowed"
                     >
-                      <span>No URL Provided</span>
+                      <span>{t("no_url_provided", "No URL Provided")}</span>
                     </button>
                   )}
                 </div>
@@ -365,7 +375,7 @@ export default function SourcesAndArchives() {
           <div className="w-full max-w-lg rounded-2xl bg-white dark:bg-[#1a2e2d] text-gray-900 dark:text-white p-6 shadow-2xl border border-[var(--border-color)] space-y-4">
             <div className="flex items-center justify-between border-b border-[var(--border-color)] pb-3">
               <h3 className="font-bold text-lg font-cinzel text-[#0d9488]">
-                {editingSource ? "Edit Source" : "+ Add New Source"}
+                {editingSource ? t("edit_source", "Edit Source") : t("add_new_source", "+ Add New Source")}
               </h3>
               <button
                 onClick={() => setModalOpen(false)}
@@ -378,48 +388,48 @@ export default function SourcesAndArchives() {
             <form onSubmit={handleSave} className="space-y-4 text-xs">
               <div>
                 <label className="block font-bold mb-1">
-                  Source Name <span className="text-red-500">*</span>
+                  {t("source_name", "Source Name")} <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  placeholder="e.g. Turkish Public Archive"
+                  placeholder={t("placeholder_source_name", "e.g. Turkish Public Archive")}
                   required
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--border-color)] bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#0d9488]/40"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--border-color)] bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#0d9488]/40 rtl:text-right"
                 />
               </div>
 
               <div>
-                <label className="block font-bold mb-1">Source Website / Link (URL)</label>
+                <label className="block font-bold mb-1">{t("source_website_url", "Source Website / Link (URL)")}</label>
                 <input
                   type="url"
                   value={url}
                   onChange={(e) => setUrl(e.target.value)}
-                  placeholder="e.g. https://www.archives.gov.tr"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--border-color)] bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#0d9488]/40"
+                  placeholder={t("placeholder_source_url", "e.g. https://www.archives.gov.tr")}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--border-color)] bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#0d9488]/40 rtl:text-right"
                 />
               </div>
 
               <div>
-                <label className="block font-bold mb-1">Description / Notes</label>
+                <label className="block font-bold mb-1">{t("description_notes", "Description / Notes")}</label>
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  placeholder="e.g. Contains Ottoman registries for Tunisian family lineages"
+                  placeholder={t("placeholder_source_desc", "e.g. Contains Ottoman registries for Tunisian family lineages")}
                   rows={3}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--border-color)] bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white resize-none"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--border-color)] bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white resize-none rtl:text-right"
                 />
               </div>
 
               {/* Icon / Flag Upload */}
               <div>
-                <label className="block font-bold mb-1">Source Icon / Flag Image</label>
+                <label className="block font-bold mb-1">{t("source_icon_flag", "Source Icon / Flag Image")}</label>
                 <div className="flex items-center gap-4">
                   {iconPreview ? (
                     <img
                       src={iconPreview}
-                      alt="Icon Preview"
+                      alt={t("icon_preview", "معاينة الأيقونة")}
                       className="w-12 h-12 rounded-xl object-cover border border-[var(--border-color)]"
                     />
                   ) : (
@@ -429,7 +439,7 @@ export default function SourcesAndArchives() {
                   )}
 
                   <label className="px-3.5 py-2 rounded-xl bg-stone-500/15 hover:bg-stone-500/25 font-bold cursor-pointer transition">
-                    <span>{iconPreview ? "Change Icon" : "Upload File"}</span>
+                    <span>{iconPreview ? t("change_icon", "Change Icon") : t("upload_file", "Upload File")}</span>
                     <input
                       type="file"
                       accept="image/*"
@@ -446,15 +456,15 @@ export default function SourcesAndArchives() {
                   onClick={() => setModalOpen(false)}
                   className="px-4 py-2.5 rounded-xl border border-[var(--border-color)] font-semibold"
                 >
-                  Cancel
+                  {t("cancel", "Cancel")}
                 </button>
                 <button
                   type="submit"
                   disabled={saving}
-                  className="px-6 py-2.5 rounded-xl bg-[#0d9488] text-white font-bold inline-flex items-center gap-2 hover:bg-[#0d9488]/90 shadow transition-all"
+                  className="px-6 py-2.5 rounded-xl bg-[#0d9488] text-white font-bold inline-flex items-center gap-2 hover:bg-[#0d9488]/90 shadow transition-all cursor-pointer"
                 >
                   {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
-                  <span>{saving ? "Saving..." : editingSource ? "Update Source" : "Save Source"}</span>
+                  <span>{saving ? t("saving", "Saving...") : editingSource ? t("update_source", "Update Source") : t("save_source", "Save Source")}</span>
                 </button>
               </div>
             </form>

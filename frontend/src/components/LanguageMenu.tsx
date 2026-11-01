@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect } from "react";
-import { useTranslation, Locale } from "../context/TranslationContext";
-import { Globe, ChevronDown } from "lucide-react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useTranslation } from "../context/TranslationContext";
+import { ChevronDown } from "lucide-react";
+import { localizePath, splitLocaleFromPath } from "../seo/localeRouting";
 
 export const languages: { code: string; label: string; short: string; badge: string }[] = [
   { code: "fr", label: "Français", short: "FR", badge: "FR" },
@@ -9,13 +11,14 @@ export const languages: { code: string; label: string; short: string; badge: str
   { code: "es", label: "Español", short: "ES", badge: "ES" },
   { code: "it", label: "Italiano", short: "IT", badge: "IT" },
   { code: "mt", label: "Malti", short: "MT", badge: "MT" },
-  { code: "eo", label: "Esperanto", short: "ESR", badge: "ESR" },
 ];
 
 export default function LanguageMenu({ className = "" }: { className?: string }) {
-  const { locale, setLocale } = useTranslation();
+  const { locale, setLocale, t } = useTranslation();
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const current = languages.find((l) => l.code === locale) || languages[0];
 
@@ -34,11 +37,13 @@ export default function LanguageMenu({ className = "" }: { className?: string })
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        aria-label="Select Language"
-        title="Change language"
+        aria-label={t("select_language")}
+        title={t("change_language")}
         className="h-[34px] flex items-center gap-1.5 rounded-sm border border-[var(--border)] px-2.5 text-[var(--foreground)] hover:bg-[var(--gold)]/15 transition-colors text-xs font-bold uppercase tracking-wider cursor-pointer"
       >
-        <span className="font-mono text-[0.65rem] font-bold text-[var(--gold)]">{current.badge}</span>
+        <span className="font-mono text-[0.65rem] font-bold text-[var(--gold)]">
+          {current.code === "ar" ? "عربي" : current.badge}
+        </span>
         <ChevronDown className={`h-3 w-3 text-[var(--muted-foreground)] transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
 
@@ -50,6 +55,8 @@ export default function LanguageMenu({ className = "" }: { className?: string })
               type="button"
               onClick={() => {
                 setLocale(lang.code);
+                const { path } = splitLocaleFromPath(location.pathname);
+                navigate(localizePath(path, lang.code) + location.search + location.hash);
                 setOpen(false);
               }}
               className={`w-full flex items-center justify-between px-3 py-2 text-xs font-semibold rounded-sm transition-colors ${

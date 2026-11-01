@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException, BadRequestException, ForbiddenException, Inject } from '@nestjs/common';
+import { Injectable, UnauthorizedException, BadRequestException, ForbiddenException, ServiceUnavailableException, Inject } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
@@ -64,9 +64,15 @@ export class AuthService {
             code === 'ENOTFOUND' ||
             code === 'ECONNREFUSED' ||
             code === 'ETIMEDOUT' ||
+            code === 'ER_ACCESS_DENIED_ERROR' ||
+            code === 'ER_BAD_DB_ERROR' ||
             message.includes('getaddrinfo') ||
             message.includes('ECONNREFUSED') ||
-            message.includes('ETIMEDOUT')
+            message.includes('ETIMEDOUT') ||
+            message.includes('Timeout acquiring a connection') ||
+            message.includes('pool is probably full') ||
+            message.includes('ER_ACCESS_DENIED') ||
+            message.includes('ER_BAD_DB_ERROR')
         );
     }
 
@@ -131,16 +137,14 @@ export class AuthService {
             }
             return null;
         } catch (error) {
-            if (!this.isDatabaseUnavailable(error)) {
-                // If it's a seed admin, allow login even on error
-                const seedAdmin = this.getSeedAdmin(normalizedEmail, pass);
-                if (seedAdmin) return this.toSeedAdminUser(seedAdmin);
-                throw error;
-            }
-
             const seedAdmin = this.getSeedAdmin(normalizedEmail, pass);
-            if (!seedAdmin) throw error;
-            return this.toSeedAdminUser(seedAdmin);
+            if (seedAdmin) {
+                return this.toSeedAdminUser(seedAdmin);
+            }
+            if (this.isDatabaseUnavailable(error)) {
+                throw new ServiceUnavailableException('Database service is temporarily unavailable. Please try again shortly or contact support.');
+            }
+            throw error;
         }
     }
 

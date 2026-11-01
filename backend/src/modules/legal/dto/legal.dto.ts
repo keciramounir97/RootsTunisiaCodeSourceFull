@@ -2,7 +2,7 @@ import { Type } from 'class-transformer';
 import { IsArray, IsIn, IsOptional, IsString, ValidateNested } from 'class-validator';
 
 export const LEGAL_LOCALES = ['en', 'fr', 'ar', 'he'] as const;
-export const LEGAL_SLUGS = ['terms', 'privacy', 'cookies'] as const;
+export const LEGAL_SLUGS = ['terms', 'privacy', 'cookies', 'refund'] as const;
 
 export class LegalSectionDto {
     @IsString()

@@ -108,22 +108,22 @@ export default function GenealogyGallery() {
   return (
     <div className="bg-[var(--background)] text-[var(--foreground)] min-h-screen">
       <SEO
-        title="Tunisian Family Trees — Roots Tunisia Genealogy Gallery"
+        title={t("seo_trees_title", "أشجار العائلات التونسية — جذور تونس")}
         description="Browse public Tunisian family trees from Tunis, Sfax, Kairouan, Djerba and the Djérid, with archive sources, document codes and GEDCOM 5.5.1 support."
         keywords={["Tunisian family trees", "Roots Tunisia genealogy gallery", "GEDCOM Tunisia"]}
       />
 
       <PageHero
-        eyebrow="Genealogy Gallery"
-        title="Tunisian Family Trees"
-        subtitle="Public lineages documented with état civil extracts, charaïque registers, habous deeds and family memory."
-        image={galleryImage}
+        eyebrow={t("nav_genealogy_gallery", "Genealogy Gallery")}
+        title={t("genealogy_gallery_title", "Tunisian Family Trees")}
+        subtitle={t("genealogy_gallery_subtitle", "Public lineages documented with état civil extracts, charaïque registers, habous deeds and family memory.")}
+        image={medinaImage}
       >
         <Link to="/signup" className="btn-base btn-gold">
-          Create your tree
+          {t("create_your_tree", "Create your tree")}
         </Link>
         <Link to="/subscriptions" className="btn-base btn-outline-light">
-          Upgrade for GEDCOM Export
+          {t("upgrade_for_gedcom_export", "Upgrade for GEDCOM Export")}
         </Link>
       </PageHero>
 
@@ -135,7 +135,7 @@ export default function GenealogyGallery() {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search family name, tribe, archive or governorate…"
+            placeholder={t("search_family_name_placeholder", "Search family name, tribe, archive or governorate…")}
             className="w-full bg-transparent text-sm text-[var(--foreground)] outline-none placeholder:text-[var(--muted-foreground)]"
           />
         </div>
@@ -143,38 +143,38 @@ export default function GenealogyGallery() {
 
       <Section>
         <SectionHeading
-          eyebrow="Family Tree Builder"
-          title="Explore public Tunisian lineages"
-          intro="Every tree carries its archive source and document code so other researchers can verify, extend or challenge the evidence."
+          eyebrow={t("family_tree_builder", "Family Tree Builder")}
+          title={t("explore_public_lineages", "Explore public Tunisian lineages")}
+          intro={t("explore_public_lineages_intro", "Every tree carries its archive source and document code so other researchers can verify, extend or challenge the evidence.")}
         />
 
         {/* Database Trees if available */}
         {filteredApiTrees.length > 0 && (
           <div className="mt-10 mb-12">
-            <h3 className="eyebrow mb-6">User Contributed Lineages ({filteredApiTrees.length})</h3>
+            <h3 className="eyebrow mb-6">{t("user_contributed_lineages", "User Contributed Lineages")} ({filteredApiTrees.length})</h3>
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {filteredApiTrees.map((tree) => (
                 <article key={tree.id} className="surface-card flex flex-col p-6 transition-transform hover:-translate-y-1">
                   <div className="flex items-center justify-between">
-                    <p className="eyebrow">Community Tree</p>
+                    <p className="eyebrow">{t("community_tree", "Community Tree")}</p>
                     <span className="rounded-sm border border-[var(--gold)]/50 px-2 py-0.5 text-[0.6rem] font-bold uppercase tracking-[0.18em] text-[var(--gold)]">
-                      Public
+                      {t("public", "Public")}
                     </span>
                   </div>
                   <h3 className="mt-3 font-display text-xl leading-snug text-[var(--foreground)]">{tree.title}</h3>
                   <p className="mt-1 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--muted-foreground)]">
-                    {tree.owner_name || "Community Member"}
+                    {tree.owner_name || t("community_member", "Community Member")}
                   </p>
                   <p className="mt-3 flex-1 text-sm leading-relaxed text-[var(--muted-foreground)]">
-                    {tree.description || "Tunisian family lineage recorded with verified civil and historical records."}
+                    {tree.description || t("default_tree_desc", "Tunisian family lineage recorded with verified civil and historical records.")}
                   </p>
                   <dl className="mt-5 grid grid-cols-2 gap-3 border-t border-[var(--gold)]/25 pt-4 text-xs">
                     <div>
-                      <dt className="font-bold uppercase tracking-[0.14em] text-[var(--gold)]">Archive Source</dt>
-                      <dd className="mt-1 text-[var(--muted-foreground)]">{tree.archiveSource || "Archives Nationales de Tunisie"}</dd>
+                      <dt className="font-bold uppercase tracking-[0.14em] text-[var(--gold)]">{t("archive_source", "Archive Source")}</dt>
+                      <dd className="mt-1 text-[var(--muted-foreground)]">{tree.archiveSource || t("national_archives_tunisia", "Archives Nationales de Tunisie")}</dd>
                     </div>
                     <div>
-                      <dt className="font-bold uppercase tracking-[0.14em] text-[var(--gold)]">Document Code</dt>
+                      <dt className="font-bold uppercase tracking-[0.14em] text-[var(--gold)]">{t("document_code", "Document Code")}</dt>
                       <dd className="mt-1 text-[var(--muted-foreground)]">{tree.documentCode || "ANT-DOC-001"}</dd>
                     </div>
                   </dl>
@@ -183,10 +183,10 @@ export default function GenealogyGallery() {
                       onClick={() => handleViewTree(tree)}
                       className="btn-base btn-red px-4 py-2 text-[0.65rem]"
                     >
-                      <GitBranch className="h-3.5 w-3.5" /> View Tree
+                      <GitBranch className="h-3.5 w-3.5 rtl:rotate-180" /> {t("view_tree", "View Tree")}
                     </button>
                     <Link to="/subscriptions" className="btn-base btn-outline-ink px-4 py-2 text-[0.65rem]">
-                      <Download className="h-3.5 w-3.5" /> GEDCOM Export
+                      <Download className="h-3.5 w-3.5" /> {t("gedcom_export", "GEDCOM Export")}
                     </Link>
                   </div>
                 </article>
@@ -196,7 +196,7 @@ export default function GenealogyGallery() {
         )}
 
         {/* Featured Reference Trees */}
-        <h3 className="eyebrow mb-6">Verified Archival Lineages</h3>
+        <h3 className="eyebrow mb-6">{t("verified_archival_lineages", "Verified Archival Lineages")}</h3>
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {featuredTrees.map((t) => (
             <TreeCard key={t.id} tree={t} />
@@ -208,16 +208,16 @@ export default function GenealogyGallery() {
         <div className="grid gap-6 md:grid-cols-3">
           {[
             {
-              t: "Build Multi-Generational Trees",
-              b: "Connect parents, grandparents, historical ancestors and extended families across Tunisian regions.",
+              t: t("feat_build_trees_title", "Build Multi-Generational Trees"),
+              b: t("feat_build_trees_desc", "Connect parents, grandparents, historical ancestors and extended families across Tunisian regions."),
             },
             {
-              t: "Attach Historical Documents",
-              b: "Upload birth records, marriage contracts, ANT and Protectorate archive scans, manuscripts and more.",
+              t: t("feat_attach_docs_title", "Attach Historical Documents"),
+              b: t("feat_attach_docs_desc", "Upload birth records, marriage contracts, ANT and Protectorate archive scans, manuscripts and more."),
             },
             {
-              t: "Trace Migration Paths",
-              b: "Follow lineages across Carthage, Kairouan, Tunis, Sfax, Djerba, the Sahel, the Djérid and the diaspora.",
+              t: t("feat_trace_paths_title", "Trace Migration Paths"),
+              b: t("feat_trace_paths_desc", "Follow lineages across Carthage, Kairouan, Tunis, Sfax, Djerba, the Sahel, the Djérid and the diaspora."),
             },
           ].map((c) => (
             <div key={c.t} className="surface-card p-7">
@@ -234,7 +234,7 @@ export default function GenealogyGallery() {
           <div className="surface-card flex flex-col w-full max-w-6xl max-h-[90vh] overflow-hidden border-2 border-[var(--gold)]">
             <div className="flex items-center justify-between border-b border-[var(--gold)]/30 p-4 bg-[var(--secondary)]/50">
               <div>
-                <p className="eyebrow">Interactive Tree Viewer</p>
+                <p className="eyebrow">{t("interactive_tree_viewer", "Interactive Tree Viewer")}</p>
                 <h3 className="font-display text-xl text-[var(--foreground)]">{viewTree.title}</h3>
               </div>
               <button

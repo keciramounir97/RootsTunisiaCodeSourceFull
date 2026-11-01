@@ -1,5 +1,6 @@
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "./AuthContext";
+import { useTranslation } from "../../context/TranslationContext";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -16,12 +17,13 @@ export default function ProtectedRoute({
 }: ProtectedRouteProps) {
   const { user, loading } = useAuth();
   const location = useLocation();
+  const { t } = useTranslation();
 
   // ✅ WAIT until auth is fully resolved
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center text-lg">
-        Checking authentication...
+        {t("auth_checking", "Checking authentication...")}
       </div>
     );
   }

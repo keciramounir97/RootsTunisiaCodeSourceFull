@@ -1,0 +1,103 @@
+version: '3.8'
+
+services:
+  # Active Nginx load balancer / reverse proxy dynamically routing to blue or green
+  nginx_proxy:
+    image: nginx:alpine
+    container_name: rootstunisia_proxy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/blue-green.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./backend/uploads:/app/uploads:ro
+    depends_on:
+      - backend_blue
+    networks:
+      - rootstunisia_net
+
+  # Blue Environment (Target Port 5001)
+  backend_blue:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: rootstunisia_backend_blue
+    restart: unless-stopped
+    ports:
+      - "5001:5000"
+    environment:
+      - NODE_ENV=production
+      - PORT=5000
+      - DB_HOST=2.24.71.239
+      - DB_PORT=3306
+      - DB_USER=kameladmin
+      - DB_PASSWORD=636363
+      - DB_NAME=rootstunisia_database
+      - DB_DATABASE=rootstunisia_database
+      - DATABASE_URL=mysql://kameladmin:636363@2.24.71.239:3306/rootstunisia_database
+      - JWT_SECRET=136d782478b4f564799d6bf639daa785289afe05307ada92a90a45870c726038
+      - CORS_ORIGIN=https://rootstunisia.com,https://www.rootstunisia.com,https://server.rootstunisia.com
+    volumes:
+      - backend_uploads:/app/uploads
+    networks:
+      - rootstunisia_net
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:5000/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  # Green Environment (Target Port 5002)
+  backend_green:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: rootstunisia_backend_green
+    restart: unless-stopped
+    ports:
+      - "5002:5000"
+    environment:
+      - NODE_ENV=production
+      - PORT=5000
+      - DB_HOST=2.24.71.239
+      - DB_PORT=3306
+      - DB_USER=kameladmin
+      - DB_PASSWORD=636363
+      - DB_NAME=rootstunisia_database
+      - DB_DATABASE=rootstunisia_database
+      - DATABASE_URL=mysql://kameladmin:636363@2.24.71.239:3306/rootstunisia_database
+      - JWT_SECRET=136d782478b4f564799d6bf639daa785289afe05307ada92a90a45870c726038
+      - CORS_ORIGIN=https://rootstunisia.com,https://www.rootstunisia.com,https://server.rootstunisia.com
+    volumes:
+      - backend_uploads:/app/uploads
+    networks:
+      - rootstunisia_net
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:5000/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: https://server.rootstunisia.com
+    container_name: rootstunisia_frontend
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    networks:
+      - rootstunisia_net
+
+networks:
+  rootstunisia_net:
+    driver: bridge
+
+volumes:
+  backend_uploads:
+    driver: local

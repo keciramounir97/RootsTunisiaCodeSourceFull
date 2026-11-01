@@ -52,6 +52,7 @@ const links = [
   { to: "/admin/audios", labelKey: "audios", Icon: Music },
   { to: "/admin/documents", labelKey: "documents", Icon: FileText },
   { to: "/admin/books", labelKey: "books", Icon: BookOpen },
+  { to: "/admin/articles", labelKey: "articles", Icon: Newspaper },
   { to: "/admin/support", labelKey: "contact_support", Icon: Headphones },
   { to: "/admin/users", labelKey: "users", Icon: Users },
   { to: "/admin/contact-messages", labelKey: "contact_messages", Icon: MessageSquare },
@@ -61,6 +62,7 @@ const links = [
   { to: "/admin/admins", labelKey: "admins", Icon: Shield },
   { to: "/admin/subscriptions", labelKey: "subscriptions", Icon: Crown },
   { to: "/admin/subscription-payments", labelKey: "subscription_payments", Icon: Crown },
+  { to: "/admin/tier-features", labelKey: "tier_features_title", Icon: ListChecks },
   { to: "/admin/user-upgrade", labelKey: "user_upgrade", Icon: ArrowUpCircle },
   { to: "/admin/user-settings", labelKey: "user_settings", Icon: Settings },
   { to: "/admin/payment-settings", labelKey: "payment_settings", Icon: Wallet },
@@ -77,6 +79,8 @@ const labelFallbacks: Record<string, string> = {
   contact_support: "Contact Support",
   user_settings: "User Settings",
   my_sources: "My Sources",
+  articles: "Articles",
+  tier_features_title: "Tier Features",
 };
 
 export default function AdminSidebar({
@@ -90,7 +94,8 @@ export default function AdminSidebar({
 }) {
   const { theme } = useThemeStore();
   const { logout, user } = useAuth();
-  const { t } = useTranslation();
+  const { t, dir } = useTranslation();
+  const isRtl = dir === "rtl";
 
   const granted = Array.isArray(user?.permissions) ? user.permissions : [];
   const normalizedRole = Number(user?.role);
@@ -137,8 +142,10 @@ export default function AdminSidebar({
 
       {/* Sidebar Container */}
       <aside
-        className={`fixed top-0 bottom-0 left-0 z-40 flex flex-col w-64 border-r border-[var(--gold)]/30 bg-[var(--card)]/98 backdrop-blur shadow-2xl transition-transform duration-300 ${
-          open ? "translate-x-0" : "-translate-x-full"
+        className={`fixed top-0 bottom-0 z-40 flex flex-col w-64 border-[var(--gold)]/30 bg-[var(--card)]/98 backdrop-blur shadow-2xl transition-transform duration-300 ${
+          isRtl
+            ? `right-0 border-l ${open ? "translate-x-0" : "translate-x-full"}`
+            : `left-0 border-r ${open ? "translate-x-0" : "-translate-x-full"}`
         }`}
       >
         {/* Brand / Logo Top */}
@@ -149,7 +156,7 @@ export default function AdminSidebar({
             title={t("close_sidebar", "Close Sidebar")}
             className="rounded p-1.5 text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-[var(--gold)]/10 transition-colors"
           >
-            <PanelLeftClose className="h-5 w-5" />
+            <PanelLeftClose className={`h-5 w-5 ${isRtl ? "rotate-180" : ""}`} />
           </button>
         </div>
 
@@ -184,7 +191,7 @@ export default function AdminSidebar({
               className={({ isActive }) =>
                 `flex items-center gap-3 rounded-md px-3 py-2.5 text-xs font-semibold tracking-wide transition-all ${
                   isActive
-                    ? "bg-[var(--gold)]/15 text-[var(--gold)] border-r-2 border-[var(--gold)] font-bold"
+                    ? `bg-[var(--gold)]/15 text-[var(--gold)] ${isRtl ? "border-l-2" : "border-r-2"} border-[var(--gold)] font-bold`
                     : "text-[var(--muted-foreground)] hover:bg-[var(--gold)]/10 hover:text-[var(--foreground)]"
                 }`
               }

@@ -11,6 +11,7 @@ const STORAGE_KEY = "locale";
 interface TranslationContextType {
   locale: string;
   dir: "rtl" | "ltr";
+  isRtl: boolean;
   locales: readonly string[];
   setLocale: (locale: string) => void;
   t: (key: string, fallback?: string) => string;
@@ -21,18 +22,38 @@ const TranslationContext = createContext<TranslationContextType | null>(null);
 const FALLBACK_VALUE: TranslationContextType = {
   locale: DEFAULT_LOCALE,
   dir: "ltr",
+  isRtl: false,
   locales: SUPPORTED_LOCALES,
   setLocale: () => {},
   t: (key: string, fallback?: string) => tForLocale(DEFAULT_LOCALE, key, fallback),
 };
 
 export function TranslationProvider({ children }: { children: ReactNode }) {
-  const [locale, setLocale] = useState<string>(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    return saved && SUPPORTED_LOCALES.includes(saved as any) ? saved : DEFAULT_LOCALE;
+  const [locale, setLocaleState] = useState<string>(() => {
+    try {
+      const first = window.location.pathname.split("/").filter(Boolean)[0];
+      if (first && (SUPPORTED_LOCALES as readonly string[]).includes(first) && first !== DEFAULT_LOCALE) {
+        return first;
+      }
+      const queryLang = new URLSearchParams(window.location.search).get("lang");
+      if (queryLang && (SUPPORTED_LOCALES as readonly string[]).includes(queryLang)) {
+        return queryLang;
+      }
+      const saved = localStorage.getItem(STORAGE_KEY);
+      return saved && (SUPPORTED_LOCALES as readonly string[]).includes(saved) ? saved : DEFAULT_LOCALE;
+    } catch {
+      return DEFAULT_LOCALE;
+    }
   });
 
-  const dir: "rtl" | "ltr" = isRtlLocale(locale) ? "rtl" : "ltr";
+  const setLocale = (next: string) => {
+    if ((SUPPORTED_LOCALES as readonly string[]).includes(next)) {
+      setLocaleState(next);
+    }
+  };
+
+  const isRtl = isRtlLocale(locale);
+  const dir: "rtl" | "ltr" = isRtl ? "rtl" : "ltr";
 
   useEffect(() => {
     try {
@@ -51,11 +72,12 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
     () => ({
       locale,
       dir,
+      isRtl,
       locales: SUPPORTED_LOCALES,
       setLocale,
       t: (key: string, fallback?: string) => tForLocale(locale, key, fallback),
     }),
-    [locale, dir]
+    [locale, dir, isRtl]
   );
 
   return (

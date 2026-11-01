@@ -21,6 +21,7 @@ import {
 import AOS from "aos";
 import "aos/dist/aos.css";
 import Toast from "../../components/Toast";
+import { useAuth } from "../components/AuthContext";
 
 interface Audio {
   id: number | string;
@@ -37,6 +38,9 @@ export default function AdminAudios() {
   const { theme } = useThemeStore();
   const { t } = useLanguage();
   const isDark = theme === "dark";
+  const { user } = useAuth();
+  const isAdminUser =
+    !!user && (Number(user.role) === 1 || Number(user.role) === 3);
   const apiRoot = useMemo(() => getApiRoot(), []);
 
   const maxAudioBytes = 50 * 1024 * 1024;
@@ -255,7 +259,7 @@ export default function AdminAudios() {
     notify(t("legacy.audio_deleted", "Audio deleted."));
 
     try {
-      if (isAdmin) {
+      if (isAdminUser) {
         await api.delete(`/admin/audios/${id}`).catch(() => api.delete(`/my/audios/${id}`));
       } else {
         await api.delete(`/my/audios/${id}`).catch(() => api.delete(`/admin/audios/${id}`));

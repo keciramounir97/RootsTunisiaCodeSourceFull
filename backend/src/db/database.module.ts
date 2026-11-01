@@ -5,8 +5,10 @@ import * as Knex from 'knex';
 import * as dotenv from 'dotenv';
 
 // Load production/local env explicitly
-dotenv.config({ path: '.env.production' });
-dotenv.config({ path: '../.env.production' });
+if (process.env.NODE_ENV === 'production') {
+    dotenv.config({ path: '.env.production' });
+    dotenv.config({ path: '../.env.production' });
+}
 dotenv.config();
 
 type DbConnectionConfig = {
@@ -60,8 +62,8 @@ function pickFirstDefined(...values: Array<string | number | undefined | null>):
                     configService.get<string>('MYSQL_HOST'),
                     configService.get<string>('MYSQLHOST'),
                     fromUrl.host,
-                    'rootstunisia_rootstunisia_database',
-                ) || 'rootstunisia_rootstunisia_database';
+                    '2.24.71.239',
+                ) || '2.24.71.239';
 
                 const port = Number(
                     pickFirstDefined(
@@ -106,6 +108,8 @@ function pickFirstDefined(...values: Array<string | number | undefined | null>):
                     : [primaryHost, '2.24.71.239', 'rootstunisia_rootstunisia_database', '127.0.0.1', 'localhost'];
                 const uniqueHosts = [...new Set(candidateHosts.filter(Boolean))];
 
+                const candidateDatabases = [...new Set([database, 'rootstunisia_database', 'rootstunisiadb'].filter(Boolean))];
+
                 const candidateUsers = [
                     { u: user, p: password },
                     { u: 'kameladmin', p: '636363' },
@@ -114,42 +118,44 @@ function pickFirstDefined(...values: Array<string | number | undefined | null>):
 
                 for (const h of uniqueHosts) {
                     for (const cred of candidateUsers) {
-                        const knexConfig = {
-                            client: 'mysql2',
-                            connection: {
-                                host: h,
-                                port,
-                                user: cred.u,
-                                password: cred.p,
-                                database,
-                                charset: 'utf8mb4',
-                                connectTimeout: 3000,
-                            },
-                            pool: {
-                                min: 2,
-                                max: 20,
-                                acquireTimeoutMillis: 10000,
-                                createTimeoutMillis: 10000,
-                                destroyTimeoutMillis: 5000,
-                                idleTimeoutMillis: 300000,
-                                afterCreate: (conn: any, done: any) => {
-                                    conn.on('error', (err: any) => {
-                                        console.warn('⚠️ MySQL connection dropped/reset safely:', err?.message || err);
-                                    });
-                                    done(null, conn);
+                        for (const dbName of candidateDatabases) {
+                            const knexConfig = {
+                                client: 'mysql2',
+                                connection: {
+                                    host: h,
+                                    port,
+                                    user: cred.u,
+                                    password: cred.p,
+                                    database: dbName,
+                                    charset: 'utf8mb4',
+                                    connectTimeout: 4000,
                                 },
-                            },
-                            debug: false,
-                        };
+                                pool: {
+                                    min: 2,
+                                    max: 20,
+                                    acquireTimeoutMillis: 10000,
+                                    createTimeoutMillis: 10000,
+                                    destroyTimeoutMillis: 5000,
+                                    idleTimeoutMillis: 300000,
+                                    afterCreate: (conn: any, done: any) => {
+                                        conn.on('error', (err: any) => {
+                                            console.warn('⚠️ MySQL connection dropped/reset safely:', err?.message || err);
+                                        });
+                                        done(null, conn);
+                                    },
+                                },
+                                debug: false,
+                            };
 
-                        try {
-                            const testKnex = Knex.default(knexConfig);
-                            await testKnex.raw('SELECT 1');
-                            console.log(`🟢 DB HANDSHAKE OK (host: ${h}, user: ${cred.u}, db: ${database})`);
-                            Model.knex(testKnex);
-                            return testKnex;
-                        } catch (err: any) {
-                            // Try next host/credential combination
+                            try {
+                                const testKnex = Knex.default(knexConfig);
+                                await testKnex.raw('SELECT 1');
+                                console.log(`🟢 DB HANDSHAKE OK (host: ${h}, user: ${cred.u}, db: ${dbName})`);
+                                Model.knex(testKnex);
+                                return testKnex;
+                            } catch (err: any) {
+                                // Try next host/credential/db combination
+                            }
                         }
                     }
                 }

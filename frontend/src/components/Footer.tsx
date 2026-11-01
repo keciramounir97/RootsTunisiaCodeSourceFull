@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, FormEvent } from "react";
+import { useEffect, useState, FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { Mail, MapPin, Phone, Send } from "lucide-react";
 import { useTranslation } from "../context/TranslationContext";
@@ -15,28 +15,30 @@ interface FooterProps {
 }
 
 const explore = [
-  { to: "/gallery/trees", label: "Family Trees" },
-  { to: "/gallery", label: "Photo Gallery" },
-  { to: "/library", label: "Library" },
-  { to: "/gallery/audios", label: "Oral Histories" },
+  { to: "/gallery/trees", labelKey: "nav_trees" },
+  { to: "/gallery", labelKey: "nav_photos" },
+  { to: "/library", labelKey: "nav_library" },
+  { to: "/audio", labelKey: "nav_audios" },
+  { to: "/gallery/articles", labelKey: "nav_articles" },
 ];
 
 const research = [
-  { to: "/periods", label: "Tunisian Periods" },
-  { to: "/sources", label: "Sources" },
-  { to: "/archives", label: "Archives" },
-  { to: "/subscriptions", label: "Subscriptions" },
-  { to: "/contact", label: "Contact" },
+  { to: "/about", labelKey: "nav_about" },
+  { to: "/periods", labelKey: "nav_periods" },
+  { to: "/sources", labelKey: "nav_sources" },
+  { to: "/archives", labelKey: "nav_archives" },
+  { to: "/subscriptions", labelKey: "nav_subscriptions" },
+  { to: "/contact", labelKey: "nav_contact" },
 ];
 
 const fallbackFooter = {
   enabled: true,
-  fineprint: "© Roots Tunisia. All rights reserved.",
+  fineprint: undefined as string | undefined,
   brandTagline: undefined as string | undefined,
 };
 
 export default function Footer({ data }: FooterProps) {
-  const { t } = useTranslation();
+  const { t, isRtl } = useTranslation();
   const [footer, setFooter] = useState<any>(data || fallbackFooter);
   const [loaded, setLoaded] = useState(Boolean(data));
   const [newsletterEmail, setNewsletterEmail] = useState("");
@@ -67,7 +69,7 @@ export default function Footer({ data }: FooterProps) {
     if (!email) {
       setNewsletterStatus({
         type: "error",
-        message: t("newsletter_email_required", "Email is required."),
+        message: t("newsletter_email_required"),
       });
       return;
     }
@@ -79,17 +81,12 @@ export default function Footer({ data }: FooterProps) {
       setNewsletterEmail("");
       setNewsletterStatus({
         type: "success",
-        message: t(
-          "newsletter_success",
-          "Thanks! We will reach out to you soon."
-        ),
+        message: t("newsletter_success"),
       });
     } catch (err: any) {
       setNewsletterStatus({
         type: "error",
-        message:
-          err.response?.data?.message ||
-          t("newsletter_failed", "Failed to subscribe."),
+        message: err.response?.data?.message || t("newsletter_failed"),
       });
     } finally {
       setNewsletterLoading(false);
@@ -98,19 +95,24 @@ export default function Footer({ data }: FooterProps) {
 
   if (!loaded || footer?.enabled === false) return null;
 
+  const customTagline = footer?.brandTagline && (!isRtl || /[\u0600-\u06FF]/.test(footer.brandTagline)) ? footer.brandTagline : null;
+  const customFineprint = footer?.fineprint && (!isRtl || /[\u0600-\u06FF]/.test(footer.fineprint)) ? footer.fineprint : null;
+
   return (
-    <footer className="mt-24 border-t border-[var(--gold)]/35 bg-[var(--secondary)]/60 text-[var(--foreground)]">
-      <div className="mx-auto grid max-w-7xl gap-10 px-5 py-14 md:grid-cols-4">
+    <footer
+      dir={isRtl ? "rtl" : "ltr"}
+      className="mt-20 border-t border-[var(--gold)]/35 bg-[var(--secondary)]/60 text-[var(--foreground)] text-start"
+    >
+      <div className="mx-auto grid max-w-7xl gap-8 sm:gap-10 px-4 py-12 sm:px-6 sm:py-14 lg:px-8 sm:grid-cols-2 lg:grid-cols-4">
         <div>
           <Logo />
           <p className="mt-4 max-w-xs text-sm leading-relaxed text-[var(--muted-foreground)]">
-            {footer.brandTagline ||
-              "A Tunisian genealogy platform connecting civil registers, beylical and Ottoman registers, habous deeds, Protectorate archives, photographs and family memory — from Carthage to Kairouan, Tunis to Djerba."}
+            {customTagline || t("footer_tagline")}
           </p>
         </div>
 
         <div>
-          <h4 className="eyebrow">{t("explore", "Explore")}</h4>
+          <h4 className="eyebrow">{t("explore")}</h4>
           <ul className="mt-4 space-y-2.5">
             {explore.map((l) => (
               <li key={l.to}>
@@ -118,7 +120,7 @@ export default function Footer({ data }: FooterProps) {
                   to={l.to}
                   className="text-sm text-[var(--muted-foreground)] transition-colors hover:text-[var(--gold)]"
                 >
-                  {l.label}
+                  {t(l.labelKey)}
                 </Link>
               </li>
             ))}
@@ -126,7 +128,7 @@ export default function Footer({ data }: FooterProps) {
         </div>
 
         <div>
-          <h4 className="eyebrow">{t("research", "Research")}</h4>
+          <h4 className="eyebrow">{t("research")}</h4>
           <ul className="mt-4 space-y-2.5">
             {research.map((l) => (
               <li key={l.to}>
@@ -134,7 +136,7 @@ export default function Footer({ data }: FooterProps) {
                   to={l.to}
                   className="text-sm text-[var(--muted-foreground)] transition-colors hover:text-[var(--gold)]"
                 >
-                  {l.label}
+                  {t(l.labelKey)}
                 </Link>
               </li>
             ))}
@@ -142,22 +144,18 @@ export default function Footer({ data }: FooterProps) {
         </div>
 
         <div>
-          <h4 className="eyebrow">{t("contact", "Contact")}</h4>
+          <h4 className="eyebrow">{t("contact")}</h4>
           <ul className="mt-4 space-y-3 text-sm text-[var(--muted-foreground)]">
-            <li className="flex items-start gap-2">
-              <MapPin className="mt-0.5 h-4 w-4 text-[var(--gold)] shrink-0" />
-              <span>Rue de la Kasbah, Medina of Tunis, Tunisia</span>
-            </li>
             <li className="flex items-center gap-2">
               <Mail className="h-4 w-4 text-[var(--gold)] shrink-0" />
-              <a href="mailto:contact@rootstunisia.com" className="hover:text-[var(--gold)]">
+              <a href="mailto:contact@rootstunisia.com" className="hover:text-[var(--gold)]" dir="ltr">
                 contact@rootstunisia.com
               </a>
             </li>
             <li className="flex items-center gap-2">
               <Phone className="h-4 w-4 text-[var(--gold)] shrink-0" />
-              <a href="tel:+21671000000" className="hover:text-[var(--gold)]">
-                +216 71 000 000
+              <a href="tel:+9613626082" className="hover:text-[var(--gold)]" dir="ltr">
+                +961 36 26 082
               </a>
             </li>
           </ul>
@@ -168,7 +166,7 @@ export default function Footer({ data }: FooterProps) {
                 type="email"
                 value={newsletterEmail}
                 onChange={(e) => setNewsletterEmail(e.target.value)}
-                placeholder={t("email", "Email")}
+                placeholder={t("email")}
                 className="w-full px-3 py-1.5 rounded text-xs bg-[var(--card)] border border-[var(--border)] text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] focus:outline-none focus:border-[var(--gold)]"
               />
               <button
@@ -176,7 +174,7 @@ export default function Footer({ data }: FooterProps) {
                 disabled={newsletterLoading}
                 className="btn-base btn-gold px-3 py-1.5 text-[0.65rem] shrink-0"
               >
-                <Send className="h-3 w-3" />
+                <Send className={`h-3 w-3 ${isRtl ? "rotate-180" : ""}`} />
               </button>
             </div>
             {newsletterStatus.message && (
@@ -190,23 +188,35 @@ export default function Footer({ data }: FooterProps) {
 
       <div className="gold-rule" />
 
-      <div className="mx-auto flex max-w-7xl flex-col md:flex-row items-center justify-between gap-4 px-5 py-5 text-xs text-[var(--muted-foreground)]">
-        <p>{footer.fineprint || `© ${new Date().getFullYear()} Roots Tunisia. All rights reserved.`}</p>
-        <div className="flex items-center gap-4 text-xs">
+      <div className="mx-auto flex max-w-7xl flex-col lg:flex-row items-center justify-between gap-4 px-4 py-5 sm:px-6 lg:px-8 text-xs text-[var(--muted-foreground)]">
+        <p>{customFineprint || t("footer_copyright")}</p>
+        <div className="flex flex-wrap items-center justify-center gap-3 md:gap-4 text-xs">
           <Link to="/terms" className="hover:text-[var(--gold)] transition-colors font-medium">
-            {t("terms_of_service", "Conditions d'Utilisation")}
+            {t("terms_of_service")}
           </Link>
           <span className="opacity-40">•</span>
           <Link to="/privacy" className="hover:text-[var(--gold)] transition-colors font-medium">
-            {t("privacy_policy", "Politique de Confidentialité")}
+            {t("privacy_policy")}
+          </Link>
+          <span className="opacity-40">•</span>
+          <Link to="/refund" className="hover:text-[var(--gold)] transition-colors font-medium">
+            {t("refund_policy")}
           </Link>
           <span className="opacity-40">•</span>
           <Link to="/cookies" className="hover:text-[var(--gold)] transition-colors font-medium">
-            {t("cookie_policy", "Gestion des Cookies")}
+            {t("cookie_policy")}
           </Link>
+          <span className="opacity-40">•</span>
+          <button
+            type="button"
+            onClick={() => window.dispatchEvent(new CustomEvent("roots:open-cookie-banner"))}
+            className="hover:text-[var(--gold)] transition-colors font-medium underline underline-offset-2 bg-transparent border-0 p-0 text-xs cursor-pointer text-[var(--muted-foreground)]"
+          >
+            {t("cookie_preferences")}
+          </button>
         </div>
         <p className="font-display text-sm tracking-wide text-[var(--gold)]">
-          جذور تونس · Preserving Tunisian lineage
+          {t("site_title")} · {t("footer_rights")}
         </p>
       </div>
     </footer>

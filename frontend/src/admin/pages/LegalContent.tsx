@@ -262,13 +262,14 @@ export default function LegalContent() {
                 >
                   <div className="flex items-center justify-between gap-3">
                     <span className="text-xs font-extrabold text-[#0d9488]">
-                      Article #{index + 1}
+                      {t("article_num", "المادة رقم")} #{index + 1}
                     </span>
                     <button
                       type="button"
                       onClick={() => removeSection(index)}
                       className="p-1 rounded text-red-500 hover:bg-red-500/10 transition"
-                      title={t("delete", "Supprimer")}
+                      title={t("delete", "حذف")}
+                      aria-label={t("delete", "حذف")}
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>

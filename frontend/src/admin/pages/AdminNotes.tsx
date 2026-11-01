@@ -24,9 +24,10 @@ import Toast from "../../components/Toast";
 interface NoteItem {
   id: number;
   title: string;
-  user_id: number;
+  user_id?: number;
   user_email?: string;
   created_at: string;
+  updated_at?: string;
   content: string;
   image_url?: string;
 }
@@ -119,7 +120,7 @@ export default function AdminNotes() {
   const submitForm = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formTitle.trim()) {
-      showToast("Note title is required", "error");
+      showToast(t("note_title_required", "عنوان الملاحظة مطلوب"), "error");
       return;
     }
 
@@ -136,10 +137,10 @@ export default function AdminNotes() {
     // Instant optimistic update
     if (editingNote) {
       setNotes((prev) => prev.map((n) => (n.id === editingNote.id ? optimisticNote : n)));
-      showToast("Note updated successfully!");
+      showToast(t("note_updated_success", "تم تحديث الملاحظة بنجاح!"));
     } else {
       setNotes((prev) => [optimisticNote, ...prev]);
-      showToast("New note added!");
+      showToast(t("new_note_added", "تمت إضافة ملاحظة جديدة بنجاح!"));
     }
     setModalOpen(false);
 
@@ -168,10 +169,10 @@ export default function AdminNotes() {
   };
 
   const deleteNote = async (id: number) => {
-    if (!window.confirm("Are you sure you want to delete this note?")) return;
+    if (!window.confirm(t("confirm_delete_note", "هل أنت متأكد من حذف هذه الملاحظة؟"))) return;
     // Instant optimistic removal
     setNotes((prev) => prev.filter((n) => n.id !== id));
-    showToast("Note deleted");
+    showToast(t("note_deleted", "تم حذف الملاحظة بنجاح."));
     if (viewNote?.id === id) setViewNote(null);
 
     try {
@@ -221,7 +222,7 @@ export default function AdminNotes() {
                   viewMode === "my" ? "bg-white dark:bg-[#1a2e2d] shadow text-[#0d9488]" : "opacity-60"
                 }`}
               >
-                My Notes
+                {t("admin.notes.my_notes", "ملاحظاتي")}
               </button>
               <button
                 onClick={() => setViewMode("all")}
@@ -229,7 +230,7 @@ export default function AdminNotes() {
                   viewMode === "all" ? "bg-white dark:bg-[#1a2e2d] shadow text-[#0d9488]" : "opacity-60"
                 }`}
               >
-                All System Notes
+                {t("admin.notes.all_system_notes", "جميع ملاحظات النظام")}
               </button>
             </div>
           )}
@@ -260,13 +261,13 @@ export default function AdminNotes() {
 
         {isMaxReached && (
           <div className="flex items-center gap-2">
-            <span className="text-xs text-red-500 font-bold">Quota Reached (100/100)</span>
+            <span className="text-xs text-red-500 font-bold">{t("quota_reached", "Quota Reached")} (100/100)</span>
             <Link
               to="/admin/user-upgrade"
               className="px-3 py-1 rounded-lg bg-gradient-to-r from-[#d9a441] to-[#e8c377] text-[#092C2B] font-bold text-xs inline-flex items-center gap-1 shadow"
             >
               <Crown className="w-3.5 h-3.5" />
-              <span>Upgrade Plan</span>
+              <span>{t("upgrade_plan", "Upgrade Plan")}</span>
             </Link>
           </div>
         )}
@@ -279,7 +280,7 @@ export default function AdminNotes() {
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search research notes..."
+          placeholder={t("placeholder_search_notes", "Search research notes...")}
           className="w-full ltr:pl-9 rtl:pr-9 pr-4 py-2.5 text-xs rounded-xl border border-[var(--border-color)] bg-white dark:bg-[#1a2e2d] text-gray-900 dark:text-white focus:ring-2 focus:ring-[#0d9488]/40"
         />
       </div>
@@ -292,16 +293,16 @@ export default function AdminNotes() {
       ) : filtered.length === 0 ? (
         <div className="py-12 text-center rounded-2xl border border-dashed border-[var(--border-color)] bg-white/50 dark:bg-black/20 p-8 space-y-3">
           <StickyNote className="w-12 h-12 mx-auto text-gray-400 opacity-60" />
-          <h3 className="font-bold text-base text-gray-800 dark:text-gray-200">No notes found</h3>
+          <h3 className="font-bold text-base text-gray-800 dark:text-gray-200">{t("no_notes_found", "No notes found")}</h3>
           <p className="text-xs text-gray-500 dark:text-gray-400 max-w-md mx-auto">
-            Create private research notes to track family archives, document sources, and personal research ideas.
+            {t("notes_empty_desc", "Create private research notes to track family archives, document sources, and personal research ideas.")}
           </p>
           <button
             onClick={openAddModal}
             className="mt-2 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#0d9488] text-white text-xs font-bold"
           >
             <Plus className="w-4 h-4" />
-            <span>Create First Note</span>
+            <span>{t("create_first_note", "Create First Note")}</span>
           </button>
         </div>
       ) : (
@@ -331,21 +332,21 @@ export default function AdminNotes() {
                     <button
                       onClick={() => setViewNote(note)}
                       className="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-[#0d9488]"
-                      title="View Full Note"
+                      title={t("view_note", "عرض الملاحظة")}
                     >
                       <Eye className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => openEditModal(note)}
                       className="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-blue-500"
-                      title="Edit Note"
+                      title={t("edit_note", "تعديل الملاحظة")}
                     >
                       <Edit3 className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => deleteNote(note.id)}
                       className="p-1.5 rounded-lg text-gray-400 hover:bg-red-50 dark:hover:bg-red-900/30 hover:text-red-500"
-                      title="Delete Note"
+                      title={t("delete_note", "حذف الملاحظة")}
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -381,7 +382,7 @@ export default function AdminNotes() {
           <div className="w-full max-w-xl rounded-2xl bg-white dark:bg-[#1a2e2d] text-gray-900 dark:text-white p-6 shadow-2xl border border-[var(--border-color)] space-y-4">
             <div className="flex items-center justify-between border-b border-[var(--border-color)] pb-3">
               <h3 className="font-bold text-lg font-cinzel text-[#0d9488]">
-                {editingNote ? "Edit Note" : "+ Add Research Note"}
+                {editingNote ? t("edit_note", "تعديل الملاحظة") : t("add_research_note", "+ إضافة ملاحظة بحثية")}
               </h3>
               <button
                 onClick={() => setModalOpen(false)}
@@ -394,24 +395,24 @@ export default function AdminNotes() {
             <form onSubmit={submitForm} className="space-y-4 text-xs">
               <div>
                 <label className="block font-bold mb-1">
-                  Note Title <span className="text-red-500">*</span>
+                  {t("admin.notes.note_title", "عنوان الملاحظة")} <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
                   value={formTitle}
                   onChange={(e) => setFormTitle(e.target.value)}
-                  placeholder="e.g. Ottoman archives citation for Mohamed Ben Ali"
+                  placeholder={t("admin.notes.title_placeholder", "مثال: مقتطف من الأرشيف العثماني")}
                   required
                   className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--border-color)] bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#0d9488]/40"
                 />
               </div>
 
               <div>
-                <label className="block font-bold mb-1">Content / Description</label>
+                <label className="block font-bold mb-1">{t("admin.notes.content_desc", "المحتوى / الوصف")}</label>
                 <textarea
                   value={formContent}
                   onChange={(e) => setFormContent(e.target.value)}
-                  placeholder="Write your research details, dates, or source references..."
+                  placeholder={t("admin.notes.content_placeholder", "اكتب تفاصيل بحثك، التواريخ، أو مراجع المصادر...")}
                   rows={5}
                   className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--border-color)] bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white resize-none"
                 />
@@ -419,12 +420,12 @@ export default function AdminNotes() {
 
               {/* Upload Image */}
               <div>
-                <label className="block font-bold mb-1">Attachment / Reference Image</label>
+                <label className="block font-bold mb-1">{t("admin.notes.attachment_label", "مرفق / صورة مرجعية")}</label>
                 <div className="flex items-center gap-4">
                   {formPreview ? (
                     <img
                       src={formPreview}
-                      alt="Preview"
+                      alt={t("preview", "معاينة")}
                       className="w-16 h-16 rounded-xl object-cover border border-[var(--border-color)]"
                     />
                   ) : (
@@ -438,7 +439,7 @@ export default function AdminNotes() {
                     onClick={() => fileRef.current?.click()}
                     className="px-3.5 py-2 rounded-xl bg-stone-500/15 hover:bg-stone-500/25 font-bold transition"
                   >
-                    {formPreview ? "Change Image" : "Upload File"}
+                    {formPreview ? t("admin.notes.change_image", "تغيير الصورة") : t("admin.notes.upload_file", "رفع ملف")}
                   </button>
                   <input
                     ref={fileRef}
@@ -456,7 +457,7 @@ export default function AdminNotes() {
                   onClick={() => setModalOpen(false)}
                   className="px-4 py-2.5 rounded-xl border border-[var(--border-color)] font-semibold"
                 >
-                  Cancel
+                  {t("common.cancel", "إلغاء")}
                 </button>
                 <button
                   type="submit"
@@ -464,7 +465,7 @@ export default function AdminNotes() {
                   className="px-6 py-2.5 rounded-xl bg-[#0d9488] text-white font-bold inline-flex items-center gap-2 hover:bg-[#0d9488]/90 shadow transition-all"
                 >
                   {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-                  <span>{submitting ? "Saving..." : editingNote ? "Update Note" : "Save Note"}</span>
+                  <span>{submitting ? t("common.saving", "جاري الحفظ...") : editingNote ? t("admin.notes.update_note", "تحديث الملاحظة") : t("admin.notes.save_note", "حفظ الملاحظة")}</span>
                 </button>
               </div>
             </form>

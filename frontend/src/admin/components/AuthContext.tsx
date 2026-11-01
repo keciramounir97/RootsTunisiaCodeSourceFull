@@ -14,6 +14,8 @@ export interface User {
   id: number;
   email: string;
   fullName: string;
+  name?: string;
+  full_name?: string;
   phone?: string;
   role: number; // roleId mapped to role
   roleName?: string;
@@ -224,10 +226,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 }
 
+const FALLBACK_AUTH: AuthContextType = {
+  user: null,
+  loading: false,
+  isAdmin: false,
+  signup: async () => ({}),
+  register: async () => ({}),
+  login: async () => {
+    throw new Error("AuthProvider missing");
+  },
+  requestReset: async () => ({}),
+  verifyReset: async () => ({}),
+  logout: async () => {},
+  refreshMe: async () => null,
+};
+
 export const useAuth = () => {
   const ctx = useContext(AuthContext);
   if (!ctx) {
-    throw new Error("useAuth must be used within AuthProvider");
+    return FALLBACK_AUTH;
   }
   return ctx;
 };

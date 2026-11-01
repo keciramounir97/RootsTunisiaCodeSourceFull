@@ -12,6 +12,7 @@ import {
   Share2,
   Heart,
   Upload,
+  ZoomIn,
 } from "lucide-react";
 import { api } from "../api/client";
 import { useTranslation } from "../context/TranslationContext";
@@ -27,21 +28,25 @@ import djerba from "../assets/djerba.jpg";
 
 interface ImageItem {
   id: number | string;
+  titleKey?: string;
   title: string;
   category: string;
+  categoryKey?: string;
   governorate?: string;
   yearStr?: string;
   imageUrl: string;
+  descriptionKey?: string;
   description: string;
   likes?: number;
   isLiked?: boolean;
 }
 
-const TUNISIAN_INITIAL_IMAGES: ImageItem[] = [
+const baseCuratedImages: ImageItem[] = [
   {
     id: "img-tn-1",
     title: "Medina of Tunis Souk Alley & Archways",
     category: "Landmarks & Architecture",
+    categoryKey: "img_cat_landmarks",
     governorate: "Tunis",
     yearStr: "c. 1910",
     imageUrl: medina,
@@ -52,6 +57,7 @@ const TUNISIAN_INITIAL_IMAGES: ImageItem[] = [
     id: "img-tn-2",
     title: "Sidi Bou Saïd Blue and White Coastal Architecture",
     category: "Landmarks & Architecture",
+    categoryKey: "img_cat_landmarks",
     governorate: "Tunis / Sidi Bou Saïd",
     yearStr: "c. 1925",
     imageUrl: sidiBouSaid,
@@ -62,6 +68,7 @@ const TUNISIAN_INITIAL_IMAGES: ImageItem[] = [
     id: "img-tn-3",
     title: "Great Mosque of Kairouan & Ancient Minaret",
     category: "Historic Landmarks",
+    categoryKey: "img_cat_historic",
     governorate: "Kairouan",
     yearStr: "c. 1900",
     imageUrl: kairouan,
@@ -72,6 +79,7 @@ const TUNISIAN_INITIAL_IMAGES: ImageItem[] = [
     id: "img-tn-4",
     title: "Roman Amphitheatre of El Jem",
     category: "Ancient Heritage",
+    categoryKey: "img_cat_ancient",
     governorate: "Mahdia / El Jem",
     yearStr: "Historical Monument",
     imageUrl: eljem,
@@ -82,6 +90,7 @@ const TUNISIAN_INITIAL_IMAGES: ImageItem[] = [
     id: "img-tn-5",
     title: "Traditional Domed Djerban Menzel Architecture",
     category: "Regional Heritage",
+    categoryKey: "img_cat_regional",
     governorate: "Médenine / Djerba",
     yearStr: "c. 1930",
     imageUrl: djerba,
@@ -92,6 +101,7 @@ const TUNISIAN_INITIAL_IMAGES: ImageItem[] = [
     id: "img-tn-6",
     title: "Medina of Tunis Ornate Studded Door & Blue Grille",
     category: "Landmarks & Architecture",
+    categoryKey: "img_cat_landmarks",
     governorate: "Tunis",
     yearStr: "c. 1915",
     imageUrl: medina,
@@ -102,7 +112,7 @@ const TUNISIAN_INITIAL_IMAGES: ImageItem[] = [
 
 export default function GalleryImages() {
   const { theme } = useTheme();
-  const { t } = useTranslation();
+  const { t, isRtl } = useTranslation();
 
   const [images, setImages] = useState<ImageItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -118,19 +128,36 @@ export default function GalleryImages() {
         const { data } = await api.get("/gallery");
         const items = Array.isArray(data?.data) ? data.data : Array.isArray(data) ? data : [];
         if (items.length > 0) {
-          setImages(items);
+          const formatted = items.map((it: any) => ({
+            id: it.id,
+            title: it.title || "Archival Image",
+            category: it.category || "Regional Heritage",
+            governorate: it.governorate || it.location || "Tunisia",
+            yearStr: it.year || "",
+            imageUrl: it.imageUrl || it.url || medina,
+            description: it.description || it.caption || "",
+            likes: it.likes || 12,
+          }));
+          setImages([...formatted, ...baseCuratedImages]);
         } else {
-          setImages(TUNISIAN_INITIAL_IMAGES);
+          setImages(baseCuratedImages);
         }
       } catch {
-        setImages(TUNISIAN_INITIAL_IMAGES);
+        setImages(baseCuratedImages);
       } finally {
         setLoading(false);
       }
     })();
   }, []);
 
-  const categories = ["All", "Landmarks & Architecture", "Historic Landmarks", "Family Portraits", "Regional Heritage", "Ancient Heritage"];
+  const categoryOptions = [
+    { key: "All", labelKey: "cat_all" },
+    { key: "Landmarks & Architecture", labelKey: "img_cat_landmarks" },
+    { key: "Historic Landmarks", labelKey: "img_cat_historic" },
+    { key: "Family Portraits", labelKey: "img_cat_portraits" },
+    { key: "Regional Heritage", labelKey: "img_cat_regional" },
+    { key: "Ancient Heritage", labelKey: "img_cat_ancient" },
+  ];
 
   const filteredImages = useMemo(() => {
     return images.filter((item) => {
@@ -146,15 +173,17 @@ export default function GalleryImages() {
 
   const toggleLike = (id: number | string) => {
     setImages((prev) =>
-      prev.map((img) =>
-        img.id === id
-          ? {
-              ...img,
-              isLiked: !img.isLiked,
-              likes: img.isLiked ? (img.likes || 0) - 1 : (img.likes || 0) + 1,
-            }
-          : img
-      )
+      prev.map((img) => {
+        if (img.id === id) {
+          const isLiked = !img.isLiked;
+          return {
+            ...img,
+            isLiked,
+            likes: (img.likes || 0) + (isLiked ? 1 : -1),
+          };
+        }
+        return img;
+      })
     );
   };
 
@@ -163,162 +192,190 @@ export default function GalleryImages() {
       hero={
         <div className="space-y-4 text-center">
           <p className="eyebrow text-[var(--gold)] text-shadow-gold tracking-widest font-bold">
-            {t("nav_photos", "Roots Tunisia Photo Gallery")}
+            {t("nav_photos")}
           </p>
           <h1 className="display-xl text-white font-bold hero-title-shadow text-shadow-glow tracking-wide">
-            {t("visual_gallery_title", "Photo & Visual Heritage Gallery")}
+            {t("gallery_teaser_title")}
           </h1>
           <div className="gold-rule mt-4 w-28 mx-auto shadow-lg" />
           <p className="max-w-3xl mx-auto text-base text-slate-100/95 font-medium drop-shadow-md">
-            {t(
-              "visual_gallery_desc",
-              "Discover vintage family portraits, historic urban views of Tunis, Sfax & Sousse, and iconic landmarks across the 24 governorates.",
-            )}
+            {t("gallery_teaser_subtitle")}
           </p>
         </div>
       }
     >
-      <div className="max-w-6xl mx-auto px-4 py-8 space-y-8">
-        {/* Search & Categories */}
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4 pb-4 border-b border-[var(--border)]">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+        {/* Search & Categories Bar */}
+        <div className="surface-card p-4 sm:p-5 rounded-lg border border-[var(--gold)]/35 bg-[var(--card)]/95 shadow-md flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
           <div className="relative w-full md:w-80">
-            <Search className="w-4 h-4 text-[var(--muted-foreground)] absolute start-3 top-2.5" />
+            <Search className="w-4 h-4 text-[var(--muted-foreground)] absolute start-3 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
               type="text"
-              placeholder={t("search_images_placeholder", "Search photos, landmarks, or governorate…")}
+              placeholder={t("search_images_placeholder")}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              className="w-full ps-9 pe-3 py-1.5 text-xs rounded-sm border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] outline-none focus:border-[var(--gold)]"
+              className="w-full ps-9 pe-3 py-2 text-xs rounded-md border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] outline-none focus:border-[var(--gold)]"
             />
           </div>
 
-          <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto">
+          <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto pb-1 scrollbar-thin">
             <Filter className="w-4 h-4 text-[var(--gold)] shrink-0" />
-            {categories.map((cat) => (
+            {categoryOptions.map((catOpt) => (
               <button
-                key={cat}
-                onClick={() => setCategoryFilter(cat)}
-                className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap cursor-pointer transition-all ${
-                  categoryFilter === cat
-                    ? "bg-[var(--primary)] text-white shadow-sm"
+                key={catOpt.key}
+                type="button"
+                onClick={() => setCategoryFilter(catOpt.key)}
+                className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap cursor-pointer transition-all ${
+                  categoryFilter === catOpt.key
+                    ? "bg-[var(--gold)] text-[#1f160f] shadow-sm font-bold"
                     : "bg-[var(--card)] text-[var(--foreground)] border border-[var(--border)] hover:border-[var(--gold)]"
                 }`}
               >
-                {cat}
+                {t(catOpt.labelKey)}
               </button>
             ))}
           </div>
         </div>
 
-        {/* Image Grid */}
+        {/* Images Grid */}
         {loading ? (
           <div className="flex justify-center py-16">
             <div className="w-10 h-10 border-2 border-[var(--gold)] border-t-transparent rounded-full animate-spin" />
           </div>
+        ) : filteredImages.length === 0 ? (
+          <div className="surface-card frame-gold p-12 text-center rounded-lg space-y-4 max-w-xl mx-auto my-8">
+            <Camera className="w-12 h-12 text-[var(--gold)] mx-auto opacity-80" />
+            <h3 className="text-xl font-display font-bold text-[var(--foreground)]">
+              {t("no_records_found")}
+            </h3>
+            <p className="text-sm text-[var(--muted-foreground)]">
+              {t("search_photos_placeholder")}
+            </p>
+          </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 items-stretch">
             {filteredImages.map((img) => (
-              <div
+              <article
                 key={img.id}
-                className="surface-card frame-gold rounded-lg overflow-hidden shadow-md flex flex-col justify-between group hover:-translate-y-1 transition-transform"
+                className="surface-card group overflow-hidden border border-[var(--gold)]/30 hover:border-[var(--gold)] transition-all hover:-translate-y-1 shadow-md flex h-full flex-col justify-between rounded-lg bg-[var(--card)] text-start"
               >
-                <div className="relative aspect-4/3 overflow-hidden bg-[var(--background)]">
-                  <img
-                    src={img.imageUrl}
-                    alt={img.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
-                    <button
-                      onClick={() => setActiveImage(img)}
-                      className="p-2.5 rounded-full bg-black/70 text-white hover:text-[var(--gold)] transition-colors cursor-pointer"
-                    >
-                      <Maximize2 className="w-5 h-5" />
-                    </button>
+                <div>
+                  <div
+                    onClick={() => setActiveImage(img)}
+                    className="relative aspect-[4/3] overflow-hidden bg-[var(--card)] cursor-pointer"
+                  >
+                    <img
+                      src={img.imageUrl}
+                      alt={img.title}
+                      loading="lazy"
+                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-3">
+                      <span className="text-white text-xs font-semibold flex items-center gap-1">
+                        <ZoomIn className="h-3.5 w-3.5 text-[var(--gold)]" />
+                        <span>{t("view_high_res")}</span>
+                      </span>
+                    </div>
+                    {img.yearStr && (
+                      <span className="absolute top-2.5 end-2.5 rounded-sm bg-black/70 px-2 py-0.5 text-[0.65rem] font-bold text-[var(--gold)] backdrop-blur-sm border border-[var(--gold)]/30">
+                        {img.yearStr}
+                      </span>
+                    )}
                   </div>
-                  {img.yearStr && (
-                    <span className="absolute bottom-2 start-2 px-2 py-0.5 rounded-sm bg-black/75 text-[0.65rem] font-mono font-bold text-[var(--gold)]">
-                      {img.yearStr}
+
+                  <div className="p-4">
+                    <h3 className="font-display font-bold text-base text-[var(--foreground)] group-hover:text-[var(--gold)] transition-colors line-clamp-1">
+                      {img.title}
+                    </h3>
+                    <p className="mt-1.5 text-xs text-[var(--muted-foreground)] line-clamp-2 leading-relaxed">
+                      {img.description}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="px-4 pb-4 pt-2 border-t border-[var(--gold)]/15 flex items-center justify-between text-xs">
+                  {img.governorate && (
+                    <span className="font-semibold text-[var(--gold)] flex items-center gap-1 text-[0.68rem] truncate max-w-[150px]">
+                      <MapPin className="h-3 w-3 shrink-0" />
+                      <span className="truncate">{img.governorate}</span>
                     </span>
                   )}
-                </div>
-
-                <div className="p-4 space-y-2">
-                  <div className="flex items-center justify-between text-[0.65rem] font-bold text-[var(--gold)] uppercase">
-                    <span>{img.category}</span>
-                    <span className="flex items-center gap-1 text-[var(--muted-foreground)]">
-                      <MapPin className="w-3 h-3 text-[var(--primary)]" />
-                      {img.governorate}
-                    </span>
-                  </div>
-
-                  <h3 className="text-base font-serif font-bold text-[var(--foreground)] line-clamp-1">
-                    {img.title}
-                  </h3>
-
-                  <p className="text-xs text-[var(--muted-foreground)] line-clamp-2 leading-relaxed">
-                    {img.description}
-                  </p>
-
-                  <div className="pt-2 border-t border-[var(--border)] flex items-center justify-between text-xs">
-                    <button
-                      onClick={() => toggleLike(img.id)}
-                      className={`flex items-center gap-1 font-bold transition-colors cursor-pointer ${
-                        img.isLiked ? "text-[var(--primary)]" : "text-[var(--muted-foreground)] hover:text-[var(--gold)]"
+                  <button
+                    type="button"
+                    onClick={() => toggleLike(img.id)}
+                    className="flex items-center gap-1 text-[var(--muted-foreground)] hover:text-rose-400 transition-colors cursor-pointer text-xs"
+                  >
+                    <Heart
+                      className={`h-3.5 w-3.5 ${
+                        img.isLiked ? "fill-rose-500 text-rose-500" : ""
                       }`}
-                    >
-                      <Heart className={`w-4 h-4 ${img.isLiked ? "fill-current" : ""}`} />
-                      <span>{img.likes || 0}</span>
-                    </button>
-
-                    <button
-                      onClick={() => setActiveImage(img)}
-                      className="text-[0.7rem] font-bold text-[var(--gold)] hover:underline cursor-pointer"
-                    >
-                      View Photo Details →
-                    </button>
-                  </div>
+                    />
+                    <span>{img.likes || 0}</span>
+                  </button>
                 </div>
-              </div>
+              </article>
             ))}
           </div>
         )}
+      </div>
 
-        {/* Lightbox Modal */}
-        {activeImage && (
-          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex items-center justify-center p-4">
-            <div className="surface-card frame-gold p-6 rounded-lg max-w-3xl w-full space-y-4 bg-[var(--card)] shadow-2xl">
-              <div className="flex items-center justify-between border-b border-[var(--border)] pb-3">
-                <div>
-                  <span className="text-[0.65rem] font-bold uppercase text-[var(--gold)]">{activeImage.category}</span>
-                  <h3 className="text-xl font-serif font-bold text-[var(--foreground)]">{activeImage.title}</h3>
-                </div>
-                <button onClick={() => setActiveImage(null)} className="text-[var(--muted-foreground)] hover:text-[var(--foreground)] cursor-pointer">
-                  <X className="w-5 h-5" />
-                </button>
+      {/* Lightbox Modal */}
+      {activeImage && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4 backdrop-blur-sm animate-fade-in"
+          onClick={() => setActiveImage(null)}
+        >
+          <div
+            className="surface-card frame-gold relative max-w-4xl w-full overflow-hidden shadow-2xl p-4 sm:p-6 rounded-xl bg-[var(--card)] text-start"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              aria-label={t("close")}
+              onClick={() => setActiveImage(null)}
+              className="absolute top-3 end-3 rounded-full bg-[var(--background)] p-1.5 text-[var(--foreground)] hover:bg-[var(--gold)]/20 transition-colors cursor-pointer z-10"
+            >
+              <X className="h-5 w-5" />
+            </button>
+
+            <div className="max-h-[60vh] overflow-hidden rounded-lg flex items-center justify-center bg-black/40">
+              <img
+                src={activeImage.imageUrl}
+                alt={activeImage.title}
+                className="max-h-[60vh] max-w-full object-contain rounded"
+              />
+            </div>
+
+            <div className="mt-4 pt-4 border-t border-[var(--gold)]/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h3 className="font-display text-xl sm:text-2xl font-bold text-[var(--foreground)]">
+                  {activeImage.title}
+                </h3>
+                <p className="text-xs sm:text-sm text-[var(--muted-foreground)] mt-1 max-w-2xl leading-relaxed">
+                  {activeImage.description}
+                </p>
+                {activeImage.governorate && (
+                  <p className="text-xs text-[var(--gold)] font-bold mt-1.5 flex items-center gap-1.5">
+                    <MapPin className="h-3.5 w-3.5" />
+                    <span>{activeImage.governorate}</span>
+                    {activeImage.yearStr && <span>• {activeImage.yearStr}</span>}
+                  </p>
+                )}
               </div>
 
-              <div className="overflow-hidden rounded-md border border-[var(--border)] max-h-[60vh] flex items-center justify-center bg-black">
-                <img src={activeImage.imageUrl} alt={activeImage.title} className="max-h-[55vh] object-contain" />
-              </div>
-
-              <div className="space-y-2 text-xs text-[var(--foreground)]">
-                <p className="leading-relaxed text-sm">{activeImage.description}</p>
-                <div className="flex items-center gap-4 font-mono text-[0.7rem] text-[var(--muted-foreground)]">
-                  <span><strong>Governorate:</strong> {activeImage.governorate || "Tunisia"}</span>
-                  <span><strong>Year/Period:</strong> {activeImage.yearStr || "Historical Record"}</span>
-                </div>
-              </div>
-
-              <div className="flex justify-end gap-2 pt-2 border-t border-[var(--border)]">
-                <button onClick={() => setActiveImage(null)} className="btn-base btn-outline-ink text-xs px-4 py-2 cursor-pointer">
-                  Close
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setActiveImage(null)}
+                  className="btn-base btn-outline text-xs py-2 px-4"
+                >
+                  {t("close")}
                 </button>
               </div>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </RootsPageShell>
   );
 }

@@ -121,6 +121,12 @@ export class TreesController {
     @Get('my/trees/:id/gedcom')
     @UseGuards(JwtAuthGuard)
     async downloadMyGedcom(@Param('id', ParseIntPipe) id: number, @Res() res: Response, @Request() req) {
+        const tree = await this.treesService.findOne(id);
+        const roleId = Number(req.user?.role_id ?? req.user?.roleId ?? req.user?.role ?? 0);
+        const isAdmin = roleId === 1 || roleId === 3;
+        if (!isAdmin && Number(tree.user_id) !== Number(req.user.id)) {
+            throw new ForbiddenException('You can only download your own family trees');
+        }
         await this.sendGedcom(id, res);
     }
 

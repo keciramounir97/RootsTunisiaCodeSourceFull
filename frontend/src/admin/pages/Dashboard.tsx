@@ -283,12 +283,14 @@ export default function Dashboard() {
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="font-bold text-base text-gray-900 dark:text-white">Account Quotas ({quotas.tierName || "Basic"} Plan)</h3>
+                <h3 className="font-bold text-base text-gray-900 dark:text-white">
+                  {t("account_quotas", "Account Quotas")} ({quotas.tierName || "Basic"} {t("plan", "Plan")})
+                </h3>
               </div>
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                Trees: <b>{quotas.limits?.trees?.used} / {quotas.limits?.trees?.max === -1 ? "∞" : quotas.limits?.trees?.max}</b> ·
-                Individuals: <b>{quotas.limits?.individuals?.used} / {quotas.limits?.individuals?.max === -1 ? "∞" : quotas.limits?.individuals?.max}</b> ·
-                Gallery: <b>{quotas.limits?.gallery?.used} / {quotas.limits?.gallery?.max === -1 ? "∞" : quotas.limits?.gallery?.max}</b>
+                {t("trees", "Trees")}: <b>{quotas.limits?.trees?.used} / {quotas.limits?.trees?.max === -1 ? "∞" : quotas.limits?.trees?.max}</b> ·{" "}
+                {t("individuals", "Individuals")}: <b>{quotas.limits?.individuals?.used} / {quotas.limits?.individuals?.max === -1 ? "∞" : quotas.limits?.individuals?.max}</b> ·{" "}
+                {t("gallery", "Gallery")}: <b>{quotas.limits?.gallery?.used} / {quotas.limits?.gallery?.max === -1 ? "∞" : quotas.limits?.gallery?.max}</b>
               </p>
             </div>
           </div>
@@ -298,14 +300,14 @@ export default function Dashboard() {
               to="/admin/usage"
               className="px-4 py-2 rounded-xl border border-[var(--border-color)] text-xs font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
             >
-              View Full Quotas
+              {t("view_full_quotas", "View Full Quotas")}
             </Link>
             <Link
               to="/admin/user-upgrade"
               className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#d9a441] to-[#e8c377] text-[#092C2B] font-bold text-xs flex items-center gap-1 shadow hover:shadow-md transition-all"
             >
               <Crown className="w-3.5 h-3.5" />
-              <span>Upgrade</span>
+              <span>{t("upgrade", "Upgrade")}</span>
             </Link>
           </div>
         </section>
@@ -330,7 +332,7 @@ export default function Dashboard() {
           <div className="easy-card-header flex items-center justify-between">
             <div>
               <p className="roots-eyebrow">{t("recent_activity", "Recent Activity")}</p>
-              <h2>{t("latest_updates", "Tableau de Bord Activity")}</h2>
+              <h2>{t("latest_updates", "آخر التحديثات وسجل النشاط")}</h2>
             </div>
             <div className="flex items-center gap-2">
               <button
@@ -344,7 +346,7 @@ export default function Dashboard() {
                 }`}
               >
                 <Power className="w-3.5 h-3.5" />
-                <span>Log: {loggingEnabled ? "ON" : "OFF"}</span>
+                <span>{t("log_status", "Log:")} {loggingEnabled ? t("on_status", "ON") : t("off_status", "OFF")}</span>
               </button>
               <button
                 className="easy-icon-button"
@@ -359,7 +361,7 @@ export default function Dashboard() {
 
           {!loggingEnabled ? (
             <div className="easy-empty text-xs text-gray-500 py-8">
-              Activity logging is currently turned <b className="text-gray-800 dark:text-gray-200">OFF</b> for your account. Turn it ON to resume tracking.
+              {t("activity_logging_off_notice", "Activity logging is currently turned OFF for your account. Turn it ON to resume tracking.")}
             </div>
           ) : loading ? (
             <div className="easy-empty">{t("loading", "Loading...")}</div>

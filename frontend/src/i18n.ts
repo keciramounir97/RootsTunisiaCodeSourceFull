@@ -15,12 +15,11 @@ export function useLanguage() {
       { code: "es", name: "Español", dir: "ltr" },
       { code: "it", name: "Italiano", dir: "ltr" },
       { code: "mt", name: "Malti", dir: "ltr" },
-      { code: "eo", name: "Esperanto", dir: "ltr" },
     ] as const,
   };
 }
 
-export type LanguageCode = "en" | "fr" | "ar" | "es" | "it" | "mt" | "eo";
+export type LanguageCode = "en" | "fr" | "ar" | "es" | "it" | "mt";
 export interface LanguageOption {
   code: LanguageCode;
   name: string;

@@ -1,0 +1,2542 @@
+{
+  "about.tsx": {
+    "missingArKeys": [],
+    "latinFallbacksInT": [
+      {
+        "key": "about_carthage_title",
+        "fallback": "Carthage"
+      },
+      {
+        "key": "about_carthage_body",
+        "fallback": "Punic stelae, Roman Africa proconsularis, and the Byrsa hill remain the oldest onomastic layer of Tunisian genealogy — names, places, and Mediterranean crossings that still echo in family memory."
+      },
+      {
+        "key": "about_kairouan_title",
+        "fallback": "Kairouan"
+      },
+      {
+        "key": "about_kairouan_body",
+        "fallback": "The Aghlabid and Fatimid capital preserved nasab chains, waqf deeds, and jurisprudential manuscripts. Kairouan remains a primary key for tracing scholarly and tribal lineages across the Sahel and the interior."
+      },
+      {
+        "key": "about_sijillat_title",
+        "fallback": "Ottoman sijillat"
+      },
+      {
+        "key": "about_sijillat_body",
+        "fallback": "Charaïque court registers, beylical decrees, and majba tax rolls document marriages, inheritances, and habous from Tunis, Sfax, and the medinas. These sijillat are the backbone of pre-colonial pedigree work."
+      },
+      {
+        "key": "about_civil_title",
+        "fallback": "Civil registry"
+      },
+      {
+        "key": "about_civil_body",
+        "fallback": "État civil from 1886 onward, Protectorate cadastre, and republican identity papers connect living families to the older documentary chain — 24 governorates, one indexed research surface."
+      },
+      {
+        "key": "about_seo_title",
+        "fallback": "About Roots Tunisia — Carthage to the civil registry"
+      },
+      {
+        "key": "about_seo_desc",
+        "fallback": "Roots Tunisia preserves Tunisian lineage through Carthage, Kairouan, Ottoman sijillat, civil registry, and the 24 governorates."
+      },
+      {
+        "key": "nav_about",
+        "fallback": "About"
+      },
+      {
+        "key": "about_hero_title",
+        "fallback": "A Tunisian archive of names, places, and periods"
+      },
+      {
+        "key": "about_hero_subtitle",
+        "fallback": "From Punic Carthage and Fatimid Kairouan to Ottoman sijillat and modern état civil, Roots Tunisia holds family evidence across twenty-four governorates."
+      },
+      {
+        "key": "nav_research",
+        "fallback": "Research"
+      },
+      {
+        "key": "nav_articles",
+        "fallback": "Articles"
+      },
+      {
+        "key": "about_mission_eyebrow",
+        "fallback": "The platform"
+      },
+      {
+        "key": "about_mission_title",
+        "fallback": "Why Tunisian genealogy needs its own house"
+      },
+      {
+        "key": "about_mission_intro",
+        "fallback": "Tunisian families are documented in more than one script, court, and language. A pedigree may begin with a CIN extract in Sousse, pass through a Tunis qadi sijill, and rest on a habous deed in Kairouan. Roots Tunisia keeps those layers together."
+      },
+      {
+        "key": "about_kairouan_title",
+        "fallback": "Kairouan"
+      },
+      {
+        "key": "about_kairouan_eyebrow",
+        "fallback": "The fourth holy city"
+      },
+      {
+        "key": "about_kairouan_panel_title",
+        "fallback": "Nasab, waqf, and the Great Mosque"
+      },
+      {
+        "key": "about_kairouan_panel_intro",
+        "fallback": "Kairouan’s manuscript culture and pious endowments are not decoration. They are how families recorded descent, property, and scholarship from the Aghlabids through the Hafsids."
+      },
+      {
+        "key": "about_sijillat_eyebrow",
+        "fallback": "Courts and beys"
+      },
+      {
+        "key": "about_sijillat_panel_title",
+        "fallback": "Ottoman and beylical registers"
+      },
+      {
+        "key": "about_sijillat_panel_intro",
+        "fallback": "Sijillat from charaïque courts, beylical chancery, and majba rolls name spouses, witnesses, neighbourhoods, and estates. They sit beside Protectorate état civil rather than beneath it."
+      },
+      {
+        "key": "about_habous_title",
+        "fallback": "Habous deeds"
+      },
+      {
+        "key": "about_habous_body",
+        "fallback": "Pious endowments tying families to olive groves, fondouks, and medina houses."
+      },
+      {
+        "key": "about_etat_civil_title",
+        "fallback": "État civil"
+      },
+      {
+        "key": "about_etat_civil_body",
+        "fallback": "Birth, marriage, and death registers from 1886, indexed by governorate."
+      },
+      {
+        "key": "about_sijillat_title",
+        "fallback": "Ottoman sijillat"
+      },
+      {
+        "key": "about_map_eyebrow",
+        "fallback": "Territory"
+      },
+      {
+        "key": "about_map_title",
+        "fallback": "Twenty-four governorates"
+      },
+      {
+        "key": "about_map_intro",
+        "fallback": "Click a region to read its archival holdings and notable lineages — from Carthage and the Cap Bon to Djerba, the Djérid, and the northwest."
+      },
+      {
+        "key": "about_medina_alt",
+        "fallback": "Medina of Tunis"
+      },
+      {
+        "key": "site_title",
+        "fallback": "Roots Tunisia"
+      },
+      {
+        "key": "about_cta_title",
+        "fallback": "Begin with a name, a governorate, or a register"
+      },
+      {
+        "key": "nav_research",
+        "fallback": "Research"
+      },
+      {
+        "key": "nav_contact",
+        "fallback": "Contact"
+      }
+    ],
+    "hardcodedAttributes": [],
+    "hardcodedJsxText": [],
+    "potentialHardcodedArrays": []
+  },
+  "articles.tsx": {
+    "missingArKeys": [],
+    "latinFallbacksInT": [
+      {
+        "key": "member",
+        "fallback": "Member"
+      },
+      {
+        "key": "articles_load_failed",
+        "fallback": "Could not load articles."
+      },
+      {
+        "key": "you",
+        "fallback": "You"
+      },
+      {
+        "key": "post_publish_failed",
+        "fallback": "Could not publish the article."
+      },
+      {
+        "key": "login_to_publish_post",
+        "fallback": "Please log in to publish."
+      },
+      {
+        "key": "articles_guest_name",
+        "fallback": "Guest"
+      },
+      {
+        "key": "articles_seo_title",
+        "fallback": "Articles — Roots Tunisia"
+      },
+      {
+        "key": "articles_seo_desc",
+        "fallback": "Read and share Tunisian genealogy findings: civil registry, Ottoman sijillat, Kairouan nasab, and governorate histories."
+      },
+      {
+        "key": "nav_articles",
+        "fallback": "Articles"
+      },
+      {
+        "key": "articles_hero_title",
+        "fallback": "Tunisian lineage, written in the open"
+      },
+      {
+        "key": "articles_hero_subtitle",
+        "fallback": "Discoveries from état civil, sijillat, habous, and family memory — indexed for researchers across twenty-four governorates."
+      },
+      {
+        "key": "articles_community_feed",
+        "fallback": "Community feed"
+      },
+      {
+        "key": "nav_research",
+        "fallback": "Research"
+      },
+      {
+        "key": "articles_sort_latest",
+        "fallback": "Latest"
+      },
+      {
+        "key": "articles_sort_likes",
+        "fallback": "Most liked"
+      },
+      {
+        "key": "articles_sort_comments",
+        "fallback": "Most commented"
+      },
+      {
+        "key": "articles_search",
+        "fallback": "Search articles…"
+      },
+      {
+        "key": "articles_cat_all",
+        "fallback": "All"
+      },
+      {
+        "key": "articles_compose_title",
+        "fallback": "Publish a finding"
+      },
+      {
+        "key": "articles_title_placeholder",
+        "fallback": "Title"
+      },
+      {
+        "key": "articles_category_placeholder",
+        "fallback": "Category (civil registry, sijillat, governorate…)"
+      },
+      {
+        "key": "articles_compose_hint",
+        "fallback": "What did you find in a Tunisian register, nasab, or family paper?"
+      },
+      {
+        "key": "posting",
+        "fallback": "Publishing…"
+      },
+      {
+        "key": "articles_publish",
+        "fallback": "Publish"
+      },
+      {
+        "key": "articles_login_hint",
+        "fallback": "Sign in to publish. Everyone can read, like, and comment."
+      },
+      {
+        "key": "nav_login",
+        "fallback": "Sign In"
+      },
+      {
+        "key": "loading",
+        "fallback": "Loading archives…"
+      },
+      {
+        "key": "articles_empty",
+        "fallback": "No articles yet — be the first to publish."
+      },
+      {
+        "key": "article_image",
+        "fallback": "Article image"
+      },
+      {
+        "key": "likes",
+        "fallback": "likes"
+      },
+      {
+        "key": "articles_comments",
+        "fallback": "Comments"
+      },
+      {
+        "key": "articles_read_more",
+        "fallback": "Read more"
+      },
+      {
+        "key": "articles_reply",
+        "fallback": "Reply"
+      }
+    ],
+    "hardcodedAttributes": [],
+    "hardcodedJsxText": [],
+    "potentialHardcodedArrays": []
+  },
+  "audio.tsx": {
+    "missingArKeys": [],
+    "latinFallbacksInT": [
+      {
+        "key": "oral_histories_eyebrow",
+        "fallback": "Oral Histories"
+      },
+      {
+        "key": "voices_before_they_disappear",
+        "fallback": "Voices Before They Disappear"
+      },
+      {
+        "key": "voices_before_they_disappear_desc",
+        "fallback": "Interviews, songs, recitations and dialect memories recorded across Tunisia and the diaspora, each linked to the family and place it documents."
+      },
+      {
+        "key": "access_audio_archives",
+        "fallback": "Access Audio Archives"
+      },
+      {
+        "key": "submit_a_recording",
+        "fallback": "Submit a Recording"
+      },
+      {
+        "key": "audio_memory_eyebrow",
+        "fallback": "Audio Memory"
+      },
+      {
+        "key": "recorded_testimony_title",
+        "fallback": "Recorded testimony from across Tunisia"
+      },
+      {
+        "key": "recorded_testimony_intro",
+        "fallback": "Every recording is transcribed, tagged by governorate and period, and attached to the tree branches it supports."
+      },
+      {
+        "key": "pause_audio",
+        "fallback": "Pause audio"
+      },
+      {
+        "key": "play_audio",
+        "fallback": "Play audio"
+      }
+    ],
+    "hardcodedAttributes": [],
+    "hardcodedJsxText": [],
+    "potentialHardcodedArrays": []
+  },
+  "contactUs.tsx": {
+    "missingArKeys": [],
+    "latinFallbacksInT": [
+      {
+        "key": "message_sent_success",
+        "fallback": "Your message has been sent successfully to devteam@rootstunisia.com! A researcher will respond soon."
+      },
+      {
+        "key": "message_send_failed",
+        "fallback": "Failed to send message. Please try again later."
+      },
+      {
+        "key": "message_sent_title",
+        "fallback": "Message Sent!"
+      },
+      {
+        "key": "transmission_error",
+        "fallback": "Transmission Error"
+      },
+      {
+        "key": "close",
+        "fallback": "Close"
+      },
+      {
+        "key": "contact_eyebrow",
+        "fallback": "Contact"
+      },
+      {
+        "key": "contact_hero_title",
+        "fallback": "Talk to the Roots Tunisia Team"
+      },
+      {
+        "key": "contact_hero_subtitle",
+        "fallback": "Research questions, archive partnerships, script translation, or institutional access — write to us and a Tunisian researcher will reply."
+      },
+      {
+        "key": "send_a_message",
+        "fallback": "Send a message"
+      },
+      {
+        "key": "how_can_we_help",
+        "fallback": "How can we help?"
+      },
+      {
+        "key": "full_name",
+        "fallback": "Full name"
+      },
+      {
+        "key": "placeholder_name",
+        "fallback": "Amel Ben Salah"
+      },
+      {
+        "key": "email",
+        "fallback": "Email"
+      },
+      {
+        "key": "placeholder_email",
+        "fallback": "you@example.tn"
+      },
+      {
+        "key": "message",
+        "fallback": "Message"
+      },
+      {
+        "key": "placeholder_contact_msg",
+        "fallback": "Describe the family, places and documents you already have…"
+      },
+      {
+        "key": "contact_consent_text",
+        "fallback": "I consent to Roots Tunisia processing my name and email address solely to respond to this research inquiry, in accordance with the"
+      },
+      {
+        "key": "privacy_policy_link",
+        "fallback": "Privacy Policy"
+      },
+      {
+        "key": "sending",
+        "fallback": "Sending…"
+      },
+      {
+        "key": "send_message",
+        "fallback": "Send message"
+      },
+      {
+        "key": "direct_contact",
+        "fallback": "Direct Contact"
+      },
+      {
+        "key": "direct_contact_desc",
+        "fallback": "Our editorial and research team is based in the heart of Tunis."
+      },
+      {
+        "key": "address_val",
+        "fallback": "Rue de la Kasbah, Medina of Tunis, Tunisia"
+      },
+      {
+        "key": "working_hours",
+        "fallback": "Monday – Friday · 09:00 – 17:00 (GMT+1)"
+      },
+      {
+        "key": "archive_partnerships",
+        "fallback": "Archive Partnerships"
+      },
+      {
+        "key": "archive_partnerships_desc",
+        "fallback": "Are you an institution, municipality or private collector with Tunisian manuscripts, photos or deeds? We offer non-destructive digitization and indexing partnerships."
+      }
+    ],
+    "hardcodedAttributes": [],
+    "hardcodedJsxText": [],
+    "potentialHardcodedArrays": []
+  },
+  "cookies.tsx": {
+    "missingArKeys": [],
+    "latinFallbacksInT": [
+      {
+        "key": "cookie_policy",
+        "fallback": "Cookie Policy"
+      },
+      {
+        "key": "cookies_seo_desc",
+        "fallback": "Cookie policy and session storage practices on Roots Tunisia."
+      },
+      {
+        "key": "cookies_eyebrow",
+        "fallback": "Cookies & Preferences"
+      },
+      {
+        "key": "cookie_policy",
+        "fallback": "Cookie Policy"
+      },
+      {
+        "key": "legal_updated",
+        "fallback": "Last updated: March 2026 · Tunis, Tunisia"
+      },
+      {
+        "key": "cookies_intro",
+        "fallback": "Roots Tunisia uses minimal, privacy-first cookies and local storage tokens exclusively to manage user authentication sessions and remember your language and theme preferences."
+      },
+      {
+        "key": "cookies_s1_title",
+        "fallback": "1. Essential Cookies"
+      },
+      {
+        "key": "cookies_s1_body",
+        "fallback": "Authentication tokens (JWT) and session cookies enable secure access to your private family trees, notes, and admin dashboards."
+      },
+      {
+        "key": "cookies_s2_title",
+        "fallback": "2. Preference Storage"
+      },
+      {
+        "key": "cookies_s2_body",
+        "fallback": "Local storage remembers your chosen language (English, French, Arabic, Spanish, Italian, Maltese, Esperanto) and dark/parchment theme mode."
+      }
+    ],
+    "hardcodedAttributes": [],
+    "hardcodedJsxText": [],
+    "potentialHardcodedArrays": []
+  },
+  "error.tsx": {
+    "missingArKeys": [],
+    "latinFallbacksInT": [
+      {
+        "key": "error_home",
+        "fallback": "Return to Home"
+      },
+      {
+        "key": "retry_connection",
+        "fallback": "Retry Connection"
+      },
+      {
+        "key": "error_back",
+        "fallback": "Go Back"
+      },
+      {
+        "key": "contact_support",
+        "fallback": "Contact Support"
+      },
+      {
+        "key": "need_archival_assistance",
+        "fallback": "Need assistance finding archival records?"
+      },
+      {
+        "key": "error_follow_citation_prefix",
+        "fallback": "If you followed a citation or link from an external genealogy document, visit our"
+      },
+      {
+        "key": "general_search",
+        "fallback": "General Search"
+      },
+      {
+        "key": "or_message_support_prefix",
+        "fallback": "or message our genealogical support desk via the"
+      },
+      {
+        "key": "contact_page",
+        "fallback": "Contact Page"
+      }
+    ],
+    "hardcodedAttributes": [],
+    "hardcodedJsxText": [],
+    "potentialHardcodedArrays": []
+  },
+  "Gallery.tsx": {
+    "missingArKeys": [],
+    "latinFallbacksInT": [
+      {
+        "key": "nav_photos",
+        "fallback": "Photo & Visual Gallery"
+      },
+      {
+        "key": "gallery_teaser_title",
+        "fallback": "Tunisian Visual Heritage"
+      },
+      {
+        "key": "gallery_teaser_subtitle",
+        "fallback": "Historical photographs, court deeds, and family archives preserving the visual memory of Tunisia."
+      },
+      {
+        "key": "nav_photos",
+        "fallback": "Photos"
+      },
+      {
+        "key": "nav_trees",
+        "fallback": "Family Trees"
+      },
+      {
+        "key": "nav_library",
+        "fallback": "Books & Manuscripts"
+      },
+      {
+        "key": "nav_audios",
+        "fallback": "Audio Memories"
+      },
+      {
+        "key": "nav_documents",
+        "fallback": "Documents & Sijillat"
+      },
+      {
+        "key": "search_photos_placeholder",
+        "fallback": "Search photographs by city, governorate, topic or period…"
+      },
+      {
+        "key": "clear",
+        "fallback": "Clear"
+      },
+      {
+        "key": "manage_upload_photos",
+        "fallback": "Manage & Upload Photos"
+      },
+      {
+        "key": "nav_gallery",
+        "fallback": "Gallery"
+      },
+      {
+        "key": "places_documents_portraits",
+        "fallback": "Places, documents and portraits"
+      },
+      {
+        "key": "gallery_intro_stored",
+        "fallback": "Images are stored with captions, dates, locations and the family or record they belong to."
+      },
+      {
+        "key": "view_high_res",
+        "fallback": "View High-Res"
+      },
+      {
+        "key": "archival_image",
+        "fallback": "Archival Image"
+      },
+      {
+        "key": "location_label",
+        "fallback": "Location:"
+      },
+      {
+        "key": "date_label",
+        "fallback": "Date:"
+      },
+      {
+        "key": "edit_in_admin",
+        "fallback": "Edit in Admin"
+      }
+    ],
+    "hardcodedAttributes": [],
+    "hardcodedJsxText": [],
+    "potentialHardcodedArrays": []
+  },
+  "GalleryArticles.tsx": {
+    "missingArKeys": [],
+    "latinFallbacksInT": [
+      {
+        "key": "member",
+        "fallback": "Member"
+      },
+      {
+        "key": "you",
+        "fallback": "You"
+      },
+      {
+        "key": "post_publish_failed",
+        "fallback": "Could not publish the post."
+      },
+      {
+        "key": "login_to_publish_post",
+        "fallback": "Please log in to publish a post."
+      },
+      {
+        "key": "you",
+        "fallback": "You"
+      },
+      {
+        "key": "gallery_articles_seo_title",
+        "fallback": "Heritage stories — Roots Tunisia"
+      },
+      {
+        "key": "gallery_articles_seo_desc",
+        "fallback": "Share Tunisian family stories, archival finds, and photographs with the Roots Tunisia community."
+      },
+      {
+        "key": "community",
+        "fallback": "Community"
+      },
+      {
+        "key": "articles_feed",
+        "fallback": "Heritage stories"
+      },
+      {
+        "key": "articles_intro",
+        "fallback": "Share family discoveries, sijillat notes, and photographs from Carthage to Djerba."
+      },
+      {
+        "key": "user",
+        "fallback": "User"
+      },
+      {
+        "key": "share_story",
+        "fallback": "Share your family story..."
+      },
+      {
+        "key": "articles_compose_title",
+        "fallback": "Publish a finding"
+      },
+      {
+        "key": "cancel",
+        "fallback": "Cancel"
+      },
+      {
+        "key": "articles_category_placeholder",
+        "fallback": "Category (civil registry, sijillat, governorate…)"
+      },
+      {
+        "key": "share_story",
+        "fallback": "Share your family story..."
+      },
+      {
+        "key": "image_url",
+        "fallback": "Image URL"
+      },
+      {
+        "key": "public",
+        "fallback": "Public"
+      },
+      {
+        "key": "community",
+        "fallback": "Community"
+      },
+      {
+        "key": "private",
+        "fallback": "Private"
+      },
+      {
+        "key": "posting",
+        "fallback": "Publishing…"
+      },
+      {
+        "key": "articles_publish",
+        "fallback": "Publish"
+      },
+      {
+        "key": "articles_empty",
+        "fallback": "No articles yet — be the first to publish."
+      },
+      {
+        "key": "post_image",
+        "fallback": "Post image"
+      },
+      {
+        "key": "post_image",
+        "fallback": "Post image"
+      },
+      {
+        "key": "articles_reply",
+        "fallback": "Reply"
+      }
+    ],
+    "hardcodedAttributes": [],
+    "hardcodedJsxText": [],
+    "potentialHardcodedArrays": []
+  },
+  "GalleryAudios.tsx": {
+    "missingArKeys": [],
+    "latinFallbacksInT": [
+      {
+        "key": "audio_gallery_eyebrow",
+        "fallback": "Roots Tunisia Audio Archives"
+      },
+      {
+        "key": "nav_audios",
+        "fallback": "Oral Histories & Audio Recordings"
+      },
+      {
+        "key": "audio_gallery_desc",
+        "fallback": "Listen to oral memories, Andalusian Malouf pedigree songs, elders"
+      },
+      {
+        "key": "all_categories",
+        "fallback": "All Categories"
+      },
+      {
+        "key": "oral_history",
+        "fallback": "Oral History"
+      },
+      {
+        "key": "music_heritage",
+        "fallback": "Music Heritage"
+      },
+      {
+        "key": "dialect_culture",
+        "fallback": "Dialect & Culture"
+      },
+      {
+        "key": "upload_audio",
+        "fallback": "Contribute Audio Record"
+      },
+      {
+        "key": "pause",
+        "fallback": "Pause"
+      },
+      {
+        "key": "listen",
+        "fallback": "Listen"
+      },
+      {
+        "key": "upload_audio_title",
+        "fallback": "Submit Audio Record or Interview"
+      },
+      {
+        "key": "audio_title",
+        "fallback": "Recording Title"
+      },
+      {
+        "key": "placeholder_audio_title",
+        "fallback": "e.g. Oral Testimony of Haj Ahmed from Sousse"
+      },
+      {
+        "key": "category",
+        "fallback": "Category"
+      },
+      {
+        "key": "cat_oral_history",
+        "fallback": "Oral History"
+      },
+      {
+        "key": "cat_music_heritage",
+        "fallback": "Music Heritage"
+      },
+      {
+        "key": "cat_dialect_culture",
+        "fallback": "Dialect & Culture"
+      },
+      {
+        "key": "governorate",
+        "fallback": "Governorate"
+      },
+      {
+        "key": "placeholder_gov_example",
+        "fallback": "e.g. Tunis, Kairouan, Sfax"
+      },
+      {
+        "key": "audio_file_url_path",
+        "fallback": "Audio File URL / Path"
+      },
+      {
+        "key": "placeholder_audio_url",
+        "fallback": "https://... or audio file URL"
+      },
+      {
+        "key": "description_context",
+        "fallback": "Description & Context"
+      },
+      {
+        "key": "placeholder_audio_desc_context",
+        "fallback": "Provide details about the speaker, period, or lineage referenced..."
+      },
+      {
+        "key": "cancel",
+        "fallback": "Cancel"
+      },
+      {
+        "key": "submit_audio",
+        "fallback": "Submit Audio"
+      }
+    ],
+    "hardcodedAttributes": [],
+    "hardcodedJsxText": [],
+    "potentialHardcodedArrays": []
+  },
+  "GalleryBooks.tsx": {
+    "missingArKeys": [
+      {
+        "key": "pages_count"
+      },
+      {
+        "key": "manuscript_tag"
+      }
+    ],
+    "latinFallbacksInT": [
+      {
+        "key": "nav_library",
+        "fallback": "Roots Tunisia Digital Library"
+      },
+      {
+        "key": "library_title",
+        "fallback": "Manuscripts & Heritage Books"
+      },
+      {
+        "key": "library_desc",
+        "fallback": "Access digitized Tunisian manuscripts, Beylical chronicles, Charaïques court registers, and Andalusian family waqf deeds."
+      },
+      {
+        "key": "search_books_placeholder",
+        "fallback": "Search title, author, or archive ref…"
+      },
+      {
+        "key": "view_manuscript",
+        "fallback": "Read Register"
+      },
+      {
+        "key": "archival_summary_note",
+        "fallback": "Archival Summary & Record Note"
+      },
+      {
+        "key": "archive_reference",
+        "fallback": "Archive Reference:"
+      },
+      {
+        "key": "national_archives_tunisia",
+        "fallback": "Archives Nationales de Tunisie"
+      },
+      {
+        "key": "period",
+        "fallback": "Period:"
+      },
+      {
+        "key": "beylical_era",
+        "fallback": "Beylical Era"
+      },
+      {
+        "key": "access_tier",
+        "fallback": "Access Tier:"
+      },
+      {
+        "key": "full_digital_index_avail",
+        "fallback": "Full Digital Index Available"
+      },
+      {
+        "key": "close",
+        "fallback": "Close"
+      },
+      {
+        "key": "request_full_pdf",
+        "fallback": "Request Full PDF"
+      }
+    ],
+    "hardcodedAttributes": [],
+    "hardcodedJsxText": [],
+    "potentialHardcodedArrays": []
+  },
+  "GalleryDocuments.tsx": {
+    "missingArKeys": [],
+    "latinFallbacksInT": [
+      {
+        "key": "nav_documents",
+        "fallback": "Roots Tunisia Legal & Archival Records"
+      },
+      {
+        "key": "gallery_docs_title",
+        "fallback": "Historical Documents & Civil Extracts"
+      },
+      {
+        "key": "gallery_docs_desc",
+        "fallback": "Search digitized Beylical sijillat, habous property deeds, Ottoman decrees, and Protectorate civil extracts from the Archives Nationales de Tunisie."
+      },
+      {
+        "key": "view_document",
+        "fallback": "Inspect Document Details"
+      },
+      {
+        "key": "document_summary",
+        "fallback": "Document Summary"
+      },
+      {
+        "key": "governorate",
+        "fallback": "Governorate:"
+      },
+      {
+        "key": "date_or_period",
+        "fallback": "Date / Period:"
+      },
+      {
+        "key": "archival_fonds",
+        "fallback": "Archival Fonds:"
+      },
+      {
+        "key": "close",
+        "fallback": "Close"
+      },
+      {
+        "key": "request_full_copy",
+        "fallback": "Request Full Copy"
+      }
+    ],
+    "hardcodedAttributes": [],
+    "hardcodedJsxText": [],
+    "potentialHardcodedArrays": []
+  },
+  "GalleryImages.tsx": {
+    "missingArKeys": [
+      {
+        "key": "year_period_label",
+        "fallback": "Year/Period:"
+      },
+      {
+        "key": "historical_record"
+      }
+    ],
+    "latinFallbacksInT": [
+      {
+        "key": "nav_photos",
+        "fallback": "Roots Tunisia Photo Gallery"
+      },
+      {
+        "key": "visual_gallery_title",
+        "fallback": "Photo & Visual Heritage Gallery"
+      },
+      {
+        "key": "visual_gallery_desc",
+        "fallback": "Discover vintage family portraits, historic urban views of Tunis, Sfax & Sousse, and iconic landmarks across the 24 governorates."
+      },
+      {
+        "key": "governorate_label",
+        "fallback": "Governorate:"
+      },
+      {
+        "key": "year_period_label",
+        "fallback": "Year/Period:"
+      },
+      {
+        "key": "close",
+        "fallback": "Close"
+      }
+    ],
+    "hardcodedAttributes": [],
+    "hardcodedJsxText": [],
+    "potentialHardcodedArrays": []
+  },
+  "GalleryTrees.tsx": {
+    "missingArKeys": [
+      {
+        "key": "open_tree_builder",
+        "issue": "ar.json value contains latin: فتح محرر الأشجار (Tree Builder)"
+      }
+    ],
+    "latinFallbacksInT": [
+      {
+        "key": "nav_trees",
+        "fallback": "Roots Tunisia Pedigrees"
+      },
+      {
+        "key": "family_trees_title",
+        "fallback": "Family Trees & Pedigrees Gallery"
+      },
+      {
+        "key": "family_trees_desc",
+        "fallback": "Explore multi-generational family trees, GEDCOM datasets, and noble lineage records across the 24 governorates of Tunisia."
+      },
+      {
+        "key": "gedcom_standard",
+        "fallback": "GEDCOM 5.5.1"
+      },
+      {
+        "key": "recently_updated",
+        "fallback": "Mis à jour récemment"
+      }
+    ],
+    "hardcodedAttributes": [],
+    "hardcodedJsxText": [],
+    "potentialHardcodedArrays": []
+  },
+  "genealogy-gallery.tsx": {
+    "missingArKeys": [],
+    "latinFallbacksInT": [
+      {
+        "key": "no_gedcom_available",
+        "fallback": "No GEDCOM file available yet."
+      },
+      {
+        "key": "gedcom_no_people",
+        "fallback": "No individuals found in GEDCOM."
+      },
+      {
+        "key": "tree_builder_error",
+        "fallback": "Failed to load tree."
+      },
+      {
+        "key": "nav_genealogy_gallery",
+        "fallback": "Genealogy Gallery"
+      },
+      {
+        "key": "genealogy_gallery_title",
+        "fallback": "Tunisian Family Trees"
+      },
+      {
+        "key": "genealogy_gallery_subtitle",
+        "fallback": "Public lineages documented with état civil extracts, charaïque registers, habous deeds and family memory."
+      },
+      {
+        "key": "create_your_tree",
+        "fallback": "Create your tree"
+      },
+      {
+        "key": "upgrade_for_gedcom_export",
+        "fallback": "Upgrade for GEDCOM Export"
+      },
+      {
+        "key": "search_family_name_placeholder",
+        "fallback": "Search family name, tribe, archive or governorate…"
+      },
+      {
+        "key": "family_tree_builder",
+        "fallback": "Family Tree Builder"
+      },
+      {
+        "key": "explore_public_lineages",
+        "fallback": "Explore public Tunisian lineages"
+      },
+      {
+        "key": "explore_public_lineages_intro",
+        "fallback": "Every tree carries its archive source and document code so other researchers can verify, extend or challenge the evidence."
+      },
+      {
+        "key": "user_contributed_lineages",
+        "fallback": "User Contributed Lineages"
+      },
+      {
+        "key": "community_tree",
+        "fallback": "Community Tree"
+      },
+      {
+        "key": "public",
+        "fallback": "Public"
+      },
+      {
+        "key": "community_member",
+        "fallback": "Community Member"
+      },
+      {
+        "key": "default_tree_desc",
+        "fallback": "Tunisian family lineage recorded with verified civil and historical records."
+      },
+      {
+        "key": "archive_source",
+        "fallback": "Archive Source"
+      },
+      {
+        "key": "national_archives_tunisia",
+        "fallback": "Archives Nationales de Tunisie"
+      },
+      {
+        "key": "document_code",
+        "fallback": "Document Code"
+      },
+      {
+        "key": "view_tree",
+        "fallback": "View Tree"
+      },
+      {
+        "key": "gedcom_export",
+        "fallback": "GEDCOM Export"
+      },
+      {
+        "key": "verified_archival_lineages",
+        "fallback": "Verified Archival Lineages"
+      },
+      {
+        "key": "feat_build_trees_title",
+        "fallback": "Build Multi-Generational Trees"
+      },
+      {
+        "key": "feat_build_trees_desc",
+        "fallback": "Connect parents, grandparents, historical ancestors and extended families across Tunisian regions."
+      },
+      {
+        "key": "feat_attach_docs_title",
+        "fallback": "Attach Historical Documents"
+      },
+      {
+        "key": "feat_attach_docs_desc",
+        "fallback": "Upload birth records, marriage contracts, ANT and Protectorate archive scans, manuscripts and more."
+      },
+      {
+        "key": "feat_trace_paths_title",
+        "fallback": "Trace Migration Paths"
+      },
+      {
+        "key": "feat_trace_paths_desc",
+        "fallback": "Follow lineages across Carthage, Kairouan, Tunis, Sfax, Djerba, the Sahel, the Djérid and the diaspora."
+      },
+      {
+        "key": "interactive_tree_viewer",
+        "fallback": "Interactive Tree Viewer"
+      }
+    ],
+    "hardcodedAttributes": [],
+    "hardcodedJsxText": [],
+    "potentialHardcodedArrays": []
+  },
+  "HelpCenter.tsx": {
+    "missingArKeys": [],
+    "latinFallbacksInT": [
+      {
+        "key": "help_cat_getting_started",
+        "fallback": "Getting Started"
+      },
+      {
+        "key": "help_q_create_account",
+        "fallback": "How do I create an account?"
+      },
+      {
+        "key": "help_a_create_account",
+        "fallback": "Click Sign Up in the top navigation, enter your name, email, and password. You"
+      },
+      {
+        "key": "help_q_first_tree",
+        "fallback": "How do I build my first family tree?"
+      },
+      {
+        "key": "help_a_first_tree",
+        "fallback": "From your dashboard, choose \\"
+      },
+      {
+        "key": "help_q_language",
+        "fallback": "Can I use the site in another language?"
+      },
+      {
+        "key": "help_a_language",
+        "fallback": "Yes — use the language switcher in the navigation bar to change between English, French, Arabic, and Spanish at any time."
+      },
+      {
+        "key": "help_cat_trees",
+        "fallback": "Family Trees & GEDCOM"
+      },
+      {
+        "key": "help_q_gedcom_import",
+        "fallback": "What GEDCOM formats can I import?"
+      },
+      {
+        "key": "help_a_gedcom_import",
+        "fallback": "We support GEDCOM 5.5.1, GEDCOM 7.0, and GEDCOM X (XML, JSON, or .gedx). Use the Import GEDCOM button inside the tree builder toolbar and pick the matching format."
+      },
+      {
+        "key": "help_q_view_vs_download",
+        "fallback": "Why can I view a tree but not download it?"
+      },
+      {
+        "key": "help_a_view_vs_download",
+        "fallback": "Viewing a tree you don"
+      },
+      {
+        "key": "help_q_request_download",
+        "fallback": "How do I request to download someone else"
+      },
+      {
+        "key": "help_a_request_download",
+        "fallback": "Open the tree and click \\"
+      },
+      {
+        "key": "help_cat_subscriptions",
+        "fallback": "Subscriptions & Billing"
+      },
+      {
+        "key": "help_q_plans_differ",
+        "fallback": "How do the plans differ?"
+      },
+      {
+        "key": "help_a_plans_differ",
+        "fallback": "Basic is free and covers small trees. Premium and Family Historian unlock unlimited trees, archive uploads, GEDCOM import/export, and priority support. See the Subscriptions page for the full feature list."
+      },
+      {
+        "key": "help_q_how_to_pay",
+        "fallback": "How do I pay for a plan?"
+      },
+      {
+        "key": "help_a_how_to_pay",
+        "fallback": "Choose a plan, then submit a bank transfer using the details shown on the payment page and upload a screenshot of your receipt as proof. Our team reviews and activates it, usually within one business day."
+      },
+      {
+        "key": "help_q_payment_review_time",
+        "fallback": "How long does payment review take?"
+      },
+      {
+        "key": "help_a_payment_review_time",
+        "fallback": "Most submissions are reviewed within 24 hours. You"
+      },
+      {
+        "key": "help_cat_privacy",
+        "fallback": "Privacy & Data"
+      },
+      {
+        "key": "help_q_who_sees_tree",
+        "fallback": "Who can see my family tree?"
+      },
+      {
+        "key": "help_a_who_sees_tree",
+        "fallback": "You control whether a tree is public or private when you create it. Private trees are visible only to you; public trees appear in the gallery for others to view (and request to download, subject to your approval)."
+      },
+      {
+        "key": "help_q_data_rights",
+        "fallback": "What are my data rights?"
+      },
+      {
+        "key": "help_a_data_rights",
+        "fallback": "Our Privacy Policy covers your rights under GDPR (EU/EEA/UK) and US state privacy laws, including access, correction, deletion, and opting out of data sharing. See the Privacy Policy page for full details."
+      },
+      {
+        "key": "help_cat_account",
+        "fallback": "Account & Login"
+      },
+      {
+        "key": "help_q_forgot_password",
+        "fallback": "I forgot my password — what now?"
+      },
+      {
+        "key": "help_a_forgot_password",
+        "fallback": "Click \\"
+      },
+      {
+        "key": "help_q_delete_account",
+        "fallback": "How do I delete my account?"
+      },
+      {
+        "key": "help_a_delete_account",
+        "fallback": "Go to My Profile and submit an account deletion request. A super admin reviews and processes these manually to make sure any shared family trees are handled correctly first."
+      },
+      {
+        "key": "support",
+        "fallback": "Support"
+      },
+      {
+        "key": "help_center",
+        "fallback": "Help Center"
+      },
+      {
+        "key": "help_center_intro",
+        "fallback": "Answers to common questions about building trees, subscriptions, and your account."
+      },
+      {
+        "key": "help_search_placeholder",
+        "fallback": "Search help articles..."
+      },
+      {
+        "key": "help_no_results",
+        "fallback": "No help articles match your search."
+      },
+      {
+        "key": "help_still_need_help",
+        "fallback": "Still need help?"
+      },
+      {
+        "key": "help_contact_intro",
+        "fallback": "Reach out and our team will get back to you."
+      },
+      {
+        "key": "contact_us",
+        "fallback": "Contact Us"
+      }
+    ],
+    "hardcodedAttributes": [],
+    "hardcodedJsxText": [],
+    "potentialHardcodedArrays": []
+  },
+  "home.tsx": {
+    "missingArKeys": [],
+    "latinFallbacksInT": [
+      {
+        "key": "site_badge",
+        "fallback": "Roots Tunisia · جذور تونس"
+      },
+      {
+        "key": "hero_title",
+        "fallback": "Discover Your Tunisian Heritage"
+      },
+      {
+        "key": "hero_subtitle",
+        "fallback": "Tunisian civil records, beylical and Ottoman registers, habous deeds, Protectorate archives, family photographs, oral memory and historical periods — in one research-ready heritage platform."
+      },
+      {
+        "key": "start_exploring",
+        "fallback": "Start Exploring"
+      },
+      {
+        "key": "browse_family_trees",
+        "fallback": "Browse Family Trees"
+      },
+      {
+        "key": "hero_show_slide",
+        "fallback": "Show {label}"
+      },
+      {
+        "key": "site_title",
+        "fallback": "Roots Tunisia"
+      },
+      {
+        "key": "preserve_lineage_title",
+        "fallback": "Preserve Your Family Lineage"
+      },
+      {
+        "key": "preserve_lineage_desc",
+        "fallback": "Connect with your roots, explore historical records, and build a lasting digital legacy for future generations."
+      },
+      {
+        "key": "why_roots_tunisia_eyebrow",
+        "fallback": "Why Roots Tunisia"
+      },
+      {
+        "key": "why_roots_tunisia_title",
+        "fallback": "Tunisian family history needs sources, places and periods together"
+      },
+      {
+        "key": "why_roots_tunisia_intro",
+        "fallback": "Roots Tunisia is built for families who want evidence without losing memory. It connects état civil extracts, charaïque court sijillat, habous deeds, Protectorate files, photographs, cadastral maps and oral testimony."
+      },
+      {
+        "key": "why_roots_tunisia_paragraph_2",
+        "fallback": "A family branch can begin with a modern CIN extract, move into a marriage contract from a Tunis qadi register, connect to a village in the Sahel or the Djérid, and finally sit inside the historical period that produced that record."
+      },
+      {
+        "key": "primary_evidence_title",
+        "fallback": "Primary Evidence"
+      },
+      {
+        "key": "primary_evidence_body",
+        "fallback": "Civil status, sijillat, waqf deeds and ANOM dossiers cited directly on person cards."
+      },
+      {
+        "key": "territorial_depth_title",
+        "fallback": "Territorial Depth"
+      },
+      {
+        "key": "territorial_depth_body",
+        "fallback": "Governorate-level context from Carthage to Djerba, with historical place names."
+      },
+      {
+        "key": "period_context_title",
+        "fallback": "Period Context"
+      },
+      {
+        "key": "period_context_body",
+        "fallback": "Nine eras from Punic antiquity to the contemporary republic to anchor your narrative."
+      },
+      {
+        "key": "medina_door_alt",
+        "fallback": "Medina of Tunis Ornate Studded Door & Blue Grille"
+      },
+      {
+        "key": "research_tools_eyebrow",
+        "fallback": "Research & Preservation Tools"
+      },
+      {
+        "key": "research_tools_title",
+        "fallback": "Everything you need to document a Tunisian family"
+      },
+      {
+        "key": "research_tools_intro",
+        "fallback": "Explore our suite of tools designed to preserve names, oral testimonies, photographs, and historical citations."
+      },
+      {
+        "key": "open_tool",
+        "fallback": "Open tool →"
+      },
+      {
+        "key": "tunisian_timeline_eyebrow",
+        "fallback": "Tunisian Timeline"
+      },
+      {
+        "key": "tunisian_timeline_title",
+        "fallback": "Records Spanning Three Millennia of History"
+      },
+      {
+        "key": "tunisian_timeline_intro",
+        "fallback": "Different eras produced different types of documents. Understanding which records belong to which period is essential for accurate genealogical research."
+      },
+      {
+        "key": "explore_all_9_periods",
+        "fallback": "Explore All 9 Periods in Detail"
+      },
+      {
+        "key": "primary_sources_eyebrow",
+        "fallback": "Primary Sources"
+      },
+      {
+        "key": "digitized_catalogued_records",
+        "fallback": "Digitized and Catalogued Records"
+      },
+      {
+        "key": "digitized_records_intro",
+        "fallback": "Access original documents and indexed records from municipal archives, religious foundations, and state repositories across Tunisia."
+      },
+      {
+        "key": "browse_library",
+        "fallback": "Browse Library"
+      },
+      {
+        "key": "archival_repositories_eyebrow",
+        "fallback": "Archival Repositories"
+      },
+      {
+        "key": "official_archives_title",
+        "fallback": "Official Archives in Tunisia & Abroad"
+      },
+      {
+        "key": "official_archives_intro",
+        "fallback": "Key institutional collections holding genealogical and administrative records for Tunisian families."
+      },
+      {
+        "key": "view_archive_guide",
+        "fallback": "View Archive Guide"
+      },
+      {
+        "key": "genealogical_trees_eyebrow",
+        "fallback": "Genealogical Trees"
+      },
+      {
+        "key": "featured_trees_title",
+        "fallback": "Featured Tunisian Family Trees"
+      },
+      {
+        "key": "featured_trees_intro",
+        "fallback": "Explore public family lineages documented with archival references, historical documents, and GEDCOM verification."
+      },
+      {
+        "key": "browse_all_family_trees",
+        "fallback": "Browse All Family Trees"
+      },
+      {
+        "key": "visual_heritage",
+        "fallback": "Visual Heritage"
+      },
+      {
+        "key": "tunisia_photo_manuscript",
+        "fallback": "Tunisia in Photographs & Manuscripts"
+      },
+      {
+        "key": "tunisia_photo_desc",
+        "fallback": "Historical photographs, architecture, landscapes, and handwritten documents preserving the visual memory of Tunisia."
+      },
+      {
+        "key": "open_full_photo_gallery",
+        "fallback": "Open Full Photo Gallery"
+      },
+      {
+        "key": "start_your_journey",
+        "fallback": "Start Your Journey"
+      },
+      {
+        "key": "cta_preserve_history",
+        "fallback": "Preserve Your Tunisian Family History Today"
+      },
+      {
+        "key": "cta_desc",
+        "fallback": "Create an account, begin building your family tree, and connect with Tunisian archives, historical records, and living family memory."
+      },
+      {
+        "key": "create_free_account",
+        "fallback": "Create Free Account"
+      },
+      {
+        "key": "view_plans_tiers",
+        "fallback": "View Plans & Tiers"
+      }
+    ],
+    "hardcodedAttributes": [],
+    "hardcodedJsxText": [],
+    "potentialHardcodedArrays": []
+  },
+  "library.tsx": {
+    "missingArKeys": [],
+    "latinFallbacksInT": [
+      {
+        "key": "nav_library",
+        "fallback": "Library"
+      },
+      {
+        "key": "genealogy_library_title",
+        "fallback": "Tunisian Genealogy Library"
+      },
+      {
+        "key": "genealogy_library_subtitle",
+        "fallback": "Digitized books, manuscripts, civil extracts, court registers, deeds and maps — organized so every claim in your tree can carry a citation."
+      },
+      {
+        "key": "get_full_access",
+        "fallback": "Get full access"
+      },
+      {
+        "key": "browse_archive_sources",
+        "fallback": "Browse Archive Sources"
+      },
+      {
+        "key": "search_library_placeholder",
+        "fallback": "Search manuscripts, books, civil registers or author names…"
+      },
+      {
+        "key": "digitized_documents_archive",
+        "fallback": "Digitized Documents in Archive"
+      },
+      {
+        "key": "default_library_desc",
+        "fallback": "Historical Tunisian reference volume and digitized archival record."
+      },
+      {
+        "key": "consult_volume",
+        "fallback": "Consult Volume"
+      },
+      {
+        "key": "collections",
+        "fallback": "Collections"
+      },
+      {
+        "key": "nine_core_collections",
+        "fallback": "Nine core collections for Tunisian research"
+      },
+      {
+        "key": "nine_core_collections_intro",
+        "fallback": "Each collection is indexed by governorate, period and record type, with guidance on what the document can and cannot prove."
+      },
+      {
+        "key": "view_guide",
+        "fallback": "View guide →"
+      }
+    ],
+    "hardcodedAttributes": [],
+    "hardcodedJsxText": [],
+    "potentialHardcodedArrays": []
+  },
+  "login.tsx": {
+    "missingArKeys": [
+      {
+        "key": "placeholder_email_example",
+        "issue": "ar.json value contains latin: you@example.tn"
+      }
+    ],
+    "latinFallbacksInT": [
+      {
+        "key": "login_failed_no_user",
+        "fallback": "Login failed: No user data received"
+      },
+      {
+        "key": "invalid_credentials",
+        "fallback": "Invalid credentials. Please check your email and password."
+      },
+      {
+        "key": "roots_tunisia",
+        "fallback": "Roots Tunisia"
+      },
+      {
+        "key": "login_hero_title",
+        "fallback": "Your lineage is waiting in the registers."
+      },
+      {
+        "key": "login_hero_desc",
+        "fallback": "Connect ancestors across Ottoman sijillat, central état civil, and Mediterranean archival collections."
+      },
+      {
+        "key": "welcome_back",
+        "fallback": "Welcome back"
+      },
+      {
+        "key": "signin_continue_building",
+        "fallback": "Sign in to continue building your Tunisian family tree."
+      },
+      {
+        "key": "email",
+        "fallback": "Email"
+      },
+      {
+        "key": "placeholder_email_example",
+        "fallback": "you@example.tn"
+      },
+      {
+        "key": "password",
+        "fallback": "Password"
+      },
+      {
+        "key": "forgot_password_q",
+        "fallback": "Forgot password?"
+      },
+      {
+        "key": "signing_in",
+        "fallback": "Signing in…"
+      },
+      {
+        "key": "sign_in_account",
+        "fallback": "Sign in to account"
+      },
+      {
+        "key": "new_to_roots_tunisia",
+        "fallback": "New to Roots Tunisia?"
+      },
+      {
+        "key": "create_an_account",
+        "fallback": "Create an account"
+      }
+    ],
+    "hardcodedAttributes": [],
+    "hardcodedJsxText": [],
+    "potentialHardcodedArrays": []
+  },
+  "payment.tsx": {
+    "missingArKeys": [],
+    "latinFallbacksInT": [
+      {
+        "key": "back_to_plans",
+        "fallback": "Back to Plans"
+      },
+      {
+        "key": "subscription_checkout",
+        "fallback": "Subscription Checkout"
+      },
+      {
+        "key": "confirm_your_plan",
+        "fallback": "Confirm Your Plan"
+      },
+      {
+        "key": "selected_plan",
+        "fallback": "Selected Plan"
+      },
+      {
+        "key": "plan",
+        "fallback": "Plan"
+      },
+      {
+        "key": "tnd",
+        "fallback": "TND"
+      },
+      {
+        "key": "monthly_ttc",
+        "fallback": "Monthly · TTC (Toutes Taxes Comprises)"
+      },
+      {
+        "key": "subscription_fee",
+        "fallback": "Subscription Fee:"
+      },
+      {
+        "key": "tnd",
+        "fallback": "TND"
+      },
+      {
+        "key": "hidden_platform_fees",
+        "fallback": "Hidden Platform Fees:"
+      },
+      {
+        "key": "tnd",
+        "fallback": "TND"
+      },
+      {
+        "key": "total_due_today",
+        "fallback": "Total Due Today:"
+      },
+      {
+        "key": "tnd_ttc",
+        "fallback": "TND (TTC)"
+      },
+      {
+        "key": "renews_monthly_notice",
+        "fallback": "Renews monthly at the same rate. You may cancel your subscription at any time with immediate effect from your Account Settings. For eligibility and refund requests, review our"
+      },
+      {
+        "key": "refund_cancellation_policy_link",
+        "fallback": "Refund & Cancellation Policy"
+      },
+      {
+        "key": "bank_proof_reference_optional",
+        "fallback": "Bank Transfer / Proof Reference (Optional)"
+      },
+      {
+        "key": "placeholder_bank_tx_id",
+        "fallback": "Bank transfer transaction ID or reference code"
+      },
+      {
+        "key": "additional_notes",
+        "fallback": "Additional Notes"
+      },
+      {
+        "key": "placeholder_additional_notes",
+        "fallback": "Any special research or invoice instructions…"
+      },
+      {
+        "key": "processing",
+        "fallback": "Processing…"
+      },
+      {
+        "key": "confirm_subscription_btn",
+        "fallback": "Confirm Subscription"
+      },
+      {
+        "key": "tnd",
+        "fallback": "TND"
+      },
+      {
+        "key": "secure_payment_guarantee",
+        "fallback": "Secure payment processing · All prices in Tunisian Dinars (TND) · VAT included"
+      }
+    ],
+    "hardcodedAttributes": [],
+    "hardcodedJsxText": [],
+    "potentialHardcodedArrays": []
+  },
+  "periods.tsx": {
+    "missingArKeys": [],
+    "latinFallbacksInT": [
+      {
+        "key": "tunisian_timeline_eyebrow",
+        "fallback": "Tunisian Timeline"
+      },
+      {
+        "key": "periods_hero_title",
+        "fallback": "Which Records Belong to Which Period?"
+      },
+      {
+        "key": "periods_hero_subtitle",
+        "fallback": "Three thousand years of Tunisian history, read through the documents each era produced — and what a genealogist can realistically expect to find."
+      },
+      {
+        "key": "browse_sources",
+        "fallback": "Browse sources"
+      },
+      {
+        "key": "explore_family_trees",
+        "fallback": "Explore Family Trees"
+      },
+      {
+        "key": "nine_periods_eyebrow",
+        "fallback": "Nine Periods"
+      },
+      {
+        "key": "nine_periods_title",
+        "fallback": "From Carthage to contemporary Tunisia"
+      },
+      {
+        "key": "nine_periods_intro",
+        "fallback": "Explore each historical era to understand how administrative changes, legal systems, and social transformations shaped the survival of genealogical records."
+      },
+      {
+        "key": "primary_records_docs",
+        "fallback": "Primary Records & Documents"
+      },
+      {
+        "key": "genealogical_value_survival",
+        "fallback": "Genealogical Value & Survival"
+      },
+      {
+        "key": "fonds_available_archives",
+        "fallback": "Fonds available at Archives Nationales & regional repositories"
+      },
+      {
+        "key": "consult_sources_era",
+        "fallback": "Consult sources for this era"
+      }
+    ],
+    "hardcodedAttributes": [],
+    "hardcodedJsxText": [],
+    "potentialHardcodedArrays": []
+  },
+  "privacy.tsx": {
+    "missingArKeys": [],
+    "latinFallbacksInT": [
+      {
+        "key": "privacy_policy",
+        "fallback": "Privacy Policy"
+      },
+      {
+        "key": "privacy_seo_desc",
+        "fallback": "Privacy policy and data protection guidelines for Roots Tunisia researchers and families."
+      },
+      {
+        "key": "privacy_eyebrow",
+        "fallback": "Privacy & Protection"
+      },
+      {
+        "key": "privacy_policy",
+        "fallback": "Privacy Policy"
+      },
+      {
+        "key": "legal_updated",
+        "fallback": "Last updated: March 2026 · Tunis, Tunisia"
+      },
+      {
+        "key": "privacy_intro",
+        "fallback": "Roots Tunisia respects the sensitivity of family heritage and genealogical records. We are committed to protecting the privacy of living individuals and securing archival data."
+      },
+      {
+        "key": "privacy_s1_title",
+        "fallback": "1. Protection of Living Individuals"
+      },
+      {
+        "key": "privacy_s1_body",
+        "fallback": "Details concerning living persons (born less than 100 years ago without death records) are automatically privatized by default and hidden from public searches unless explicitly shared by the tree owner."
+      },
+      {
+        "key": "privacy_s2_title",
+        "fallback": "2. Information We Collect"
+      },
+      {
+        "key": "privacy_s2_body",
+        "fallback": "We collect account details (name, email, governorate/region), user-uploaded GEDCOM files, oral history recordings, and research inquiries submitted to our team."
+      },
+      {
+        "key": "privacy_s3_title",
+        "fallback": "3. Data Hosting & Security"
+      },
+      {
+        "key": "privacy_s3_body",
+        "fallback": "All genealogical databases and document stores are encrypted in transit and at rest, adhering to Tunisian data protection regulations and modern cybersecurity standards."
+      }
+    ],
+    "hardcodedAttributes": [],
+    "hardcodedJsxText": [],
+    "potentialHardcodedArrays": []
+  },
+  "refund.tsx": {
+    "missingArKeys": [],
+    "latinFallbacksInT": [
+      {
+        "key": "refund_eyebrow",
+        "fallback": "Consumer Rights & Billing"
+      },
+      {
+        "key": "refund_title",
+        "fallback": "Refund & Cancellation Policy"
+      },
+      {
+        "key": "refund_subtitle",
+        "fallback": "Clear, fair, and transparent billing terms for our Tunisian and international researchers."
+      },
+      {
+        "key": "fair_billing_commitment",
+        "fallback": "Our Fair Billing Commitment"
+      },
+      {
+        "key": "fair_billing_desc",
+        "fallback": "Roots Tunisia is dedicated to transparent, honest pricing. We do not use hidden fees, deceptive cancellation barriers, or unexpected recurring add-ons. You can manage or cancel your subscription at any time."
+      },
+      {
+        "key": "refund_section_1_title",
+        "fallback": "1. Subscription Cancellation"
+      },
+      {
+        "key": "refund_section_1_p1",
+        "fallback": "You may cancel your recurring monthly or annual plan at any time through your User Settings dashboard or by emailing our team at"
+      },
+      {
+        "key": "refund_section_1_p2",
+        "fallback": "Upon cancellation, your subscription access will continue uninterrupted until the end of your current paid billing period. You will not be billed again."
+      },
+      {
+        "key": "refund_section_2_title",
+        "fallback": "2. Statutory 14-Day Cooling-Off Period"
+      },
+      {
+        "key": "refund_section_2_p1",
+        "fallback": "In compliance with international and European consumer protection standards, customers in applicable jurisdictions (including the EU and UK) have the right to withdraw from their initial subscription purchase within 14 calendar days of transaction date for a full refund."
+      },
+      {
+        "key": "refund_section_2_p2",
+        "fallback": "If you activated immediate digital delivery and conducted extensive bulk archival downloads during this window, refunds may be adjusted to account for the service utilized prior to withdrawal."
+      },
+      {
+        "key": "refund_section_3_title",
+        "fallback": "3. Digital Records & One-Time Document Deliveries"
+      },
+      {
+        "key": "refund_section_3_p1",
+        "fallback": "Due to the immediate access nature of high-resolution digital scans, historical certificates, and GEDCOM tree files, one-time document processing fees are non-refundable once the file has been successfully delivered or downloaded, except in cases where:"
+      },
+      {
+        "key": "refund_exception_1",
+        "fallback": "The downloaded file is corrupted, illegible, or unreadable due to technical server defects."
+      },
+      {
+        "key": "refund_exception_2",
+        "fallback": "The wrong archival record was delivered due to our administrative error."
+      },
+      {
+        "key": "refund_section_4_title",
+        "fallback": "4. How to Request a Refund"
+      },
+      {
+        "key": "refund_section_4_p1",
+        "fallback": "To request a refund, submit an email to"
+      },
+      {
+        "key": "refund_section_4_with",
+        "fallback": "with:"
+      },
+      {
+        "key": "refund_req_item_1",
+        "fallback": "Your account email address."
+      },
+      {
+        "key": "refund_req_item_2",
+        "fallback": "Transaction ID or payment reference number."
+      },
+      {
+        "key": "refund_req_item_3",
+        "fallback": "A brief description of why you are requesting a refund."
+      },
+      {
+        "key": "refund_section_4_p2",
+        "fallback": "Refund requests are reviewed within 3 business days. Approved refunds are credited back to your original payment card or bank account within 5 to 10 business days."
+      },
+      {
+        "key": "refund_section_5_title",
+        "fallback": "5. Legal Protections & Consumer Guarantees"
+      },
+      {
+        "key": "refund_section_5_p1",
+        "fallback": "Nothing in this Refund Policy excludes, restricts, or modifies any statutory consumer guarantees or rights granted under Tunisian consumer protection laws (Loi n° 98-40 relative aux techniques de vente et à la publicité) or consumer laws in your home jurisdiction."
+      },
+      {
+        "key": "return_to_terms",
+        "fallback": "Return to Terms of Service"
+      },
+      {
+        "key": "last_updated_date",
+        "fallback": "Last updated: October 2026"
+      }
+    ],
+    "hardcodedAttributes": [],
+    "hardcodedJsxText": [],
+    "potentialHardcodedArrays": []
+  },
+  "Research.tsx": {
+    "missingArKeys": [],
+    "latinFallbacksInT": [
+      {
+        "key": "pedigree_load_failed",
+        "fallback": "Failed to load pedigree data."
+      },
+      {
+        "key": "research_seo_title",
+        "fallback": "Research & Archive Search — Roots Tunisia"
+      },
+      {
+        "key": "research_seo_desc",
+        "fallback": "Search across all digitized Tunisian manuscripts, civil registers, and community family trees."
+      },
+      {
+        "key": "universal_research",
+        "fallback": "Universal Research"
+      },
+      {
+        "key": "search_across_archives",
+        "fallback": "Search Across the Archives"
+      },
+      {
+        "key": "research_subtitle",
+        "fallback": "Search across family names, tribes, ancestral places, digitized books, civil extracts and oral history indices."
+      },
+      {
+        "key": "searching",
+        "fallback": "Searching…"
+      },
+      {
+        "key": "search",
+        "fallback": "Search"
+      },
+      {
+        "key": "family_trees",
+        "fallback": "Family Trees"
+      },
+      {
+        "key": "view_tree",
+        "fallback": "View Tree"
+      },
+      {
+        "key": "digitized_books_docs",
+        "fallback": "Digitized Books & Documents"
+      },
+      {
+        "key": "consult_document",
+        "fallback": "Consult Document"
+      }
+    ],
+    "hardcodedAttributes": [],
+    "hardcodedJsxText": [],
+    "potentialHardcodedArrays": []
+  },
+  "resetpassword.tsx": {
+    "missingArKeys": [
+      {
+        "key": "placeholder_email_example",
+        "issue": "ar.json value contains latin: you@example.tn"
+      }
+    ],
+    "latinFallbacksInT": [
+      {
+        "key": "reset_failed",
+        "fallback": "Password reset request failed. Please try again."
+      },
+      {
+        "key": "verify_failed",
+        "fallback": "Password reset verification failed. Check your code."
+      },
+      {
+        "key": "roots_tunisia",
+        "fallback": "Roots Tunisia"
+      },
+      {
+        "key": "reset_hero_title",
+        "fallback": "Account recovery for researchers and genealogists."
+      },
+      {
+        "key": "reset_hero_desc",
+        "fallback": "Secure access to your family tree pedigrees, uploaded oral histories, and digitized manuscripts."
+      },
+      {
+        "key": "password_reset_complete",
+        "fallback": "Password Reset Complete"
+      },
+      {
+        "key": "password_reset_success_desc",
+        "fallback": "Your password has been updated successfully. You can now log in with your new password."
+      },
+      {
+        "key": "signin_now",
+        "fallback": "Sign In Now"
+      },
+      {
+        "key": "enter_reset_code",
+        "fallback": "Enter Reset Code"
+      },
+      {
+        "key": "reset_code_sent_to",
+        "fallback": "We sent a verification code to"
+      },
+      {
+        "key": "reset_code",
+        "fallback": "Reset Code"
+      },
+      {
+        "key": "six_digit_code",
+        "fallback": "6-DIGIT CODE"
+      },
+      {
+        "key": "new_password",
+        "fallback": "New Password"
+      },
+      {
+        "key": "verifying",
+        "fallback": "Verifying…"
+      },
+      {
+        "key": "reset_password",
+        "fallback": "Reset Password"
+      },
+      {
+        "key": "change_email_address",
+        "fallback": "← Change Email Address"
+      },
+      {
+        "key": "reset_password",
+        "fallback": "Reset Password"
+      },
+      {
+        "key": "reset_password_instruction",
+        "fallback": "Enter your account email to receive a password reset verification code."
+      },
+      {
+        "key": "email_address",
+        "fallback": "Email Address"
+      },
+      {
+        "key": "placeholder_email_example",
+        "fallback": "you@example.tn"
+      },
+      {
+        "key": "sending_code",
+        "fallback": "Sending code…"
+      },
+      {
+        "key": "send_reset_code",
+        "fallback": "Send Reset Code"
+      },
+      {
+        "key": "remember_password",
+        "fallback": "Remember your password?"
+      },
+      {
+        "key": "login",
+        "fallback": "Sign in"
+      }
+    ],
+    "hardcodedAttributes": [],
+    "hardcodedJsxText": [],
+    "potentialHardcodedArrays": []
+  },
+  "signup.tsx": {
+    "missingArKeys": [
+      {
+        "key": "create_account",
+        "issue": "ar.json value contains latin: إنشاء account"
+      },
+      {
+        "key": "placeholder_email_example",
+        "issue": "ar.json value contains latin: you@example.tn"
+      }
+    ],
+    "latinFallbacksInT": [
+      {
+        "key": "registration_failed",
+        "fallback": "Registration failed. Please try again."
+      },
+      {
+        "key": "roots_tunisia",
+        "fallback": "Roots Tunisia"
+      },
+      {
+        "key": "signup_hero_title",
+        "fallback": "Preserve your family story for generations to come."
+      },
+      {
+        "key": "signup_hero_desc",
+        "fallback": "Build multi-generational lineages with verified archival citations from across 24 Tunisian governorates."
+      },
+      {
+        "key": "create_account",
+        "fallback": "Create your account"
+      },
+      {
+        "key": "signup_subtitle",
+        "fallback": "Start building your Tunisian family tree with verified records."
+      },
+      {
+        "key": "full_name",
+        "fallback": "Full Name"
+      },
+      {
+        "key": "placeholder_name_example",
+        "fallback": "Mohamed Ben Amor"
+      },
+      {
+        "key": "email_address",
+        "fallback": "Email Address"
+      },
+      {
+        "key": "placeholder_email_example",
+        "fallback": "you@example.tn"
+      },
+      {
+        "key": "password",
+        "fallback": "Password"
+      },
+      {
+        "key": "placeholder_min_chars",
+        "fallback": "At least 6 characters"
+      },
+      {
+        "key": "signup_agree_age_prefix",
+        "fallback": "I confirm that I am at least 16 years of age and agree to the"
+      },
+      {
+        "key": "terms_of_service",
+        "fallback": "Terms of Service"
+      },
+      {
+        "key": "and",
+        "fallback": "and"
+      },
+      {
+        "key": "privacy_policy",
+        "fallback": "Privacy Policy"
+      },
+      {
+        "key": "signup_marketing_optin",
+        "fallback": "(Optional) I would like to receive occasional email updates about newly indexed Tunisian archives and historical records. You can unsubscribe at any time."
+      },
+      {
+        "key": "creating_account",
+        "fallback": "Creating account…"
+      },
+      {
+        "key": "create_free_account",
+        "fallback": "Create free account"
+      },
+      {
+        "key": "already_have_account",
+        "fallback": "Already have an account?"
+      },
+      {
+        "key": "login",
+        "fallback": "Sign in"
+      }
+    ],
+    "hardcodedAttributes": [],
+    "hardcodedJsxText": [],
+    "potentialHardcodedArrays": []
+  },
+  "SourcesAndArchives.tsx": {
+    "missingArKeys": [],
+    "latinFallbacksInT": [
+      {
+        "key": "sources_and_archives_nav",
+        "fallback": "Sources & Archives"
+      },
+      {
+        "key": "tunisian_sources_repositories",
+        "fallback": "Tunisian Sources & Repositories"
+      },
+      {
+        "key": "tunisian_sources_repositories_desc",
+        "fallback": "Nine source families that carry Tunisian genealogy, with what each one proves, where it is held, and the directory of archives preserving them."
+      },
+      {
+        "key": "see_the_timeline",
+        "fallback": "See the timeline"
+      },
+      {
+        "key": "explore_family_trees",
+        "fallback": "Explore Family Trees"
+      },
+      {
+        "key": "evidence_eyebrow",
+        "fallback": "Evidence"
+      },
+      {
+        "key": "know_what_document_proves",
+        "fallback": "Know what a document can prove before you cite it"
+      },
+      {
+        "key": "know_what_document_proves_intro",
+        "fallback": "Roots Tunisia records every claim with its source family, holding institution and document code, so your tree stays verifiable."
+      },
+      {
+        "key": "repository_label",
+        "fallback": "Repository"
+      },
+      {
+        "key": "genealogical_proof_label",
+        "fallback": "Genealogical Proof"
+      },
+      {
+        "key": "directory",
+        "fallback": "Directory"
+      },
+      {
+        "key": "ten_institutions_title",
+        "fallback": "Ten institutions to start your research"
+      },
+      {
+        "key": "ten_institutions_intro",
+        "fallback": "Each entry lists the city and the series most useful to family researchers, from beylical decrees to synagogue rolls."
+      }
+    ],
+    "hardcodedAttributes": [],
+    "hardcodedJsxText": [],
+    "potentialHardcodedArrays": []
+  },
+  "subscriptions.tsx": {
+    "missingArKeys": [],
+    "latinFallbacksInT": [
+      {
+        "key": "nav_subscriptions",
+        "fallback": "Subscriptions"
+      },
+      {
+        "key": "subscriptions_hero_title",
+        "fallback": "Plans for Every Tunisian Researcher"
+      },
+      {
+        "key": "subscriptions_hero_subtitle",
+        "fallback": "Start free with your family tree, then unlock the full Tunisian archive index, citation tools and GEDCOM export when your research deepens."
+      },
+      {
+        "key": "get_started_for_free",
+        "fallback": "Get started for free"
+      },
+      {
+        "key": "pricing_eyebrow",
+        "fallback": "Pricing"
+      },
+      {
+        "key": "three_plans_title",
+        "fallback": "Three plans, transparent pricing in Tunisian Dinars"
+      },
+      {
+        "key": "three_plans_intro",
+        "fallback": "All plans include secure data hosting, privacy protection according to Tunisian regulations, and community contributions."
+      },
+      {
+        "key": "most_popular",
+        "fallback": "Most Popular"
+      }
+    ],
+    "hardcodedAttributes": [],
+    "hardcodedJsxText": [],
+    "potentialHardcodedArrays": []
+  },
+  "terms.tsx": {
+    "missingArKeys": [],
+    "latinFallbacksInT": [
+      {
+        "key": "terms_of_service",
+        "fallback": "Terms of Service"
+      },
+      {
+        "key": "terms_seo_desc",
+        "fallback": "Terms of Service and conditions of use for the Roots Tunisia genealogical platform."
+      },
+      {
+        "key": "legal_eyebrow",
+        "fallback": "Legal & Compliance"
+      },
+      {
+        "key": "terms_of_service",
+        "fallback": "Terms of Service"
+      },
+      {
+        "key": "legal_updated",
+        "fallback": "Last updated: March 2026 · Tunis, Tunisia"
+      },
+      {
+        "key": "terms_intro",
+        "fallback": "Please read these Terms of Service carefully before accessing or using the Roots Tunisia platform, archives catalog, or family tree building tools."
+      },
+      {
+        "key": "terms_s1_title",
+        "fallback": "1. Acceptance of Terms"
+      },
+      {
+        "key": "terms_s1_body",
+        "fallback": "By creating an account, browsing records, or uploading family materials to Roots Tunisia, you agree to be bound by these terms, all applicable Tunisian laws, and international data protection standards."
+      },
+      {
+        "key": "terms_s2_title",
+        "fallback": "2. User Accounts & Verification"
+      },
+      {
+        "key": "terms_s2_body",
+        "fallback": "You are responsible for maintaining the confidentiality of your login credentials and for all activity conducted through your account. Family tree records may be set to public or private at your discretion."
+      },
+      {
+        "key": "terms_s3_title",
+        "fallback": "3. Historical Documents & Archival Accuracy"
+      },
+      {
+        "key": "terms_s3_body",
+        "fallback": "Roots Tunisia provides citations and cataloging for civil status registers, charaïque court records, habous deeds, and municipal archives. While we strive for absolute documentary fidelity, researchers are encouraged to verify primary evidence."
+      },
+      {
+        "key": "terms_s4_title",
+        "fallback": "4. Intellectual Property & Family Ownership"
+      },
+      {
+        "key": "terms_s4_body",
+        "fallback": "Users retain full moral and intellectual property over family photographs, oral histories, and private memoirs uploaded to their accounts. Roots Tunisia claims no ownership over user-generated pedigrees."
+      },
+      {
+        "key": "terms_s5_title",
+        "fallback": "5. Governing Law & Jurisdiction"
+      },
+      {
+        "key": "terms_s5_body",
+        "fallback": "These terms are governed by the laws of the Republic of Tunisia. Any disputes shall be submitted to the competent courts of Tunis."
+      }
+    ],
+    "hardcodedAttributes": [],
+    "hardcodedJsxText": [],
+    "potentialHardcodedArrays": []
+  },
+  "unsubscribe.tsx": {
+    "missingArKeys": [
+      {
+        "key": "placeholder_email_example",
+        "issue": "ar.json value contains latin: you@example.tn"
+      }
+    ],
+    "latinFallbacksInT": [
+      {
+        "key": "provide_valid_email",
+        "fallback": "Please provide a valid email address."
+      },
+      {
+        "key": "unsubscribe_process_failed",
+        "fallback": "Failed to process unsubscription request."
+      },
+      {
+        "key": "unsubscribe_error_generic",
+        "fallback": "An unexpected error occurred. Please try again or contact support."
+      },
+      {
+        "key": "unsubscribe_seo_title",
+        "fallback": "Unsubscribe from Newsletter — Roots Tunisia"
+      },
+      {
+        "key": "unsubscribe_seo_desc",
+        "fallback": "Manage your communication preferences and unsubscribe from Roots Tunisia marketing and archival updates."
+      },
+      {
+        "key": "email_preferences",
+        "fallback": "Email Preferences"
+      },
+      {
+        "key": "unsubscribed_success_title",
+        "fallback": "You have been unsubscribed"
+      },
+      {
+        "key": "unsubscribe_title",
+        "fallback": "Unsubscribe from Updates"
+      },
+      {
+        "key": "unsubscribe_intro_message",
+        "fallback": "We are sorry to see you go. Enter your email below to opt out of archival updates, new collection announcements, and promotional newsletters."
+      },
+      {
+        "key": "important_note",
+        "fallback": "Important Note:"
+      },
+      {
+        "key": "unsubscribe_legal_disclaimer",
+        "fallback": "If you have an active Roots Tunisia account, you may still receive essential transactional emails (such as password resets, security notices, and purchase confirmations) as permitted by law."
+      },
+      {
+        "key": "return_to_home",
+        "fallback": "Return to Home"
+      },
+      {
+        "key": "contact_support",
+        "fallback": "Contact Support"
+      },
+      {
+        "key": "email_address",
+        "fallback": "Email Address"
+      },
+      {
+        "key": "placeholder_email_example",
+        "fallback": "you@example.tn"
+      },
+      {
+        "key": "processing_unsubscription",
+        "fallback": "Processing unsubscription…"
+      },
+      {
+        "key": "confirm_unsubscribe",
+        "fallback": "Confirm Unsubscribe"
+      },
+      {
+        "key": "back_to_roots_tunisia",
+        "fallback": "Back to Roots Tunisia"
+      }
+    ],
+    "hardcodedAttributes": [],
+    "hardcodedJsxText": [],
+    "potentialHardcodedArrays": []
+  },
+  "components/TreeCard.tsx": {
+    "missingArKeys": [],
+    "latinFallbacksInT": [
+      {
+        "key": "standard_gedcom",
+        "fallback": "معيار GEDCOM 5.5.1 UTF-8"
+      },
+      {
+        "key": "show_3d_card_gedcom",
+        "fallback": "عرض البطاقة ثلاثية الأبعاد و GEDCOM"
+      }
+    ],
+    "hardcodedAttributes": [],
+    "hardcodedJsxText": [],
+    "potentialHardcodedArrays": []
+  }
+}

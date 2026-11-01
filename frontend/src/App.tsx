@@ -8,9 +8,11 @@ import { useSiteImages } from "./hooks/useSiteImages";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import WhatsAppButton from "./components/WhatsAppButton";
-import { TranslationProvider } from "./context/TranslationContext";
+import { useTranslation } from "./context/TranslationContext";
 import ProtectedRoute from "./admin/components/protectedRoute";
 import Home from "./pages/home";
+import SeoHead from "./seo/SeoHead";
+import { splitLocaleFromPath } from "./seo/localeRouting";
 
 // ===== LAZY LOADED ROUTE COMPONENTS =====
 const GalleryPage = lazy(() => import("./pages/Gallery"));
@@ -39,6 +41,11 @@ const Payment = lazy(() => import("./pages/payment"));
 const Terms = lazy(() => import("./pages/terms"));
 const Privacy = lazy(() => import("./pages/privacy"));
 const Cookies = lazy(() => import("./pages/cookies"));
+const Refund = lazy(() => import("./pages/refund"));
+const Unsubscribe = lazy(() => import("./pages/unsubscribe"));
+
+import { ErrorBoundary } from "./components/ErrorBoundary";
+import CookieConsentBanner from "./components/CookieConsentBanner";
 
 // ===== ADMIN ROUTE COMPONENTS =====
 const AdminLayout = lazy(() => import("./admin/AdminLayout"));
@@ -77,6 +84,11 @@ const AdminNotes = lazy(() => import("./admin/pages/AdminNotes"));
 
 // ===== NEW FEATURE PAGES (redesign parity) =====
 const GalleryDocuments = lazy(() => import("./pages/GalleryDocuments"));
+const GalleryArticles = lazy(() => import("./pages/GalleryArticles"));
+const ArticlesPage = lazy(() => import("./pages/articles"));
+const AboutPage = lazy(() => import("./pages/about"));
+const ResearchPage = lazy(() => import("./pages/Research"));
+const GenealogyGallery = lazy(() => import("./pages/genealogy-gallery"));
 const AudioPage = lazy(() => import("./pages/audio"));
 const MyDownloadRequests = lazy(() => import("./pages/MyDownloadRequests"));
 const HelpCenter = lazy(() => import("./pages/HelpCenter"));
@@ -87,15 +99,33 @@ const Backups = lazy(() => import("./admin/pages/Backups"));
 const AdminSuggestions = lazy(() => import("./admin/pages/Suggestions"));
 const LegalContent = lazy(() => import("./admin/pages/LegalContent"));
 const DownloadRequests = lazy(() => import("./admin/pages/DownloadRequests"));
+const AdminArticles = lazy(() => import("./admin/pages/Articles"));
+const TierFeatures = lazy(() => import("./admin/pages/TierFeatures"));
 
 /** Pages where WhatsApp button should appear */
 const WHATSAPP_PAGES = ["/", "/contact", "/subscriptions", "/tasks", "/notes", "/reminders"];
 
+function LocaleSync() {
+  const location = useLocation();
+  const { setLocale } = useTranslation();
+
+  useEffect(() => {
+    const { locale } = splitLocaleFromPath(location.pathname);
+    const queryLang = new URLSearchParams(location.search).get("lang");
+    if (locale) setLocale(locale);
+    else if (queryLang) setLocale(queryLang);
+  }, [location.pathname, location.search, setLocale]);
+
+  return null;
+}
+
 /** Wrapper that uses useLocation so App stays a valid hook boundary; avoids invalid hook call when router context is missing. */
 function AppWithRouter() {
   const location = useLocation();
-  const isAdminRoute = location.pathname.startsWith("/admin");
-  const showWhatsApp = !isAdminRoute && WHATSAPP_PAGES.includes(location.pathname);
+  const { t } = useTranslation();
+  const { path } = splitLocaleFromPath(location.pathname);
+  const isAdminRoute = path.startsWith("/admin");
+  const showWhatsApp = !isAdminRoute && WHATSAPP_PAGES.includes(path);
   const { backgroundImage } = useSiteImages();
 
   useEffect(() => {
@@ -109,6 +139,14 @@ function AppWithRouter() {
 
   return (
     <div className="min-h-screen relative bg-[var(--background)] transition-colors duration-300">
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-[var(--gold)] focus:text-stone-950 focus:font-bold focus:rounded-md focus:shadow-xl focus:outline-none"
+      >
+        {t("skip_to_main_content", "الانتقال إلى المحتوى الرئيسي")}
+      </a>
+      <SeoHead />
+      <LocaleSync />
       {/* Historic Tunisian Landmark Background with soft opacity across all pages, sections, navbar & admin */}
       <div
         className="fixed inset-0 pointer-events-none z-0 bg-cover bg-center bg-no-repeat opacity-[0.06] dark:opacity-[0.08]"
@@ -116,11 +154,16 @@ function AppWithRouter() {
       />
       <div className="relative z-10">
         {!isAdminRoute && <Navbar />}
-        <Suspense fallback={<LoadingFallback />}>
-          <AppRoutes />
-        </Suspense>
+        <main id="main-content" className="outline-none" tabIndex={-1}>
+          <ErrorBoundary>
+            <Suspense fallback={<LoadingFallback />}>
+              <AppRoutes />
+            </Suspense>
+          </ErrorBoundary>
+        </main>
         {!isAdminRoute && <Footer />}
         {showWhatsApp && <WhatsAppButton />}
+        <CookieConsentBanner />
       </div>
     </div>
   );
@@ -131,16 +174,17 @@ function AppWithRouter() {
  * Memoized to prevent re-renders
  */
 const LoadingFallback = memo(function LoadingFallback() {
+  const { t } = useTranslation();
   return (
-    <div className="min-h-screen flex items-center justify-center bg-light-beige dark:bg-[#1a0f0a]">
+    <div className="min-h-screen flex items-center justify-center bg-[var(--background)]">
       <div className="text-center">
         <div className="relative w-20 h-20 mx-auto mb-6">
-          <div className="absolute inset-0 border-2 border-primary-brown/20 dark:border-accent-gold/20 rounded-full" />
-          <div className="absolute inset-0 border-2 border-transparent border-t-accent-gold rounded-full animate-spin" />
-          <div className="absolute inset-2 border-2 border-transparent border-b-primary-brown/40 dark:border-b-accent-gold/40 rounded-full animate-spin" style={{ animationDirection: "reverse", animationDuration: "1.5s" }} />
+          <div className="absolute inset-0 border-2 border-[var(--primary)]/20 rounded-full" />
+          <div className="absolute inset-0 border-2 border-transparent border-t-[var(--gold)] rounded-full animate-spin" />
+          <div className="absolute inset-2 border-2 border-transparent border-b-[var(--primary)]/40 rounded-full animate-spin" style={{ animationDirection: "reverse", animationDuration: "1.5s" }} />
         </div>
-        <p className="text-primary-brown dark:text-accent-gold font-cinzel text-lg tracking-widest">
-          Loading...
+        <p className="text-[var(--gold)] font-display text-lg tracking-widest">
+          {t("loading", "Loading archives…")}
         </p>
       </div>
     </div>
@@ -162,8 +206,12 @@ const AdminLoadingFallback = memo(function AdminLoadingFallback() {
  * Route definitions
  */
 function AppRoutes() {
+  const location = useLocation();
+  const { path } = splitLocaleFromPath(location.pathname);
+  const stripped = { ...location, pathname: path };
+
   return (
-    <Routes>
+    <Routes location={stripped} key={path}>
       {/* ===== PUBLIC ROUTES ===== */}
       <Route path="/" element={<Home />} />
       <Route path="/gallery" element={<GalleryPage />} />
@@ -172,10 +220,15 @@ function AppRoutes() {
       <Route path="/gallery/books" element={<GalleryBooks />} />
       <Route path="/gallery/audios" element={<GalleryAudios />} />
       <Route path="/gallery/documents" element={<GalleryDocuments />} />
+      <Route path="/gallery/articles" element={<GalleryArticles />} />
+      <Route path="/articles" element={<ArticlesPage />} />
+      <Route path="/about" element={<AboutPage />} />
+      <Route path="/research" element={<ResearchPage />} />
+      <Route path="/genealogy-gallery" element={<GenealogyGallery />} />
       <Route path="/audio" element={<AudioPage />} />
       <Route path="/my-download-requests" element={<MyDownloadRequests />} />
       <Route path="/help-center" element={<HelpCenter />} />
-      <Route path="/library" element={<GalleryPage />} />
+      <Route path="/library" element={<GalleryBooks />} />
       <Route path="/periods" element={<Periods />} />
       {/* Unified Sources & Archives page */}
       <Route path="/archives" element={<SourcesAndArchives />} />
@@ -195,6 +248,7 @@ function AppRoutes() {
 
       {/* ===== FEATURE PAGES ===== */}
       <Route path="/subscriptions" element={<Subscriptions />} />
+      <Route path="/payment" element={<Payment />} />
       <Route path="/payment/:tier" element={<Payment />} />
       <Route path="/tasks" element={<Tasks />} />
       <Route path="/notes" element={<Notes />} />
@@ -204,6 +258,17 @@ function AppRoutes() {
       <Route path="/terms" element={<Terms />} />
       <Route path="/privacy" element={<Privacy />} />
       <Route path="/cookies" element={<Cookies />} />
+      <Route path="/refund" element={<Refund />} />
+      <Route path="/unsubscribe" element={<Unsubscribe />} />
+      <Route path="/error" element={<ErrorPage />} />
+      <Route
+        path="/myprofile"
+        element={
+          <ProtectedRoute>
+            <Settings />
+          </ProtectedRoute>
+        }
+      />
 
       {/* ===== ADMIN ROUTES (PROTECTED) ===== */}
       <Route
@@ -528,6 +593,26 @@ function AppRoutes() {
           }
         />
         <Route
+          path="articles"
+          element={
+            <Suspense fallback={<AdminLoadingFallback />}>
+              <ProtectedRoute privileges={["articles"]}>
+                <AdminArticles />
+              </ProtectedRoute>
+            </Suspense>
+          }
+        />
+        <Route
+          path="tier-features"
+          element={
+            <Suspense fallback={<AdminLoadingFallback />}>
+              <ProtectedRoute roles={[3]}>
+                <TierFeatures />
+              </ProtectedRoute>
+            </Suspense>
+          }
+        />
+        <Route
           path="suggestions"
           element={
             <Suspense fallback={<AdminLoadingFallback />}>
@@ -553,16 +638,6 @@ function AppRoutes() {
             <Suspense fallback={<AdminLoadingFallback />}>
               <ProtectedRoute roles={[3]}>
                 <LegalContent />
-              </ProtectedRoute>
-            </Suspense>
-          }
-        />
-        <Route
-          path="user-upgrade"
-          element={
-            <Suspense fallback={<AdminLoadingFallback />}>
-              <ProtectedRoute roles={[1, 3]}>
-                <UserUpgrade />
               </ProtectedRoute>
             </Suspense>
           }

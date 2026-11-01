@@ -134,13 +134,13 @@ export default function Tasks() {
                     )}
                     <div className="flex gap-1.5 mt-2">
                       {col.key !== "todo" && (
-                        <button onClick={() => moveTask(task.id, "todo")} className="text-[10px] px-2 py-1 rounded bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-300 hover:bg-gray-200 transition-colors">← Todo</button>
+                        <button onClick={() => moveTask(task.id, "todo")} className="text-[10px] px-2 py-1 rounded bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-300 hover:bg-gray-200 transition-colors">← {t("status_todo", "Todo")}</button>
                       )}
                       {col.key !== "in_progress" && (
-                        <button onClick={() => moveTask(task.id, "in_progress")} className="text-[10px] px-2 py-1 rounded bg-[var(--brand-gold)]/15 text-[var(--brand-gold)] hover:bg-[var(--brand-gold)]/25 transition-colors">In Progress</button>
+                        <button onClick={() => moveTask(task.id, "in_progress")} className="text-[10px] px-2 py-1 rounded bg-[var(--brand-gold)]/15 text-[var(--brand-gold)] hover:bg-[var(--brand-gold)]/25 transition-colors">{t("status_in_progress", "In Progress")}</button>
                       )}
                       {col.key !== "done" && (
-                        <button onClick={() => moveTask(task.id, "done")} className="text-[10px] px-2 py-1 rounded bg-green-100 dark:bg-green-950/30 text-green-600 dark:text-green-400 hover:bg-green-200 transition-colors">Done →</button>
+                        <button onClick={() => moveTask(task.id, "done")} className="text-[10px] px-2 py-1 rounded bg-green-100 dark:bg-green-950/30 text-green-600 dark:text-green-400 hover:bg-green-200 transition-colors">{t("status_done", "Done")} →</button>
                       )}
                     </div>
                   </div>

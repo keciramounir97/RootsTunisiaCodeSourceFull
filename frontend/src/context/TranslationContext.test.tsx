@@ -32,12 +32,19 @@ describe("TranslationContext & translations.ts", () => {
     expect(isRtlLocale("en")).toBe(false);
   });
 
-  it("resolves translation strings with fallback", () => {
+  it("resolves translation strings with fallback and Arabic master dictionary", () => {
     const resEn = tForLocale("en", "nav_home", "Home");
     expect(resEn).toBeDefined();
 
     const resAr = tForLocale("ar", "nav_home", "الرئيسية");
-    expect(resAr).toBeDefined();
+    expect(resAr).toBe("الرئيسية");
+
+    // Verify admin and dashboard keys resolve to 100% Arabic
+    expect(tForLocale("ar", "dashboard")).toBe("لوحة القيادة");
+    expect(tForLocale("ar", "close_sidebar")).toBe("إغلاق الشريط الجانبي");
+    expect(tForLocale("ar", "super_admin")).toBe("المسؤول المتميز");
+    expect(tForLocale("ar", "save")).toBe("حفظ");
+    expect(tForLocale("ar", "cancel")).toBe("إلغاء");
   });
 
   it("dynamically changes locale and updates direction attribute", () => {
@@ -47,7 +54,8 @@ describe("TranslationContext & translations.ts", () => {
       </TranslationProvider>
     );
 
-    expect(screen.getByTestId("locale-val").textContent).toBe("en");
+    // Initial default locale is "fr" (DEFAULT_LOCALE)
+    expect(screen.getByTestId("locale-val").textContent).toBe("fr");
     expect(screen.getByTestId("dir-val").textContent).toBe("ltr");
 
     fireEvent.click(screen.getByTestId("set-ar"));
