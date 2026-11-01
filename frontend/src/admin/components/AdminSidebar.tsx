@@ -7,6 +7,7 @@ import { useAuth } from "./AuthContext";
 import { Logo } from "../../components/site/Logo";
 import {
   LayoutDashboard,
+  Layout,
   Network,
   Image,
   BookOpen,
@@ -42,48 +43,81 @@ import {
 
 // Navigation Config
 const links = [
+  // 1. Dashboard
   { to: "/admin", end: true, labelKey: "dashboard", Icon: LayoutDashboard },
+  // 2. Usage Quotas
   { to: "/admin/usage", labelKey: "usage_quotas", Icon: Gauge },
+  // 3. Arbres Généalogiques
   { to: "/admin/trees", labelKey: "trees", Icon: Network },
+  // 4. Individuals
   { to: "/admin/individuals", labelKey: "individuals", Icon: UserRound, permissionKey: "trees" },
+  // 5. My Sources & Archives
   { to: "/admin/sources-archives", labelKey: "my_sources", Icon: Archive },
+  // 6. My Tasks
   { to: "/admin/tasks", labelKey: "tasks", Icon: ListChecks },
+  // 7. My Notes & References d'Archives
   { to: "/admin/notes", labelKey: "notes", Icon: StickyNote },
+  // 8. Gallery
   { to: "/admin/gallery", labelKey: "gallery", Icon: Image },
+  // 9. Audio
   { to: "/admin/audios", labelKey: "audios", Icon: Music },
+  // 10. Documents
   { to: "/admin/documents", labelKey: "documents", Icon: FileText },
+  // 11. Books
   { to: "/admin/books", labelKey: "books", Icon: BookOpen },
+  // 12. Articles
   { to: "/admin/articles", labelKey: "articles", Icon: Newspaper },
-  { to: "/admin/support", labelKey: "contact_support", Icon: Headphones },
+  // 13. Users
   { to: "/admin/users", labelKey: "users", Icon: Users },
-  { to: "/admin/contact-messages", labelKey: "contact_messages", Icon: MessageSquare },
-  { to: "/admin/newsletter", labelKey: "newsletter", Icon: Mail },
-  { to: "/admin/download-requests", labelKey: "download_requests", Icon: Download },
-  { to: "/admin/approvals", labelKey: "approvals", Icon: UserCheck },
+  // 14. Admins (create & assign pages)
   { to: "/admin/admins", labelKey: "admins", Icon: Shield },
+  // 15. Super Admins
+  { to: "/admin/super-admins", labelKey: "super_admins", Icon: Crown },
+  // 16. Contact
+  { to: "/admin/contact-messages", labelKey: "contact_messages", Icon: MessageSquare },
+  // 17. Newsletter
+  { to: "/admin/newsletter", labelKey: "newsletter", Icon: Mail },
+  // 18. Subscriptions (Unified real limitations & public copy)
   { to: "/admin/subscriptions", labelKey: "subscriptions", Icon: Crown },
-  { to: "/admin/subscription-payments", labelKey: "subscription_payments", Icon: Crown },
-  { to: "/admin/tier-features", labelKey: "tier_features_title", Icon: ListChecks },
-  { to: "/admin/user-upgrade", labelKey: "user_upgrade", Icon: ArrowUpCircle },
-  { to: "/admin/user-settings", labelKey: "user_settings", Icon: Settings },
+  // 19. Subscription Payments (proof, zoom, ✓/✗, client message)
+  { to: "/admin/subscription-payments", labelKey: "subscription_payments", Icon: Wallet },
+  // 20. Payment Methods
   { to: "/admin/payment-settings", labelKey: "payment_settings", Icon: Wallet },
+  // 21. Taux de Change
   { to: "/admin/currencies", labelKey: "currencies_exchange", Icon: Coins },
-  { to: "/admin/activity", labelKey: "activity", Icon: Activity },
+  // 22. Gestion du Contenu Juridique
   { to: "/admin/legal-content", labelKey: "legal_content", Icon: Scale },
-  { to: "/admin/backups", labelKey: "backups", Icon: ArchiveRestore },
+  // 23. Page Named Content (choose page & section to edit public content)
+  { to: "/admin/content", labelKey: "public_content_manager", Icon: Layout },
+  // 24. Settings
   { to: "/admin/settings", labelKey: "settings", Icon: Settings },
-  { to: "/admin/footer-settings", labelKey: "footer_settings", Icon: Globe },
 ];
 
 const labelFallbacks: Record<string, string> = {
-  individuals: "Individuals",
-  usage_quotas: "Usage & Quotas",
-  contact_support: "Contact Support",
-  user_settings: "User Settings",
-  my_sources: "My Sources",
-  articles: "Articles",
-  tier_features_title: "Tier Features",
-  currencies_exchange: "Taux de Change & Devises",
+  dashboard: "لوحة التحكم (Dashboard)",
+  usage_quotas: "استهلاك الحساب والحدود (Usage Quotas)",
+  trees: "أشجار العائلة (Arbres Généalogiques)",
+  individuals: "الأفراد والأسلاف (Individuals)",
+  my_sources: "المصادر والأرشيف (Mes Sources)",
+  tasks: "مهام البحث (Mes Tâches)",
+  notes: "الملاحظات ومراجع الأرشيف (Notes & Références)",
+  gallery: "المعرض التراثي (Galerie)",
+  audios: "التسجيلات والروايات الشفوية (Récits Oraux & Audio)",
+  documents: "الوثائق وسجلات الأرشيف (Documents & Sijillat)",
+  books: "الكتب والمخطوطات (Livres & Manuscrits)",
+  articles: "المقالات والدراسات (Articles & Chroniques)",
+  users: "إدارة المستخدمين (Utilisateurs)",
+  admins: "المشرفون وصلاحيات الصفحات (Admins & Rôles)",
+  super_admins: "المشرفون العامون (Super Admins)",
+  contact_messages: "رسائل اتصل بنا (Messages de Contact)",
+  newsletter: "النشرة البريدية (Newsletter)",
+  subscriptions: "باقات الاشتراكات والحدود (Abonnements & Limites)",
+  subscription_payments: "إشعارات واعتماد المدفوعات (Paiements & Preuves)",
+  payment_settings: "وسائل وطرق الدفع (Moyens de Paiement)",
+  currencies_exchange: "أسعار الصرف والعملات (Taux de Change)",
+  legal_content: "إدارة المحتوى القانوني (Contenu Juridique)",
+  public_content_manager: "إدارة محتوى الموقع (Page Content)",
+  settings: "الإعدادات العامة (Paramètres)",
 };
 
 export default function AdminSidebar({

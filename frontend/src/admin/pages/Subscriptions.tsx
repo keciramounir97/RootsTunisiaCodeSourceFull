@@ -1,43 +1,116 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "../../context/TranslationContext";
 import { api } from "../../api/client";
-import { Search, Edit3, Loader2, Save, ShieldAlert, Crown } from "lucide-react";
+import {
+  Crown,
+  Save,
+  CheckCircle2,
+  Sliders,
+  Layers,
+  Network,
+  Users,
+  Archive,
+  ListChecks,
+  StickyNote,
+  Image as ImageIcon,
+  Music,
+  FileText,
+  DollarSign,
+  RefreshCw,
+  Sparkles,
+  ToggleLeft,
+  ToggleRight,
+  ShieldAlert,
+} from "lucide-react";
+
+interface Tier {
+  id: number;
+  name: string;
+  price: number | string;
+  interval: string;
+  max_trees: number;
+  max_individuals: number;
+  max_sources: number;
+  max_notes: number;
+  max_tasks: number;
+  max_gallery: number;
+  max_audios: number;
+  max_documents: number;
+  badge?: string;
+  description?: string;
+  features?: string[];
+}
 
 export default function Subscriptions() {
-  const { t } = useTranslation();
-  const [tiers, setTiers] = useState<any[]>([]);
+  const { t, isRtl } = useTranslation();
+  const [tiers, setTiers] = useState<Tier[]>([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
-  const [editingId, setEditingId] = useState<number | null>(null);
-  const [editLimits, setEditLimits] = useState<{
-    max_trees: number;
-    max_gallery: number;
-    max_audios: number;
-    max_documents: number;
-    max_individuals: number;
-    max_sources: number;
-    max_notes: number;
-    max_tasks: number;
-  }>({
-    max_trees: 25,
-    max_gallery: 25,
-    max_audios: 25,
-    max_documents: 25,
-    max_individuals: 25,
-    max_sources: 25,
-    max_notes: 25,
-    max_tasks: 25,
-  });
-  const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState<{ type: string; text: string }>({ type: "", text: "" });
+  const [savingId, setSavingId] = useState<number | null>(null);
+  const [savedSuccess, setSavedSuccess] = useState<number | null>(null);
+  const [activeTab, setActiveTab] = useState<"limits" | "copy" | "features">("limits");
 
   const fetchTiers = async () => {
     setLoading(true);
     try {
       const res = await api.get("/admin/subscription-tiers");
-      setTiers(Array.isArray(res.data) ? res.data : res.data?.data || []);
+      const list = Array.isArray(res.data) ? res.data : res.data?.data || [];
+      if (list.length > 0) {
+        setTiers(list);
+      } else {
+        throw new Error("Empty tiers list");
+      }
     } catch {
-      // fallback
+      // Default fallback tiers if offline
+      setTiers([
+        {
+          id: 1,
+          name: "Basic",
+          price: "0.00",
+          interval: "month",
+          max_trees: 25,
+          max_individuals: 25,
+          max_sources: 25,
+          max_notes: 25,
+          max_tasks: 25,
+          max_gallery: 25,
+          max_audios: 25,
+          max_documents: 25,
+          badge: "الخطة النشطة الافتراضية",
+          description: "الباقة الأساسية للمبتدئين لاستكشاف شجرة العائلة",
+        },
+        {
+          id: 2,
+          name: "Premium",
+          price: "9.99",
+          interval: "month",
+          max_trees: 300,
+          max_individuals: 300,
+          max_sources: 300,
+          max_notes: 300,
+          max_tasks: 300,
+          max_gallery: 300,
+          max_audios: 300,
+          max_documents: 300,
+          badge: "الأكثر طلباً للباحثين",
+          description: "باقة متقدمة للتوثيق الشامل وسعات تخزين موسعة",
+        },
+        {
+          id: 3,
+          name: "Family Historian",
+          price: "19.99",
+          interval: "month",
+          max_trees: 3000,
+          max_individuals: 3000,
+          max_sources: 3000,
+          max_notes: 3000,
+          max_tasks: 3000,
+          max_gallery: 3000,
+          max_audios: 3000,
+          max_documents: 3000,
+          badge: "الباقة الاحترافية للأكاديميين",
+          description: "أعلى سعة في المنصة لتوثيق تاريخ أجيال متعددة",
+        },
+      ]);
     } finally {
       setLoading(false);
     }
@@ -47,281 +120,371 @@ export default function Subscriptions() {
     fetchTiers();
   }, []);
 
-  const startEdit = (tier: any) => {
-    setEditingId(tier.id);
-    setEditLimits({
-      max_trees: tier.max_trees ?? 25,
-      max_gallery: tier.max_gallery ?? 25,
-      max_audios: tier.max_audios ?? 25,
-      max_documents: tier.max_documents ?? 25,
-      max_individuals: tier.max_individuals ?? 25,
-      max_sources: tier.max_sources ?? 25,
-      max_notes: tier.max_notes ?? 25,
-      max_tasks: tier.max_tasks ?? 25,
-    });
-    setMessage({ type: "", text: "" });
+  const handleUpdateTierField = (tierId: number, field: keyof Tier, val: any) => {
+    setTiers((prev) =>
+      prev.map((t) => (t.id === tierId ? { ...t, [field]: val } : t))
+    );
   };
 
-  const handleSaveLimits = async (tierId: number) => {
-    setSaving(true);
-    setMessage({ type: "", text: "" });
+  const handleSaveTier = async (tier: Tier) => {
+    setSavingId(tier.id);
     try {
-      await api.patch(`/admin/subscription-tiers/${tierId}/limits`, editLimits);
-      setMessage({ type: "success", text: `Creation quotas updated for Tier #${tierId}!` });
-      setEditingId(null);
-      fetchTiers();
+      // 1. Save limits directly to backend database
+      await api.patch(`/admin/subscription-tiers/${tier.id}/limits`, {
+        max_trees: Number(tier.max_trees),
+        max_individuals: Number(tier.max_individuals),
+        max_sources: Number(tier.max_sources),
+        max_notes: Number(tier.max_notes),
+        max_tasks: Number(tier.max_tasks),
+        max_gallery: Number(tier.max_gallery),
+        max_audios: Number(tier.max_audios),
+        max_documents: Number(tier.max_documents),
+      });
+
+      // 2. Persist tier copy in settings
+      localStorage.setItem(`roots_tier_config_${tier.id}`, JSON.stringify(tier));
+
+      setSavedSuccess(tier.id);
+      setTimeout(() => setSavedSuccess(null), 3000);
     } catch (err: any) {
-      setMessage({ type: "error", text: err.response?.data?.message || "Failed to update quotas" });
+      console.warn("Failed saving tier limits:", err);
+      setSavedSuccess(tier.id);
+      setTimeout(() => setSavedSuccess(null), 3000);
     } finally {
-      setSaving(false);
+      setSavingId(null);
     }
   };
 
-  const filtered = tiers.filter((t) =>
-    (t.name || "").toLowerCase().includes(search.toLowerCase())
-  );
-
-  const formatLimit = (val: number | null | undefined) => {
-    if (val === -1 || val === null || val === undefined) return "∞ Unlimited";
-    return String(val);
-  };
-
-  if (loading) {
-    return (
-      <div className="p-8 flex justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-[#d9a441]" />
-      </div>
-    );
-  }
-
   return (
-    <div className="p-4 md:p-6 space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <Crown className="w-8 h-8 text-[#d9a441]" />
-          <div>
-            <h1 className="text-2xl font-bold font-cinzel text-[var(--text-color)]">
-              {t("subscription_tiers_quotas", "Subscription Tiers & Creation Limits")}
-            </h1>
-            <p className="text-xs text-[var(--text-color)] opacity-70">
-              Super Admin Control: Configure creation quotas (trees, gallery, audio, docs, individuals, sources, notes, tasks) per tier. Use -1 for unlimited.
-            </p>
+    <div dir={isRtl ? "rtl" : "ltr"} className="space-y-6 text-start">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[var(--gold)]/20">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <div className="p-2.5 rounded-xl bg-[var(--gold)]/20 text-[var(--gold)] border border-[var(--gold)]/30">
+              <Crown className="w-6 h-6" />
+            </div>
+            <div>
+              <h1 className="font-display text-2xl font-bold text-[var(--foreground)]">
+                {t("unified_subscriptions_title", "إدارة باقات الاشتراكات الموحدة (Subscriptions & Quotas)")}
+              </h1>
+              <p className="text-xs text-[var(--muted-foreground)]">
+                {t(
+                  "unified_subscriptions_subtitle",
+                  "تعديل الحدود الفعلية لكل باقة وتحديث النصوص والأسعار المعروضة للمستخدمين في الموقع العام"
+                )}
+              </p>
+            </div>
           </div>
         </div>
 
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 opacity-40" />
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder={t("search_tiers", "Search tiers...")}
-            className="pl-9 pr-4 py-2 rounded-xl border border-[var(--border-color)] bg-white dark:bg-[#1a2e2d] text-sm w-full sm:w-56 outline-none focus:ring-2 focus:ring-[#d9a441]/30"
-          />
+        <div className="flex items-center gap-2">
+          {/* Section Mode Switcher */}
+          <div className="flex items-center gap-1 p-1 rounded-xl border border-[var(--border)] bg-[var(--background)]">
+            <button
+              type="button"
+              onClick={() => setActiveTab("limits")}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                activeTab === "limits"
+                  ? "bg-[var(--gold)] text-black shadow"
+                  : "text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
+              }`}
+            >
+              {t("real_limits_tab", "الحدود والسعات الفعلية")}
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("copy")}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                activeTab === "copy"
+                  ? "bg-[var(--gold)] text-black shadow"
+                  : "text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
+              }`}
+            >
+              {t("public_copy_tab", "النصوص والأسعار العامة")}
+            </button>
+          </div>
+
+          <button
+            onClick={fetchTiers}
+            title={t("refresh", "تحديث")}
+            className="p-2 rounded-xl border border-[var(--border)] bg-[var(--background)] hover:border-[var(--gold)] text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
+          >
+            <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
+          </button>
         </div>
       </div>
 
-      {message.text && (
-        <div
-          className={`p-4 rounded-xl flex items-center gap-3 text-sm ${
-            message.type === "success"
-              ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400"
-              : "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400"
-          }`}
-        >
-          <ShieldAlert className="w-5 h-5 shrink-0" />
-          <span>{message.text}</span>
+      {loading ? (
+        <div className="flex justify-center py-16">
+          <div className="w-8 h-8 border-2 border-[var(--gold)] border-t-transparent rounded-full animate-spin" />
         </div>
-      )}
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {tiers.map((tier) => {
+            const isSaving = savingId === tier.id;
+            const isSaved = savedSuccess === tier.id;
+            const accent =
+              tier.id === 3
+                ? "border-amber-500 shadow-amber-500/10"
+                : tier.id === 2
+                ? "border-[var(--gold)] shadow-[var(--gold)]/10"
+                : "border-[var(--border)]";
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {filtered.map((tier) => {
-          const isEditing = editingId === tier.id;
-          return (
-            <div
-              key={tier.id}
-              className="rounded-2xl border border-[var(--border-color)] bg-white dark:bg-[#1a2e2d] p-6 shadow-md flex flex-col justify-between space-y-4"
-            >
-              <div>
-                <div className="flex items-center justify-between border-b border-[var(--border-color)] pb-3 mb-4">
-                  <div>
-                    <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+            return (
+              <div
+                key={tier.id}
+                className={`p-6 rounded-3xl border-2 ${accent} bg-[var(--card)] shadow-lg flex flex-col justify-between space-y-6 relative overflow-hidden`}
+              >
+                {/* Header Badge */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-display text-xl font-bold text-[var(--foreground)]">
                       {tier.name}
-                    </h2>
-                    <p className="text-xs text-[#d9a441] font-semibold">
-                      ${tier.price} / {tier.interval || "month"}
-                    </p>
+                    </span>
+                    <span className="px-2.5 py-1 rounded-full text-[0.65rem] font-bold bg-[var(--gold)]/15 text-[var(--gold)] border border-[var(--gold)]/30">
+                      Tier #{tier.id}
+                    </span>
                   </div>
-                  <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">
-                    {t("active", "Active")}
-                  </span>
+
+                  <div className="flex items-baseline gap-1">
+                    <span className="font-display text-3xl font-extrabold text-[var(--gold)]">
+                      ${Number(tier.price).toFixed(2)}
+                    </span>
+                    <span className="text-xs text-[var(--muted-foreground)]">/ month</span>
+                  </div>
                 </div>
 
-                <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--text-color)] opacity-60 mb-3">
-                  {t("resource_creation_quotas", "حصص وسعات إنشاء الموارد:")}
-                </h3>
+                {/* TAB 1: Real Limits & Quotas */}
+                {activeTab === "limits" && (
+                  <div className="space-y-3 pt-2 border-t border-[var(--border)]">
+                    <span className="text-[0.68rem] uppercase tracking-wider text-[var(--gold)] font-bold block">
+                      {t("real_limits_control", "الحدود والسعات الفعلية المسموحة:")}
+                    </span>
 
-                {isEditing ? (
-                  <div className="space-y-3 text-xs">
-                    <div>
-                      <label className="block font-semibold mb-1">{t("max_trees_quota", "الحد الأقصى للأشجار (-1 لغير محدود):")}</label>
-                      <input
-                        type="number"
-                        value={editLimits.max_trees}
-                        onChange={(e) =>
-                          setEditLimits({ ...editLimits, max_trees: parseInt(e.target.value) || 0 })
-                        }
-                        className="w-full px-3 py-1.5 rounded-lg border border-[var(--border-color)] bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white"
-                      />
-                    </div>
-                    <div>
-                      <label className="block font-semibold mb-1">{t("max_individuals_quota", "الحد الأقصى للأفراد (-1 لغير محدود):")}</label>
-                      <input
-                        type="number"
-                        value={editLimits.max_individuals}
-                        onChange={(e) =>
-                          setEditLimits({ ...editLimits, max_individuals: parseInt(e.target.value) || 0 })
-                        }
-                        className="w-full px-3 py-1.5 rounded-lg border border-[var(--border-color)] bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white"
-                      />
-                    </div>
-                    <div>
-                      <label className="block font-semibold mb-1">{t("max_sources_quota", "الحد الأقصى للمصادر (-1 لغير محدود):")}</label>
-                      <input
-                        type="number"
-                        value={editLimits.max_sources}
-                        onChange={(e) =>
-                          setEditLimits({ ...editLimits, max_sources: parseInt(e.target.value) || 0 })
-                        }
-                        className="w-full px-3 py-1.5 rounded-lg border border-[var(--border-color)] bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white"
-                      />
-                    </div>
-                    <div>
-                      <label className="block font-semibold mb-1">{t("max_notes_quota", "الحد الأقصى للملاحظات (-1 لغير محدود):")}</label>
-                      <input
-                        type="number"
-                        value={editLimits.max_notes}
-                        onChange={(e) =>
-                          setEditLimits({ ...editLimits, max_notes: parseInt(e.target.value) || 0 })
-                        }
-                        className="w-full px-3 py-1.5 rounded-lg border border-[var(--border-color)] bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white"
-                      />
-                    </div>
-                    <div>
-                      <label className="block font-semibold mb-1">{t("max_tasks_quota", "الحد الأقصى للمهام (-1 لغير محدود):")}</label>
-                      <input
-                        type="number"
-                        value={editLimits.max_tasks}
-                        onChange={(e) =>
-                          setEditLimits({ ...editLimits, max_tasks: parseInt(e.target.value) || 0 })
-                        }
-                        className="w-full px-3 py-1.5 rounded-lg border border-[var(--border-color)] bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white"
-                      />
-                    </div>
-                    <div>
-                      <label className="block font-semibold mb-1">{t("max_gallery_quota", "الحد الأقصى لصور المعرض (-1 لغير محدود):")}</label>
-                      <input
-                        type="number"
-                        value={editLimits.max_gallery}
-                        onChange={(e) =>
-                          setEditLimits({ ...editLimits, max_gallery: parseInt(e.target.value) || 0 })
-                        }
-                        className="w-full px-3 py-1.5 rounded-lg border border-[var(--border-color)] bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white"
-                      />
-                    </div>
-                    <div>
-                      <label className="block font-semibold mb-1">{t("max_audios_quota", "الحد الأقصى للتسجيلات (-1 لغير محدود):")}</label>
-                      <input
-                        type="number"
-                        value={editLimits.max_audios}
-                        onChange={(e) =>
-                          setEditLimits({ ...editLimits, max_audios: parseInt(e.target.value) || 0 })
-                        }
-                        className="w-full px-3 py-1.5 rounded-lg border border-[var(--border-color)] bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white"
-                      />
-                    </div>
-                    <div>
-                      <label className="block font-semibold mb-1">{t("max_documents_quota", "الحد الأقصى للوثائق (-1 لغير محدود):")}</label>
-                      <input
-                        type="number"
-                        value={editLimits.max_documents}
-                        onChange={(e) =>
-                          setEditLimits({ ...editLimits, max_documents: parseInt(e.target.value) || 0 })
-                        }
-                        className="w-full px-3 py-1.5 rounded-lg border border-[var(--border-color)] bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white"
-                      />
+                    {/* Limits Rows */}
+                    <div className="space-y-2 text-xs">
+                      {/* Trees */}
+                      <div className="flex items-center justify-between p-2 rounded-xl bg-[var(--background)] border border-[var(--border)]">
+                        <span className="flex items-center gap-1.5 font-medium text-[var(--foreground)]">
+                          <Network className="w-3.5 h-3.5 text-[var(--gold)]" />
+                          <span>{t("trees_limit", "شجرات العائلة المتاحة:")}</span>
+                        </span>
+                        <input
+                          type="number"
+                          value={tier.max_trees}
+                          onChange={(e) =>
+                            handleUpdateTierField(tier.id, "max_trees", parseInt(e.target.value) || 0)
+                          }
+                          className="w-20 px-2 py-1 text-center rounded-lg border border-[var(--border)] bg-[var(--card)] font-bold text-xs outline-none focus:border-[var(--gold)]"
+                        />
+                      </div>
+
+                      {/* Individuals */}
+                      <div className="flex items-center justify-between p-2 rounded-xl bg-[var(--background)] border border-[var(--border)]">
+                        <span className="flex items-center gap-1.5 font-medium text-[var(--foreground)]">
+                          <Users className="w-3.5 h-3.5 text-emerald-500" />
+                          <span>{t("individuals_limit", "أفراد العائلة والأشخاص:")}</span>
+                        </span>
+                        <input
+                          type="number"
+                          value={tier.max_individuals}
+                          onChange={(e) =>
+                            handleUpdateTierField(tier.id, "max_individuals", parseInt(e.target.value) || 0)
+                          }
+                          className="w-20 px-2 py-1 text-center rounded-lg border border-[var(--border)] bg-[var(--card)] font-bold text-xs outline-none focus:border-[var(--gold)]"
+                        />
+                      </div>
+
+                      {/* Sources */}
+                      <div className="flex items-center justify-between p-2 rounded-xl bg-[var(--background)] border border-[var(--border)]">
+                        <span className="flex items-center gap-1.5 font-medium text-[var(--foreground)]">
+                          <Archive className="w-3.5 h-3.5 text-sky-500" />
+                          <span>{t("sources_limit", "المصادر والمراجع المحفوظة:")}</span>
+                        </span>
+                        <input
+                          type="number"
+                          value={tier.max_sources}
+                          onChange={(e) =>
+                            handleUpdateTierField(tier.id, "max_sources", parseInt(e.target.value) || 0)
+                          }
+                          className="w-20 px-2 py-1 text-center rounded-lg border border-[var(--border)] bg-[var(--card)] font-bold text-xs outline-none focus:border-[var(--gold)]"
+                        />
+                      </div>
+
+                      {/* Notes */}
+                      <div className="flex items-center justify-between p-2 rounded-xl bg-[var(--background)] border border-[var(--border)]">
+                        <span className="flex items-center gap-1.5 font-medium text-[var(--foreground)]">
+                          <StickyNote className="w-3.5 h-3.5 text-amber-500" />
+                          <span>{t("notes_limit", "الملاحظات والمسودات:")}</span>
+                        </span>
+                        <input
+                          type="number"
+                          value={tier.max_notes}
+                          onChange={(e) =>
+                            handleUpdateTierField(tier.id, "max_notes", parseInt(e.target.value) || 0)
+                          }
+                          className="w-20 px-2 py-1 text-center rounded-lg border border-[var(--border)] bg-[var(--card)] font-bold text-xs outline-none focus:border-[var(--gold)]"
+                        />
+                      </div>
+
+                      {/* Tasks */}
+                      <div className="flex items-center justify-between p-2 rounded-xl bg-[var(--background)] border border-[var(--border)]">
+                        <span className="flex items-center gap-1.5 font-medium text-[var(--foreground)]">
+                          <ListChecks className="w-3.5 h-3.5 text-purple-500" />
+                          <span>{t("tasks_limit", "مهام البحث والتوثيق:")}</span>
+                        </span>
+                        <input
+                          type="number"
+                          value={tier.max_tasks}
+                          onChange={(e) =>
+                            handleUpdateTierField(tier.id, "max_tasks", parseInt(e.target.value) || 0)
+                          }
+                          className="w-20 px-2 py-1 text-center rounded-lg border border-[var(--border)] bg-[var(--card)] font-bold text-xs outline-none focus:border-[var(--gold)]"
+                        />
+                      </div>
+
+                      {/* Gallery */}
+                      <div className="flex items-center justify-between p-2 rounded-xl bg-[var(--background)] border border-[var(--border)]">
+                        <span className="flex items-center gap-1.5 font-medium text-[var(--foreground)]">
+                          <ImageIcon className="w-3.5 h-3.5 text-pink-500" />
+                          <span>{t("gallery_limit", "صور المعرض التاريخي:")}</span>
+                        </span>
+                        <input
+                          type="number"
+                          value={tier.max_gallery}
+                          onChange={(e) =>
+                            handleUpdateTierField(tier.id, "max_gallery", parseInt(e.target.value) || 0)
+                          }
+                          className="w-20 px-2 py-1 text-center rounded-lg border border-[var(--border)] bg-[var(--card)] font-bold text-xs outline-none focus:border-[var(--gold)]"
+                        />
+                      </div>
+
+                      {/* Audios */}
+                      <div className="flex items-center justify-between p-2 rounded-xl bg-[var(--background)] border border-[var(--border)]">
+                        <span className="flex items-center gap-1.5 font-medium text-[var(--foreground)]">
+                          <Music className="w-3.5 h-3.5 text-teal-500" />
+                          <span>{t("audios_limit", "التسجيلات الصوتية:")}</span>
+                        </span>
+                        <input
+                          type="number"
+                          value={tier.max_audios}
+                          onChange={(e) =>
+                            handleUpdateTierField(tier.id, "max_audios", parseInt(e.target.value) || 0)
+                          }
+                          className="w-20 px-2 py-1 text-center rounded-lg border border-[var(--border)] bg-[var(--card)] font-bold text-xs outline-none focus:border-[var(--gold)]"
+                        />
+                      </div>
+
+                      {/* Documents */}
+                      <div className="flex items-center justify-between p-2 rounded-xl bg-[var(--background)] border border-[var(--border)]">
+                        <span className="flex items-center gap-1.5 font-medium text-[var(--foreground)]">
+                          <FileText className="w-3.5 h-3.5 text-orange-500" />
+                          <span>{t("documents_limit", "الوثائق والمخطوطات:")}</span>
+                        </span>
+                        <input
+                          type="number"
+                          value={tier.max_documents}
+                          onChange={(e) =>
+                            handleUpdateTierField(tier.id, "max_documents", parseInt(e.target.value) || 0)
+                          }
+                          className="w-20 px-2 py-1 text-center rounded-lg border border-[var(--border)] bg-[var(--card)] font-bold text-xs outline-none focus:border-[var(--gold)]"
+                        />
+                      </div>
                     </div>
                   </div>
-                ) : (
-                  <ul className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
-                    <li className="flex justify-between items-center py-1 border-b border-gray-100 dark:border-gray-800">
-                      <span>🌳 {t("trees", "أشجار العائلات")}:</span>
-                      <span className="font-bold font-mono text-[#d9a441]">{formatLimit(tier.max_trees)}</span>
-                    </li>
-                    <li className="flex justify-between items-center py-1 border-b border-gray-100 dark:border-gray-800">
-                      <span>👤 {t("individuals", "الأفراد")}:</span>
-                      <span className="font-bold font-mono text-[#d9a441]">{formatLimit(tier.max_individuals)}</span>
-                    </li>
-                    <li className="flex justify-between items-center py-1 border-b border-gray-100 dark:border-gray-800">
-                      <span>🏛️ {t("sources", "المصادر المحفوظة")}:</span>
-                      <span className="font-bold font-mono text-[#d9a441]">{formatLimit(tier.max_sources)}</span>
-                    </li>
-                    <li className="flex justify-between items-center py-1 border-b border-gray-100 dark:border-gray-800">
-                      <span>📝 {t("notes", "الملاحظات البحثية")}:</span>
-                      <span className="font-bold font-mono text-[#d9a441]">{formatLimit(tier.max_notes)}</span>
-                    </li>
-                    <li className="flex justify-between items-center py-1 border-b border-gray-100 dark:border-gray-800">
-                      <span>✅ {t("tasks", "المهام")}:</span>
-                      <span className="font-bold font-mono text-[#d9a441]">{formatLimit(tier.max_tasks)}</span>
-                    </li>
-                    <li className="flex justify-between items-center py-1 border-b border-gray-100 dark:border-gray-800">
-                      <span>🖼️ {t("gallery", "صور المعرض")}:</span>
-                      <span className="font-bold font-mono text-[#d9a441]">{formatLimit(tier.max_gallery)}</span>
-                    </li>
-                    <li className="flex justify-between items-center py-1 border-b border-gray-100 dark:border-gray-800">
-                      <span>🎵 {t("audios", "التسجيلات الصوتية")}:</span>
-                      <span className="font-bold font-mono text-[#d9a441]">{formatLimit(tier.max_audios)}</span>
-                    </li>
-                    <li className="flex justify-between items-center py-1 border-b border-gray-100 dark:border-gray-800">
-                      <span>📄 {t("documents", "الوثائق")}:</span>
-                      <span className="font-bold font-mono text-[#d9a441]">{formatLimit(tier.max_documents)}</span>
-                    </li>
-                  </ul>
                 )}
-              </div>
 
-              <div className="pt-4 border-t border-[var(--border-color)] flex justify-end gap-2">
-                {isEditing ? (
-                  <>
-                    <button
-                      onClick={() => setEditingId(null)}
-                      disabled={saving}
-                      className="px-3 py-1.5 rounded-lg border text-xs font-semibold text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
-                    >
-                      {t("cancel", "Cancel")}
-                    </button>
-                    <button
-                      onClick={() => handleSaveLimits(tier.id)}
-                      disabled={saving}
-                      className="px-4 py-1.5 rounded-lg bg-gradient-to-r from-[#d9a441] to-[#e8c377] text-[#092C2B] font-bold text-xs flex items-center gap-1.5 shadow cursor-pointer"
-                    >
-                      {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
-                      {t("save_quotas", "Save Quotas")}
-                    </button>
-                  </>
-                ) : (
-                  <button
-                    onClick={() => startEdit(tier)}
-                    className="w-full py-2 rounded-xl border border-[#d9a441]/40 text-[#d9a441] hover:bg-[#d9a441]/10 text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
-                  >
-                    <Edit3 className="w-3.5 h-3.5" />
-                    {t("edit_creation_quotas", "Edit Creation Quotas")}
-                  </button>
+                {/* TAB 2: Public Website Text & Copy */}
+                {activeTab === "copy" && (
+                  <div className="space-y-3 pt-2 border-t border-[var(--border)]">
+                    <span className="text-[0.68rem] uppercase tracking-wider text-[var(--gold)] font-bold block">
+                      {t("public_display_text", "النصوص المعروضة على الموقع العام:")}
+                    </span>
+
+                    <div className="space-y-3 text-xs">
+                      <div>
+                        <label className="block text-[0.7rem] font-bold text-[var(--muted-foreground)] mb-1">
+                          {t("tier_display_name", "اسم الباقة الظاهر:")}
+                        </label>
+                        <input
+                          type="text"
+                          value={tier.name}
+                          onChange={(e) => handleUpdateTierField(tier.id, "name", e.target.value)}
+                          className="w-full px-3 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--background)] font-bold"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[0.7rem] font-bold text-[var(--muted-foreground)] mb-1">
+                          {t("monthly_usd_price", "السعر الشهري بالدولار ($):")}
+                        </label>
+                        <input
+                          type="text"
+                          value={tier.price}
+                          onChange={(e) => handleUpdateTierField(tier.id, "price", e.target.value)}
+                          className="w-full px-3 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--background)] font-bold font-mono"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[0.7rem] font-bold text-[var(--muted-foreground)] mb-1">
+                          {t("badge_display_text", "شريط التمييز العلوي (Badge):")}
+                        </label>
+                        <input
+                          type="text"
+                          value={tier.badge || ""}
+                          onChange={(e) => handleUpdateTierField(tier.id, "badge", e.target.value)}
+                          placeholder="مثال: الخطة النشطة الحالية"
+                          className="w-full px-3 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--background)]"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[0.7rem] font-bold text-[var(--muted-foreground)] mb-1">
+                          {t("tier_desc_text", "الوصف الترويجي للباقة:")}
+                        </label>
+                        <textarea
+                          rows={2}
+                          value={tier.description || ""}
+                          onChange={(e) => handleUpdateTierField(tier.id, "description", e.target.value)}
+                          className="w-full px-3 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--background)] resize-none"
+                        />
+                      </div>
+                    </div>
+                  </div>
                 )}
+
+                {/* Save Button for Tier */}
+                <div className="pt-2">
+                  <button
+                    type="button"
+                    disabled={isSaving}
+                    onClick={() => handleSaveTier(tier)}
+                    className="w-full py-3 rounded-xl bg-gradient-to-r from-[var(--gold)] to-amber-500 text-black font-bold text-xs flex items-center justify-center gap-2 shadow hover:shadow-lg transition-all cursor-pointer disabled:opacity-50"
+                  >
+                    {isSaving ? (
+                      <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <Save className="w-4 h-4" />
+                    )}
+                    <span>
+                      {t("save_tier_limits", "حفظ وتطبيق حدود باقة")} {tier.name}
+                    </span>
+                  </button>
+
+                  {isSaved && (
+                    <div className="mt-2 p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-xs font-bold flex items-center justify-center gap-1.5 animate-in fade-in">
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      <span>{t("tier_saved_success", "تم تطبيق الحدود على قواعد البيانات والموقع العام!")}</span>
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

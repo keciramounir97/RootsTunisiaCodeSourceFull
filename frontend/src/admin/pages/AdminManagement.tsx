@@ -1,13 +1,3 @@
-import { useCallback, useEffect, useState } from "react";
-import { useThemeStore } from "../../store/theme";
-import { useLanguage } from "../../i18n";
-import { useAuth } from "../components/AuthContext";
-import { api } from "../../api/client";
-import {
-  getApiErrorMessage,
-  requestWithFallback,
-  shouldFallbackRoute,
-} from "../../api/helpers";
 import {
   Shield,
   Plus,
@@ -26,8 +16,19 @@ import {
   FileText,
   Newspaper,
   MessageSquare,
+  Mail,
+  Download,
   UserCheck,
   Save,
+  Archive,
+  ListChecks,
+  StickyNote,
+  Gauge,
+  Crown,
+  Wallet,
+  Coins,
+  Scale,
+  Layout,
 } from "lucide-react";
 import AOS from "aos";
 import "aos/dist/aos.css";
@@ -46,16 +47,26 @@ interface AdminUser {
 
 const PRIVILEGE_OPTIONS = [
   { key: "dashboard", label: "Dashboard", Icon: LayoutDashboard },
+  { key: "usage", label: "Usage Quotas", Icon: Gauge },
   { key: "trees", label: "Family Trees", Icon: Network },
   { key: "individuals", label: "Individuals", Icon: Users },
+  { key: "sources-archives", label: "Sources & Archives", Icon: Archive },
+  { key: "tasks", label: "Tasks", Icon: ListChecks },
+  { key: "notes", label: "Notes & References", Icon: StickyNote },
   { key: "gallery", label: "Gallery (Images)", Icon: Image },
   { key: "audios", label: "Audio Archives", Icon: Music },
   { key: "documents", label: "Documents", Icon: FileText },
   { key: "books", label: "Books", Icon: BookOpen },
+  { key: "articles", label: "Articles & Chroniques", Icon: Newspaper },
   { key: "users", label: "Users", Icon: Users },
-  { key: "suggestions", label: "Suggestions", Icon: MessageSquare },
-  { key: "approvals", label: "User Approvals", Icon: UserCheck },
-  { key: "activity", label: "Activity Log", Icon: Activity },
+  { key: "contact-messages", label: "Contact Messages", Icon: MessageSquare },
+  { key: "newsletter", label: "Newsletter", Icon: Mail },
+  { key: "subscriptions", label: "Subscriptions", Icon: Crown },
+  { key: "subscription-payments", label: "Subscription Payments", Icon: Wallet },
+  { key: "payment-settings", label: "Payment Methods", Icon: Wallet },
+  { key: "currencies", label: "Taux de Change", Icon: Coins },
+  { key: "legal-content", label: "Contenu Juridique", Icon: Scale },
+  { key: "content", label: "Page Content CMS", Icon: Layout },
   { key: "settings", label: "Settings", Icon: Settings },
 ];
 
@@ -68,18 +79,28 @@ export default function AdminManagement() {
 
   const getPrivilegeLabel = (key: string, fallback: string = "") => {
     const map: Record<string, string> = {
-      dashboard: t("privilege_dashboard", "لوحة التحكم"),
-      trees: t("privilege_trees", "أشجار العائلة"),
-      individuals: t("privilege_individuals", "الأفراد والأسلاف"),
-      gallery: t("privilege_gallery", "معرض الصور"),
-      audios: t("privilege_audios", "الأرشيف الصوتي"),
-      documents: t("privilege_documents", "الوثائق التاريخية"),
-      books: t("privilege_books", "المكتبة والمخطوطات"),
-      users: t("privilege_users", "إدارة المستخدمين"),
-      suggestions: t("privilege_suggestions", "الاقتراحات والطلبات"),
-      approvals: t("privilege_approvals", "موافقات المستخدمين"),
-      activity: t("privilege_activity", "سجل النشاطات"),
-      settings: t("privilege_settings", "الإعدادات العامة"),
+      dashboard: t("dashboard", "لوحة التحكم (Dashboard)"),
+      usage: t("usage_quotas", "استهلاك الحساب والحدود (Usage Quotas)"),
+      trees: t("trees", "أشجار العائلة (Arbres Généalogiques)"),
+      individuals: t("individuals", "الأفراد والأسلاف (Individuals)"),
+      "sources-archives": t("my_sources", "المصادر والأرشيف (Mes Sources)"),
+      tasks: t("tasks", "مهام البحث (Mes Tâches)"),
+      notes: t("notes", "الملاحظات ومراجع الأرشيف (Notes & Références)"),
+      gallery: t("gallery", "المعرض التراثي (Galerie)"),
+      audios: t("audios", "التسجيلات والروايات الشفوية (Audio)"),
+      documents: t("documents", "الوثائق وسجلات الأرشيف (Documents)"),
+      books: t("books", "الكتب والمخطوطات (Livres & Manuscrits)"),
+      articles: t("articles", "المقالات والدراسات (Articles)"),
+      users: t("users", "إدارة المستخدمين (Utilisateurs)"),
+      "contact-messages": t("contact_messages", "رسائل اتصل بنا (Messages)"),
+      newsletter: t("newsletter", "النشرة البريدية (Newsletter)"),
+      subscriptions: t("subscriptions", "باقات الاشتراكات والحدود (Abonnements)"),
+      "subscription-payments": t("subscription_payments", "إشعارات واعتماد المدفوعات (Paiements)"),
+      "payment-settings": t("payment_settings", "وسائل وطرق الدفع (Moyens de Paiement)"),
+      currencies: t("currencies_exchange", "أسعار الصرف والعملات (Taux de Change)"),
+      "legal-content": t("legal_content", "إدارة المحتوى القانوني (Contenu Juridique)"),
+      content: t("public_content_manager", "إدارة محتوى الموقع (Page Content)"),
+      settings: t("settings", "الإعدادات العامة (Settings)"),
     };
     return map[key] || t(`privilege_${key}`, fallback || key);
   };

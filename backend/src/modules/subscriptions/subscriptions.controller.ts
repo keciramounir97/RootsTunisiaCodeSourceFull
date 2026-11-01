@@ -83,10 +83,10 @@ export class SubscriptionsController {
     @Roles(3)
     async reviewPayment(
         @Param('id', ParseIntPipe) id: number,
-        @Body() body: { decision: 'approved' | 'rejected' },
+        @Body() body: { decision: 'approved' | 'rejected'; admin_message?: string },
         @Request() req,
     ) {
-        return this.service.reviewPayment(id, req.user.id, body.decision);
+        return this.service.reviewPayment(id, req.user.id, body.decision, body.admin_message);
     }
 
     @Patch('admin/users/:userId/subscription')

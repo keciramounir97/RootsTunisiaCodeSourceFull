@@ -228,6 +228,8 @@ export class SubscriptionsService {
             user_id: data.user_id,
             tier_id: data.tier_id,
             amount: data.amount,
+            currency: (data as any).currency || 'USD',
+            payment_method: (data as any).payment_method || 'Virement Bancaire',
             proof_url: data.proof_url || null,
             notes: data.notes || null,
             status: 'pending',
@@ -241,23 +243,39 @@ export class SubscriptionsService {
     }
 
     async listAllPayments(status?: string) {
-        const query = SubscriptionPayment.query(this.knex).orderBy('created_at', 'desc');
-        if (status) query.where('status', status);
+        let query = this.knex('subscription_payments')
+            .leftJoin('users', 'subscription_payments.user_id', 'users.id')
+            .leftJoin('subscription_tiers', 'subscription_payments.tier_id', 'subscription_tiers.id')
+            .select(
+                'subscription_payments.*',
+                'users.name as user_name',
+                'users.email as user_email',
+                'users.phone as user_phone',
+                'subscription_tiers.name as tier_name',
+                'subscription_tiers.price as tier_price'
+            )
+            .orderBy('subscription_payments.created_at', 'desc');
+
+        if (status && status !== 'all') query = query.where('subscription_payments.status', status);
         return query;
     }
 
-    async reviewPayment(id: number, reviewerId: number, decision: 'approved' | 'rejected') {
+    async reviewPayment(id: number, reviewerId: number, decision: 'approved' | 'rejected', adminMessage?: string) {
         const payment = await SubscriptionPayment.query(this.knex).findById(id);
         if (!payment) throw new NotFoundException('Payment not found');
         if (payment.status !== 'pending') throw new BadRequestException('Payment already reviewed');
 
         const now = new Date().toISOString().slice(0, 19).replace('T', ' ');
 
-        const updated = await SubscriptionPayment.query(this.knex).patchAndFetchById(id, {
+        const patchData: any = {
             status: decision,
             reviewed_by: reviewerId,
             reviewed_at: now,
-        });
+        };
+        if (adminMessage !== undefined) {
+            patchData.admin_message = adminMessage;
+        }
+        const updated = await SubscriptionPayment.query(this.knex).patchAndFetchById(id, patchData);
 
         // If approved, create or update user subscription
         if (decision === 'approved') {

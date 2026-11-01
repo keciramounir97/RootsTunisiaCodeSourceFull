@@ -99,6 +99,8 @@ const Currencies = lazy(() => import("./admin/pages/Currencies"));
 const Backups = lazy(() => import("./admin/pages/Backups"));
 const AdminSuggestions = lazy(() => import("./admin/pages/Suggestions"));
 const LegalContent = lazy(() => import("./admin/pages/LegalContent"));
+const SuperAdmins = lazy(() => import("./admin/pages/SuperAdmins"));
+const ContentManager = lazy(() => import("./admin/pages/ContentManager"));
 const DownloadRequests = lazy(() => import("./admin/pages/DownloadRequests"));
 const AdminArticles = lazy(() => import("./admin/pages/Articles"));
 const TierFeatures = lazy(() => import("./admin/pages/TierFeatures"));
@@ -650,6 +652,26 @@ function AppRoutes() {
             <Suspense fallback={<AdminLoadingFallback />}>
               <ProtectedRoute roles={[3]}>
                 <Currencies />
+              </ProtectedRoute>
+            </Suspense>
+          }
+        />
+        <Route
+          path="super-admins"
+          element={
+            <Suspense fallback={<AdminLoadingFallback />}>
+              <ProtectedRoute roles={[3]}>
+                <SuperAdmins />
+              </ProtectedRoute>
+            </Suspense>
+          }
+        />
+        <Route
+          path="content"
+          element={
+            <Suspense fallback={<AdminLoadingFallback />}>
+              <ProtectedRoute roles={[3]}>
+                <ContentManager />
               </ProtectedRoute>
             </Suspense>
           }
