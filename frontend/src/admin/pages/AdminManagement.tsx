@@ -165,7 +165,15 @@ export default function AdminManagement() {
         (Array.isArray(data) && data) ||
         [];
 
-      setAdmins(list);
+      const normalized = list.map((item: any) => ({
+        ...item,
+        fullName: item.fullName || item.full_name || item.name || item.email || "Admin",
+        role: item.role ?? item.roleId ?? 1,
+        privileges: Array.isArray(item.privileges)
+          ? item.privileges
+          : (typeof item.privileges === "string" ? JSON.parse(item.privileges || "[]") : []),
+      }));
+      setAdmins(normalized);
     } catch (error) {
       console.error("Failed to load admins:", error);
       notify(getApiErrorMessage(error, "Failed to load admins"), "error");
@@ -418,10 +426,10 @@ export default function AdminManagement() {
                           <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold ${
                             admin.role === 3 ? "bg-gradient-to-br from-[#d9a441] to-[#b38f2d]" : "bg-gradient-to-br from-[#24766f] to-[#1a5c57]"
                           }`}>
-                            {admin.fullName.charAt(0)}
+                            {(admin.fullName || (admin as any).full_name || admin.email || "A").charAt(0).toUpperCase()}
                           </div>
                           <div>
-                            <p className={`font-medium ${textColor}`}>{admin.fullName}</p>
+                            <p className={`font-medium ${textColor}`}>{admin.fullName || (admin as any).full_name || admin.email}</p>
                             <p className="text-xs opacity-60">{admin.email}</p>
                           </div>
                         </div>
@@ -453,7 +461,7 @@ export default function AdminManagement() {
                         </div>
                       </td>
                       <td className="px-4 py-4">
-                        <p className={`text-sm ${textColor} opacity-70`}>{formatDate(admin.createdAt)}</p>
+                        <p className={`text-sm ${textColor} opacity-70`}>{admin.createdAt ? formatDate(admin.createdAt) : "-"}</p>
                         {admin.createdBy && (
                           <p className="text-xs opacity-50">
                             {t("legacy.by", "بواسطة")} {admin.createdBy}

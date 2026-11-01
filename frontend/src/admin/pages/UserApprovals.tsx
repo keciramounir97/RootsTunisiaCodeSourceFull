@@ -298,9 +298,9 @@ export default function AdminUserApprovals() {
                       <td className="px-4 py-4">
                         <div className="flex items-center gap-2">
                           <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#24766f] to-[#d9a441] flex items-center justify-center text-white text-xs font-bold">
-                            {pendingUser.fullName.charAt(0)}
+                            {(pendingUser.fullName || (pendingUser as any).full_name || pendingUser.email || "U").charAt(0).toUpperCase()}
                           </div>
-                          <span className={`font-medium ${textColor}`}>{pendingUser.fullName}</span>
+                          <span className={`font-medium ${textColor}`}>{pendingUser.fullName || (pendingUser as any).full_name || pendingUser.email || "User"}</span>
                           {pendingUser.status === "approved" && (
                             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-500/20 text-green-500 text-xs">
                               <Check className="w-3 h-3" />

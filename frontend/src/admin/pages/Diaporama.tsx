@@ -83,7 +83,8 @@ export default function Diaporama() {
         }
       }
 
-      const selectedIds = new Set(savedSlides.map((s) => String(s.id || s.imageUrl || s.image_url)));
+      const safeSlides = Array.isArray(savedSlides) ? savedSlides : [];
+      const selectedIds = new Set(safeSlides.map((s) => String(s.id || s.imageUrl || s.image_url)));
 
       // Fallback sample items if gallery is empty
       if (galleryList.length === 0) {

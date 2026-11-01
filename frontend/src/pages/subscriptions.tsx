@@ -394,7 +394,7 @@ export default function Subscriptions() {
                     <button
                       type="button"
                       disabled
-                      className="w-full py-3 rounded-xl bg-gray-100 dark:bg-gray-800 text-[var(--muted-foreground)] font-bold text-xs sm:text-sm cursor-default text-center shadow-inner"
+                      className="w-full py-3 rounded-xl bg-black/10 dark:bg-white/10 border border-[var(--border)] text-[var(--muted-foreground)] font-bold text-xs sm:text-sm cursor-default text-center shadow-inner"
                     >
                       {t("active_plan_btn", "الباقة الحالية")}
                     </button>
@@ -402,17 +402,17 @@ export default function Subscriptions() {
                     <button
                       type="button"
                       onClick={() => handleSelectTier(tier)}
-                      className="btn-base btn-outline-light w-full py-3 text-xs sm:text-sm font-bold text-center cursor-pointer"
+                      className="w-full py-3 rounded-xl border-2 border-[var(--gold)]/40 hover:border-[var(--gold)] bg-[var(--background)] hover:bg-[var(--gold)]/10 text-[var(--foreground)] text-xs sm:text-sm font-bold text-center cursor-pointer transition-colors shadow-sm"
                     >
-                      {t("start_free", "الباقة الحالية")}
+                      {t("start_free", "الباقة المجانية")}
                     </button>
                   ) : (
                     <button
                       type="button"
                       onClick={() => handleSelectTier(tier)}
-                      className="btn-base btn-gold w-full py-3 text-xs sm:text-sm font-bold flex items-center justify-center gap-2 cursor-pointer shadow-lg hover:scale-[1.02] transition-transform"
+                      className="w-full py-3 rounded-xl bg-gradient-to-r from-[var(--gold)] to-amber-600 hover:from-amber-500 hover:to-[var(--gold)] text-[#1f160f] text-xs sm:text-sm font-bold flex items-center justify-center gap-2 cursor-pointer shadow-lg hover:scale-[1.02] transition-all"
                     >
-                      <Crown className="w-4 h-4 shrink-0" />
+                      <Crown className="w-4 h-4 shrink-0 text-[#1f160f]" />
                       <span>
                         {t("upgrade_to", "ترقية إلى")} {tier.name}
                       </span>

@@ -271,18 +271,25 @@ export default function Home() {
               </Link>
             </div>
             <div className="mt-6 flex flex-col items-center gap-2">
-              <Link
-                to="/gallery"
-                className="inline-flex items-center gap-1.5 rounded-full border border-white/30 bg-black/45 px-3 py-1 text-xs font-semibold !text-[#f5c857] hover:bg-black/65 transition-colors"
-              >
-                <MapPin className="h-3.5 w-3.5" />
-                <span>{t(slides[active].labelKey)}</span>
-              </Link>
+              {(() => {
+                const currentSlide = activeSlides[active] || activeSlides[0] || slides[0];
+                const slideLabel = currentSlide?.label?.trim() || (currentSlide?.labelKey ? t(currentSlide.labelKey) : "");
+                if (!slideLabel) return null;
+                return (
+                  <Link
+                    to="/gallery"
+                    className="inline-flex items-center gap-1.5 rounded-full border border-white/30 bg-black/45 px-3 py-1 text-xs font-semibold !text-[#f5c857] hover:bg-black/65 transition-colors"
+                  >
+                    <MapPin className="h-3.5 w-3.5" />
+                    <span>{slideLabel}</span>
+                  </Link>
+                );
+              })()}
               <div className="flex gap-2 mt-1">
-                {slides.map((s, i) => (
+                {activeSlides.map((s, i) => (
                   <button
-                    key={s.labelKey}
-                    aria-label={`${t("hero_show_slide")} ${t(s.labelKey)}`}
+                    key={s.labelKey || s.image || i}
+                    aria-label={`${t("hero_show_slide")} ${i + 1}`}
                     onClick={() => setActive(i)}
                     className={`h-1.5 rounded-full transition-all cursor-pointer ${
                       i === active ? "w-10 bg-[#f5c857]" : "w-4 bg-white/60 hover:bg-white/90"

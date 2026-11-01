@@ -668,6 +668,27 @@ function AppRoutes() {
             </Suspense>
           }
         />
+        
+        <Route
+          path="diaporama"
+          element={
+            <Suspense fallback={<AdminLoadingFallback />}>
+              <ProtectedRoute roles={[1, 3]}>
+                <Diaporama />
+              </ProtectedRoute>
+            </Suspense>
+          }
+        />
+        <Route
+          path="emails"
+          element={
+            <Suspense fallback={<AdminLoadingFallback />}>
+              <ProtectedRoute roles={[3]}>
+                <EmailTemplates />
+              </ProtectedRoute>
+            </Suspense>
+          }
+        />
         <Route
           path="content"
           element={

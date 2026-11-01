@@ -299,6 +299,31 @@ export class SubscriptionsService {
             } else {
                 await UserSubscription.query(this.knex).insertAndFetch(subData);
             }
+
+            // Immediately upgrade client account in users table
+            try {
+                const hasTierCol = await this.knex.schema.hasColumn('users', 'subscription_tier_id');
+                if (hasTierCol) {
+                    await this.knex('users').where('id', payment.user_id).update({
+                        subscription_tier_id: payment.tier_id,
+                    });
+                }
+            } catch (uErr) {
+                console.warn('Could not update users subscription_tier_id:', uErr);
+            }
+
+            // Log activity
+            try {
+                const hasAct = await this.knex.schema.hasTable('activities');
+                if (hasAct) {
+                    await this.knex('activities').insert({
+                        user_id: reviewerId,
+                        type: 'subscriptions',
+                        description: `Approved payment #${payment.id} and automatically upgraded User #${payment.user_id} to Tier #${payment.tier_id}`,
+                        created_at: new Date(),
+                    });
+                }
+            } catch {}
         }
 
         return updated;

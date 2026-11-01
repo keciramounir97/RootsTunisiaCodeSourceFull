@@ -64,10 +64,15 @@ export class ErrorBoundary extends Component<Props, State> {
               </p>
             </div>
 
-            {process.env.NODE_ENV !== "production" && this.state.error && (
-              <pre className="text-left text-xs bg-black/40 p-4 rounded border border-white/10 overflow-x-auto text-red-300 max-h-40">
-                {this.state.error.message}
-              </pre>
+            {this.state.error && (
+              <details className="text-left text-xs bg-black/40 p-3 rounded border border-white/10 text-red-300 max-h-48 overflow-y-auto cursor-pointer">
+                <summary className="font-mono text-xs opacity-75 font-semibold text-[var(--gold)]">
+                  {isAr ? "عرض تفاصيل الخطأ التقني" : "View technical error details"}
+                </summary>
+                <pre className="mt-2 whitespace-pre-wrap break-all font-mono text-[0.7rem] text-red-200">
+                  {this.state.error.message || String(this.state.error)}
+                </pre>
+              </details>
             )}
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
