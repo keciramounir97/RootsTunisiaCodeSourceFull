@@ -920,7 +920,7 @@ export default function Individuals() {
                       <button
                         type="button"
                         onClick={() => gedcomFileInputRef.current?.click()}
-                        className="neu-inset p-4 rounded-xl text-left rtl:text-right hover:border-[#0d9488] transition-colors"
+                        className="neu-inset p-4 rounded-xl text-start rtl:text-end hover:border-[#0d9488] transition-colors"
                       >
                         <Upload className="w-5 h-5 text-[#0d9488] mb-2" />
                         <div className="text-sm font-semibold">{t("import_file", "Importer un fichier")}</div>
@@ -932,7 +932,7 @@ export default function Individuals() {
                           const el = document.getElementById("individual-gedcom-editor");
                           if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
                         }}
-                        className="neu-inset p-4 rounded-xl text-left rtl:text-right hover:border-[#0d9488] transition-colors"
+                        className="neu-inset p-4 rounded-xl text-start rtl:text-end hover:border-[#0d9488] transition-colors"
                       >
                         <FileText className="w-5 h-5 text-[#0d9488] mb-2" />
                         <div className="text-sm font-semibold">{t("edit_or_paste", "Éditer / coller")}</div>
@@ -942,7 +942,7 @@ export default function Individuals() {
                         type="button"
                         onClick={() => downloadGedcomText(currentGedcomText, `${(formData.name || "individual").replace(/\s+/g, "-").toLowerCase()}.ged`)}
                         disabled={!currentGedcomText}
-                        className="neu-inset p-4 rounded-xl text-left rtl:text-right hover:border-[#0d9488] transition-colors disabled:opacity-50"
+                        className="neu-inset p-4 rounded-xl text-start rtl:text-end hover:border-[#0d9488] transition-colors disabled:opacity-50"
                       >
                         <FileCode2 className="w-5 h-5 text-[#0d9488] mb-2" />
                         <div className="text-sm font-semibold">{t("export_gedcom", "Exporter GEDCOM")}</div>
@@ -993,7 +993,7 @@ export default function Individuals() {
                           value={formData.name}
                           onChange={(e) => setFormData((s: any) => ({ ...s, name: e.target.value }))}
                           placeholder={t("placeholder_name_example", "ex. Ahmed Ben Mohamed")}
-                          className="neu-field w-full px-3 py-2 text-xs rtl:text-right"
+                          className="neu-field w-full px-3 py-2 text-xs rtl:text-end"
                         />
                       </div>
 
@@ -1233,7 +1233,7 @@ export default function Individuals() {
                             <button
                               type="button"
                               onClick={() => openSourceLink(parsed?.url || link, parsed?.label, parsed?.kind)}
-                              className="min-w-0 flex-1 truncate text-left font-semibold text-[#0d9488] hover:underline flex items-center gap-1.5"
+                              className="min-w-0 flex-1 truncate text-start font-semibold text-[#0d9488] hover:underline flex items-center gap-1.5"
                             >
                               {parsed?.kind === "image" ? (
                                 <ImageIcon className="w-3.5 h-3.5 shrink-0" />
@@ -1459,7 +1459,7 @@ export default function Individuals() {
                       >
                         <div className="flex items-start gap-2 min-w-0">
                           <Link2 className="w-4 h-4 text-[#0d9488] shrink-0 mt-0.5" />
-                          <span className="min-w-0 text-left">
+                          <span className="min-w-0 text-start">
                             <span className="block font-semibold text-[#0c4a6e] dark:text-[#0d9488] group-hover:underline truncate">
                               {link.label}
                             </span>

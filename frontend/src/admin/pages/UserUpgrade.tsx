@@ -463,11 +463,11 @@ export default function UserUpgrade() {
             <table className="w-full text-sm text-gray-900 dark:text-white">
               <thead>
                 <tr className="border-b border-[var(--border-color)] bg-[var(--paper-color)]">
-                  <th className="text-left rtl:text-right px-4 py-3 font-semibold">{t("id", "ID")}</th>
-                  <th className="text-left rtl:text-right px-4 py-3 font-semibold">{t("name", "Name")}</th>
-                  <th className="text-left rtl:text-right px-4 py-3 font-semibold">{t("email", "Email")}</th>
-                  <th className="text-left rtl:text-right px-4 py-3 font-semibold">{t("role", "Role")}</th>
-                  <th className="text-left rtl:text-right px-4 py-3 font-semibold">{t("actions", "Actions")}</th>
+                  <th className="text-start rtl:text-end px-4 py-3 font-semibold">{t("id", "ID")}</th>
+                  <th className="text-start rtl:text-end px-4 py-3 font-semibold">{t("name", "Name")}</th>
+                  <th className="text-start rtl:text-end px-4 py-3 font-semibold">{t("email", "Email")}</th>
+                  <th className="text-start rtl:text-end px-4 py-3 font-semibold">{t("role", "Role")}</th>
+                  <th className="text-start rtl:text-end px-4 py-3 font-semibold">{t("actions", "Actions")}</th>
                 </tr>
               </thead>
               <tbody>

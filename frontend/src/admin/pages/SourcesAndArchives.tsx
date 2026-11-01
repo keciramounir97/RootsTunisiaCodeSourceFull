@@ -396,7 +396,7 @@ export default function SourcesAndArchives() {
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder={t("placeholder_source_name", "e.g. Turkish Public Archive")}
                   required
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--border-color)] bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#0d9488]/40 rtl:text-right"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--border-color)] bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#0d9488]/40 rtl:text-end"
                 />
               </div>
 
@@ -407,7 +407,7 @@ export default function SourcesAndArchives() {
                   value={url}
                   onChange={(e) => setUrl(e.target.value)}
                   placeholder={t("placeholder_source_url", "e.g. https://www.archives.gov.tr")}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--border-color)] bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#0d9488]/40 rtl:text-right"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--border-color)] bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#0d9488]/40 rtl:text-end"
                 />
               </div>
 
@@ -418,7 +418,7 @@ export default function SourcesAndArchives() {
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder={t("placeholder_source_desc", "e.g. Contains Ottoman registries for Tunisian family lineages")}
                   rows={3}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--border-color)] bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white resize-none rtl:text-right"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--border-color)] bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white resize-none rtl:text-end"
                 />
               </div>
 

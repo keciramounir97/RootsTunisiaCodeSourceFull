@@ -1439,7 +1439,7 @@ export default function Trees() {
                         value={treeForm.archiveSource}
                         onChange={(e) => setTreeForm((s) => ({ ...s, archiveSource: e.target.value }))}
                         placeholder={t("archive_source", "Archives...")}
-                        className={`w-full px-3.5 py-2.5 text-xs rounded-lg border ${border} ${inputBg} ${inputText} rtl:text-right`}
+                        className={`w-full px-3.5 py-2.5 text-xs rounded-lg border ${border} ${inputBg} ${inputText} rtl:text-end`}
                       />
                     </div>
                     <div>
@@ -1450,7 +1450,7 @@ export default function Trees() {
                         value={treeForm.documentCode}
                         onChange={(e) => setTreeForm((s) => ({ ...s, documentCode: e.target.value }))}
                         placeholder={t("placeholder_doc_code", "DOC-12345")}
-                        className={`w-full px-3.5 py-2.5 text-xs rounded-lg border ${border} ${inputBg} ${inputText} rtl:text-right`}
+                        className={`w-full px-3.5 py-2.5 text-xs rounded-lg border ${border} ${inputBg} ${inputText} rtl:text-end`}
                       />
                     </div>
                   </div>

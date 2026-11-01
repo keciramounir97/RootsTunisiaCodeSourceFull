@@ -104,13 +104,13 @@ export default function SubscriptionPayments() {
           <table className="w-full text-sm text-gray-900 dark:text-white">
             <thead>
               <tr className="border-b border-[var(--border-color)] bg-[var(--paper-color)]">
-                <th className="ltr:text-left rtl:text-right px-4 py-3 font-semibold text-gray-900 dark:text-white">{t("id_col", "المعرف")}</th>
-                <th className="ltr:text-left rtl:text-right px-4 py-3 font-semibold text-gray-900 dark:text-white">{t("user", "المستخدم")}</th>
-                <th className="ltr:text-left rtl:text-right px-4 py-3 font-semibold text-gray-900 dark:text-white">{t("tier", "الخطة")}</th>
-                <th className="ltr:text-left rtl:text-right px-4 py-3 font-semibold text-gray-900 dark:text-white">{t("amount", "المبلغ")}</th>
-                <th className="ltr:text-left rtl:text-right px-4 py-3 font-semibold text-gray-900 dark:text-white">{t("status", "الحالة")}</th>
-                <th className="ltr:text-left rtl:text-right px-4 py-3 font-semibold text-gray-900 dark:text-white">{t("date", "التاريخ")}</th>
-                <th className="ltr:text-left rtl:text-right px-4 py-3 font-semibold text-gray-900 dark:text-white">{t("actions", "الإجراءات")}</th>
+                <th className="ltr:text-start rtl:text-end px-4 py-3 font-semibold text-gray-900 dark:text-white">{t("id_col", "المعرف")}</th>
+                <th className="ltr:text-start rtl:text-end px-4 py-3 font-semibold text-gray-900 dark:text-white">{t("user", "المستخدم")}</th>
+                <th className="ltr:text-start rtl:text-end px-4 py-3 font-semibold text-gray-900 dark:text-white">{t("tier", "الخطة")}</th>
+                <th className="ltr:text-start rtl:text-end px-4 py-3 font-semibold text-gray-900 dark:text-white">{t("amount", "المبلغ")}</th>
+                <th className="ltr:text-start rtl:text-end px-4 py-3 font-semibold text-gray-900 dark:text-white">{t("status", "الحالة")}</th>
+                <th className="ltr:text-start rtl:text-end px-4 py-3 font-semibold text-gray-900 dark:text-white">{t("date", "التاريخ")}</th>
+                <th className="ltr:text-start rtl:text-end px-4 py-3 font-semibold text-gray-900 dark:text-white">{t("actions", "الإجراءات")}</th>
               </tr>
             </thead>
             <tbody>

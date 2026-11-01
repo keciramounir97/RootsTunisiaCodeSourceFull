@@ -428,9 +428,9 @@ export default function UserSettings() {
               <table className="w-full text-xs text-gray-900 dark:text-white">
                 <thead>
                   <tr className="bg-gray-50 dark:bg-gray-800 border-b border-[var(--border-color)]">
-                    <th className="text-left rtl:text-right px-4 py-3 font-semibold">{t("date_time", "Date & Time")}</th>
-                    <th className="text-left rtl:text-right px-4 py-3 font-semibold">{t("category", "Category")}</th>
-                    <th className="text-left rtl:text-right px-4 py-3 font-semibold">{t("description", "Description")}</th>
+                    <th className="text-start rtl:text-end px-4 py-3 font-semibold">{t("date_time", "Date & Time")}</th>
+                    <th className="text-start rtl:text-end px-4 py-3 font-semibold">{t("category", "Category")}</th>
+                    <th className="text-start rtl:text-end px-4 py-3 font-semibold">{t("description", "Description")}</th>
                   </tr>
                 </thead>
                 <tbody>

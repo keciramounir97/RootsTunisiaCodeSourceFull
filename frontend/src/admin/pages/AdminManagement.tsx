@@ -372,10 +372,10 @@ export default function AdminManagement() {
               <table className="w-full">
                 <thead className={`${isDark ? "bg-white/5" : "bg-black/5"}`}>
                   <tr>
-                    <th className={`px-4 py-3 ltr:text-left rtl:text-right text-sm font-semibold ${textColor}`}>{t("legacy.admin", "المشرف")}</th>
-                    <th className={`px-4 py-3 ltr:text-left rtl:text-right text-sm font-semibold ${textColor}`}>{t("legacy.role", "الدور")}</th>
-                    <th className={`px-4 py-3 ltr:text-left rtl:text-right text-sm font-semibold ${textColor}`}>{t("legacy.privileges", "الصلاحيات والامتيازات")}</th>
-                    <th className={`px-4 py-3 ltr:text-left rtl:text-right text-sm font-semibold ${textColor}`}>{t("legacy.created", "تاريخ الإنشاء")}</th>
+                    <th className={`px-4 py-3 ltr:text-start rtl:text-end text-sm font-semibold ${textColor}`}>{t("legacy.admin", "المشرف")}</th>
+                    <th className={`px-4 py-3 ltr:text-start rtl:text-end text-sm font-semibold ${textColor}`}>{t("legacy.role", "الدور")}</th>
+                    <th className={`px-4 py-3 ltr:text-start rtl:text-end text-sm font-semibold ${textColor}`}>{t("legacy.privileges", "الصلاحيات والامتيازات")}</th>
+                    <th className={`px-4 py-3 ltr:text-start rtl:text-end text-sm font-semibold ${textColor}`}>{t("legacy.created", "تاريخ الإنشاء")}</th>
                     <th className={`px-4 py-3 text-center text-sm font-semibold ${textColor}`}>{t("legacy.actions", "الإجراءات")}</th>
                   </tr>
                 </thead>

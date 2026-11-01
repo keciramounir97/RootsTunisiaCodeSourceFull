@@ -931,7 +931,7 @@ export default function Books() {
                       setForm((s) => ({ ...s, title: e.target.value }))
                     }
                     required
-                    className={`heritage-input mt-2 w-full px-3 py-2 rounded-md border ${inputBg} ${inputText} ${border} rtl:text-right`}
+                    className={`heritage-input mt-2 w-full px-3 py-2 rounded-md border ${inputBg} ${inputText} ${border} rtl:text-end`}
                     placeholder={t("placeholder_book_title", "Book title")}
                     disabled={saving}
                   />
@@ -947,7 +947,7 @@ export default function Books() {
                       onChange={(e) =>
                         setForm((s) => ({ ...s, author: e.target.value }))
                       }
-                      className={`heritage-input mt-2 w-full px-3 py-2 rounded-md border ${inputBg} ${inputText} ${border} rtl:text-right`}
+                      className={`heritage-input mt-2 w-full px-3 py-2 rounded-md border ${inputBg} ${inputText} ${border} rtl:text-end`}
                       placeholder={t("author", "Author")}
                       disabled={saving}
                     />
@@ -962,7 +962,7 @@ export default function Books() {
                       onChange={(e) =>
                         setForm((s) => ({ ...s, category: e.target.value }))
                       }
-                      className={`heritage-input mt-2 w-full px-3 py-2 rounded-md border ${inputBg} ${inputText} ${border} rtl:text-right`}
+                      className={`heritage-input mt-2 w-full px-3 py-2 rounded-md border ${inputBg} ${inputText} ${border} rtl:text-end`}
                       placeholder={t("category", "Category")}
                       disabled={saving}
                     />
@@ -982,7 +982,7 @@ export default function Books() {
                           archiveSource: e.target.value,
                         }))
                       }
-                      className={`heritage-input mt-2 w-full px-3 py-2 rounded-md border ${inputBg} ${inputText} ${border} rtl:text-right`}
+                      className={`heritage-input mt-2 w-full px-3 py-2 rounded-md border ${inputBg} ${inputText} ${border} rtl:text-end`}
                       placeholder={t("archive_source", "Archive Source")}
                       disabled={saving}
                     />
@@ -997,7 +997,7 @@ export default function Books() {
                       onChange={(e) =>
                         setForm((s) => ({ ...s, documentCode: e.target.value }))
                       }
-                      className={`heritage-input mt-2 w-full px-3 py-2 rounded-md border ${inputBg} ${inputText} ${border} rtl:text-right`}
+                      className={`heritage-input mt-2 w-full px-3 py-2 rounded-md border ${inputBg} ${inputText} ${border} rtl:text-end`}
                       placeholder={t("document_code", "Document Code")}
                       disabled={saving}
                     />

@@ -158,9 +158,9 @@ export default function SuperAdminApprovals() {
                   <table className="w-full text-sm">
                     <thead>
                       <tr className={isDark ? "bg-white/5" : "bg-black/5"}>
-                        <th className="ltr:text-left rtl:text-right px-4 py-3">{t("legacy.name", "الاسم")}</th>
-                        <th className="ltr:text-left rtl:text-right px-4 py-3">{t("legacy.email", "البريد الإلكتروني")}</th>
-                        <th className="ltr:text-left rtl:text-right px-4 py-3">{t("legacy.role", "الدور")}</th>
+                        <th className="ltr:text-start rtl:text-end px-4 py-3">{t("legacy.name", "الاسم")}</th>
+                        <th className="ltr:text-start rtl:text-end px-4 py-3">{t("legacy.email", "البريد الإلكتروني")}</th>
+                        <th className="ltr:text-start rtl:text-end px-4 py-3">{t("legacy.role", "الدور")}</th>
                       </tr>
                     </thead>
                     <tbody>

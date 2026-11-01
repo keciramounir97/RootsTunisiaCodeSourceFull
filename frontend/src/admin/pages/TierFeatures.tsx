@@ -166,7 +166,7 @@ export default function TierFeatures() {
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-[var(--primary)] border-b border-white/20">
-                <th className="ltr:text-left rtl:text-right px-4 py-3.5 font-semibold text-white">{t("feature", "الميزة")}</th>
+                <th className="ltr:text-start rtl:text-end px-4 py-3.5 font-semibold text-white">{t("feature", "الميزة")}</th>
                 {tiers.map((tier) => (
                   <th key={tier.id} className="text-center px-4 py-3.5 font-semibold text-white">
                     {getTierName(tier)}
@@ -178,7 +178,7 @@ export default function TierFeatures() {
             <tbody>
               {features.map((feature) => (
                 <tr key={feature.featureKey} className="border-b border-[var(--border)] hover:bg-[var(--gold)]/5">
-                  <td className="px-4 py-3 ltr:text-left rtl:text-right">
+                  <td className="px-4 py-3 ltr:text-start rtl:text-end">
                     <div className="font-semibold">{feature.label}</div>
                     <div className="text-xs opacity-50 font-mono">{feature.featureKey}</div>
                   </td>

@@ -163,10 +163,10 @@ export default function NewsletterSubscribers() {
             <table className="w-full text-sm">
               <thead>
                 <tr className={isDark ? "bg-white/5" : "bg-black/5"}>
-                  <th className="text-left rtl:text-right px-4 py-3">#</th>
-                  <th className="text-left rtl:text-right px-4 py-3">{t("email", "Email")}</th>
-                  <th className="text-left rtl:text-right px-4 py-3">{t("subscribed_at", "Subscribed At")}</th>
-                  <th className="text-right rtl:text-left px-4 py-3">{t("actions", "Actions")}</th>
+                  <th className="text-start rtl:text-end px-4 py-3">#</th>
+                  <th className="text-start rtl:text-end px-4 py-3">{t("email", "Email")}</th>
+                  <th className="text-start rtl:text-end px-4 py-3">{t("subscribed_at", "Subscribed At")}</th>
+                  <th className="text-end rtl:text-start px-4 py-3">{t("actions", "Actions")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -179,7 +179,7 @@ export default function NewsletterSubscribers() {
                         ? new Date(row.created_at || row.createdAt || "").toLocaleDateString()
                         : "—"}
                     </td>
-                    <td className="px-4 py-3 text-right rtl:text-left">
+                    <td className="px-4 py-3 text-end rtl:text-start">
                       <button
                         onClick={() => openIndividualModal(row.email)}
                         className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded bg-teal/10 text-teal hover:bg-teal/20 transition text-xs font-semibold"

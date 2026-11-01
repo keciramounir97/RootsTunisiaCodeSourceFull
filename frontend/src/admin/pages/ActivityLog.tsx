@@ -142,7 +142,7 @@ export default function ActivityLog() {
         <div className="overflow-x-auto">
           <table className="heritage-table w-full text-sm">
             <thead className={subtle}>
-              <tr className={`text-left border-b ${border}`}>
+              <tr className={`text-start border-b ${border}`}>
                 <th className="py-3 px-4">{t("type", "Type")}</th>
                 <th className="py-3 px-4">{t("description", "Description")}</th>
                 <th className="py-3 px-4">{t("user", "User")}</th>

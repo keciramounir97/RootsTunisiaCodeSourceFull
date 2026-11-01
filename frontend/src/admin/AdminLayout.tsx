@@ -28,6 +28,7 @@ export default function AdminLayout() {
 
   return (
     <div
+      dir={isRtl ? "rtl" : "ltr"}
       className="bg-[var(--background)] text-[var(--foreground)] min-h-screen bg-cover bg-center bg-fixed bg-no-repeat transition-colors duration-300 relative"
       style={{ backgroundImage: `url(${backgroundImage})` }}
     >
@@ -48,7 +49,7 @@ export default function AdminLayout() {
         >
           <div className={`mx-auto space-y-6 transition-all duration-300 ${open ? "max-w-7xl" : "max-w-[98%] w-full"}`}>
             <Breadcrumb />
-            <div className="surface-card p-4 sm:p-8 shadow-xl border border-[var(--gold)]/30 backdrop-blur-md w-full">
+            <div dir={isRtl ? "rtl" : "ltr"} className="surface-card p-4 sm:p-8 shadow-xl border border-[var(--gold)]/30 backdrop-blur-md w-full">
               <Outlet context={{ sidebarOpen: open }} />
             </div>
           </div>

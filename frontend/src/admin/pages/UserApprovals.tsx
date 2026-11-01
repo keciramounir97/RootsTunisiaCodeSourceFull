@@ -265,25 +265,25 @@ export default function AdminUserApprovals() {
               <table className="w-full">
                 <thead className={`${isDark ? "bg-white/5" : "bg-black/5"}`}>
                   <tr>
-                    <th className={`px-4 py-3 text-left text-sm font-semibold ${textColor}`}>
+                    <th className={`px-4 py-3 text-start text-sm font-semibold ${textColor}`}>
                       <div className="flex items-center gap-2">
                         <UserCheck className="w-4 h-4" />
                         {t("legacy.full_name", "Full Name")}
                       </div>
                     </th>
-                    <th className={`px-4 py-3 text-left text-sm font-semibold ${textColor}`}>
+                    <th className={`px-4 py-3 text-start text-sm font-semibold ${textColor}`}>
                       <div className="flex items-center gap-2">
                         <Mail className="w-4 h-4" />
                         {t("legacy.email", "Email")}
                       </div>
                     </th>
-                    <th className={`px-4 py-3 text-left text-sm font-semibold ${textColor}`}>
+                    <th className={`px-4 py-3 text-start text-sm font-semibold ${textColor}`}>
                       <div className="flex items-center gap-2">
                         <Phone className="w-4 h-4" />
                         {t("legacy.phone", "Phone")}
                       </div>
                     </th>
-                    <th className={`px-4 py-3 text-left text-sm font-semibold ${textColor}`}>
+                    <th className={`px-4 py-3 text-start text-sm font-semibold ${textColor}`}>
                       <div className="flex items-center gap-2">
                         <Calendar className="w-4 h-4" />
                         {t("legacy.signed_up", "Signed Up")}

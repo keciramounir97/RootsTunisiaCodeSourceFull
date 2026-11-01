@@ -57,7 +57,7 @@ export default function Backups() {
       <div className="overflow-hidden rounded-2xl border border-[var(--border-color)]">
         <table className="w-full text-sm">
           <thead>
-            <tr className="bg-[var(--paper-color)] ltr:text-left rtl:text-right">
+            <tr className="bg-[var(--paper-color)] ltr:text-start rtl:text-end">
               <th className="p-3">{t("id_col", "المعرف")}</th>
               <th className="p-3">{t("tree", "الشجرة")}</th>
               <th className="p-3">{t("reason", "السبب")}</th>

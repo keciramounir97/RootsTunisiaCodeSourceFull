@@ -304,11 +304,11 @@ export default function AdminSuggestions() {
               <table className="w-full">
                 <thead className={`${isDark ? "bg-white/5" : "bg-black/5"}`}>
                   <tr>
-                    <th className={`px-4 py-3 text-left text-sm font-semibold ${textColor}`}>{t("user", "User")}</th>
-                    <th className={`px-4 py-3 text-left text-sm font-semibold ${textColor}`}>{t("type", "Type")}</th>
-                    <th className={`px-4 py-3 text-left text-sm font-semibold ${textColor}`}>{t("category", "Category")}</th>
-                    <th className={`px-4 py-3 text-left text-sm font-semibold ${textColor}`}>{t("message", "Message")}</th>
-                    <th className={`px-4 py-3 text-left text-sm font-semibold ${textColor}`}>{t("date", "Date")}</th>
+                    <th className={`px-4 py-3 text-start text-sm font-semibold ${textColor}`}>{t("user", "User")}</th>
+                    <th className={`px-4 py-3 text-start text-sm font-semibold ${textColor}`}>{t("type", "Type")}</th>
+                    <th className={`px-4 py-3 text-start text-sm font-semibold ${textColor}`}>{t("category", "Category")}</th>
+                    <th className={`px-4 py-3 text-start text-sm font-semibold ${textColor}`}>{t("message", "Message")}</th>
+                    <th className={`px-4 py-3 text-start text-sm font-semibold ${textColor}`}>{t("date", "Date")}</th>
                     <th className={`px-4 py-3 text-center text-sm font-semibold ${textColor}`}>{t("actions", "Actions")}</th>
                   </tr>
                 </thead>
