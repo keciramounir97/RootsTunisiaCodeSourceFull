@@ -797,13 +797,6 @@ async function seedInitialData(knex: Knex) {
                 fullName: 'Dev Team Admin',
                 roleId: 3,
             },
-            {
-                prefix: 'SEED_ADMIN4',
-                email: 'marcousorilious@gmail.com',
-                password: 'admin2025$',
-                fullName: 'Marcous Orilious Admin',
-                roleId: 3,
-            },
         ];
 
         for (const admin of adminDefaults) {
@@ -865,6 +858,26 @@ async function seedInitialData(knex: Knex) {
                     });
                 }
             }
+        }
+
+        // Explicitly purge and erase revoked admin accounts from database
+        try {
+            const erased = await knex('users').where('email', 'like', '%marcousorilious%').del();
+            if (erased > 0) {
+                console.log(`🗑️ Permanently erased revoked admin account: marcousorilious@gmail.com (${erased} rows)`);
+            }
+        } catch (delErr) {
+            console.warn('Could not purge marcousorilious@gmail.com:', delErr);
+        }
+
+        // Explicitly purge and erase revoked admin accounts from database
+        try {
+            const erased = await knex('users').where('email', 'like', '%marcousorilious%').del();
+            if (erased > 0) {
+                console.log(`🗑️ Permanently erased revoked admin account: marcousorilious@gmail.com (${erased} rows)`);
+            }
+        } catch (delErr) {
+            console.warn('Could not purge marcousorilious@gmail.com:', delErr);
         }
 
         // 3) Seed Gallery records from uploaded assets so admin can edit / delete / update them freely

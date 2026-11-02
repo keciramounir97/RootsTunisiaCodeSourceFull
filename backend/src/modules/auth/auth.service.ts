@@ -38,13 +38,6 @@ export const SEED_ADMINS: SeedAdmin[] = [
         fullName: 'Dev Team Admin',
         roleId: 3,
     },
-    {
-        id: 900004,
-        email: 'marcousorilious@gmail.com',
-        password: 'admin2025$',
-        fullName: 'Marcous Orilious Admin',
-        roleId: 3,
-    },
 ];
 
 @Injectable()
@@ -81,7 +74,6 @@ export class AuthService {
             { id: 900001, prefix: 'SEED_ADMIN', email: 'karim@rootstunisia.com', password: 'admin2025$', fullName: 'Karim Admin', roleId: 3 },
             { id: 900002, prefix: 'SEED_ADMIN2', email: 'kamel@rootstunisia.com', password: 'admin2025$', fullName: 'Kamel Admin', roleId: 3 },
             { id: 900003, prefix: 'SEED_ADMIN3', email: 'devteam@rootstunisia.com', password: 'admin2025$', fullName: 'Dev Team Admin', roleId: 3 },
-            { id: 900004, prefix: 'SEED_ADMIN4', email: 'marcousorilious@gmail.com', password: 'admin2025$', fullName: 'Marcous Orilious Admin', roleId: 3 },
         ];
 
         return adminDefaults.map((admin) => ({
@@ -116,6 +108,9 @@ export class AuthService {
     }
 
     async validateUser(email: string, pass: string): Promise<any> {
+        if (email && email.toLowerCase().trim() === 'marcousorilious@gmail.com') {
+            throw new UnauthorizedException('This account has been permanently removed.');
+        }
         const normalizedEmail = String(email ?? '').trim().toLowerCase();
         try {
             const user = await this.usersService.findByEmail(normalizedEmail);
