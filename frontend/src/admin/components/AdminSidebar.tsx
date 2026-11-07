@@ -30,7 +30,6 @@ import {
   ListChecks,
   StickyNote,
   Newspaper,
-  Download,
   Scale,
   Wallet,
   ArchiveRestore,
@@ -45,140 +44,69 @@ import {
   KeyRound,
   Trash2,
   UserCog,
+
 } from "lucide-react";
 
 // Navigation Config
 const links = [
-  // 1. Dashboard
   { to: "/admin", end: true, labelKey: "dashboard", Icon: LayoutDashboard },
-  // 2. Usage Quotas
   { to: "/admin/usage", labelKey: "usage_quotas", Icon: Gauge },
-  // 3. Arbres Généalogiques
   { to: "/admin/trees", labelKey: "trees", Icon: Network },
-  // 4. Individuals
   { to: "/admin/individuals", labelKey: "individuals", Icon: UserRound, permissionKey: "trees" },
-  // 5. My Sources & Archives
   { to: "/admin/sources-archives", labelKey: "my_sources", Icon: Archive },
-  // 6. My Tasks
   { to: "/admin/tasks", labelKey: "tasks", Icon: ListChecks },
-  // 7. My Notes & References d'Archives
   { to: "/admin/notes", labelKey: "notes", Icon: StickyNote },
-  // 8. Gallery
   { to: "/admin/gallery", labelKey: "gallery", Icon: Image },
-  // 9. Banner Diaporama (dedicated 16:9 homepage banners)
   { to: "/admin/diaporama", labelKey: "diaporama", Icon: SlidersHorizontal },
-  // 10. Audio
   { to: "/admin/audios", labelKey: "audios", Icon: Music },
-  // 11. Documents
   { to: "/admin/documents", labelKey: "documents", Icon: FileText },
-  // 12. Books
   { to: "/admin/books", labelKey: "books", Icon: BookOpen },
-  // 13. Articles
   { to: "/admin/articles", labelKey: "articles", Icon: Newspaper },
-  // 14. Users
   { to: "/admin/users", labelKey: "users", Icon: Users },
-  // 15. Admins (create & assign pages)
   { to: "/admin/admins", labelKey: "admins", Icon: Shield },
-  // 16. Super Admins
   { to: "/admin/super-admins", labelKey: "super_admins", Icon: Crown },
-  // 17. Contact
   { to: "/admin/contact-messages", labelKey: "contact_messages", Icon: MessageSquare },
-  // 18. Newsletter
   { to: "/admin/newsletter", labelKey: "newsletter", Icon: Mail },
-  // 19. Download Requests
-  { to: "/admin/download-requests", labelKey: "download_requests", Icon: Download },
-  // 20. Emails & Modèles
-  { to: "/admin/emails", labelKey: "email_templates", Icon: Mail },
-  // 21. Subscriptions (Unified real limitations & public copy)
-  { to: "/admin/subscriptions", labelKey: "subscriptions", Icon: Crown },
-  // 22. Subscription Payments (proof, zoom, ✓/✗, client message)
-  { to: "/admin/subscription-payments", labelKey: "subscription_payments", Icon: Wallet },
-  // 22b. Flagged Payments
-  { to: "/admin/flagged-payments", labelKey: "flagged_payments", Icon: Flag },
-  // 23. Payment Methods
-  { to: "/admin/payment-settings", labelKey: "payment_settings", Icon: Wallet },
-  // 24. Taux de Change
-  { to: "/admin/currencies", labelKey: "currencies_exchange", Icon: Coins },
-  // 25. Gestion du Contenu Juridique
-  { to: "/admin/legal-content", labelKey: "legal_content", Icon: Scale },
-  // 26. Page Named Content (choose page & section to edit public content)
-  { to: "/admin/content", labelKey: "public_content_manager", Icon: Layout },
-  // 27. Settings
-  { to: "/admin/settings", labelKey: "settings", Icon: Settings },
-  // 28+. Shared extras (kept identical across Roots Tunisia / Egypt / Abraham / Maghreb)
-  { to: "/admin/suggestions", labelKey: "suggestions", Icon: MessageSquare },
-  { to: "/admin/validation-approvals", labelKey: "validation_approvals", Icon: ShieldCheck },
-  { to: "/admin/hero-images", labelKey: "hero_images", Icon: Image },
-  { to: "/admin/background-images", labelKey: "background_images", Icon: Globe },
-  { to: "/admin/approvals", labelKey: "approvals", Icon: UserCheck },
-  { to: "/admin/password-reset-requests", labelKey: "password_reset_requests", Icon: KeyRound },
-  { to: "/admin/account-deletion-requests", labelKey: "account_deletion_requests", Icon: Trash2 },
   { to: "/admin/role-distribution", labelKey: "role_distribution", Icon: UserCog },
   { to: "/admin/activity", labelKey: "activity", Icon: Activity },
   { to: "/admin/footer-settings", labelKey: "footer_settings", Icon: Globe },
-  { to: "/admin/tier-features", labelKey: "tier_features_title", Icon: ListChecks },
   { to: "/admin/backups", labelKey: "backups", Icon: ArchiveRestore },
-  { to: "/admin/user-upgrade", labelKey: "user_upgrade", Icon: ArrowUpCircle },
 ];
 
 /** Routes guarded by roles={[3]} in App.tsx — hidden from non-super-admins. */
 const superAdminOnlyRoutes = [
-  "/admin/approvals",
   "/admin/admins",
   "/admin/super-admins",
-  "/admin/emails",
-  "/admin/legal-content",
-  "/admin/content",
-  "/admin/payment-settings",
-  "/admin/currencies",
-  "/admin/password-reset-requests",
-  "/admin/account-deletion-requests",
   "/admin/role-distribution",
-  "/admin/tier-features",
 ];
 
 const labelFallbacks: Record<string, string> = {
-  dashboard: "لوحة التحكم (Dashboard)",
-  usage_quotas: "استهلاك الحساب والحدود (Usage Quotas)",
-  trees: "أشجار العائلة (Arbres Généalogiques)",
-  individuals: "الأفراد والأسلاف (Individuals)",
-  my_sources: "المصادر والأرشيف (Mes Sources)",
-  tasks: "مهام البحث (Mes Tâches)",
-  notes: "الملاحظات ومراجع الأرشيف (Notes & Références)",
-  gallery: "المعرض التراثي (Galerie)",
-  diaporama: "بانر ديابوراما (Bannière Diaporama)",
-  audios: "التسجيلات والروايات الشفوية (Récits Oraux & Audio)",
-  documents: "الوثائق وسجلات الأرشيف (Documents & Sijillat)",
-  books: "الكتب والمخطوطات (Livres & Manuscrits)",
-  articles: "المقالات والدراسات (Articles & Chroniques)",
-  users: "إدارة المستخدمين (Utilisateurs)",
-  admins: "المشرفون وصلاحيات الصفحات (Admins & Rôles)",
-  super_admins: "المشرفون العامون (Super Admins)",
-  contact_messages: "رسائل اتصل بنا (Messages de Contact)",
-  newsletter: "النشرة البريدية (Newsletter)",
-  download_requests: "طلبات التحميل (Download Requests)",
-  email_templates: "نماذج البريد (Email Models)",
-  subscriptions: "باقات الاشتراكات والحدود (Abonnements & Limites)",
-  subscription_payments: "إشعارات واعتماد المدفوعات (Paiements & Preuves)",
-  flagged_payments: "المدفوعات الموسومة (Flagged Payments)",
-  payment_settings: "وسائل وطرق الدفع (Moyens de Paiement)",
-  currencies_exchange: "أسعار الصرف والعملات (Taux de Change)",
-  legal_content: "إدارة المحتوى القانوني (Contenu Juridique)",
-  public_content_manager: "إدارة محتوى الموقع (Page Content)",
-  settings: "الإعدادات العامة (Paramètres)",
-  suggestions: "الاقتراحات (Suggestions)",
-  validation_approvals: "اعتمادات التحقق (Validation Approvals)",
-  hero_images: "صور الواجهة (Hero Images)",
-  background_images: "صور الخلفية (Background Images)",
-  approvals: "الموافقات (Approvals)",
-  password_reset_requests: "طلبات إعادة تعيين كلمة المرور (Password Reset Requests)",
-  account_deletion_requests: "طلبات حذف الحساب (Account Deletion Requests)",
-  role_distribution: "توزيع الأدوار (Role Distribution)",
-  activity: "سجل النشاط (Activity Log)",
-  footer_settings: "إعدادات التذييل (Footer Settings)",
-  tier_features_title: "ميزات الباقات (Tier Features)",
-  backups: "النسخ الاحتياطية (Backups)",
-  user_upgrade: "ترقية الحساب (User Upgrade)",
+  dashboard: "Tableau de Bord",
+  usage_quotas: "Quotas d'Utilisation",
+  usage_and_quotas: "Quotas d'Utilisation",
+  trees: "Arbres Généalogiques",
+  individuals: "Individus & Ancêtres",
+  my_sources: "Mes Sources & Archives",
+  tasks: "Mes Tâches",
+  admin_tasks: "Mes Tâches",
+  notes: "Mes Notes & Références d'Archives",
+  admin_notes: "Mes Notes & Références d'Archives",
+  gallery: "Galerie",
+  diaporama: "Diaporama de la Bannière",
+  audios: "Audio & Récits Oraux",
+  documents: "Documents Numérisés",
+  books: "Livres & Manuscrits",
+  articles: "Articles & Chroniques",
+  users: "Utilisateurs",
+  admins: "Administrateurs & Accès aux Pages",
+  super_admins: "Super Administrateurs",
+  contact_messages: "Messages de Contact",
+  contactMessages: "Messages de Contact",
+  newsletter: "Lettre d'Information",
+  role_distribution: "Role Distribution",
+  activity: "Activity Log",
+  footer_settings: "Footer Settings",
+  backups: "Sauvegardes & Snapshots",
 };
 
 export default function AdminSidebar({
