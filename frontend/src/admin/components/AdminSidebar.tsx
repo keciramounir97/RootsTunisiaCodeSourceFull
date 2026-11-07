@@ -41,6 +41,10 @@ import {
   Headphones,
   Coins,
   Flag,
+  ShieldCheck,
+  KeyRound,
+  Trash2,
+  UserCog,
 } from "lucide-react";
 
 // Navigation Config
@@ -101,6 +105,36 @@ const links = [
   { to: "/admin/content", labelKey: "public_content_manager", Icon: Layout },
   // 27. Settings
   { to: "/admin/settings", labelKey: "settings", Icon: Settings },
+  // 28+. Shared extras (kept identical across Roots Tunisia / Egypt / Abraham / Maghreb)
+  { to: "/admin/suggestions", labelKey: "suggestions", Icon: MessageSquare },
+  { to: "/admin/validation-approvals", labelKey: "validation_approvals", Icon: ShieldCheck },
+  { to: "/admin/hero-images", labelKey: "hero_images", Icon: Image },
+  { to: "/admin/background-images", labelKey: "background_images", Icon: Globe },
+  { to: "/admin/approvals", labelKey: "approvals", Icon: UserCheck },
+  { to: "/admin/password-reset-requests", labelKey: "password_reset_requests", Icon: KeyRound },
+  { to: "/admin/account-deletion-requests", labelKey: "account_deletion_requests", Icon: Trash2 },
+  { to: "/admin/role-distribution", labelKey: "role_distribution", Icon: UserCog },
+  { to: "/admin/activity", labelKey: "activity", Icon: Activity },
+  { to: "/admin/footer-settings", labelKey: "footer_settings", Icon: Globe },
+  { to: "/admin/tier-features", labelKey: "tier_features_title", Icon: ListChecks },
+  { to: "/admin/backups", labelKey: "backups", Icon: ArchiveRestore },
+  { to: "/admin/user-upgrade", labelKey: "user_upgrade", Icon: ArrowUpCircle },
+];
+
+/** Routes guarded by roles={[3]} in App.tsx — hidden from non-super-admins. */
+const superAdminOnlyRoutes = [
+  "/admin/approvals",
+  "/admin/admins",
+  "/admin/super-admins",
+  "/admin/emails",
+  "/admin/legal-content",
+  "/admin/content",
+  "/admin/payment-settings",
+  "/admin/currencies",
+  "/admin/password-reset-requests",
+  "/admin/account-deletion-requests",
+  "/admin/role-distribution",
+  "/admin/tier-features",
 ];
 
 const labelFallbacks: Record<string, string> = {
@@ -132,6 +166,19 @@ const labelFallbacks: Record<string, string> = {
   legal_content: "إدارة المحتوى القانوني (Contenu Juridique)",
   public_content_manager: "إدارة محتوى الموقع (Page Content)",
   settings: "الإعدادات العامة (Paramètres)",
+  suggestions: "الاقتراحات (Suggestions)",
+  validation_approvals: "اعتمادات التحقق (Validation Approvals)",
+  hero_images: "صور الواجهة (Hero Images)",
+  background_images: "صور الخلفية (Background Images)",
+  approvals: "الموافقات (Approvals)",
+  password_reset_requests: "طلبات إعادة تعيين كلمة المرور (Password Reset Requests)",
+  account_deletion_requests: "طلبات حذف الحساب (Account Deletion Requests)",
+  role_distribution: "توزيع الأدوار (Role Distribution)",
+  activity: "سجل النشاط (Activity Log)",
+  footer_settings: "إعدادات التذييل (Footer Settings)",
+  tier_features_title: "ميزات الباقات (Tier Features)",
+  backups: "النسخ الاحتياطية (Backups)",
+  user_upgrade: "ترقية الحساب (User Upgrade)",
 };
 
 export default function AdminSidebar({
@@ -172,10 +219,8 @@ export default function AdminSidebar({
     if (normalizedRole === 2) {
       return userAllowedRoutes.includes(link.to);
     }
-    if (normalizedRole === 1 && granted.length === 0) {
-      return link.to !== "/admin/admins" && link.to !== "/admin/approvals";
-    }
-    if (link.to === "/admin/approvals" || link.to === "/admin/admins") return false;
+    if (superAdminOnlyRoutes.includes(link.to)) return false;
+    if (normalizedRole === 1 && granted.length === 0) return true;
     if (link.to === "/admin") return granted.includes("dashboard");
     const key = link.permissionKey || link.to.replace("/admin/", "");
     return granted.includes(key);
