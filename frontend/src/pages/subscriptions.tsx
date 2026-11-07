@@ -1,24 +1,16 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   Check,
   ShieldCheck,
   Zap,
-  Lock,
-  RefreshCw,
   HelpCircle,
-  ArrowRight,
   ChevronDown,
-  Mail,
   FileCheck,
   X,
-  Sparkles,
-  Layers,
   Users,
-  Download,
   BookOpen,
   Crown,
   Coins,
-  Globe,
   Radio,
   FileText,
   Image as ImageIcon,
@@ -27,10 +19,11 @@ import {
 import { useTranslation } from "../context/TranslationContext";
 import { useAuth } from "../admin/components/AuthContext";
 import { useCurrency } from "../context/CurrencyContext";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { PageHero, Section, SectionHeading } from "../components/site/Primitives";
 import medina from "../assets/medina-tunis.jpg";
 import SEO from "../components/SEO";
+import { api } from "../api/client";
 
 type ComparisonCell = string | boolean;
 
@@ -41,6 +34,131 @@ interface ComparisonRow {
   historian: ComparisonCell;
 }
 
+interface ApiTier {
+  id: number;
+  name?: string;
+  price?: number | string;
+  badge?: string;
+  tagline?: string;
+  description?: string;
+  max_trees?: number;
+  max_individuals?: number;
+  max_sources?: number;
+  max_notes?: number;
+  max_tasks?: number;
+  max_gallery?: number;
+  max_audios?: number;
+  max_documents?: number;
+  features?: string[];
+  is_active?: boolean;
+}
+
+type TierLimits = {
+  trees: number;
+  individuals: number;
+  sources: number;
+  notes: number;
+  tasks: number;
+  gallery: number;
+  audios: number;
+  documents: number;
+};
+
+type DisplayTier = {
+  id: number;
+  slug: string;
+  name: string;
+  nameKey: string;
+  priceUSD: number;
+  priceDisplay: string;
+  amountRaw: number;
+  currencyCode: string;
+  period: string;
+  limits: TierLimits;
+  highlight: boolean;
+  badge?: string;
+  description?: string;
+  isCurrent: boolean;
+};
+
+const FALLBACK_API_TIERS: ApiTier[] = [
+  {
+    id: 1,
+    name: "Basic",
+    price: 0,
+    badge: "",
+    description: "",
+    max_trees: 25,
+    max_individuals: 25,
+    max_sources: 25,
+    max_notes: 25,
+    max_tasks: 25,
+    max_gallery: 25,
+    max_audios: 25,
+    max_documents: 25,
+  },
+  {
+    id: 2,
+    name: "Premium",
+    price: 9.99,
+    badge: "",
+    description: "",
+    max_trees: 300,
+    max_individuals: 300,
+    max_sources: 300,
+    max_notes: 300,
+    max_tasks: 300,
+    max_gallery: 300,
+    max_audios: 300,
+    max_documents: 300,
+  },
+  {
+    id: 3,
+    name: "Family Historian",
+    price: 19.99,
+    badge: "",
+    description: "",
+    max_trees: 3000,
+    max_individuals: 3000,
+    max_sources: 3000,
+    max_notes: 3000,
+    max_tasks: 3000,
+    max_gallery: 3000,
+    max_audios: 3000,
+    max_documents: 3000,
+  },
+];
+
+const SLUG_BY_ID: Record<number, string> = {
+  1: "basic",
+  2: "premium",
+  3: "historian",
+};
+
+const NAME_KEY_BY_ID: Record<number, string> = {
+  1: "tier_basic_name",
+  2: "tier_premium_name",
+  3: "tier_historian_name",
+};
+
+function safeNumber(value: unknown, fallback = 0): number {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : fallback;
+}
+
+function limitsFromApi(tier: ApiTier, fallback: ApiTier): TierLimits {
+  return {
+    trees: safeNumber(tier.max_trees, fallback.max_trees ?? 0),
+    individuals: safeNumber(tier.max_individuals, fallback.max_individuals ?? 0),
+    sources: safeNumber(tier.max_sources, fallback.max_sources ?? 0),
+    notes: safeNumber(tier.max_notes, fallback.max_notes ?? 0),
+    tasks: safeNumber(tier.max_tasks, fallback.max_tasks ?? 0),
+    gallery: safeNumber(tier.max_gallery, fallback.max_gallery ?? 0),
+    audios: safeNumber(tier.max_audios, fallback.max_audios ?? 0),
+    documents: safeNumber(tier.max_documents, fallback.max_documents ?? 0),
+  };
+}
+
 export default function Subscriptions() {
   const { t, isRtl } = useTranslation();
   const { user } = useAuth();
@@ -49,96 +167,66 @@ export default function Subscriptions() {
 
   const [billingCycle, setBillingCycle] = useState<"monthly" | "annual">("monthly");
   const [openFaq, setOpenFaq] = useState<number | null>(0);
+  const [apiTiers, setApiTiers] = useState<ApiTier[]>(FALLBACK_API_TIERS);
 
-  // User subscription status
   const currentTierId = Number(user?.tier_id ?? 1);
 
-  // 3 Exact Tiers matching the screenshot and database quotas:
-  // Basic ($0.00), Premium ($9.99), Family Historian ($19.99)
-  const tiers = useMemo(() => {
+  useEffect(() => {
+    let cancelled = false;
+    api
+      .get("/subscriptions/tiers")
+      .then((res) => {
+        if (cancelled) return;
+        const raw = Array.isArray(res.data) ? res.data : res.data?.data || [];
+        const list = (raw as ApiTier[]).filter((tier) => tier && tier.is_active !== false);
+        if (list.length > 0) setApiTiers(list);
+      })
+      .catch(() => {
+        // Keep hardcoded FALLBACK if API fails
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const tiers: DisplayTier[] = useMemo(() => {
     const isAnnual = billingCycle === "annual";
-    // Annual gives 2 months free: 10 * monthly price
-    const premiumBaseUSD = isAnnual ? 9.99 * 10 : 9.99;
-    const historianBaseUSD = isAnnual ? 19.99 * 10 : 19.99;
+    const source = apiTiers.length > 0 ? apiTiers : FALLBACK_API_TIERS;
 
-    const premiumConverted = convertPrice(premiumBaseUSD);
-    const historianConverted = convertPrice(historianBaseUSD);
-    const basicConverted = convertPrice(0);
+    return source.map((apiTier, index) => {
+      const fallback = FALLBACK_API_TIERS.find((f) => f.id === apiTier.id) || FALLBACK_API_TIERS[index] || FALLBACK_API_TIERS[0];
+      const monthlyUSD = safeNumber(apiTier.price, safeNumber(fallback.price, 0));
+      const priceUSD = isAnnual && monthlyUSD > 0 ? monthlyUSD * 10 : monthlyUSD;
+      const converted = convertPrice(priceUSD);
+      const id = Number(apiTier.id) || fallback.id || index + 1;
+      const limits = limitsFromApi(apiTier, fallback);
+      const badge =
+        apiTier.badge ||
+        apiTier.tagline ||
+        (id === 2
+          ? t("most_popular", "الأكثر شعبية")
+          : id === 3
+            ? t("ultimate_research", "البحث الأكاديمي الشامل")
+            : undefined);
 
-    return [
-      {
-        id: 1,
-        slug: "basic",
-        name: "Basic",
-        nameKey: "tier_basic_name",
-        priceUSD: 0,
-        priceDisplay: basicConverted.formatted,
-        amountRaw: basicConverted.amount,
-        currencyCode: basicConverted.code,
+      return {
+        id,
+        slug: SLUG_BY_ID[id] || `tier-${id}`,
+        name: apiTier.name || fallback.name || `Tier ${id}`,
+        nameKey: NAME_KEY_BY_ID[id] || `tier_${id}_name`,
+        priceUSD,
+        priceDisplay: converted.formatted,
+        amountRaw: converted.amount,
+        currencyCode: converted.code,
         period: isAnnual ? t("per_year", "/ year") : t("per_month", "/ month"),
-        limits: {
-          trees: 25,
-          individuals: 25,
-          sources: 25,
-          notes: 25,
-          tasks: 25,
-          gallery: 25,
-          audios: 25,
-          documents: 25,
-        },
-        highlight: false,
-        isCurrent: !user || currentTierId === 1,
-      },
-      {
-        id: 2,
-        slug: "premium",
-        name: "Premium",
-        nameKey: "tier_premium_name",
-        priceUSD: premiumBaseUSD,
-        priceDisplay: premiumConverted.formatted,
-        amountRaw: premiumConverted.amount,
-        currencyCode: premiumConverted.code,
-        period: isAnnual ? t("per_year", "/ year") : t("per_month", "/ month"),
-        limits: {
-          trees: 300,
-          individuals: 300,
-          sources: 300,
-          notes: 300,
-          tasks: 300,
-          gallery: 300,
-          audios: 300,
-          documents: 300,
-        },
-        highlight: true,
-        badge: t("most_popular", "الأكثر شعبية"),
-        isCurrent: user && currentTierId === 2,
-      },
-      {
-        id: 3,
-        slug: "historian",
-        name: "Family Historian",
-        nameKey: "tier_historian_name",
-        priceUSD: historianBaseUSD,
-        priceDisplay: historianConverted.formatted,
-        amountRaw: historianConverted.amount,
-        currencyCode: historianConverted.code,
-        period: isAnnual ? t("per_year", "/ year") : t("per_month", "/ month"),
-        limits: {
-          trees: 3000,
-          individuals: 3000,
-          sources: 3000,
-          notes: 3000,
-          tasks: 3000,
-          gallery: 3000,
-          audios: 3000,
-          documents: 3000,
-        },
-        highlight: false,
-        badge: t("ultimate_research", "البحث الأكاديمي الشامل"),
-        isCurrent: user && currentTierId === 3,
-      },
-    ];
-  }, [billingCycle, convertPrice, user, currentTierId, t]);
+        limits,
+        highlight: id === 2,
+        badge,
+        description: apiTier.description || fallback.description || "",
+        isCurrent: id === 1 ? !user || currentTierId === 1 : Boolean(user && currentTierId === id),
+      };
+    });
+  }, [apiTiers, billingCycle, convertPrice, user, currentTierId, t]);
 
   const featureLabels = [
     { key: "trees", label: t("max_trees", "شجرات العائلة المتاحة"), icon: FolderTree },
@@ -151,18 +239,23 @@ export default function Subscriptions() {
     { key: "documents", label: t("max_documents", "الوثائق والمخطوطات المؤرشفة"), icon: FileCheck },
   ];
 
+  const byId = (id: number) => tiers.find((tier) => tier.id === id);
+  const basicLimits = byId(1)?.limits || limitsFromApi(FALLBACK_API_TIERS[0], FALLBACK_API_TIERS[0]);
+  const premiumLimits = byId(2)?.limits || limitsFromApi(FALLBACK_API_TIERS[1], FALLBACK_API_TIERS[1]);
+  const historianLimits = byId(3)?.limits || limitsFromApi(FALLBACK_API_TIERS[2], FALLBACK_API_TIERS[2]);
+
   const comparisonRows: ComparisonRow[] = [
     {
       feature: t("comp_max_trees", "عدد شجرات العائلة المسموح بها"),
-      basic: "25",
-      premium: "300",
-      historian: "3000",
+      basic: String(basicLimits.trees),
+      premium: String(premiumLimits.trees),
+      historian: String(historianLimits.trees),
     },
     {
       feature: t("comp_max_members", "الأفراد وسجلات النسب الموثقة"),
-      basic: "25",
-      premium: "300",
-      historian: "3000",
+      basic: String(basicLimits.individuals),
+      premium: String(premiumLimits.individuals),
+      historian: String(historianLimits.individuals),
     },
     {
       feature: t("comp_archive_access", "الوصول إلى السجلات والأرشيف الوطني"),
@@ -221,14 +314,13 @@ export default function Subscriptions() {
     },
   ];
 
-  const handleSelectTier = (tier: (typeof tiers)[0]) => {
+  const handleSelectTier = (tier: DisplayTier) => {
     if (tier.id === 1) {
       if (!user) navigate("/signup");
       else navigate("/admin/trees");
       return;
     }
 
-    // Lead directly to payment page with tier, amount, and currency!
     const query = new URLSearchParams({
       tier: String(tier.id),
       plan: tier.slug,
@@ -239,6 +331,8 @@ export default function Subscriptions() {
     navigate(`/payment?${query.toString()}`);
   };
 
+  const safeCurrencyCode = String(selectedCurrency?.code || "USD");
+
   return (
     <div dir={isRtl ? "rtl" : "ltr"} className="bg-[var(--background)] text-[var(--foreground)] min-h-screen">
       <SEO
@@ -247,7 +341,6 @@ export default function Subscriptions() {
         keywords={["Roots Tunisia pricing", "اشتراكات جذور تونس", "شجرة العائلة تونس"]}
       />
 
-      {/* Hero Banner */}
       <PageHero
         eyebrow={t("subscriptions_eyebrow", "خطط الاشتراكات والترقية")}
         title={t("subscriptions_hero_title", "استكشف أصولك العائلية بسعات متقدمة")}
@@ -256,7 +349,6 @@ export default function Subscriptions() {
       />
 
       <Section>
-        {/* Main Section Header matching user screenshot */}
         <div className="surface-card frame-gold p-6 sm:p-8 rounded-2xl shadow-xl max-w-5xl mx-auto -mt-16 sm:-mt-20 relative z-20 bg-[var(--card)]/95 backdrop-blur-md">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-4 text-start w-full md:w-auto">
@@ -273,7 +365,6 @@ export default function Subscriptions() {
               </div>
             </div>
 
-            {/* Currency Selector Controls */}
             <div className="flex flex-wrap items-center gap-3 w-full md:w-auto justify-start md:justify-end">
               <div className="flex items-center gap-2 p-1.5 rounded-xl border border-[var(--gold)]/35 bg-[var(--background)] shadow-sm">
                 <Coins className="h-4 w-4 text-[var(--gold)] shrink-0 ms-1" />
@@ -281,19 +372,20 @@ export default function Subscriptions() {
                   {t("currency", "العملة")}:
                 </span>
                 <select
-                  value={selectedCurrency.code}
+                  value={safeCurrencyCode}
                   onChange={(e) => setCurrencyCode(e.target.value)}
                   className="bg-transparent text-xs font-bold font-mono text-[var(--foreground)] outline-none cursor-pointer pe-2"
                 >
-                  {currencies.map((c) => (
-                    <option key={c.code} value={c.code} className="bg-[var(--card)] text-[var(--foreground)]">
-                      {c.code} ({c.symbol}) — {c.name}
-                    </option>
-                  ))}
+                  {currencies
+                    .filter((c) => String(c?.code || "").trim())
+                    .map((c) => (
+                      <option key={c.code} value={c.code} className="bg-[var(--card)] text-[var(--foreground)]">
+                        {c.code} ({c.symbol}) — {c.name}
+                      </option>
+                    ))}
                 </select>
               </div>
 
-              {/* Billing Cycle Switch */}
               <div className="flex items-center rounded-xl border border-[var(--gold)]/35 bg-[var(--background)] p-1 text-xs font-bold">
                 <button
                   type="button"
@@ -325,12 +417,9 @@ export default function Subscriptions() {
           </div>
         </div>
 
-        {/* 3 Tiers Grid — Pixel-perfect alignment with attached screenshot */}
         <div className="mt-12 sm:mt-16 grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 items-stretch max-w-7xl mx-auto">
           {tiers.map((tier) => {
             const isBasic = tier.id === 1;
-            const isPremium = tier.id === 2;
-            const isHistorian = tier.id === 3;
 
             return (
               <div
@@ -341,7 +430,6 @@ export default function Subscriptions() {
                     : "border-[var(--gold)]/35 hover:-translate-y-1.5 hover:shadow-2xl bg-[var(--card)]"
                 }`}
               >
-                {/* Active Plan or Highlight Badge */}
                 {tier.isCurrent && (
                   <span className="absolute -top-3.5 start-6 px-3.5 py-1 rounded-full text-[0.68rem] font-extrabold uppercase tracking-wide bg-[var(--gold)] text-[#1f160f] shadow-md border border-[#1f160f]/20">
                     {t("current_active_plan", "الخطة النشطة الحالية")}
@@ -354,12 +442,14 @@ export default function Subscriptions() {
                 )}
 
                 <div>
-                  {/* Tier Title */}
                   <h3 className="font-display text-2xl font-bold text-[var(--foreground)] mt-2">
                     {tier.name}
                   </h3>
 
-                  {/* Price */}
+                  {tier.description ? (
+                    <p className="mt-1 text-xs text-[var(--muted-foreground)] leading-relaxed">{tier.description}</p>
+                  ) : null}
+
                   <div className="flex items-baseline gap-1.5 my-4 border-b border-[var(--gold)]/20 pb-4">
                     <span className="font-display text-3xl sm:text-4xl font-extrabold text-[var(--gold)]">
                       {tier.priceDisplay}
@@ -369,7 +459,6 @@ export default function Subscriptions() {
                     </span>
                   </div>
 
-                  {/* 8 Feature Quota Items (Matching user screenshot) */}
                   <div className="space-y-3 text-xs sm:text-sm text-[var(--foreground)] py-2">
                     {featureLabels.map((f) => {
                       const limit = tier.limits[f.key as keyof typeof tier.limits];
@@ -388,7 +477,6 @@ export default function Subscriptions() {
                   </div>
                 </div>
 
-                {/* Bottom CTA Button */}
                 <div className="pt-6 mt-4 border-t border-[var(--gold)]/20">
                   {tier.isCurrent ? (
                     <button
@@ -424,7 +512,6 @@ export default function Subscriptions() {
           })}
         </div>
 
-        {/* Guarantee Banner */}
         <div className="mt-12 text-center text-xs text-[var(--muted-foreground)] flex items-center justify-center gap-2 max-w-xl mx-auto">
           <ShieldCheck className="h-4 w-4 text-[var(--gold)] shrink-0" />
           <span>
@@ -435,7 +522,6 @@ export default function Subscriptions() {
           </span>
         </div>
 
-        {/* Feature Comparison Table */}
         <div className="mt-20">
           <SectionHeading
             center={true}
@@ -452,9 +538,15 @@ export default function Subscriptions() {
                     <th className="py-4 px-6 text-start font-bold uppercase tracking-wider text-xs">
                       {t("feature", "الميزة")}
                     </th>
-                    <th className="py-4 px-4 text-center font-bold text-xs">Basic</th>
-                    <th className="py-4 px-4 text-center font-bold text-xs text-[var(--gold)]">Premium</th>
-                    <th className="py-4 px-4 text-center font-bold text-xs">Family Historian</th>
+                    <th className="py-4 px-4 text-center font-bold text-xs">
+                      {byId(1)?.name || "Basic"}
+                    </th>
+                    <th className="py-4 px-4 text-center font-bold text-xs text-[var(--gold)]">
+                      {byId(2)?.name || "Premium"}
+                    </th>
+                    <th className="py-4 px-4 text-center font-bold text-xs">
+                      {byId(3)?.name || "Family Historian"}
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[var(--border)]">
@@ -491,7 +583,6 @@ export default function Subscriptions() {
           </div>
         </div>
 
-        {/* Collapsible FAQ Section */}
         <div className="mt-20 max-w-4xl mx-auto">
           <SectionHeading
             center={true}

@@ -156,6 +156,25 @@ export class SubscriptionsController {
         return this.service.getUserQuotas(userId);
     }
 
+    @Patch('admin/subscription-tiers/:id')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(3)
+    async updateTierContent(
+        @Param('id', ParseIntPipe) id: number,
+        @Body()
+        body: {
+            name?: string;
+            price?: number;
+            badge?: string;
+            description?: string;
+            tagline?: string;
+            features?: string[] | string;
+            is_active?: boolean;
+        },
+    ) {
+        return this.service.updateTierContent(id, body);
+    }
+
     @Patch('admin/subscription-tiers/:id/limits')
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles(3)

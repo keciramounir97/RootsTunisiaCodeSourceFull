@@ -47,6 +47,7 @@ export default function Subscriptions() {
   const [loading, setLoading] = useState(true);
   const [savingId, setSavingId] = useState<number | null>(null);
   const [savedSuccess, setSavedSuccess] = useState<number | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"limits" | "copy" | "features">("limits");
 
   const fetchTiers = async () => {
@@ -128,8 +129,22 @@ export default function Subscriptions() {
 
   const handleSaveTier = async (tier: Tier) => {
     setSavingId(tier.id);
+    setSaveError(null);
     try {
-      // 1. Save limits directly to backend database
+      const contentPayload: Record<string, unknown> = {
+        name: tier.name,
+        price: Number(tier.price) || 0,
+        badge: tier.badge || "",
+        description: tier.description || "",
+      };
+      if (tier.features !== undefined) {
+        contentPayload.features = tier.features;
+      }
+
+      // 1. Persist public copy (name/price/badge/description) to DB
+      await api.patch(`/admin/subscription-tiers/${tier.id}`, contentPayload);
+
+      // 2. Persist quota limits to DB
       await api.patch(`/admin/subscription-tiers/${tier.id}/limits`, {
         max_trees: Number(tier.max_trees),
         max_individuals: Number(tier.max_individuals),
@@ -141,15 +156,24 @@ export default function Subscriptions() {
         max_documents: Number(tier.max_documents),
       });
 
-      // 2. Persist tier copy in settings
-      localStorage.setItem(`roots_tier_config_${tier.id}`, JSON.stringify(tier));
+      // Optional local cache only — API is the source of truth
+      try {
+        localStorage.setItem(`roots_tier_config_${tier.id}`, JSON.stringify(tier));
+      } catch {
+        /* ignore quota/private-mode failures */
+      }
 
+      await fetchTiers();
       setSavedSuccess(tier.id);
       setTimeout(() => setSavedSuccess(null), 3000);
     } catch (err: any) {
-      console.warn("Failed saving tier limits:", err);
-      setSavedSuccess(tier.id);
-      setTimeout(() => setSavedSuccess(null), 3000);
+      const msg =
+        err?.userMessage ||
+        err?.response?.data?.message ||
+        err?.message ||
+        t("tier_save_failed", "فشل حفظ الباقة. حاول مرة أخرى.");
+      setSaveError(String(Array.isArray(msg) ? msg.join(", ") : msg));
+      console.warn("Failed saving tier:", err);
     } finally {
       setSavingId(null);
     }
@@ -249,7 +273,7 @@ export default function Subscriptions() {
 
                   <div className="flex items-baseline gap-1">
                     <span className="font-display text-3xl font-extrabold text-[var(--gold)]">
-                      ${Number(tier.price).toFixed(2)}
+                      ${Number.isFinite(Number(tier.price)) ? Number(tier.price).toFixed(2) : "0.00"}
                     </span>
                     <span className="text-xs text-[var(--muted-foreground)]">/ month</span>
                   </div>
@@ -485,6 +509,13 @@ export default function Subscriptions() {
           })}
         </div>
       )}
+
+      {saveError ? (
+        <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-600 dark:text-rose-400 text-sm font-bold flex items-center gap-2">
+          <ShieldAlert className="w-4 h-4 shrink-0" />
+          <span>{saveError}</span>
+        </div>
+      ) : null}
     </div>
   );
 }

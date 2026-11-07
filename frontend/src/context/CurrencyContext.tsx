@@ -36,7 +36,11 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
   const [currencies, setCurrencies] = useState<CurrencyItem[]>(DEFAULT_CURRENCIES);
   const [loading, setLoading] = useState(false);
   const [selectedCode, setSelectedCode] = useState<string>(() => {
-    return localStorage.getItem("roots_currency") || "USD";
+    try {
+      return localStorage.getItem("roots_currency") || "USD";
+    } catch {
+      return "USD";
+    }
   });
 
   const refreshCurrencies = async () => {
@@ -44,8 +48,9 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
       setLoading(true);
       const { data } = await api.get("/currencies");
       const items = Array.isArray(data?.data) ? data.data : Array.isArray(data) ? data : [];
-      if (items.length > 0) {
-        setCurrencies(items);
+      const valid = items.filter((c: CurrencyItem) => String(c?.code || "").trim());
+      if (valid.length > 0) {
+        setCurrencies(valid);
       }
     } catch {
       // Keep defaults gracefully
@@ -59,23 +64,32 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const setCurrencyCode = (code: string) => {
-    setSelectedCode(code);
-    localStorage.setItem("roots_currency", code);
+    const next = String(code || "USD");
+    setSelectedCode(next);
+    try {
+      localStorage.setItem("roots_currency", next);
+    } catch {
+      /* private mode / blocked storage — keep in-memory selection */
+    }
   };
 
   const selectedCurrency = useMemo(() => {
-    const found = currencies.find((c) => c.code.toUpperCase() === selectedCode.toUpperCase());
+    const selected = String(selectedCode || "").toUpperCase();
+    const found = currencies.find(
+      (c) => String(c?.code || "").toUpperCase() === selected,
+    );
     return found || currencies[0] || DEFAULT_CURRENCIES[0];
   }, [currencies, selectedCode]);
 
   const convertPrice = (priceInUSD: number) => {
-    const rate = selectedCurrency.rate || 1.0;
-    const converted = priceInUSD * rate;
-    const isRound = converted === 0;
-    const formattedAmount = isRound ? "0.00" : converted.toFixed(2);
-    
-    // Position symbol appropriately: for TND/SAR/AED put after amount, for USD/EUR/GBP put before or after
-    const symbol = selectedCurrency.symbol || selectedCurrency.code;
+    const rate = Number(selectedCurrency?.rate) > 0 ? Number(selectedCurrency.rate) : 1.0;
+    const base = Number(priceInUSD);
+    const safeBase = Number.isFinite(base) ? base : 0;
+    const converted = safeBase * rate;
+    const formattedAmount = Number.isFinite(converted) ? converted.toFixed(2) : "0.00";
+
+    const symbol = selectedCurrency?.symbol || selectedCurrency?.code || "$";
+    const code = String(selectedCurrency?.code || "USD");
     const isPrefixSymbol = ["$", "€", "£", "CA$"].includes(symbol);
     const formatted = isPrefixSymbol ? `${symbol}${formattedAmount}` : `${formattedAmount} ${symbol}`;
 
@@ -83,7 +97,7 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
       amount: parseFloat(formattedAmount),
       formatted,
       symbol,
-      code: selectedCurrency.code,
+      code,
     };
   };
 
@@ -115,8 +129,16 @@ export function useCurrency() {
       currencies: DEFAULT_CURRENCIES,
       selectedCurrency: DEFAULT_CURRENCIES[0],
       setCurrencyCode: () => {},
-      convertPrice: (p: number) => ({ amount: p, formatted: `$${p.toFixed(2)}`, symbol: "$", code: "USD" }),
-      formatPrice: (p: number) => `$${p.toFixed(2)}`,
+      convertPrice: (p: number) => {
+        const n = Number(p);
+        const amount = Number.isFinite(n) ? n : 0;
+        return { amount, formatted: `$${amount.toFixed(2)}`, symbol: "$", code: "USD" };
+      },
+      formatPrice: (p: number) => {
+        const n = Number(p);
+        const amount = Number.isFinite(n) ? n : 0;
+        return `$${amount.toFixed(2)}`;
+      },
       refreshCurrencies: async () => {},
       loading: false,
     };

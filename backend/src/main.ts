@@ -361,6 +361,23 @@ async function ensureCriticalSchema(knex: Knex) {
             console.log('🟡 Schema patch: created subscription_tiers table');
         }
 
+        // Ensure optional content columns used by admin tier editor
+        for (const col of [
+            { name: 'badge', add: (t: any) => t.string('badge', 255).nullable() },
+            { name: 'description', add: (t: any) => t.text('description').nullable() },
+            { name: 'tagline', add: (t: any) => t.string('tagline', 255).nullable() },
+            { name: 'is_active', add: (t: any) => t.boolean('is_active').defaultTo(true) },
+            { name: 'sort_order', add: (t: any) => t.integer('sort_order').defaultTo(0) },
+        ] as const) {
+            if (!(await knex.schema.hasColumn('subscription_tiers', col.name))) {
+                await knex.schema.alterTable('subscription_tiers', col.add);
+            }
+        }
+        // Backfill so public listTiers (is_active=true) does not hide legacy NULL rows
+        if (await knex.schema.hasColumn('subscription_tiers', 'is_active')) {
+            await knex('subscription_tiers').whereNull('is_active').update({ is_active: true });
+        }
+
         const existingTiers = await knex('subscription_tiers').select('id');
         const existingTierIds = new Set(existingTiers.map((t: any) => t.id));
         const defaultTiers = [
@@ -374,7 +391,8 @@ async function ensureCriticalSchema(knex: Knex) {
             }
         }
 
-        // Ensure default tier quota limits
+        // Seed default tier quota limits ONLY when max_trees is NULL
+        // (never overwrite admin-configured quotas on every boot)
         if (await knex.schema.hasColumn('subscription_tiers', 'max_trees')) {
             if (!(await knex.schema.hasColumn('subscription_tiers', 'max_sources'))) {
                 await knex.schema.alterTable('subscription_tiers', (t) => {
@@ -383,36 +401,44 @@ async function ensureCriticalSchema(knex: Knex) {
                     t.integer('max_tasks').defaultTo(100);
                 });
             }
-            await knex('subscription_tiers').where('id', 1).update({
-                max_trees: 25,
-                max_gallery: 25,
-                max_audios: 25,
-                max_documents: 25,
-                max_individuals: 25,
-                max_sources: 25,
-                max_notes: 25,
-                max_tasks: 25,
-            });
-            await knex('subscription_tiers').where('id', 2).update({
-                max_trees: 300,
-                max_gallery: 300,
-                max_audios: 300,
-                max_documents: 300,
-                max_individuals: 300,
-                max_sources: 300,
-                max_notes: 300,
-                max_tasks: 300,
-            });
-            await knex('subscription_tiers').where('id', 3).update({
-                max_trees: 3000,
-                max_gallery: 3000,
-                max_audios: 3000,
-                max_documents: 3000,
-                max_individuals: 3000,
-                max_sources: 3000,
-                max_notes: 3000,
-                max_tasks: 3000,
-            });
+            const defaultQuotaByTier: Record<number, Record<string, number>> = {
+                1: {
+                    max_trees: 25,
+                    max_gallery: 25,
+                    max_audios: 25,
+                    max_documents: 25,
+                    max_individuals: 25,
+                    max_sources: 25,
+                    max_notes: 25,
+                    max_tasks: 25,
+                },
+                2: {
+                    max_trees: 300,
+                    max_gallery: 300,
+                    max_audios: 300,
+                    max_documents: 300,
+                    max_individuals: 300,
+                    max_sources: 300,
+                    max_notes: 300,
+                    max_tasks: 300,
+                },
+                3: {
+                    max_trees: 3000,
+                    max_gallery: 3000,
+                    max_audios: 3000,
+                    max_documents: 3000,
+                    max_individuals: 3000,
+                    max_sources: 3000,
+                    max_notes: 3000,
+                    max_tasks: 3000,
+                },
+            };
+            for (const [tierId, quotas] of Object.entries(defaultQuotaByTier)) {
+                await knex('subscription_tiers')
+                    .where({ id: Number(tierId) })
+                    .whereNull('max_trees')
+                    .update(quotas);
+            }
         }
 
         if (await knex.schema.hasTable('users')) {

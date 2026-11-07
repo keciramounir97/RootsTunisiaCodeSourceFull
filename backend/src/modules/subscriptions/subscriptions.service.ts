@@ -8,35 +8,118 @@ import { SubscriptionPayment } from '../../models/SubscriptionPayment';
 export class SubscriptionsService {
     constructor(@Inject('KnexConnection') private readonly knex) {}
 
+    private mapTier(row: any) {
+        if (!row) return row;
+        let features: string[] = [];
+        try {
+            if (Array.isArray(row.features)) {
+                features = row.features;
+            } else if (typeof row.features === 'string' && row.features.trim()) {
+                features = JSON.parse(row.features);
+            }
+        } catch {
+            features = [];
+        }
+        return {
+            ...row,
+            price: Number(row.price ?? 0),
+            is_active: row.is_active === undefined || row.is_active === null ? true : Boolean(row.is_active),
+            features,
+        };
+    }
+
     async listTiers() {
         try {
             const hasIsActive = await this.knex.schema.hasColumn('subscription_tiers', 'is_active');
             const hasSortOrder = await this.knex.schema.hasColumn('subscription_tiers', 'sort_order');
             let q = SubscriptionTier.query(this.knex);
-            if (hasIsActive) q = q.where('is_active', true);
+            // NULL means active for legacy rows before is_active was backfilled
+            if (hasIsActive) {
+                q = q.where((builder: any) =>
+                    builder.where('is_active', true).orWhereNull('is_active'),
+                );
+            }
             if (hasSortOrder) q = q.orderBy('sort_order', 'asc');
-            return await q;
+            const rows = await q;
+            return (rows || []).map((row: any) => this.mapTier(row));
         } catch {
-            return this.knex('subscription_tiers').select('*');
+            const rows = await this.knex('subscription_tiers').select('*');
+            return (rows || []).map((row: any) => this.mapTier(row));
         }
     }
 
     async listTiersForAdmin() {
         try {
             const hasSortOrder = await this.knex.schema.hasColumn('subscription_tiers', 'sort_order');
-            if (hasSortOrder) {
-                return await this.knex('subscription_tiers').orderBy('sort_order', 'asc');
-            }
-            return await this.knex('subscription_tiers').select('*');
+            const rows = hasSortOrder
+                ? await this.knex('subscription_tiers').orderBy('sort_order', 'asc')
+                : await this.knex('subscription_tiers').select('*');
+            return (rows || []).map((row: any) => this.mapTier(row));
         } catch {
-            return this.knex('subscription_tiers').select('*');
+            const rows = await this.knex('subscription_tiers').select('*');
+            return (rows || []).map((row: any) => this.mapTier(row));
         }
     }
 
     async getTier(id: number) {
         const tier = await SubscriptionTier.query(this.knex).findById(id);
         if (!tier) throw new NotFoundException('Subscription tier not found');
-        return tier;
+        return this.mapTier(tier);
+    }
+
+    async updateTierContent(
+        tierId: number,
+        dto: {
+            name?: string;
+            price?: number;
+            badge?: string;
+            description?: string;
+            tagline?: string;
+            features?: string[] | string;
+            is_active?: boolean;
+        },
+    ) {
+        await this.getTier(tierId);
+        const patch: Record<string, any> = {};
+        const hasCol = async (col: string) => this.knex.schema.hasColumn('subscription_tiers', col);
+
+        if (dto.name !== undefined && (await hasCol('name'))) {
+            patch.name = String(dto.name);
+        }
+        if (dto.price !== undefined && (await hasCol('price'))) {
+            patch.price = Number(dto.price);
+        }
+        // Prefer badge; fall back to tagline column if badge is absent
+        if (dto.badge !== undefined || dto.tagline !== undefined) {
+            const value = dto.badge !== undefined ? dto.badge : dto.tagline;
+            if (await hasCol('badge')) {
+                patch.badge = value == null ? null : String(value);
+            } else if (await hasCol('tagline')) {
+                patch.tagline = value == null ? null : String(value);
+            }
+        }
+        if (dto.description !== undefined && (await hasCol('description'))) {
+            patch.description = dto.description == null ? null : String(dto.description);
+        }
+        if (dto.features !== undefined && (await hasCol('features'))) {
+            patch.features = Array.isArray(dto.features)
+                ? JSON.stringify(dto.features)
+                : typeof dto.features === 'string'
+                  ? dto.features
+                  : JSON.stringify([]);
+        }
+        if (dto.is_active !== undefined && (await hasCol('is_active'))) {
+            patch.is_active = Boolean(dto.is_active);
+        }
+        if (await hasCol('updated_at')) {
+            patch.updated_at = new Date().toISOString().slice(0, 19).replace('T', ' ');
+        }
+
+        if (Object.keys(patch).length > 0) {
+            await this.knex('subscription_tiers').where({ id: tierId }).update(patch);
+        }
+        const row = await this.knex('subscription_tiers').where({ id: tierId }).first();
+        return this.mapTier(row);
     }
 
     async getPageAccess(tierId: number) {
