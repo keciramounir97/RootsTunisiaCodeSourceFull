@@ -179,7 +179,7 @@ export default function Library() {
       </PageHero>
 
       {/* Search Bar */}
-      <div className="mx-auto max-w-7xl px-5 pt-8">
+      <div className="mx-auto max-w-[var(--content-max)] px-5 pt-8">
         <div className="surface-card flex items-center gap-3 p-3">
           <Search className="h-4 w-4 text-[var(--muted-foreground)] ml-2" />
           <input

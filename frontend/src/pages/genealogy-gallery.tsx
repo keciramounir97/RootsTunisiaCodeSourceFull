@@ -128,7 +128,7 @@ export default function GenealogyGallery() {
       </PageHero>
 
       {/* Search & Filter Bar */}
-      <div className="mx-auto max-w-7xl px-5 pt-8">
+      <div className="mx-auto max-w-[var(--content-max)] px-5 pt-8">
         <div className="surface-card flex items-center gap-3 p-3">
           <Search className="h-4 w-4 text-[var(--muted-foreground)] ml-2" />
           <input
@@ -231,7 +231,7 @@ export default function GenealogyGallery() {
       {/* GEDCOM Viewer Modal */}
       {viewTree && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm">
-          <div className="surface-card flex flex-col w-full max-w-6xl max-h-[90vh] overflow-hidden border-2 border-[var(--gold)]">
+          <div className="surface-card flex flex-col w-full max-w-[var(--content-max)] max-h-[90vh] overflow-hidden border-2 border-[var(--gold)]">
             <div className="flex items-center justify-between border-b border-[var(--gold)]/30 p-4 bg-[var(--secondary)]/50">
               <div>
                 <p className="eyebrow">{t("interactive_tree_viewer", "Interactive Tree Viewer")}</p>

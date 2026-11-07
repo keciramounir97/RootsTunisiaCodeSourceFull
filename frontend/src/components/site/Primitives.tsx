@@ -16,7 +16,7 @@ export function PageHero({
 }) {
   return (
     <section className="px-4 pt-4 sm:px-6 lg:px-8">
-      <div className="frame-gold relative mx-auto max-w-7xl overflow-hidden rounded-md min-h-[340px] sm:min-h-[420px] flex items-center justify-center">
+      <div className="frame-gold relative mx-auto max-w-[var(--content-max)] overflow-hidden rounded-md min-h-[340px] sm:min-h-[420px] flex items-center justify-center">
         <img
           src={image}
           alt={title}
@@ -52,7 +52,7 @@ export function Section({
 }) {
   return (
     <section id={id} className={`w-full px-4 py-10 sm:px-6 sm:py-14 lg:px-8 lg:py-16 ${className}`}>
-      <div className={`mx-auto max-w-7xl ${containerClassName}`}>{children}</div>
+      <div className={`mx-auto max-w-[var(--content-max)] ${containerClassName}`}>{children}</div>
     </section>
   );
 }

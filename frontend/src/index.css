@@ -138,7 +138,7 @@
   --container-padding-x: clamp(0.75rem, 2vw, 2rem);
   --container-padding-y: clamp(1rem, 2.5vw, 2rem);
   --container-max: min(100%, 1920px);
-  --content-max: 1400px;
+  --content-max: 1600px;
   --section-gap: clamp(3rem, 6vw, 6.5rem);
 }
 

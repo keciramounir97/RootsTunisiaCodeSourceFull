@@ -158,7 +158,7 @@ export default function Research() {
       {/* Tree Modal */}
       {viewTree && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-          <div className="surface-card flex flex-col w-full max-w-6xl max-h-[90vh] overflow-hidden border-2 border-[var(--gold)]">
+          <div className="surface-card flex flex-col w-full max-w-[var(--content-max)] max-h-[90vh] overflow-hidden border-2 border-[var(--gold)]">
             <div className="flex items-center justify-between border-b border-[var(--gold)]/30 p-4 bg-[var(--secondary)]/50">
               <h3 className="font-display text-xl text-[var(--foreground)]">{viewTree.title}</h3>
               <button

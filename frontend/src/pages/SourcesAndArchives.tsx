@@ -829,7 +829,7 @@ ARCHIVAL CHECKLIST:
 
       {/* Interactive Filter & Live Search Bar */}
       <section className="w-full px-4 pt-6 sm:px-6 sm:pt-8 lg:px-8">
-        <div className="mx-auto max-w-7xl">
+        <div className="mx-auto max-w-[var(--content-max)]">
           <div className="surface-card p-4 sm:p-6 rounded-lg border border-[var(--gold)]/35 bg-[var(--card)]/95 shadow-md flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
             {/* View Switcher */}
             <div className="flex flex-wrap gap-2">

@@ -82,7 +82,7 @@ export default function ResetPassword() {
         description="Reset your password to regain access to your Roots Tunisia account."
       />
 
-      <div className="mx-auto max-w-7xl px-3 sm:px-5">
+      <div className="mx-auto max-w-[var(--content-max)] px-3 sm:px-5">
         <div className="surface-card grid lg:grid-cols-2 rounded-lg border border-[var(--gold)]/40 overflow-hidden shadow-2xl min-h-[620px]">
           {/* Left Photo Part */}
           <div className="relative hidden lg:block overflow-hidden min-h-[600px]">

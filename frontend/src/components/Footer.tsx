@@ -103,7 +103,7 @@ export default function Footer({ data }: FooterProps) {
       dir={isRtl ? "rtl" : "ltr"}
       className="mt-20 border-t border-[var(--gold)]/35 bg-[var(--secondary)]/60 text-[var(--foreground)] text-start"
     >
-      <div className="mx-auto grid max-w-7xl gap-8 sm:gap-10 px-4 py-12 sm:px-6 sm:py-14 lg:px-8 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mx-auto grid max-w-[var(--content-max)] gap-8 sm:gap-10 px-4 py-12 sm:px-6 sm:py-14 lg:px-8 sm:grid-cols-2 lg:grid-cols-4">
         <div>
           <Logo />
           <p className="mt-4 max-w-xs text-sm leading-relaxed text-[var(--muted-foreground)]">
@@ -188,7 +188,7 @@ export default function Footer({ data }: FooterProps) {
 
       <div className="gold-rule" />
 
-      <div className="mx-auto flex max-w-7xl flex-col lg:flex-row items-center justify-between gap-4 px-4 py-5 sm:px-6 lg:px-8 text-xs text-[var(--muted-foreground)]">
+      <div className="mx-auto flex max-w-[var(--content-max)] flex-col lg:flex-row items-center justify-between gap-4 px-4 py-5 sm:px-6 lg:px-8 text-xs text-[var(--muted-foreground)]">
         <p>{customFineprint || t("footer_copyright")}</p>
         <div className="flex flex-wrap items-center justify-center gap-3 md:gap-4 text-xs">
           <Link to="/terms" className="hover:text-[var(--gold)] transition-colors font-medium">
