@@ -59,9 +59,8 @@ export default function Payment() {
   const [loadingMethods, setLoadingMethods] = useState(true);
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethod | null>(null);
 
-  // Form states
-  const [proofUrl, setProofUrl] = useState("");
-  const [notes, setNotes] = useState("");
+  // Form states — proof file required (image or PDF)
+  const [proofFile, setProofFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [status, setStatus] = useState<{ type: string; msg: string }>({ type: "", msg: "" });
   const [copiedField, setCopiedField] = useState(false);
@@ -104,10 +103,26 @@ export default function Payment() {
     setTimeout(() => setCopiedField(false), 2500);
   };
 
+  const canSubmit = Boolean(selectedMethod && proofFile && !submitting);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) {
       navigate(`/login?redirect=${encodeURIComponent(location.pathname + location.search)}`);
+      return;
+    }
+    if (!selectedMethod) {
+      setStatus({
+        type: "error",
+        msg: t("select_payment_method_required", "Veuillez choisir un moyen de paiement."),
+      });
+      return;
+    }
+    if (!proofFile) {
+      setStatus({
+        type: "error",
+        msg: t("payment_proof_required", "Veuillez joindre une preuve de paiement (image ou PDF)."),
+      });
       return;
     }
 
@@ -115,24 +130,29 @@ export default function Payment() {
     setStatus({ type: "", msg: "" });
 
     try {
-      await api.post("/my/subscription/payment", {
-        tier_id: tierId,
-        amount: converted.amount,
-        currency: converted.code,
-        payment_method: selectedMethod?.name || "Virement Bancaire",
-        proof_url: proofUrl || undefined,
-        notes: notes || undefined,
-      });
+      const formData = new FormData();
+      formData.append("tier_id", String(tierId));
+      formData.append("amount", String(converted.amount));
+      formData.append("currency", converted.code);
+      formData.append("payment_method", selectedMethod.name || "Virement Bancaire");
+      formData.append("proof", proofFile);
+
+      await api.post("/my/subscription/payment", formData);
 
       setStatus({
         type: "success",
         msg: t("payment_recorded_success", "تم تسجيل طلب تأكيد الدفع بنجاح! سيتم مراجعة وتفعيل اشتراكك بأسرع وقت."),
       });
+      setProofFile(null);
       setTimeout(() => navigate("/subscriptions"), 3000);
     } catch (err: any) {
+      const msg =
+        err?.response?.data?.message ||
+        err?.userMessage ||
+        t("payment_recorded_failed", "فشل تسجيل الدفع. يرجى الاتصال بالدعم الفني.");
       setStatus({
         type: "error",
-        msg: err?.response?.data?.message || t("payment_recorded_failed", "فشل تسجيل الدفع. يرجى الاتصال بالدعم الفني."),
+        msg: Array.isArray(msg) ? msg.join(", ") : String(msg),
       });
     } finally {
       setSubmitting(false);
@@ -321,39 +341,36 @@ export default function Payment() {
             </div>
           )}
 
-          {/* Confirmation Form */}
+          {/* Confirmation Form — proof file only */}
           <form onSubmit={handleSubmit} className="space-y-4 pt-2 border-t border-[var(--gold)]/20">
             <div>
               <label className="block text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted-foreground)] mb-1.5">
-                {t("payment_reference_label", "رقم أو مرجع التحويل / Transaction ID (موصى به)")}
+                {t("payment_proof_label", "Preuve de paiement (image ou PDF) — obligatoire")}
               </label>
               <input
-                type="text"
-                value={proofUrl}
-                onChange={(e) => setProofUrl(e.target.value)}
-                placeholder={t("placeholder_tx_reference", "مثال: TXN-892402 أو رقم الحوالة / الوصل البنكي")}
-                className="w-full px-4 py-3 rounded-lg border border-[var(--border)] bg-[var(--card)] text-sm text-[var(--foreground)] outline-none focus:border-[var(--gold)] font-medium"
+                type="file"
+                accept=".pdf,image/*,.jpg,.jpeg,.png,.gif,.webp"
+                onChange={(e) => setProofFile(e.target.files?.[0] || null)}
+                className="w-full px-4 py-3 rounded-lg border border-[var(--border)] bg-[var(--card)] text-sm text-[var(--foreground)] outline-none focus:border-[var(--gold)] font-medium file:me-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-[var(--gold)]/20 file:text-[var(--gold)] file:font-bold file:cursor-pointer"
+                required
               />
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted-foreground)] mb-1.5">
-                {t("additional_notes_optional", "ملاحظات إضافية أو اسم صاحب الحساب (اختياري)")}
-              </label>
-              <textarea
-                rows={3}
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder={t("placeholder_payment_notes", "اكتب هنا اسم صاحب الحساب المحول منه أو أي تفاصيل تخص اشتراكك...")}
-                className="w-full px-4 py-3 rounded-lg border border-[var(--border)] bg-[var(--card)] text-sm text-[var(--foreground)] outline-none focus:border-[var(--gold)]"
-              />
+              {proofFile ? (
+                <p className="mt-2 text-xs text-[var(--muted-foreground)]">
+                  {t("selected_file", "Fichier sélectionné")}:{" "}
+                  <span className="font-semibold text-[var(--foreground)]">{proofFile.name}</span>
+                </p>
+              ) : (
+                <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">
+                  {t("payment_proof_hint", "Joignez une capture ou un PDF du virement pour valider la demande.")}
+                </p>
+              )}
             </div>
 
             <div className="pt-4">
               <button
                 type="submit"
-                disabled={submitting}
-                className="btn-base btn-gold w-full py-4 text-sm sm:text-base font-bold flex items-center justify-center gap-2 cursor-pointer shadow-xl hover:scale-[1.01] transition-transform"
+                disabled={!canSubmit}
+                className="btn-base btn-gold w-full py-4 text-sm sm:text-base font-bold flex items-center justify-center gap-2 cursor-pointer shadow-xl hover:scale-[1.01] transition-transform disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
               >
                 <ShieldCheck className="w-5 h-5" />
                 <span>

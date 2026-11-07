@@ -126,6 +126,14 @@ api.interceptors.request.use(
     if (token && !config.headers.Authorization) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    // Let the browser set multipart boundary for FormData uploads
+    if (typeof FormData !== "undefined" && config.data instanceof FormData) {
+      if (config.headers && typeof (config.headers as any).delete === "function") {
+        (config.headers as any).delete("Content-Type");
+      } else if (config.headers) {
+        delete (config.headers as any)["Content-Type"];
+      }
+    }
     return config;
   },
   (error: AxiosError) => {

@@ -29,6 +29,16 @@ import TunisiaGovernoratesMap from "../components/TunisiaGovernoratesMap";
 import SEO from "../components/SEO";
 import { useTranslation } from "../context/TranslationContext";
 import { api } from "../api/client";
+import { getApiRoot } from "../api/helpers";
+
+function resolveBannerUrl(pathOrUrl?: string | null) {
+  const raw = String(pathOrUrl || "").trim();
+  if (!raw) return "";
+  if (/^https?:\/\//i.test(raw) || raw.startsWith("data:")) return raw;
+  const root = String(getApiRoot() || "").replace(/\/+$/, "");
+  if (raw.startsWith("/")) return `${root}${raw}`;
+  return `${root}/${raw}`;
+}
 
 const slides = [
   { image: carthageRuins, labelKey: "hero_slide_carthage" },
@@ -135,21 +145,26 @@ export default function Home() {
   const [activeSlides, setActiveSlides] = useState<any[]>(slides);
 
   useEffect(() => {
-    try {
-      const cached = localStorage.getItem("hero_diaporama_slides");
-      if (cached) {
-        const parsed = JSON.parse(cached);
-        if (Array.isArray(parsed) && parsed.length > 0) {
+    (async () => {
+      try {
+        const { data } = await api.get("/banner-slides");
+        const list = Array.isArray(data?.data) ? data.data : Array.isArray(data) ? data : [];
+        if (list.length > 0) {
           setActiveSlides(
-            parsed.map((p) => ({
-              image: p.image_url || p.imageUrl,
-              label: p.description?.trim() ? p.description : "",
-              labelKey: p.labelKey || "",
-            }))
+            list.map((row: any) => ({
+              image: resolveBannerUrl(row.imagePath || row.image_path || row.imageUrl || row.image_url),
+              label: String(row.caption || row.title || "").trim(),
+              labelKey: "",
+            })),
           );
+        } else {
+          // No active banners yet — keep branded defaults until admin checks slides
+          setActiveSlides(slides);
         }
+      } catch {
+        setActiveSlides(slides);
       }
-    } catch {}
+    })();
   }, []);
 
   useEffect(() => {

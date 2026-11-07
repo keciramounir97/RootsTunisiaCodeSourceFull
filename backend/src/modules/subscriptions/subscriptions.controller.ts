@@ -1,8 +1,56 @@
-import { Controller, Get, Post, Put, Patch, Delete, Param, Body, UseGuards, Request, ParseIntPipe, Query } from '@nestjs/common';
+import {
+    Controller,
+    Get,
+    Post,
+    Put,
+    Patch,
+    Delete,
+    Param,
+    Body,
+    UseGuards,
+    Request,
+    ParseIntPipe,
+    Query,
+    UseInterceptors,
+    UploadedFile,
+    BadRequestException,
+} from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { SubscriptionsService } from './subscriptions.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
+import { PAYMENT_PROOF_UPLOADS_DIR } from '../../common/utils/file.utils';
+import * as crypto from 'crypto';
+import * as multer from 'multer';
+import * as path from 'path';
+
+const paymentProofUploadOptions = {
+    storage: multer.diskStorage({
+        destination: (_req, _file, cb) => cb(null, PAYMENT_PROOF_UPLOADS_DIR),
+        filename: (_req, file, cb) => {
+            const ext = path.extname(file.originalname || '') || '.bin';
+            cb(null, `proof-${crypto.randomBytes(16).toString('hex')}${ext}`);
+        },
+    }),
+    limits: { fileSize: 10 * 1024 * 1024 },
+    fileFilter: (_req, file, cb) => {
+        const allowedTypes = /jpeg|jpg|png|gif|webp|pdf/;
+        const extname = allowedTypes.test(
+            path.extname(file.originalname || '').toLowerCase(),
+        );
+        const mimetype =
+            allowedTypes.test((file.mimetype || '').split('/').pop() || '') ||
+            /^(image\/(jpeg|jpg|png|gif|webp)|application\/pdf)$/i.test(
+                file.mimetype || '',
+            );
+        if (mimetype && extname) return cb(null, true);
+        return cb(
+            new Error('Only image (jpeg/png/gif/webp) or PDF files are allowed'),
+            false,
+        );
+    },
+};
 
 @Controller()
 export class SubscriptionsController {
@@ -52,8 +100,35 @@ export class SubscriptionsController {
 
     @Post('my/subscription/payment')
     @UseGuards(JwtAuthGuard)
-    async submitPayment(@Body() body: { tier_id: number; amount: number; proof_url?: string; notes?: string }, @Request() req) {
-        return this.service.submitPayment({ ...body, user_id: req.user.id });
+    @UseInterceptors(FileInterceptor('proof', paymentProofUploadOptions))
+    async submitPayment(
+        @UploadedFile() file: Express.Multer.File | undefined,
+        @Body()
+        body: {
+            tier_id: number | string;
+            amount: number | string;
+            currency?: string;
+            payment_method?: string;
+            proof_url?: string;
+            notes?: string;
+        },
+        @Request() req,
+    ) {
+        if (!file?.filename) {
+            throw new BadRequestException(
+                'Payment proof file is required / Preuve de paiement requise (image ou PDF)',
+            );
+        }
+        const proofUrl = `/uploads/payment-proofs/${file.filename}`;
+        return this.service.submitPayment({
+            user_id: req.user.id,
+            tier_id: Number(body.tier_id),
+            amount: Number(body.amount),
+            currency: body.currency,
+            payment_method: body.payment_method,
+            proof_url: proofUrl,
+            notes: undefined,
+        });
     }
 
     @Get('my/subscription/payments')

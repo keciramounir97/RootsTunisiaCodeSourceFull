@@ -303,17 +303,26 @@ export class SubscriptionsService {
         amount: number;
         proof_url?: string;
         notes?: string;
+        currency?: string;
+        payment_method?: string;
     }) {
         const tier = await this.getTier(data.tier_id);
         if (tier.price === 0) throw new BadRequestException('Free tiers do not require payment');
+
+        const proofUrl = String(data.proof_url || '').trim();
+        if (!proofUrl) {
+            throw new BadRequestException(
+                'Payment proof file is required / Preuve de paiement requise',
+            );
+        }
 
         return SubscriptionPayment.query(this.knex).insertAndFetch({
             user_id: data.user_id,
             tier_id: data.tier_id,
             amount: data.amount,
-            currency: (data as any).currency || 'USD',
-            payment_method: (data as any).payment_method || 'Virement Bancaire',
-            proof_url: data.proof_url || null,
+            currency: data.currency || 'USD',
+            payment_method: data.payment_method || 'Virement Bancaire',
+            proof_url: proofUrl,
             notes: data.notes || null,
             status: 'pending',
         });

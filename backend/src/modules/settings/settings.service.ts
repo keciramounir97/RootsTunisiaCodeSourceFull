@@ -10,6 +10,8 @@ import {
   resolveStoredFilePath,
   safeUnlink,
 } from "../../common/utils/file.utils";
+import * as fs from "fs";
+import { imageSize } from "image-size";
 
 type SettingsShape = {
   allowRegistration: boolean;
@@ -103,28 +105,230 @@ export class SettingsService implements OnModuleInit {
         table.string("type", 40).notNullable();
         table.string("image_path", 512).notNullable();
         table.integer("sort_order").notNullable().defaultTo(0);
+        table.string("title", 255).nullable();
+        table.text("caption").nullable();
+        table.integer("width").nullable();
+        table.integer("height").nullable();
+        table.boolean("is_active").notNullable().defaultTo(false);
         table.dateTime("created_at").defaultTo(this.knex.fn.now());
         table.dateTime("updated_at").defaultTo(this.knex.fn.now());
         table.index(["type", "sort_order"]);
       });
-      return;
+    } else {
+      if (!(await this.knex.schema.hasColumn("site_images", "updated_at"))) {
+        await this.knex.schema.alterTable("site_images", (table) => {
+          table.dateTime("updated_at").nullable();
+        });
+      }
+      if (!(await this.knex.schema.hasColumn("site_images", "title"))) {
+        await this.knex.schema.alterTable("site_images", (table) => {
+          table.string("title", 255).nullable();
+        });
+      }
+      if (!(await this.knex.schema.hasColumn("site_images", "caption"))) {
+        await this.knex.schema.alterTable("site_images", (table) => {
+          table.text("caption").nullable();
+        });
+      }
+      if (!(await this.knex.schema.hasColumn("site_images", "width"))) {
+        await this.knex.schema.alterTable("site_images", (table) => {
+          table.integer("width").nullable();
+        });
+      }
+      if (!(await this.knex.schema.hasColumn("site_images", "height"))) {
+        await this.knex.schema.alterTable("site_images", (table) => {
+          table.integer("height").nullable();
+        });
+      }
+      if (!(await this.knex.schema.hasColumn("site_images", "is_active"))) {
+        await this.knex.schema.alterTable("site_images", (table) => {
+          table.boolean("is_active").notNullable().defaultTo(false);
+        });
+      }
+    }
+  }
+
+  private static readonly BANNER_MIN_W = 1920;
+  private static readonly BANNER_MIN_H = 1080;
+  private static readonly BANNER_RATIO_MIN = 1.7;
+  private static readonly BANNER_RATIO_MAX = 1.85;
+
+  private isValidBannerDimensions(width: number, height: number) {
+    const w = Number(width);
+    const h = Number(height);
+    if (!Number.isFinite(w) || !Number.isFinite(h) || w <= 0 || h <= 0) return false;
+    const ratio = w / h;
+    return (
+      w >= SettingsService.BANNER_MIN_W &&
+      h >= SettingsService.BANNER_MIN_H &&
+      ratio >= SettingsService.BANNER_RATIO_MIN &&
+      ratio <= SettingsService.BANNER_RATIO_MAX
+    );
+  }
+
+  formatBannerSlide(row: any) {
+    return {
+      id: Number(row.id),
+      imagePath: row.image_path,
+      imageUrl: row.image_path,
+      width: row.width != null ? Number(row.width) : null,
+      height: row.height != null ? Number(row.height) : null,
+      title: row.title || null,
+      caption: row.caption || null,
+      isActive: Boolean(row.is_active),
+      sortOrder: Number(row.sort_order || 0),
+      createdAt: row.created_at,
+    };
+  }
+
+  async listBannerSlides(activeOnly = false) {
+    await this.ensureSettingsSchema();
+    let query = this.knex("site_images")
+      .where({ type: "banner" })
+      .orderBy("sort_order", "asc")
+      .orderBy("id", "asc");
+    if (activeOnly) {
+      query = query.andWhere({ is_active: true });
+    }
+    const rows = await query;
+    return (rows || []).map((row: any) => this.formatBannerSlide(row));
+  }
+
+  async addBannerSlide(
+    file: Express.Multer.File,
+    meta: { width?: number; height?: number; title?: string },
+    actorId: number,
+  ) {
+    await this.ensureSettingsSchema();
+    if (!file) {
+      throw new BadRequestException(
+        "Image file is required / Fichier image requis",
+      );
     }
 
-    if (!(await this.knex.schema.hasColumn("site_images", "updated_at"))) {
-      await this.knex.schema.alterTable("site_images", (table) => {
-        table.dateTime("updated_at").nullable();
-      });
+    // Measure real pixels from the uploaded file (do not trust client form fields)
+    let width = 0;
+    let height = 0;
+    try {
+      const buffer = fs.readFileSync(file.path);
+      const dims = imageSize(buffer);
+      width = Number(dims?.width || 0);
+      height = Number(dims?.height || 0);
+    } catch {
+      safeUnlink(file.path);
+      throw new BadRequestException(
+        "Could not read image dimensions / Impossible de lire les dimensions de l'image",
+      );
     }
-    if (!(await this.knex.schema.hasColumn("site_images", "title"))) {
-      await this.knex.schema.alterTable("site_images", (table) => {
-        table.string("title", 255).nullable();
-      });
+    if (!this.isValidBannerDimensions(width, height)) {
+      safeUnlink(file.path);
+      throw new BadRequestException(
+        `Banner rejected: must be at least 1920×1080 and 16:9 ratio (1.70–1.85). Got ${width || "?"}×${height || "?"}. / Bannière refusée : minimum 1920×1080 et ratio 16:9 (1,70–1,85). Reçu ${width || "?"}×${height || "?"}.`,
+      );
     }
-    if (!(await this.knex.schema.hasColumn("site_images", "caption"))) {
-      await this.knex.schema.alterTable("site_images", (table) => {
-        table.text("caption").nullable();
-      });
+
+    const maxRow = await this.knex("site_images")
+      .where({ type: "banner" })
+      .max("sort_order as max")
+      .first();
+    const nextOrder = Number(maxRow?.max || 0) + 1;
+    const now = new Date().toISOString().slice(0, 19).replace("T", " ");
+    const imagePath = `/uploads/site/${file.filename}`;
+
+    const [id] = await this.knex("site_images").insert({
+      type: "banner",
+      image_path: imagePath,
+      sort_order: nextOrder,
+      title: meta?.title || null,
+      caption: null,
+      width,
+      height,
+      is_active: false,
+      created_at: now,
+      updated_at: now,
+    });
+
+    await this.activityService.log(
+      actorId,
+      "settings",
+      `Uploaded banner slide #${id}`,
+    );
+    const row = await this.knex("site_images").where({ id }).first();
+    return this.formatBannerSlide(row);
+  }
+
+  async setBannerSelection(ids: number[], actorId: number) {
+    await this.ensureSettingsSchema();
+    const normalizedIds = (Array.isArray(ids) ? ids : [])
+      .map((id) => Number(id))
+      .filter((id) => Number.isFinite(id) && id > 0);
+    const now = new Date().toISOString().slice(0, 19).replace("T", " ");
+
+    await this.knex("site_images")
+      .where({ type: "banner" })
+      .update({ is_active: false, updated_at: now });
+
+    for (let i = 0; i < normalizedIds.length; i++) {
+      await this.knex("site_images")
+        .where({ id: normalizedIds[i], type: "banner" })
+        .update({
+          is_active: true,
+          sort_order: i + 1,
+          updated_at: now,
+        });
     }
+
+    await this.activityService.log(
+      actorId,
+      "settings",
+      `Updated banner diaporama selection (${normalizedIds.length} active)`,
+    );
+    return this.listBannerSlides(false);
+  }
+
+  async updateBannerSlide(
+    id: number,
+    data: { title?: string; caption?: string; isActive?: boolean },
+    actorId: number,
+  ) {
+    await this.ensureSettingsSchema();
+    const row = await this.knex("site_images")
+      .where({ id, type: "banner" })
+      .first();
+    if (!row) {
+      throw new BadRequestException("Banner slide not found");
+    }
+    const now = new Date().toISOString().slice(0, 19).replace("T", " ");
+    const update: any = { updated_at: now };
+    if (data.title !== undefined) update.title = data.title || null;
+    if (data.caption !== undefined) update.caption = data.caption || null;
+    if (data.isActive !== undefined) update.is_active = Boolean(data.isActive);
+    await this.knex("site_images")
+      .where({ id, type: "banner" })
+      .update(update);
+    await this.activityService.log(
+      actorId,
+      "settings",
+      `Updated banner slide #${id}`,
+    );
+    const updated = await this.knex("site_images").where({ id }).first();
+    return this.formatBannerSlide(updated);
+  }
+
+  async deleteBannerSlide(id: number, actorId: number) {
+    await this.ensureSettingsSchema();
+    const row = await this.knex("site_images")
+      .where({ id, type: "banner" })
+      .first();
+    if (!row) return { deleted: false };
+    safeUnlink(resolveStoredFilePath(row.image_path));
+    await this.knex("site_images").where({ id, type: "banner" }).delete();
+    await this.activityService.log(
+      actorId,
+      "settings",
+      `Deleted banner slide #${id}`,
+    );
+    return { deleted: true };
   }
 
   private parseValue(

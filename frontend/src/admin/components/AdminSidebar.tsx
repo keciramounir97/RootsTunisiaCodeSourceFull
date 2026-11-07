@@ -60,7 +60,7 @@ const links = [
   { to: "/admin/notes", labelKey: "notes", Icon: StickyNote },
   // 8. Gallery
   { to: "/admin/gallery", labelKey: "gallery", Icon: Image },
-  // 9. Diaporama (Hero section banner selector & aspect ratio check)
+  // 9. Banner Diaporama (dedicated 16:9 homepage banners)
   { to: "/admin/diaporama", labelKey: "diaporama", Icon: SlidersHorizontal },
   // 10. Audio
   { to: "/admin/audios", labelKey: "audios", Icon: Music },
@@ -109,7 +109,7 @@ const labelFallbacks: Record<string, string> = {
   tasks: "مهام البحث (Mes Tâches)",
   notes: "الملاحظات ومراجع الأرشيف (Notes & Références)",
   gallery: "المعرض التراثي (Galerie)",
-  diaporama: "ديابوراما الواجهة (Hero Diaporama)",
+  diaporama: "بانر ديابوراما (Bannière Diaporama)",
   audios: "التسجيلات والروايات الشفوية (Récits Oraux & Audio)",
   documents: "الوثائق وسجلات الأرشيف (Documents & Sijillat)",
   books: "الكتب والمخطوطات (Livres & Manuscrits)",

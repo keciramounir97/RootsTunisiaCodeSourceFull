@@ -9,6 +9,7 @@ import {
   Post,
   Put,
   Request,
+  UploadedFile,
   UploadedFiles,
   UseGuards,
   UseInterceptors,
@@ -18,7 +19,7 @@ import { RolesGuard } from "../auth/guards/roles.guard";
 import { Roles } from "../../common/decorators/roles.decorator";
 import { SettingsService } from "./settings.service";
 import { UpdateSettingsDto } from "./dto/settings.dto";
-import { FilesInterceptor } from "@nestjs/platform-express";
+import { FileInterceptor, FilesInterceptor } from "@nestjs/platform-express";
 import { SITE_UPLOADS_DIR } from "../../common/utils/file.utils";
 import * as crypto from "crypto";
 import * as multer from "multer";
@@ -161,5 +162,81 @@ export class AdminSiteImagesController {
   @Delete("background")
   async deleteBackgroundImages(@Request() req) {
     return this.settingsService.deleteBackgroundImages(req.user.id);
+  }
+}
+
+@Controller("banner-slides")
+export class PublicBannerSlidesController {
+  constructor(private readonly settingsService: SettingsService) {}
+
+  @Get()
+  async listActiveBannerSlides() {
+    return this.settingsService.listBannerSlides(true);
+  }
+}
+
+@Controller("admin/banner-slides")
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles("admin", "super_admin")
+export class AdminBannerSlidesController {
+  constructor(private readonly settingsService: SettingsService) {}
+
+  @Get()
+  async listBannerSlides() {
+    return this.settingsService.listBannerSlides(false);
+  }
+
+  @Post()
+  @UseInterceptors(FileInterceptor("image", siteImageUploadOptions))
+  async addBannerSlide(
+    @UploadedFile() file: Express.Multer.File,
+    @Body() body: any,
+    @Request() req,
+  ) {
+    return this.settingsService.addBannerSlide(
+      file,
+      {
+        width: Number(body?.width),
+        height: Number(body?.height),
+        title: body?.title,
+      },
+      req.user.id,
+    );
+  }
+
+  @Put("selection")
+  async setBannerSelection(@Body() body: any, @Request() req) {
+    const ids = Array.isArray(body?.ids) ? body.ids.map(Number) : [];
+    return this.settingsService.setBannerSelection(ids, req.user.id);
+  }
+
+  @Patch(":id")
+  async updateBannerSlide(
+    @Param("id", ParseIntPipe) id: number,
+    @Body() body: any,
+    @Request() req,
+  ) {
+    return this.settingsService.updateBannerSlide(
+      id,
+      {
+        title: body?.title,
+        caption: body?.caption,
+        isActive:
+          body?.isActive !== undefined
+            ? Boolean(body.isActive)
+            : body?.is_active !== undefined
+              ? Boolean(body.is_active)
+              : undefined,
+      },
+      req.user.id,
+    );
+  }
+
+  @Delete(":id")
+  async deleteBannerSlide(
+    @Param("id", ParseIntPipe) id: number,
+    @Request() req,
+  ) {
+    return this.settingsService.deleteBannerSlide(id, req.user.id);
   }
 }
