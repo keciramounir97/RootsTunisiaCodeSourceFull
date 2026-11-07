@@ -2947,5 +2947,12 @@
   "cms_sections_of": "Sections of",
   "cms_fields": "fields",
   "cms_customised_lower": "customised",
-  "cms_open_page": "Open page"
+  "cms_open_page": "Open page",
+  "admins_roles": "Admins & Roles",
+  "admins_roles_title": "Admins & Roles",
+  "admins_roles_subtitle": "Manage page admins, super administrators, and role page access in one place.",
+  "admins_roles_eyebrow": "Access Control",
+  "admins_roles_tab_page_admins": "Page Admins & Access",
+  "admins_roles_tab_super_admins": "Super Administrators",
+  "admins_roles_tab_role_distribution": "Role Distribution"
 }

@@ -2947,5 +2947,12 @@
   "cms_sections_of": "Sections de",
   "cms_fields": "champs",
   "cms_customised_lower": "personnalisés",
-  "cms_open_page": "Ouvrir la page"
+  "cms_open_page": "Ouvrir la page",
+  "admins_roles": "Administrateurs & Rôles",
+  "admins_roles_title": "Administrateurs & Rôles",
+  "admins_roles_subtitle": "Gérez les administrateurs de pages, les super-administrateurs et les accès par rôle au même endroit.",
+  "admins_roles_eyebrow": "Contrôle d'accès",
+  "admins_roles_tab_page_admins": "Admins & Accès aux Pages",
+  "admins_roles_tab_super_admins": "Super Administrateurs",
+  "admins_roles_tab_role_distribution": "Répartition des Rôles"
 }

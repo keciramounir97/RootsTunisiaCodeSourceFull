@@ -2684,5 +2684,12 @@
   "may_crop_badge": "Puede Recortarse",
   "all_gallery_images": "Todas las Imágenes",
   "fits_16_9_criteria": "Cumple Criterio 16:9",
-  "currently_selected": "Solo Seleccionadas"
+  "currently_selected": "Solo Seleccionadas",
+  "admins_roles": "Administradores y Roles",
+  "admins_roles_title": "Administradores y Roles",
+  "admins_roles_subtitle": "Gestione administradores de páginas, superadministradores y acceso por roles en un solo lugar.",
+  "admins_roles_eyebrow": "Control de acceso",
+  "admins_roles_tab_page_admins": "Admins y Acceso a Páginas",
+  "admins_roles_tab_super_admins": "Superadministradores",
+  "admins_roles_tab_role_distribution": "Distribución de Roles"
 }

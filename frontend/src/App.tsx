@@ -1,4 +1,4 @@
-import { Routes, Route, useLocation } from "react-router-dom";
+import { Routes, Route, useLocation, Navigate } from "react-router-dom";
 import { Suspense, useEffect, memo, lazy } from "react";
 import AOS from "aos";
 import "aos/dist/aos.css";
@@ -66,7 +66,7 @@ const AdminDocuments = lazy(() => import("./admin/pages/Documents"));
 const NewsletterSubscribers = lazy(() => import("./admin/pages/NewsletterSubscribers"));
 const ContactMessages = lazy(() => import("./admin/pages/ContactMessages"));
 const SuperAdminApprovals = lazy(() => import("./admin/pages/SuperAdminApprovals"));
-const AdminManagement = lazy(() => import("./admin/pages/AdminManagement"));
+const AdminsRoles = lazy(() => import("./admin/pages/AdminsRoles"));
 const UserApprovals = lazy(() => import("./admin/pages/UserApprovals"));
 const FooterSettings = lazy(() => import("./admin/pages/FooterSettings"));
 const HeroImages = lazy(() => import("./admin/pages/HeroImages"));
@@ -74,7 +74,6 @@ const BackgroundImages = lazy(() => import("./admin/pages/BackgroundImages"));
 const ValidationApprovals = lazy(() => import("./admin/pages/ValidationApprovals"));
 const PasswordResetRequests = lazy(() => import("./admin/pages/PasswordResetRequests"));
 const AccountDeletionRequests = lazy(() => import("./admin/pages/AccountDeletionRequests"));
-const RoleDistribution = lazy(() => import("./admin/pages/RoleDistribution"));
 const SubscriptionsAdmin = lazy(() => import("./admin/pages/Subscriptions"));
 const SubscriptionPayments = lazy(() => import("./admin/pages/SubscriptionPayments"));
 const FlaggedPayments = lazy(() => import("./admin/pages/FlaggedPayments"));
@@ -100,7 +99,6 @@ const Currencies = lazy(() => import("./admin/pages/Currencies"));
 const Backups = lazy(() => import("./admin/pages/Backups"));
 const AdminSuggestions = lazy(() => import("./admin/pages/Suggestions"));
 const LegalContent = lazy(() => import("./admin/pages/LegalContent"));
-const SuperAdmins = lazy(() => import("./admin/pages/SuperAdmins"));
 const ContentManager = lazy(() => import("./admin/pages/ContentManager"));
 const Diaporama = lazy(() => import("./admin/pages/Diaporama"));
 const EmailTemplates = lazy(() => import("./admin/pages/EmailTemplates"));
@@ -448,15 +446,16 @@ function AppRoutes() {
           }
         />
         <Route
-          path="admins"
+          path="admins-roles"
           element={
             <Suspense fallback={<AdminLoadingFallback />}>
-              <ProtectedRoute roles={[1, 3]}>
-                <AdminManagement />
+              <ProtectedRoute roles={[3]}>
+                <AdminsRoles />
               </ProtectedRoute>
             </Suspense>
           }
         />
+        <Route path="admins" element={<Navigate to="/admin/admins-roles" replace />} />
         <Route
           path="footer-settings"
           element={
@@ -519,13 +518,7 @@ function AppRoutes() {
         />
         <Route
           path="role-distribution"
-          element={
-            <Suspense fallback={<AdminLoadingFallback />}>
-              <ProtectedRoute roles={[3]}>
-                <RoleDistribution />
-              </ProtectedRoute>
-            </Suspense>
-          }
+          element={<Navigate to="/admin/admins-roles" replace />}
         />
         <Route
           path="user-approvals"
@@ -680,15 +673,9 @@ function AppRoutes() {
         />
         <Route
           path="super-admins"
-          element={
-            <Suspense fallback={<AdminLoadingFallback />}>
-              <ProtectedRoute roles={[3]}>
-                <SuperAdmins />
-              </ProtectedRoute>
-            </Suspense>
-          }
+          element={<Navigate to="/admin/admins-roles" replace />}
         />
-        
+
         <Route
           path="diaporama"
           element={

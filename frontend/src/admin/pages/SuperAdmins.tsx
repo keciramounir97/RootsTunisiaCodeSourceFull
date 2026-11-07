@@ -26,7 +26,11 @@ interface SuperAdminUser {
   is_active?: boolean;
 }
 
-export default function SuperAdmins() {
+export default function SuperAdmins({
+  embedded = false,
+}: {
+  embedded?: boolean;
+} = {}) {
   const { t, isRtl } = useTranslation();
   const [superAdmins, setSuperAdmins] = useState<SuperAdminUser[]>([]);
   const [loading, setLoading] = useState(true);
@@ -37,23 +41,21 @@ export default function SuperAdmins() {
     try {
       const res = await api.get("/admin/users");
       const list: any[] = Array.isArray(res.data) ? res.data : res.data?.data || [];
-      const filtered = list.filter(
-        (u) => Number(u.role_id ?? u.roleId ?? u.role) === 3
-      );
+      const filtered = list
+        .filter((u) => Number(u.role_id ?? u.roleId ?? u.role) === 3)
+        .map((u) => ({
+          id: Number(u.id),
+          name: u.name || u.fullName || u.full_name || u.email || "Super Admin",
+          email: u.email || "",
+          phone: u.phone || u.phoneNumber || u.phone_number,
+          role: 3,
+          created_at: u.created_at || u.createdAt || "",
+          last_login: u.last_login || u.lastLogin,
+          is_active: u.is_active ?? u.isActive ?? true,
+        }));
       setSuperAdmins(filtered);
     } catch {
-      // Fallback default super admin
-      setSuperAdmins([
-        {
-          id: 1,
-          name: "Karim Admin",
-          email: "karim@rootstunisia.com",
-          phone: "+216 71 000 000",
-          role: 3,
-          created_at: "2026-01-01T00:00:00Z",
-          is_active: true,
-        },
-      ]);
+      setSuperAdmins([]);
     } finally {
       setLoading(false);
     }
@@ -73,20 +75,30 @@ export default function SuperAdmins() {
   return (
     <div dir={isRtl ? "rtl" : "ltr"} className="space-y-6 text-start">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[var(--gold)]/20">
+      <div
+        className={`flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
+          embedded ? "" : "pb-4 border-b border-[var(--gold)]/20"
+        }`}
+      >
         <div className="space-y-1">
           <div className="flex items-center gap-2">
-            <div className="p-2.5 rounded-xl bg-[var(--gold)]/20 text-[var(--gold)] border border-[var(--gold)]/30">
-              <ShieldCheck className="w-6 h-6" />
-            </div>
+            {!embedded ? (
+              <div className="p-2.5 rounded-xl bg-[var(--gold)]/20 text-[var(--gold)] border border-[var(--gold)]/30">
+                <ShieldCheck className="w-6 h-6" />
+              </div>
+            ) : null}
             <div>
-              <h1 className="font-display text-2xl font-bold text-[var(--foreground)]">
-                {t("super_admins_title", "فريق الإدارة العليا (Super Admins)")}
+              <h1
+                className={`font-display font-bold text-[var(--foreground)] ${
+                  embedded ? "text-xl" : "text-2xl"
+                }`}
+              >
+                {t("super_admins_title", "Super Administrators")}
               </h1>
               <p className="text-xs text-[var(--muted-foreground)]">
                 {t(
                   "super_admins_subtitle",
-                  "عرض الحسابات ذات الصلاحيات الكاملة والمطلقة لإدارة المنصة وقواعد البيانات"
+                  "Accounts with full platform access and absolute privileges",
                 )}
               </p>
             </div>
@@ -100,13 +112,13 @@ export default function SuperAdmins() {
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder={t("search_super_admins", "بحث في المشرفين العامين...")}
+              placeholder={t("search_super_admins", "Search super admins...")}
               className="ps-9 pe-4 py-2 rounded-xl border border-[var(--border)] bg-[var(--background)] text-xs text-[var(--foreground)] outline-none focus:border-[var(--gold)] transition-colors w-60"
             />
           </div>
           <button
             onClick={fetchSuperAdmins}
-            title={t("refresh", "تحديث")}
+            title={t("refresh", "Refresh")}
             className="p-2 rounded-xl border border-[var(--border)] bg-[var(--background)] hover:border-[var(--gold)] text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
           >
             <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />

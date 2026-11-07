@@ -25,7 +25,11 @@ type PagePermission = {
   label: string;
 };
 
-export default function RoleDistribution() {
+export default function RoleDistribution({
+  embedded = false,
+}: {
+  embedded?: boolean;
+} = {}) {
   const { theme } = useThemeStore();
   const { t } = useLanguage();
   const isDark = theme === "dark";
@@ -131,13 +135,15 @@ export default function RoleDistribution() {
   };
 
   return (
-    <div className={`min-h-screen p-6 ${palette.page}`}>
+    <div className={embedded ? "" : `min-h-screen p-6 ${palette.page}`}>
       <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between mb-6">
         <div>
-          <p className={`text-sm uppercase tracking-[0.2em] ${palette.accent}`}>
-            {t("legacy.roles", "Roles")}
-          </p>
-          <h1 className="text-3xl font-bold mt-1">
+          {!embedded ? (
+            <p className={`text-sm uppercase tracking-[0.2em] ${palette.accent}`}>
+              {t("legacy.roles", "Roles")}
+            </p>
+          ) : null}
+          <h1 className={`${embedded ? "text-xl" : "text-3xl"} font-bold ${embedded ? "" : "mt-1"}`}>
             {t("legacy.role_distribution", "Role Distribution")}
           </h1>
           <p className={`mt-2 max-w-2xl ${palette.muted}`}>

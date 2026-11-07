@@ -4144,5 +4144,12 @@
   "cms_sections_of": "أقسام",
   "cms_fields": "حقول",
   "cms_customised_lower": "مخصصة",
-  "cms_open_page": "فتح الصفحة"
+  "cms_open_page": "فتح الصفحة",
+  "admins_roles": "المشرفون والأدوار",
+  "admins_roles_title": "المشرفون والأدوار",
+  "admins_roles_subtitle": "إدارة مشرفي الصفحات والمشرفين العامين وصلاحيات الأدوار في مكان واحد.",
+  "admins_roles_eyebrow": "التحكم في الوصول",
+  "admins_roles_tab_page_admins": "مشرفو الصفحات والصلاحيات",
+  "admins_roles_tab_super_admins": "المشرفون العامون",
+  "admins_roles_tab_role_distribution": "توزيع الأدوار"
 }

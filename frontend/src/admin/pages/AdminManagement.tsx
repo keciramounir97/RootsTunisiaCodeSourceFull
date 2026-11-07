@@ -126,7 +126,11 @@ const normalizeAdmin = (item: any): AdminUser => {
   };
 };
 
-export default function AdminManagement() {
+export default function AdminManagement({
+  embedded = false,
+}: {
+  embedded?: boolean;
+} = {}) {
   const { theme } = useThemeStore();
   const { t } = useLanguage();
   const { user } = useAuth();
@@ -399,6 +403,7 @@ export default function AdminManagement() {
   const textColor = isDark ? "text-[#f5f1e8]" : "text-[#162238]";
 
   if (!isSuperAdmin) {
+    if (embedded) return null;
     return (
       <div className={`min-h-screen p-6 ${isDark ? "bg-[#071827]" : "bg-[#f5f1e8]"}`}>
         <div className="max-w-7xl mx-auto">
@@ -413,22 +418,33 @@ export default function AdminManagement() {
   }
 
   return (
-    <div className={`min-h-screen p-6 ${isDark ? "bg-[#071827]" : "bg-[#f5f1e8]"}`}>
+    <div className={embedded ? "" : `min-h-screen p-6 ${isDark ? "bg-[#071827]" : "bg-[#f5f1e8]"}`}>
       <Toast message={toast.message} tone={toast.tone} />
-      <div className="max-w-7xl mx-auto">
+      <div className={embedded ? "" : "max-w-7xl mx-auto"}>
         {/* Header */}
-        <div className="mb-8 flex items-center justify-between" data-aos="fade-down">
-          <div className="flex items-center gap-3">
-            <Shield className={`w-8 h-8 ${isDark ? "text-[#d9a441]" : "text-[#24766f]"}`} />
+        <div className={`mb-8 flex items-center justify-between ${embedded ? "mb-5" : ""}`} data-aos="fade-down">
+          {!embedded ? (
+            <div className="flex items-center gap-3">
+              <Shield className={`w-8 h-8 ${isDark ? "text-[#d9a441]" : "text-[#24766f]"}`} />
+              <div>
+                <h1 className={`text-4xl font-bold font-serif ${isDark ? "text-[#d9a441]" : "text-[#24766f]"} mb-1`}>
+                  {t("legacy.admin_management", "Admin Management")}
+                </h1>
+                <p className={`${textColor} opacity-70`}>
+                  {t("legacy.admin_management_desc", "Create and manage admin accounts with custom privileges")}
+                </p>
+              </div>
+            </div>
+          ) : (
             <div>
-              <h1 className={`text-4xl font-bold font-serif ${isDark ? "text-[#d9a441]" : "text-[#24766f]"} mb-1`}>
+              <h2 className={`text-xl font-bold ${textColor}`}>
                 {t("legacy.admin_management", "Admin Management")}
-              </h1>
-              <p className={`${textColor} opacity-70`}>
+              </h2>
+              <p className={`text-sm ${textColor} opacity-70`}>
                 {t("legacy.admin_management_desc", "Create and manage admin accounts with custom privileges")}
               </p>
             </div>
-          </div>
+          )}
           <button
             onClick={() => setShowCreateModal(true)}
             className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#24766f] text-white hover:bg-[#24766f]/90 transition"

@@ -2684,5 +2684,12 @@
   "may_crop_badge": "Jista' Jiġi Maqtugħ",
   "all_gallery_images": "L-Istampi Kollha",
   "fits_16_9_criteria": "Taqbel mal-16:9",
-  "currently_selected": "Magħżula Biss"
+  "currently_selected": "Magħżula Biss",
+  "admins_roles": "Amministraturi u Rwoli",
+  "admins_roles_title": "Amministraturi u Rwoli",
+  "admins_roles_subtitle": "Immaniġġja amministraturi tal-paġni, super-amministraturi u aċċess skont ir-rwol f'post wieħed.",
+  "admins_roles_eyebrow": "Kontroll tal-aċċess",
+  "admins_roles_tab_page_admins": "Admins u Aċċess għall-Paġni",
+  "admins_roles_tab_super_admins": "Super Amministraturi",
+  "admins_roles_tab_role_distribution": "Distribuzzjoni tar-Rwoli"
 }

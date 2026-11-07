@@ -1,8 +1,6 @@
 import { NavLink } from "react-router-dom";
 import ThemeToggle from "./ThemeToggle";
-import { useThemeStore } from "../../store/theme";
 import { useTranslation } from "../../context/TranslationContext";
-import LanguageMenu from "../../components/LanguageMenu";
 import { useAuth } from "./AuthContext";
 import { Logo } from "../../components/site/Logo";
 import {
@@ -16,15 +14,12 @@ import {
   Activity,
   Users,
   UserRound,
-  X,
   LogOut,
-  ChevronRight,
   PanelLeftClose,
   Music,
   FileText,
   MessageSquare,
   Mail,
-  UserCheck,
   Shield,
   Crown,
   ListChecks,
@@ -34,20 +29,12 @@ import {
   Wallet,
   ArchiveRestore,
   Archive,
-  ArrowUpCircle,
   Globe,
   Gauge,
-  Headphones,
   Coins,
   Flag,
-  ShieldCheck,
-  KeyRound,
-  Trash2,
-  UserCog,
-
 } from "lucide-react";
 
-// Navigation Config
 const links = [
   { to: "/admin", end: true, labelKey: "dashboard", Icon: LayoutDashboard },
   { to: "/admin/usage", labelKey: "usage_quotas", Icon: Gauge },
@@ -63,21 +50,39 @@ const links = [
   { to: "/admin/books", labelKey: "books", Icon: BookOpen },
   { to: "/admin/articles", labelKey: "articles", Icon: Newspaper },
   { to: "/admin/users", labelKey: "users", Icon: Users },
-  { to: "/admin/admins", labelKey: "admins", Icon: Shield },
-  { to: "/admin/super-admins", labelKey: "super_admins", Icon: Crown },
+  { to: "/admin/admins-roles", labelKey: "admins_roles", Icon: Shield },
   { to: "/admin/contact-messages", labelKey: "contact_messages", Icon: MessageSquare },
   { to: "/admin/newsletter", labelKey: "newsletter", Icon: Mail },
-  { to: "/admin/role-distribution", labelKey: "role_distribution", Icon: UserCog },
+  { to: "/admin/subscriptions", labelKey: "subscriptions", Icon: Crown },
+  { to: "/admin/tier-features", labelKey: "tier_features_title", Icon: ListChecks },
+  { to: "/admin/subscription-payments", labelKey: "subscription_payments", Icon: Wallet },
+  { to: "/admin/flagged-payments", labelKey: "flagged_payments", Icon: Flag },
+  { to: "/admin/payment-settings", labelKey: "payment_settings", Icon: Wallet },
+  { to: "/admin/currencies", labelKey: "currencies_exchange", Icon: Coins },
+  { to: "/admin/legal-content", labelKey: "legal_content", Icon: Scale },
+  { to: "/admin/content", labelKey: "public_content_manager", Icon: Layout },
+  { to: "/admin/settings", labelKey: "settings", Icon: Settings },
   { to: "/admin/activity", labelKey: "activity", Icon: Activity },
   { to: "/admin/footer-settings", labelKey: "footer_settings", Icon: Globe },
   { to: "/admin/backups", labelKey: "backups", Icon: ArchiveRestore },
 ];
 
-/** Routes guarded by roles={[3]} in App.tsx — hidden from non-super-admins. */
+/** Routes guarded by roles={[3]} — hidden from non-super-admins. */
 const superAdminOnlyRoutes = [
+  "/admin/admins-roles",
   "/admin/admins",
   "/admin/super-admins",
   "/admin/role-distribution",
+  "/admin/subscriptions",
+  "/admin/tier-features",
+  "/admin/subscription-payments",
+  "/admin/flagged-payments",
+  "/admin/payment-settings",
+  "/admin/currencies",
+  "/admin/legal-content",
+  "/admin/content",
+  "/admin/settings",
+  "/admin/backups",
 ];
 
 const labelFallbacks: Record<string, string> = {
@@ -98,11 +103,21 @@ const labelFallbacks: Record<string, string> = {
   books: "Livres & Manuscrits",
   articles: "Articles & Chroniques",
   users: "Utilisateurs",
+  admins_roles: "Administrateurs & Rôles",
   admins: "Administrateurs & Accès aux Pages",
   super_admins: "Super Administrateurs",
   contact_messages: "Messages de Contact",
   contactMessages: "Messages de Contact",
   newsletter: "Lettre d'Information",
+  subscriptions: "Abonnements & Limites",
+  tier_features_title: "Fonctionnalités & Quotas des Offres",
+  subscription_payments: "Paiements d'Abonnement",
+  flagged_payments: "Paiements Signalés",
+  payment_settings: "Moyens de Paiement",
+  currencies_exchange: "Devises & Taux de Change",
+  legal_content: "Contenu Juridique",
+  public_content_manager: "Gestion du Contenu Public",
+  settings: "Paramètres",
   role_distribution: "Role Distribution",
   activity: "Activity Log",
   footer_settings: "Footer Settings",
@@ -118,7 +133,6 @@ export default function AdminSidebar({
   onClose: () => void;
   onToggle: () => void;
 }) {
-  const { theme } = useThemeStore();
   const { logout, user } = useAuth();
   const { t, dir } = useTranslation();
   const isRtl = dir === "rtl";
@@ -150,13 +164,13 @@ export default function AdminSidebar({
     if (superAdminOnlyRoutes.includes(link.to)) return false;
     if (normalizedRole === 1 && granted.length === 0) return true;
     if (link.to === "/admin") return granted.includes("dashboard");
-    const key = link.permissionKey || link.to.replace("/admin/", "");
+    const key = (link as { permissionKey?: string }).permissionKey || link.to.replace("/admin/", "");
+    if (key === "admins-roles") return granted.includes("admins") || granted.includes("admins-roles");
     return granted.includes(key);
   });
 
   return (
     <>
-      {/* Mobile backdrop */}
       {open && (
         <div
           className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden"
@@ -164,7 +178,6 @@ export default function AdminSidebar({
         />
       )}
 
-      {/* Sidebar Container */}
       <aside
         className={`fixed top-0 bottom-0 z-40 flex flex-col w-64 border-[var(--gold)]/30 bg-[var(--card)]/98 backdrop-blur shadow-2xl transition-transform duration-300 ${
           isRtl
@@ -172,7 +185,6 @@ export default function AdminSidebar({
             : `left-0 border-r ${open ? "translate-x-0" : "-translate-x-full"}`
         }`}
       >
-        {/* Brand / Logo Top */}
         <div className="flex h-16 items-center justify-between px-5 border-b border-[var(--gold)]/25">
           <Logo />
           <button
@@ -184,7 +196,6 @@ export default function AdminSidebar({
           </button>
         </div>
 
-        {/* User Mini Profile */}
         <div className="px-5 py-4 border-b border-[var(--gold)]/15 bg-[var(--secondary)]/40">
           <div className="flex items-center gap-3">
             <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--primary)] text-xs font-bold text-white uppercase">
@@ -199,7 +210,6 @@ export default function AdminSidebar({
           </div>
         </div>
 
-        {/* Navigation links */}
         <div className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
           <p className="px-3 text-[0.65rem] font-bold uppercase tracking-[0.2em] text-[var(--gold)] mb-2">
             {t("navigation", "Navigation")}
@@ -226,7 +236,6 @@ export default function AdminSidebar({
           ))}
         </div>
 
-        {/* Bottom Utility Bar */}
         <div className="p-3 border-t border-[var(--gold)]/20 bg-[var(--secondary)]/40 flex items-center justify-between gap-2">
           <ThemeToggle />
           <button
