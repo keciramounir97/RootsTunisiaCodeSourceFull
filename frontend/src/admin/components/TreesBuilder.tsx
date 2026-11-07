@@ -69,6 +69,166 @@ export function sanitizeLinkLabel(
   return "External Link";
 }
 
+/** Normalize a URL or path to a stable lookup key (pathname, lowercased). */
+export function mediaPathKey(urlOrPath: string | undefined): string {
+  const raw = String(urlOrPath || "").trim();
+  if (!raw) return "";
+  try {
+    if (/^https?:\/\//i.test(raw)) {
+      return new URL(raw).pathname.split("?")[0].split("#")[0].toLowerCase();
+    }
+  } catch {}
+  const path = raw.startsWith("/") ? raw : `/${raw}`;
+  return path.split("?")[0].split("#")[0].toLowerCase();
+}
+
+/** True when a label is just an upload basename / hashed storage filename. */
+export function isHashedMediaFilename(label: string | undefined, urlOrPath?: string): boolean {
+  const value = String(label || "").trim();
+  if (!value) return true;
+  const filename = mediaPathKey(urlOrPath || value).split("/").pop() || "";
+  if (filename && value.toLowerCase() === filename.toLowerCase()) return true;
+  return /^(gallery|doc|document|audio|file|upload|img|image)[-_][a-f0-9]{8,}\.[a-z0-9]+$/i.test(value);
+}
+
+/** Prefer real catalog titles; ignore basename / hash fallbacks. */
+export function meaningfulMediaTitle(title: string | undefined, urlOrPath?: string): string {
+  const clean = String(title || "").trim();
+  if (!clean || isHashedMediaFilename(clean, urlOrPath)) return "";
+  const generic = new Set(["photo", "audio", "document", "external link", "link"]);
+  if (generic.has(clean.toLowerCase())) return "";
+  return clean;
+}
+
+/** Persist source links as `Title | path` when a title is available. */
+export function formatPersistedSourceLink(urlOrPath: string, title?: string): string {
+  let target = String(urlOrPath || "").trim();
+  if (!target) return "";
+  try {
+    if (/^https?:\/\//i.test(target)) {
+      const pathname = new URL(target).pathname;
+      if (/^\/(?:private_)?uploads\//i.test(pathname)) {
+        target = pathname;
+      }
+    }
+  } catch {}
+  const cleanTitle = meaningfulMediaTitle(title, target);
+  if (!cleanTitle) return target;
+  if (target.includes(" | ")) {
+    const parts = target.split(" | ");
+    const existingTitle = parts[0].trim();
+    const existingTarget = parts.slice(1).join(" | ").trim();
+    if (meaningfulMediaTitle(existingTitle, existingTarget)) return target;
+    return `${cleanTitle} | ${existingTarget || target}`;
+  }
+  return `${cleanTitle} | ${target}`;
+}
+
+/** Rebuild a persisted source-link string from an extracted link, keeping titles. */
+export function persistedValueFromExtractedLink(link: {
+  url?: string;
+  label?: string;
+  kind?: string;
+  raw?: string;
+}): string {
+  if (!link) return "";
+  const raw = String(link.raw || "").trim();
+  let title = "";
+  let target = "";
+
+  if (raw.includes(" | ")) {
+    const parts = raw.split(" | ");
+    title = parts[0].trim();
+    target = parts.slice(1).join(" | ").trim();
+  } else {
+    target = raw || String(link.url || "").trim();
+  }
+
+  try {
+    if (/^https?:\/\//i.test(target)) {
+      const pathname = new URL(target).pathname;
+      if (/^\/(?:private_)?uploads\//i.test(pathname) || link.kind === "local") {
+        target = pathname;
+      }
+    } else if (link.kind === "local" && link.url) {
+      try {
+        target = new URL(link.url).pathname;
+      } catch {
+        /* keep target */
+      }
+    }
+  } catch {}
+
+  if (!meaningfulMediaTitle(title, target)) {
+    title = meaningfulMediaTitle(link.label, target);
+  }
+
+  return formatPersistedSourceLink(target, title);
+}
+
+/** Build path → title map from gallery/document/audio catalog items. */
+export function buildMediaTitleLookup(items: any[] = []): Record<string, string> {
+  const lookup: Record<string, string> = {};
+  for (const item of Array.isArray(items) ? items : []) {
+    const candidates = [
+      item?.sourceUrl,
+      item?.source_url,
+      item?.image_path,
+      item?.imagePath,
+      item?.file_path,
+      item?.filePath,
+      item?.audio_path,
+      item?.audioPath,
+      item?.path,
+      item?.url,
+      item?.href,
+    ];
+    const primaryPath = candidates.find((c) => String(c || "").trim()) || "";
+    const title = meaningfulMediaTitle(
+      item?.title || item?.name || item?.label,
+      primaryPath
+    );
+    if (!title) continue;
+    for (const candidate of candidates) {
+      const key = mediaPathKey(candidate);
+      if (key && !lookup[key]) lookup[key] = title;
+    }
+  }
+  return lookup;
+}
+
+/** Replace hashed-filename labels with catalog titles when the link had no real title. */
+export function applyMediaTitlesToLinks(
+  links: Array<{ url: string; label: string; kind: string; raw: string }>,
+  lookup: Record<string, string> = {}
+) {
+  if (!Array.isArray(links) || !lookup || !Object.keys(lookup).length) return links || [];
+  return links.map((link) => {
+    const raw = String(link?.raw || "");
+    let existingTitle = "";
+    let existingTarget = "";
+    if (raw.includes(" | ")) {
+      const parts = raw.split(" | ");
+      existingTitle = parts[0].trim();
+      existingTarget = parts.slice(1).join(" | ").trim();
+    }
+    if (meaningfulMediaTitle(existingTitle, existingTarget || link?.url)) return link;
+
+    const key = mediaPathKey(link?.url || existingTarget);
+    const title = meaningfulMediaTitle(lookup[key], key);
+    if (!title) return link;
+    let persistPath = String(existingTarget || link?.url || key);
+    try {
+      if (/^https?:\/\//i.test(persistPath)) persistPath = new URL(persistPath).pathname;
+    } catch {}
+    return {
+      ...link,
+      label: title,
+      raw: formatPersistedSourceLink(persistPath, title),
+    };
+  });
+}
+
 
 /* eslint-disable react-hooks/set-state-in-effect */
 // @ts-nocheck
@@ -353,14 +513,7 @@ export function hydrateEditableSourceLinks(person) {
 
   return updateEditableSourceLinks(
     person,
-    extractPersonLinks(person).map((link) => {
-      if (link.kind !== "local") return link.url;
-      try {
-        return new URL(link.url).pathname;
-      } catch {
-        return link.url;
-      }
-    })
+    extractPersonLinks(person).map((link) => persistedValueFromExtractedLink(link))
   );
 }
 
@@ -2044,6 +2197,7 @@ export default function TreesBuilder({
   const [mediaLoading, setMediaLoading] = useState(false);
 
   const [selectedMediaLink, setSelectedMediaLink] = useState("");
+  const [mediaTitleLookup, setMediaTitleLookup] = useState<Record<string, string>>({});
   const sourceLinkAutoSaveTimerRef = useRef<any>(null);
 
   useEffect(() => {
@@ -3672,8 +3826,11 @@ export default function TreesBuilder({
   }, [selectedPerson, people]);
 
   const selectedPersonLinks = useMemo(
-    () => (selectedPerson ? extractPersonLinks(selectedPerson) : []),
-    [selectedPerson]
+    () =>
+      selectedPerson
+        ? applyMediaTitlesToLinks(extractPersonLinks(selectedPerson), mediaTitleLookup)
+        : [],
+    [selectedPerson, mediaTitleLookup]
   );
 
   const closeSelectedPersonCard = useCallback(() => {
@@ -3809,14 +3966,7 @@ export default function TreesBuilder({
     (index) => {
       const currentLinks = selectedPerson?.sourceLinksManaged && Array.isArray(selectedPerson?.sourceLinks)
         ? selectedPerson.sourceLinks
-        : extractPersonLinks(selectedPerson).map((link) => {
-            if (link.kind !== "local") return link.url;
-            try {
-              return new URL(link.url).pathname;
-            } catch {
-              return link.url;
-            }
-          });
+        : extractPersonLinks(selectedPerson).map((link) => persistedValueFromExtractedLink(link));
       const nextLinks = currentLinks.filter((_, i) => i !== index);
       persistSelectedSourceLinks(nextLinks);
       setSourceLinkDraft("");
@@ -3842,18 +3992,26 @@ export default function TreesBuilder({
     [t]
   );
 
+  const shouldFallbackMediaRead = useCallback((err: any) =>
+    shouldFallbackRoute(err) ||
+    err?.response?.status === 401 ||
+    err?.response?.status === 403 ||
+    err?.response?.status === 500 ||
+    err?.code === "ERR_NETWORK" ||
+    !err?.response ||
+    err?.code === "AUTH_MISSING",
+  []);
+
+  const mergeMediaTitleLookup = useCallback((items: any[]) => {
+    const next = buildMediaTitleLookup(items);
+    if (!Object.keys(next).length) return;
+    setMediaTitleLookup((prev) => ({ ...prev, ...next }));
+  }, []);
+
   const loadExistingMedia = useCallback(async (type = "document") => {
     const config = MEDIA_LINK_TYPES[type] || MEDIA_LINK_TYPES.document;
     setMediaLoading(true);
     try {
-      const shouldFallbackMediaRead = (err: any) =>
-        shouldFallbackRoute(err) ||
-        err?.response?.status === 401 ||
-        err?.response?.status === 403 ||
-        err?.response?.status === 500 ||
-        err?.code === "ERR_NETWORK" ||
-        !err?.response ||
-        err?.code === "AUTH_MISSING";
       const { data } = await requestWithFallback(
         config.endpoints.map((endpoint) => () => api.get(endpoint)),
         shouldFallbackMediaRead
@@ -3861,6 +4019,7 @@ export default function TreesBuilder({
       const rawItems = normalizeExistingMediaResponse(data, type);
       setExistingMedia(rawItems);
       setSelectedMediaLink(rawItems[0]?.sourceUrl || "");
+      mergeMediaTitleLookup(rawItems);
     } catch (err) {
       console.error("Failed to load existing media:", err);
       setExistingMedia([]);
@@ -3868,7 +4027,44 @@ export default function TreesBuilder({
     } finally {
       setMediaLoading(false);
     }
-  }, []);
+  }, [mergeMediaTitleLookup, shouldFallbackMediaRead]);
+
+  const loadMediaTitleCatalog = useCallback(async () => {
+    const types = ["image", "document", "audio"] as const;
+    try {
+      const results = await Promise.all(
+        types.map(async (type) => {
+          const config = MEDIA_LINK_TYPES[type] || MEDIA_LINK_TYPES.document;
+          try {
+            const { data } = await requestWithFallback(
+              config.endpoints.map((endpoint) => () => api.get(endpoint)),
+              shouldFallbackMediaRead
+            );
+            return normalizeExistingMediaResponse(data, type);
+          } catch {
+            return [];
+          }
+        })
+      );
+      mergeMediaTitleLookup(results.flat());
+    } catch (err) {
+      console.error("Failed to load media titles:", err);
+    }
+  }, [mergeMediaTitleLookup, shouldFallbackMediaRead]);
+
+  useEffect(() => {
+    if (!selectedPerson?.id) return;
+    const links = extractPersonLinks(selectedPerson);
+    const needsTitles = links.some((link) => {
+      const raw = String(link.raw || "");
+      const path = mediaPathKey(link.url);
+      if (!/^\/(?:private_)?uploads\//i.test(path)) return false;
+      if (!raw.includes(" | ")) return true;
+      const title = raw.split(" | ")[0].trim();
+      return !meaningfulMediaTitle(title, path);
+    });
+    if (needsTitles) void loadMediaTitleCatalog();
+  }, [selectedPerson?.id, loadMediaTitleCatalog]);
 
   const openMediaLinkPanel = useCallback(
     (type = "document") => {
@@ -3893,14 +4089,25 @@ export default function TreesBuilder({
       notifyError(t("legacy.select_media_first", "Select an item first."));
       return;
     }
+    const matched = existingMedia.find(
+      (item) => String(item?.sourceUrl || "").trim() === link || mediaPathKey(item?.sourceUrl) === mediaPathKey(link)
+    );
+    const title = meaningfulMediaTitle(
+      matched?.title || matched?.name || matched?.label,
+      link
+    );
+    const persisted = formatPersistedSourceLink(link, title);
     const hydrated = hydrateEditableSourceLinks(selectedPerson);
     const currentLinks = Array.isArray(hydrated?.sourceLinks) ? hydrated.sourceLinks : [];
     persistSelectedSourceLinks(
-      normalizeSourceLinks([...currentLinks, link])
+      normalizeSourceLinks([...currentLinks, persisted])
     );
+    if (title) mergeMediaTitleLookup([{ ...matched, sourceUrl: link, title }]);
     setSelectedMediaLink("");
     notifyPerson(t("legacy.media_linked", "Source linked to person."));
   }, [
+    existingMedia,
+    mergeMediaTitleLookup,
     selectedPerson,
     notifyError,
     notifyPerson,

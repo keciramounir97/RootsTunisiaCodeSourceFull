@@ -109,6 +109,9 @@ import {
   MEDIA_LINK_TYPES,
   DEFAULT_FALLBACK_MEDIA,
   normalizeExistingMediaResponse,
+  formatPersistedSourceLink,
+  mediaPathKey,
+  meaningfulMediaTitle,
 } from "../components/TreesBuilder";
 
 export function parseIndividualPersonLinks(person: any) {
@@ -406,9 +409,19 @@ export default function Individuals() {
 
   const attachSelectedMedia = () => {
     if (!selectedMediaLink) return;
+    const matched = existingMedia.find(
+      (item: any) =>
+        String(item?.sourceUrl || "").trim() === selectedMediaLink ||
+        mediaPathKey(item?.sourceUrl) === mediaPathKey(selectedMediaLink)
+    );
+    const title = meaningfulMediaTitle(
+      matched?.title || matched?.name || matched?.label,
+      selectedMediaLink
+    );
+    const persisted = formatPersistedSourceLink(selectedMediaLink, title);
     setFormData((prev: any) => ({
       ...prev,
-      sourceLinks: [...(prev.sourceLinks || []), selectedMediaLink],
+      sourceLinks: [...(prev.sourceLinks || []), persisted],
     }));
     setSelectedMediaLink("");
   };
