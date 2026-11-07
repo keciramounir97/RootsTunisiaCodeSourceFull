@@ -26,6 +26,7 @@ import { LegalModule } from './modules/legal/legal.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { IndividualsModule } from './modules/individuals/individuals.module';
 import { SourcesModule } from './modules/sources/sources.module';
+import { SiteContentModule } from './modules/site-content/site-content.module';
 
 @Module({
     imports: [
@@ -61,6 +62,7 @@ import { SourcesModule } from './modules/sources/sources.module';
         NotificationsModule,
         IndividualsModule,
         SourcesModule,
+        SiteContentModule,
     ],
     controllers: [],
     providers: [],

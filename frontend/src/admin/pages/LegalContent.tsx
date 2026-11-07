@@ -11,13 +11,13 @@ import {
   Eye,
   FileText,
   Sliders,
-  Sparkles,
   ArrowUp,
   ArrowDown,
   Globe,
-  RefreshCw,
+  AlertTriangle,
 } from "lucide-react";
 import { api } from "../../api/client";
+import { getApiErrorMessage } from "../../api/helpers";
 import { useTranslation } from "../../context/TranslationContext";
 
 type LegalSection = { heading: string; body: string };
@@ -28,6 +28,7 @@ type LegalDocument = {
   title: string;
   intro: string;
   sections: LegalSection[];
+  translated?: boolean;
 };
 
 const LEGAL_DOCUMENTS = [
@@ -46,155 +47,129 @@ const LOCALES = [
   { code: "mt", label: "Malti 🇲🇹" },
 ];
 
-const DEFAULT_DOCS: Record<string, LegalDocument> = {
-  terms: {
-    slug: "terms",
-    locale: "ar",
-    title: "شروط وأحكام استخدام منصة جذور تونس",
-    intro: "مرحباً بكم في منصة جذور تونس. تحكم هذه الشروط استخدامكم لخدمات الأنساب والأرشيف التاريخي وقواعد البيانات الرقمية.",
-    sections: [
-      {
-        heading: "1. قبول الشروط والأهلية القانونية",
-        body: "بإنشاء حساب أو تصفح الموقع، فإنك تقر وتوافق على الالتزام الكامل بهذه الشروط والسياسات الملحقة بها.",
-      },
-      {
-        heading: "2. ملكية البيانات وحقوق النشر التاريخية",
-        body: "جميع المخطوطات والوثائق الرقمية المعروضة هي إما ملكية تراثية عامة أو مرخصة خصيصاً للمنصة لأغراض البحث الأكاديمي والعائلي.",
-      },
-      {
-        heading: "3. سعات التخزين وحدود الاشتراكات",
-        body: "تلتزم الحسابات بالحدود القصوى للأفراد والشجرات والوثائق المحددة في كل باقة (Basic, Premium, Family Historian).",
-      },
-    ],
-  },
-  privacy: {
-    slug: "privacy",
-    locale: "ar",
-    title: "سياسة الخصوصية وحماية البيانات الشخصية",
-    intro: "نلتزم في جذور تونس بحماية أقصى درجات الخصوصية لمعلومات شجرتك العائلية وأفراد أسرتك وبياناتك الشخصية.",
-    sections: [
-      {
-        heading: "1. البيانات التي نجمعها",
-        body: "نجمع الاسم وعنوان البريد ورقم الهاتف وبيانات شجرة العائلة التي تقوم بإدخالها أو استيرادها بصيغة GEDCOM.",
-      },
-      {
-        heading: "2. خصوصية الأشخاص الأحياء",
-        body: "يتم حجب بيانات الأفراد الأحياء في شجرات العائلة تلقائياً لحماية هويتهم ما لم يحدد المستخدم خلاف ذلك.",
-      },
-    ],
-  },
-  cookies: {
-    slug: "cookies",
-    locale: "ar",
-    title: "سياسة ملفات تعريف الارتباط (Cookies)",
-    intro: "نستخدم ملفات تعريف الارتباط الأساسية لضمان عمل جلسة تسجيل الدخول وتذكر تفضيلات اللغة والعملة المختارة.",
-    sections: [
-      {
-        heading: "1. ملفات تعريف الارتباط الأساسية",
-        body: "ضرورية لحفظ جلسة الأمان والتحقق من صلاحية المشرف وتفضيلات الوضع الليلي.",
-      },
-    ],
-  },
-  refund: {
-    slug: "refund",
-    locale: "ar",
-    title: "سياسة الاسترداد وإلغاء الاشتراكات",
-    intro: "تحدد هذه السياسة معايير وإجراءات استرداد مبالغ الاشتراكات الرقمية.",
-    sections: [
-      {
-        heading: "1. ضمان الرضا والاسترداد خلال 14 يوماً",
-        body: "يمكن للمشترك طلب استرداد كامل المبلغ خلال 14 يوماً من تاريخ التفعيل إذا لم يتم استهلاك السعات التخزينية.",
-      },
-    ],
-  },
-};
+function unwrapLegalPayload(payload: any): LegalDocument | null {
+  const doc = payload?.data ?? payload;
+  if (!doc || typeof doc !== "object") return null;
+  if (!Array.isArray(doc.sections)) return null;
+  return {
+    slug: String(doc.slug || ""),
+    locale: String(doc.locale || ""),
+    title: String(doc.title || ""),
+    intro: String(doc.intro || ""),
+    sections: doc.sections.map((section: any) => ({
+      heading: String(section?.heading || ""),
+      body: String(section?.body || ""),
+    })),
+    translated: doc.translated,
+  };
+}
 
 export default function LegalContent() {
   const { t, isRtl } = useTranslation();
   const [selectedSlug, setSelectedSlug] = useState("terms");
   const [selectedLocale, setSelectedLocale] = useState("ar");
-  const [doc, setDoc] = useState<LegalDocument>(DEFAULT_DOCS["terms"]);
+  const [doc, setDoc] = useState<LegalDocument | null>(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [savedSuccess, setSavedSuccess] = useState(false);
   const [previewMode, setPreviewMode] = useState(false);
-
-  const storageKey = `roots_legal_${selectedSlug}_${selectedLocale}`;
+  const [error, setError] = useState("");
 
   const loadDocument = useCallback(async () => {
     setLoading(true);
+    setError("");
     try {
-      // 1. Try local cache
-      const cached = localStorage.getItem(storageKey);
-      if (cached) {
-        setDoc(JSON.parse(cached));
-        setLoading(false);
-        return;
-      }
-
-      // 2. Try API endpoint
       const { data } = await api.get(`/admin/legal/${selectedSlug}`, {
         params: { locale: selectedLocale },
       });
-      if (data && data.sections) {
-        setDoc(data);
-      } else {
-        throw new Error("Fallback needed");
+      const parsed = unwrapLegalPayload(data);
+      if (!parsed) {
+        throw new Error("Invalid legal document payload");
       }
-    } catch {
-      // 3. Fallback default
-      const fallback = DEFAULT_DOCS[selectedSlug] || DEFAULT_DOCS.terms;
-      setDoc({ ...fallback, slug: selectedSlug, locale: selectedLocale });
+      setDoc({ ...parsed, slug: selectedSlug, locale: selectedLocale });
+    } catch (err) {
+      setDoc(null);
+      setError(
+        getApiErrorMessage(
+          err,
+          t("legal_content_load_failed", "Échec du chargement du document légal."),
+        ),
+      );
     } finally {
       setLoading(false);
     }
-  }, [selectedSlug, selectedLocale, storageKey]);
+  }, [selectedSlug, selectedLocale, t]);
 
   useEffect(() => {
-    loadDocument();
+    void loadDocument();
   }, [loadDocument]);
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!doc) return;
     setSaving(true);
+    setError("");
+    setSavedSuccess(false);
     try {
-      localStorage.setItem(storageKey, JSON.stringify(doc));
-      await api.put(`/admin/legal/${selectedSlug}`, doc).catch(() => {});
+      const { data } = await api.put(`/admin/legal/${selectedSlug}`, {
+        locale: selectedLocale,
+        title: doc.title,
+        intro: doc.intro,
+        sections: doc.sections,
+      });
+      const parsed = unwrapLegalPayload(data);
+      if (parsed) {
+        setDoc({ ...parsed, slug: selectedSlug, locale: selectedLocale });
+      }
       setSavedSuccess(true);
       setTimeout(() => setSavedSuccess(false), 3000);
+    } catch (err) {
+      setError(
+        getApiErrorMessage(
+          err,
+          t("legal_content_save_failed", "Échec de la sauvegarde"),
+        ),
+      );
     } finally {
       setSaving(false);
     }
   };
 
   const addSection = () => {
-    const nextNum = doc.sections.length + 1;
-    setDoc({
-      ...doc,
-      sections: [
-        ...doc.sections,
-        {
-          heading: `${nextNum}. بند قانوني جديد`,
-          body: "اكتب النص والشروط الخاصة بهذا البند هنا بالتفصيل...",
-        },
-      ],
-    });
+    setDoc((prev) =>
+      prev
+        ? {
+            ...prev,
+            sections: [
+              ...prev.sections,
+              {
+                heading: `${prev.sections.length + 1}. بند قانوني جديد`,
+                body: "اكتب النص والشروط الخاصة بهذا البند هنا بالتفصيل...",
+              },
+            ],
+          }
+        : prev,
+    );
   };
 
   const removeSection = (index: number) => {
-    setDoc({
-      ...doc,
-      sections: doc.sections.filter((_, idx) => idx !== index),
-    });
+    setDoc((prev) =>
+      prev
+        ? { ...prev, sections: prev.sections.filter((_, idx) => idx !== index) }
+        : prev,
+    );
   };
 
   const moveSection = (index: number, direction: "up" | "down") => {
-    const targetIdx = direction === "up" ? index - 1 : index + 1;
-    if (targetIdx < 0 || targetIdx >= doc.sections.length) return;
-    const cloned = [...doc.sections];
-    const [moved] = cloned.splice(index, 1);
-    cloned.splice(targetIdx, 0, moved);
-    setDoc({ ...doc, sections: cloned });
+    setDoc((prev) => {
+      if (!prev) return prev;
+      const targetIdx = direction === "up" ? index - 1 : index + 1;
+      if (targetIdx < 0 || targetIdx >= prev.sections.length) return prev;
+      const cloned = [...prev.sections];
+      const [moved] = cloned.splice(index, 1);
+      cloned.splice(targetIdx, 0, moved);
+      return { ...prev, sections: cloned };
+    });
   };
 
   return (
@@ -213,7 +188,7 @@ export default function LegalContent() {
               <p className="text-xs text-[var(--muted-foreground)]">
                 {t(
                   "legal_content_manager_subtitle",
-                  "تحرير وتحديث وثائق الشروط، الخصوصية، ملفات الارتباط، والاسترداد بجميع اللغات مع حفظ فوري"
+                  "تحرير وتحديث وثائق الشروط، الخصوصية، ملفات الارتباط، والاسترداد بجميع اللغات مع حفظ فوري",
                 )}
               </p>
             </div>
@@ -224,7 +199,8 @@ export default function LegalContent() {
           <button
             type="button"
             onClick={() => setPreviewMode((v) => !v)}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-[var(--border)] bg-[var(--card)] text-xs font-bold text-[var(--foreground)] hover:border-[var(--gold)] transition-colors cursor-pointer"
+            disabled={!doc}
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-[var(--border)] bg-[var(--card)] text-xs font-bold text-[var(--foreground)] hover:border-[var(--gold)] transition-colors cursor-pointer disabled:opacity-50"
           >
             <Eye className="w-4 h-4 text-[var(--gold)]" />
             <span>{previewMode ? t("edit_mode", "وضع التحرير") : t("live_preview", "معاينة الوثيقة")}</span>
@@ -279,8 +255,31 @@ export default function LegalContent() {
         </div>
       </div>
 
-      {/* Editor or Preview Mode */}
-      {previewMode ? (
+      {error ? (
+        <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-600 dark:text-rose-400 text-xs font-bold flex items-center gap-2">
+          <AlertTriangle className="w-4 h-4 shrink-0" />
+          <span>{error}</span>
+        </div>
+      ) : null}
+
+      {doc?.translated === false ? (
+        <div className="p-3 rounded-xl bg-[var(--gold)]/10 border border-[var(--gold)]/30 text-[var(--foreground)] text-xs">
+          {t(
+            "legal_content_not_translated",
+            "No content saved yet for this language — showing the English version as a starting point. Edit and save to create the translation.",
+          )}
+        </div>
+      ) : null}
+
+      {loading ? (
+        <div className="p-10 rounded-3xl border border-[var(--border)] bg-[var(--card)] text-center text-xs text-[var(--muted-foreground)]">
+          {t("loading", "جاري التحميل...")}
+        </div>
+      ) : !doc ? (
+        <div className="p-10 rounded-3xl border border-[var(--border)] bg-[var(--card)] text-center text-xs text-[var(--muted-foreground)]">
+          {t("legal_content_load_failed", "Échec du chargement du document légal.")}
+        </div>
+      ) : previewMode ? (
         <div className="p-8 rounded-3xl border-2 border-[var(--gold)]/40 bg-[var(--card)] shadow-xl space-y-6 text-start max-w-4xl mx-auto">
           <div className="border-b border-[var(--gold)]/20 pb-4 space-y-2">
             <h1 className="font-display text-2xl sm:text-3xl font-bold text-[var(--foreground)]">
@@ -397,7 +396,7 @@ export default function LegalContent() {
                     value={section.heading}
                     onChange={(e) => {
                       const updated = [...doc.sections];
-                      updated[idx].heading = e.target.value;
+                      updated[idx] = { ...updated[idx], heading: e.target.value };
                       setDoc({ ...doc, sections: updated });
                     }}
                     placeholder={t("clause_heading_placeholder", "عنوان البند...")}
@@ -411,7 +410,7 @@ export default function LegalContent() {
                     value={section.body}
                     onChange={(e) => {
                       const updated = [...doc.sections];
-                      updated[idx].body = e.target.value;
+                      updated[idx] = { ...updated[idx], body: e.target.value };
                       setDoc({ ...doc, sections: updated });
                     }}
                     placeholder={t("clause_body_placeholder", "نص وشروط البند...")}
@@ -430,7 +429,7 @@ export default function LegalContent() {
 
             <button
               type="submit"
-              disabled={saving}
+              disabled={saving || loading}
               className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[var(--gold)] to-amber-500 text-black text-xs font-bold shadow hover:shadow-lg transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
             >
               {saving ? (

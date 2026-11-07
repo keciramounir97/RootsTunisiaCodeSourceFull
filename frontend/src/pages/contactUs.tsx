@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { useTranslation } from "../context/TranslationContext";
 import { api } from "../api/client";
+import { useSiteContent } from "../hooks/useSiteContent";
 import { PageHero, Section, SectionHeading } from "../components/site/Primitives";
 import sidiBouSaid from "../assets/slider-sidibousaid.jpg";
 import SEO from "../components/SEO";
@@ -32,6 +33,20 @@ type ContactFormData = {
 
 export default function ContactUs() {
   const { t, isRtl } = useTranslation();
+  const { getText, getImage } = useSiteContent();
+
+  // Public Content Manager overrides (hardcoded/i18n defaults when unset).
+  const heroEyebrow = getText("contact", "hero", "eyebrow") ?? t("contact_eyebrow");
+  const heroTitle = getText("contact", "hero", "title") ?? t("contact_hero_title");
+  const heroSubtitle = getText("contact", "hero", "subtitle") ?? t("contact_hero_subtitle");
+  const heroImage = getImage("contact", "hero", "image") ?? sidiBouSaid;
+  const email = getText("contact", "details", "email")?.trim() || "contact@rootstunisia.com";
+  const phone = getText("contact", "details", "phone")?.trim() || "+961 36 26 082";
+  const phoneHref = phone.replace(/[^\d+]/g, "") || "+9613626082";
+  const hours = getText("contact", "details", "hours") ?? "09:00 – 17:00 (GMT+1)";
+  const formTitle = getText("contact", "form", "title") ?? t("how_can_we_help");
+  const formIntro = getText("contact", "form", "intro") ?? t("direct_contact_desc");
+
   const [loading, setLoading] = useState(false);
   const [selectedTopic, setSelectedTopic] = useState<string>("topic_general");
   const [modalStatus, setModalStatus] = useState<{
@@ -169,10 +184,10 @@ export default function ContactUs() {
       )}
 
       <PageHero
-        eyebrow={t("contact_eyebrow")}
-        title={t("contact_hero_title")}
-        subtitle={t("contact_hero_subtitle")}
-        image={sidiBouSaid}
+        eyebrow={heroEyebrow}
+        title={heroTitle}
+        subtitle={heroSubtitle}
+        image={heroImage}
       />
 
       {/* 3 Symmetric Quick Contact Cards */}
@@ -181,7 +196,7 @@ export default function ContactUs() {
           <div className="grid gap-4 sm:gap-6 sm:grid-cols-3 items-stretch">
             {/* Email Card */}
             <a
-              href="mailto:contact@rootstunisia.com"
+              href={`mailto:${email}`}
               className="surface-card group flex h-full flex-col justify-between p-5 sm:p-6 rounded-lg border border-[var(--gold)]/35 hover:border-[var(--gold)] transition-all bg-[var(--card)]/95 shadow-md hover:-translate-y-1 text-start"
             >
               <div className="flex items-center gap-3">
@@ -193,7 +208,7 @@ export default function ContactUs() {
                     {t("email")}
                   </p>
                   <p className="font-display text-base font-bold text-[var(--foreground)] group-hover:text-[var(--gold)] transition-colors">
-                    contact@rootstunisia.com
+                    {email}
                   </p>
                 </div>
               </div>
@@ -205,7 +220,7 @@ export default function ContactUs() {
 
             {/* Direct Phone & WhatsApp Card */}
             <a
-              href="tel:+9613626082"
+              href={`tel:${phoneHref}`}
               className="surface-card group flex h-full flex-col justify-between p-5 sm:p-6 rounded-lg border border-[var(--gold)]/35 hover:border-[var(--gold)] transition-all bg-[var(--card)]/95 shadow-md hover:-translate-y-1 text-start"
             >
               <div className="flex items-center gap-3">
@@ -217,7 +232,7 @@ export default function ContactUs() {
                     {t("nav_contact")}
                   </p>
                   <p dir="ltr" className="font-display text-base font-bold text-[var(--foreground)] group-hover:text-[var(--gold)] transition-colors">
-                    +961 36 26 082
+                    {phone}
                   </p>
                 </div>
               </div>
@@ -238,7 +253,7 @@ export default function ContactUs() {
                     {t("working_hours")}
                   </p>
                   <p className="text-xs sm:text-sm font-semibold text-[var(--foreground)] leading-tight">
-                    09:00 – 17:00 (GMT+1)
+                    {hours}
                   </p>
                 </div>
               </div>
@@ -259,8 +274,8 @@ export default function ContactUs() {
             <SectionHeading
               center={false}
               eyebrow={t("send_a_message")}
-              title={t("how_can_we_help")}
-              intro={t("direct_contact_desc")}
+              title={formTitle}
+              intro={formIntro}
             />
 
             {/* Interactive Topic Pill Selector */}
@@ -388,19 +403,19 @@ export default function ContactUs() {
               <div className="mt-5 p-4 rounded-md bg-[var(--background)]/80 border border-[var(--gold)]/25 space-y-2.5 text-xs">
                 <div className="flex items-center gap-2">
                   <Phone className="h-4 w-4 text-[var(--gold)] shrink-0" />
-                  <a href="tel:+9613626082" dir="ltr" className="font-semibold text-[var(--foreground)] hover:text-[var(--gold)]">
-                    +961 36 26 082
+                  <a href={`tel:${phoneHref}`} dir="ltr" className="font-semibold text-[var(--foreground)] hover:text-[var(--gold)]">
+                    {phone}
                   </a>
                 </div>
                 <div className="flex items-center gap-2">
                   <Mail className="h-4 w-4 text-[var(--gold)] shrink-0" />
-                  <a href="mailto:contact@rootstunisia.com" className="text-[var(--foreground)] hover:text-[var(--gold)]">
-                    contact@rootstunisia.com
+                  <a href={`mailto:${email}`} className="text-[var(--foreground)] hover:text-[var(--gold)]">
+                    {email}
                   </a>
                 </div>
                 <div className="flex items-center gap-2">
                   <Clock className="h-4 w-4 text-[var(--gold)] shrink-0" />
-                  <span className="text-[var(--muted-foreground)]">09:00 – 17:00 (GMT+1)</span>
+                  <span className="text-[var(--muted-foreground)]">{hours}</span>
                 </div>
               </div>
             </div>

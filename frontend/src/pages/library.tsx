@@ -7,6 +7,7 @@ import { PageHero, Section, SectionHeading } from "../components/site/Primitives
 import manuscript from "../assets/family-archive.jpg";
 import SEO from "../components/SEO";
 import { useTranslation } from "../context/TranslationContext";
+import { useSiteContent } from "../hooks/useSiteContent";
 
 const collections = [
   {
@@ -103,6 +104,7 @@ const collections = [
 
 export default function Library() {
   const { t } = useTranslation();
+  const { getText, getImage } = useSiteContent();
   const location = useLocation();
   const [books, setBooks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -157,10 +159,16 @@ export default function Library() {
       />
 
       <PageHero
-        eyebrow={t("nav_library", "Library")}
-        title={t("genealogy_library_title", "Tunisian Genealogy Library")}
-        subtitle={t("genealogy_library_subtitle", "Digitized books, manuscripts, civil extracts, court registers, deeds and maps — organized so every claim in your tree can carry a citation.")}
-        image={manuscript}
+        eyebrow={getText("library", "hero", "eyebrow") ?? t("nav_library", "Library")}
+        title={getText("library", "hero", "title") ?? t("genealogy_library_title", "Tunisian Genealogy Library")}
+        subtitle={
+          getText("library", "hero", "subtitle") ??
+          t(
+            "genealogy_library_subtitle",
+            "Digitized books, manuscripts, civil extracts, court registers, deeds and maps — organized so every claim in your tree can carry a citation.",
+          )
+        }
+        image={getImage("library", "hero", "image") ?? manuscript}
       >
         <Link to="/subscriptions" className="btn-base btn-gold">
           {t("get_full_access", "Get full access")}

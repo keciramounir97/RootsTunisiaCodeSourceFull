@@ -40,6 +40,7 @@ import {
   Gauge,
   Headphones,
   Coins,
+  Flag,
 } from "lucide-react";
 
 // Navigation Config
@@ -88,6 +89,8 @@ const links = [
   { to: "/admin/subscriptions", labelKey: "subscriptions", Icon: Crown },
   // 22. Subscription Payments (proof, zoom, ✓/✗, client message)
   { to: "/admin/subscription-payments", labelKey: "subscription_payments", Icon: Wallet },
+  // 22b. Flagged Payments
+  { to: "/admin/flagged-payments", labelKey: "flagged_payments", Icon: Flag },
   // 23. Payment Methods
   { to: "/admin/payment-settings", labelKey: "payment_settings", Icon: Wallet },
   // 24. Taux de Change
@@ -123,6 +126,7 @@ const labelFallbacks: Record<string, string> = {
   email_templates: "نماذج البريد (Email Models)",
   subscriptions: "باقات الاشتراكات والحدود (Abonnements & Limites)",
   subscription_payments: "إشعارات واعتماد المدفوعات (Paiements & Preuves)",
+  flagged_payments: "المدفوعات الموسومة (Flagged Payments)",
   payment_settings: "وسائل وطرق الدفع (Moyens de Paiement)",
   currencies_exchange: "أسعار الصرف والعملات (Taux de Change)",
   legal_content: "إدارة المحتوى القانوني (Contenu Juridique)",

@@ -50,9 +50,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const normalizeUser = (raw: any): User | null => {
     if (!raw) return null;
     const roleId = raw.roleId ?? raw.role_id ?? raw.role;
+    const privilegesRaw =
+      raw.permissions ?? raw.privileges ?? raw.adminPrivileges ?? raw.admin_privileges;
+    let permissions: string[] = [];
+    if (Array.isArray(privilegesRaw)) {
+      permissions = privilegesRaw.map((v) => String(v));
+    } else if (typeof privilegesRaw === "string" && privilegesRaw.trim()) {
+      try {
+        const parsed = JSON.parse(privilegesRaw);
+        permissions = Array.isArray(parsed) ? parsed.map((v) => String(v)) : [];
+      } catch {
+        permissions = privilegesRaw.split(",").map((v) => v.trim()).filter(Boolean);
+      }
+    }
     return {
       ...raw,
       role: typeof roleId === "number" ? roleId : Number(roleId) || 0,
+      permissions,
     };
   };
 

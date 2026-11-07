@@ -9,20 +9,21 @@ import {
   RefreshCw,
   Mail,
   Phone,
-  User,
   Calendar,
   Wallet,
   FileText,
   Eye,
   MessageSquare,
-  Send,
   ExternalLink,
   Check,
   X,
   AlertCircle,
   Clock,
-  Sparkles,
+  Trash2,
+  Flag,
 } from "lucide-react";
+
+type PaymentFlag = "refund" | "false_payment" | "fraudulent";
 
 interface PaymentRecord {
   id: number;
@@ -35,6 +36,7 @@ interface PaymentRecord {
   notes?: string;
   status: "pending" | "approved" | "rejected";
   admin_message?: string;
+  flag?: PaymentFlag | null;
   user_name?: string;
   user_email?: string;
   user_phone?: string;
@@ -43,17 +45,24 @@ interface PaymentRecord {
   reviewed_at?: string;
 }
 
+const FLAG_OPTIONS: { key: PaymentFlag; labelKey: string; fallback: string }[] = [
+  { key: "refund", labelKey: "flag_refund", fallback: "Refund" },
+  { key: "false_payment", labelKey: "flag_false_payment", fallback: "False payment" },
+  { key: "fraudulent", labelKey: "flag_fraudulent", fallback: "Fraudulent" },
+];
+
 export default function SubscriptionPayments() {
   const { t, isRtl } = useTranslation();
   const [payments, setPayments] = useState<PaymentRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<string>("pending");
   const [activeProofModal, setActiveProofModal] = useState<string | null>(null);
 
-  // Message per payment draft
   const [adminMessages, setAdminMessages] = useState<Record<number, string>>({});
   const [processingId, setProcessingId] = useState<number | null>(null);
+  const [refuseModal, setRefuseModal] = useState<{ id: number; message: string } | null>(null);
   const [notification, setNotification] = useState<{ type: string; text: string }>({
     type: "",
     text: "",
@@ -61,30 +70,18 @@ export default function SubscriptionPayments() {
 
   const fetchPayments = async () => {
     setLoading(true);
+    setLoadError("");
     try {
       const { data } = await api.get("/admin/subscription-payments");
       const list: PaymentRecord[] = Array.isArray(data) ? data : data?.data || [];
       setPayments(list);
-    } catch {
-      // Fallback sample payment if testing offline
-      setPayments([
-        {
-          id: 1,
-          user_id: 2,
-          user_name: "Ahmed Ben Salah",
-          user_email: "ahmed.bensalah@gmail.com",
-          user_phone: "+216 98 123 456",
-          tier_id: 3,
-          tier_name: "Family Historian",
-          amount: 19.99,
-          currency: "USD",
-          payment_method: "Virement Bancaire (BIAT)",
-          proof_url: "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=800&q=80",
-          notes: "Virement effectué ce matin depuis mon compte BIAT réf TR-894726",
-          status: "pending",
-          created_at: new Date().toISOString(),
-        },
-      ]);
+    } catch (err: any) {
+      setPayments([]);
+      setLoadError(
+        err?.userMessage ||
+          err?.response?.data?.message ||
+          t("payments_load_failed", "Failed to load subscription payments.")
+      );
     } finally {
       setLoading(false);
     }
@@ -94,24 +91,112 @@ export default function SubscriptionPayments() {
     fetchPayments();
   }, []);
 
-  const handleReview = async (id: number, decision: "approved" | "rejected") => {
+  const handleApprove = async (id: number) => {
     setProcessingId(id);
     setNotification({ type: "", text: "" });
-    const msg = adminMessages[id] || "";
+    const msg = (adminMessages[id] || "").trim();
 
     try {
       await api.patch(`/admin/subscription-payments/${id}/review`, {
-        decision,
-        admin_message: msg || (decision === "approved" ? "تم تفعيل اشتراكك بنجاح!" : "تم رفض الطلب لعدم وضوح إشعار التحويل."),
+        decision: "approved",
+        admin_message: msg || undefined,
       });
 
       setNotification({
         type: "success",
-        text: decision === "approved"
-          ? t("payment_approved_success", "تم اعتماد الدفع وترقية حساب العميل بنجاح!")
-          : t("payment_rejected_notice", "تم رفض إشعار الدفع وإبلاغ العميل."),
+        text: t("payment_approved_success", "تم اعتماد الدفع وترقية حساب العميل بنجاح!"),
       });
 
+      fetchPayments();
+    } catch (err: any) {
+      setNotification({
+        type: "error",
+        text: err?.response?.data?.message || t("action_failed", "فشل تنفيذ الإجراء"),
+      });
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
+  const openRefuseModal = (id: number) => {
+    setRefuseModal({ id, message: adminMessages[id] || "" });
+  };
+
+  const handleRefuseConfirm = async () => {
+    if (!refuseModal) return;
+    const msg = refuseModal.message.trim();
+    if (!msg) {
+      setNotification({
+        type: "error",
+        text: t("refuse_message_required", "يجب إدخال رسالة الرفض قبل رفض الدفع."),
+      });
+      return;
+    }
+
+    setProcessingId(refuseModal.id);
+    setNotification({ type: "", text: "" });
+
+    try {
+      await api.patch(`/admin/subscription-payments/${refuseModal.id}/review`, {
+        decision: "rejected",
+        admin_message: msg,
+      });
+
+      setAdminMessages({ ...adminMessages, [refuseModal.id]: msg });
+      setRefuseModal(null);
+      setNotification({
+        type: "success",
+        text: t("payment_rejected_notice", "تم رفض إشعار الدفع وإبلاغ العميل."),
+      });
+      fetchPayments();
+    } catch (err: any) {
+      setNotification({
+        type: "error",
+        text: err?.response?.data?.message || t("action_failed", "فشل تنفيذ الإجراء"),
+      });
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
+  const handleSetFlag = async (id: number, flag: PaymentFlag | null) => {
+    setProcessingId(id);
+    setNotification({ type: "", text: "" });
+    try {
+      await api.patch(`/admin/subscription-payments/${id}/flag`, { flag });
+      setNotification({
+        type: "success",
+        text: flag
+          ? t("payment_flagged", "تم وسم الدفع بنجاح.")
+          : t("payment_flag_cleared", "تم إزالة الوسم."),
+      });
+      fetchPayments();
+    } catch (err: any) {
+      setNotification({
+        type: "error",
+        text: err?.response?.data?.message || t("action_failed", "فشل تنفيذ الإجراء"),
+      });
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
+  const handleDelete = async (id: number) => {
+    if (
+      !window.confirm(
+        t("confirm_erase_payment", "هل تريد حذف هذا السجل نهائياً؟ لا يمكن التراجع.")
+      )
+    ) {
+      return;
+    }
+    setProcessingId(id);
+    setNotification({ type: "", text: "" });
+    try {
+      await api.delete(`/admin/subscription-payments/${id}`);
+      setNotification({
+        type: "success",
+        text: t("payment_erased", "تم حذف سجل الدفع."),
+      });
       fetchPayments();
     } catch (err: any) {
       setNotification({
@@ -154,7 +239,7 @@ export default function SubscriptionPayments() {
               <p className="text-xs text-[var(--muted-foreground)]">
                 {t(
                   "subscription_payments_audit_subtitle",
-                  "استلام إشعارات الدفع، معاينة إيصال التحويل، ترقية الحساب بنقرة واحدة، ومراسلة العميل"
+                  "استلام إشعارات الدفع، معاينة إيصال التحويل، ترقية الحساب بنقرة، ومراسلة العميل"
                 )}
               </p>
             </div>
@@ -220,7 +305,6 @@ export default function SubscriptionPayments() {
         })}
       </div>
 
-      {/* Global Notification Banner */}
       {notification.text && (
         <div
           className={`p-4 rounded-2xl border text-xs font-bold flex items-center justify-between gap-3 animate-in fade-in ${
@@ -239,7 +323,13 @@ export default function SubscriptionPayments() {
         </div>
       )}
 
-      {/* Payments List */}
+      {loadError && !loading && (
+        <div className="p-4 rounded-2xl border border-rose-500/30 bg-rose-500/10 text-rose-600 dark:text-rose-400 text-xs font-bold flex items-center gap-2">
+          <AlertCircle className="w-4 h-4 shrink-0" />
+          <span>{loadError}</span>
+        </div>
+      )}
+
       {loading ? (
         <div className="flex justify-center py-16">
           <div className="w-8 h-8 border-2 border-[var(--gold)] border-t-transparent rounded-full animate-spin" />
@@ -247,7 +337,11 @@ export default function SubscriptionPayments() {
       ) : filtered.length === 0 ? (
         <div className="p-12 text-center rounded-2xl border border-[var(--border)] text-[var(--muted-foreground)] space-y-2">
           <Clock className="w-8 h-8 text-[var(--gold)] mx-auto opacity-50" />
-          <p className="text-sm font-bold">{t("no_payments_found", "لا توجد عمليات دفع مسجلة في هذا التبويب.")}</p>
+          <p className="text-sm font-bold">
+            {loadError
+              ? t("payments_unavailable", "تعذر تحميل المدفوعات. حاول التحديث لاحقاً.")
+              : t("no_payments_found", "لا توجد عمليات دفع مسجلة في هذا التبويب.")}
+          </p>
         </div>
       ) : (
         <div className="space-y-4">
@@ -268,9 +362,7 @@ export default function SubscriptionPayments() {
                     : "border-rose-500/30 opacity-75"
                 }`}
               >
-                {/* Top Row: Client & Tier Summary */}
                 <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 pb-4 border-b border-[var(--border)]">
-                  {/* Client Info */}
                   <div className="flex items-start gap-3">
                     <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[var(--gold)] to-amber-600 text-white font-bold text-lg flex items-center justify-center shrink-0 shadow">
                       {payment.user_name ? payment.user_name.charAt(0).toUpperCase() : "U"}
@@ -287,6 +379,12 @@ export default function SubscriptionPayments() {
                           <Wallet className="w-3 h-3" />
                           <span>{payment.payment_method || "Virement Bancaire"}</span>
                         </span>
+                        {payment.flag && (
+                          <span className="px-2 py-0.5 rounded-md text-[0.68rem] font-bold bg-rose-500/15 text-rose-500 border border-rose-500/30 flex items-center gap-1">
+                            <Flag className="w-3 h-3" />
+                            {payment.flag}
+                          </span>
+                        )}
                       </div>
 
                       <div className="flex items-center gap-4 flex-wrap text-xs text-[var(--muted-foreground)]">
@@ -310,7 +408,6 @@ export default function SubscriptionPayments() {
                     </div>
                   </div>
 
-                  {/* Plan & Amount Requested */}
                   <div className="flex flex-col items-start sm:items-end gap-1 shrink-0">
                     <span className="text-[0.68rem] font-bold uppercase tracking-wider text-[var(--muted-foreground)]">
                       {t("requested_plan", "الخطة المطلوبة")}:
@@ -325,9 +422,7 @@ export default function SubscriptionPayments() {
                   </div>
                 </div>
 
-                {/* Middle Row: Payment Method, Notes, and Proof Preview */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-                  {/* Payment Details & Client Notes */}
                   <div className="p-4 rounded-2xl bg-[var(--background)] border border-[var(--border)] space-y-3">
                     <div className="flex items-center justify-between border-b border-[var(--border)] pb-2 text-[0.72rem]">
                       <span className="font-bold text-[var(--foreground)] flex items-center gap-1.5">
@@ -354,7 +449,6 @@ export default function SubscriptionPayments() {
                       </p>
                     )}
 
-                    {/* Status Pill */}
                     <div className="pt-1 flex items-center gap-2">
                       <span className="text-[0.7rem] text-[var(--muted-foreground)] font-bold">{t("current_status", "الحالة")}:</span>
                       <span
@@ -371,7 +465,6 @@ export default function SubscriptionPayments() {
                     </div>
                   </div>
 
-                  {/* Proof of Payment Box */}
                   <div className="p-4 rounded-2xl bg-[var(--background)] border border-[var(--border)] flex flex-col justify-between space-y-3">
                     <div className="flex items-center justify-between border-b border-[var(--border)] pb-2">
                       <span className="font-bold text-[var(--foreground)] flex items-center gap-1.5">
@@ -402,8 +495,7 @@ export default function SubscriptionPayments() {
                             alt="Receipt Preview"
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                             onError={(e) => {
-                              (e.target as HTMLImageElement).src =
-                                "https://placehold.co/300x200/1a2634/d9a441?text=Receipt+Doc";
+                              (e.target as HTMLImageElement).style.display = "none";
                             }}
                           />
                           <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity text-white text-[0.65rem] font-bold gap-1">
@@ -425,58 +517,91 @@ export default function SubscriptionPayments() {
                   </div>
                 </div>
 
-                {/* Bottom Row: Direct Client Message & Action Buttons */}
                 <div className="p-4 rounded-2xl bg-[var(--background)] border border-[var(--gold)]/30 space-y-3">
-                  <div className="space-y-1">
-                    <label className="block text-xs font-bold text-[var(--foreground)] flex items-center gap-1.5">
-                      <MessageSquare className="w-3.5 h-3.5 text-[var(--gold)]" />
-                      <span>{t("message_to_client", "رسالة مباشرة للعميل (تصل إلى حسابه وتظهر في تفاصيل الدفع):")}</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={adminMessages[payment.id] || ""}
-                      onChange={(e) =>
-                        setAdminMessages({ ...adminMessages, [payment.id]: e.target.value })
-                      }
-                      placeholder={
-                        isApproved
-                          ? t("message_approved_placeholder", "مثال: تم تأكيد الدفع وترقية حسابك إلى باقة Family Historian، شكراً لثقتكم!")
-                          : t("message_reject_placeholder", "مثال: يرجى إرسال إيصال التحويل البنكي الأصلي متضمناً رقم المعاملة وتاريخ التحويل.")
-                      }
-                      className="w-full px-3.5 py-2 rounded-xl border border-[var(--border)] bg-[var(--card)] text-xs text-[var(--foreground)] outline-none focus:border-[var(--gold)]"
-                    />
-                  </div>
-
-                  {/* Actions for Pending Payments */}
                   {isPending && (
-                    <div className="flex items-center justify-end gap-3 pt-2">
-                      {/* Red Cross Reject Button */}
-                      <button
-                        type="button"
-                        disabled={isBusy}
-                        onClick={() => handleReview(payment.id, "rejected")}
-                        className="px-5 py-2.5 rounded-xl border-2 border-rose-500/60 bg-rose-500/10 hover:bg-rose-500 text-rose-500 hover:text-white text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
-                      >
-                        <X className="w-4 h-4" />
-                        <span>{t("reject_payment_red", "رفض الدفع (Red ✗)")}</span>
-                      </button>
-
-                      {/* Green Checkmark Approve Button */}
-                      <button
-                        type="button"
-                        disabled={isBusy}
-                        onClick={() => handleReview(payment.id, "approved")}
-                        className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold shadow-lg hover:shadow-xl transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
-                      >
-                        {isBusy ? (
-                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        ) : (
-                          <Check className="w-4 h-4" />
+                    <div className="space-y-1">
+                      <label className="block text-xs font-bold text-[var(--foreground)] flex items-center gap-1.5">
+                        <MessageSquare className="w-3.5 h-3.5 text-[var(--gold)]" />
+                        <span>{t("message_to_client", "رسالة مباشرة للعميل (تصل إلى حسابه وتظهر في تفاصيل الدفع):")}</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={adminMessages[payment.id] || ""}
+                        onChange={(e) =>
+                          setAdminMessages({ ...adminMessages, [payment.id]: e.target.value })
+                        }
+                        placeholder={t(
+                          "message_approved_placeholder",
+                          "مثال: تم تأكيد الدفع وترقية حسابك إلى باقة Family Historian، شكراً لثقتكم!"
                         )}
-                        <span>{t("approve_and_upgrade_client", "اعتماد وترقية العميل فوراً (Green ✓)")}</span>
-                      </button>
+                        className="w-full px-3.5 py-2 rounded-xl border border-[var(--border)] bg-[var(--card)] text-xs text-[var(--foreground)] outline-none focus:border-[var(--gold)]"
+                      />
                     </div>
                   )}
+
+                  <div className="flex flex-wrap items-center gap-2 pt-1">
+                    <span className="text-[0.7rem] font-bold text-[var(--muted-foreground)] flex items-center gap-1">
+                      <Flag className="w-3 h-3" />
+                      {t("mark_as", "وسم كـ")}:
+                    </span>
+                    {FLAG_OPTIONS.map((opt) => (
+                      <button
+                        key={opt.key}
+                        type="button"
+                        disabled={isBusy}
+                        onClick={() =>
+                          handleSetFlag(payment.id, payment.flag === opt.key ? null : opt.key)
+                        }
+                        className={`px-2.5 py-1 rounded-lg text-[0.68rem] font-bold border cursor-pointer disabled:opacity-50 ${
+                          payment.flag === opt.key
+                            ? "bg-rose-500 text-white border-rose-500"
+                            : "bg-[var(--card)] text-[var(--muted-foreground)] border-[var(--border)] hover:border-rose-400 hover:text-rose-500"
+                        }`}
+                      >
+                        {t(opt.labelKey, opt.fallback)}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="flex items-center justify-end gap-3 pt-2 flex-wrap">
+                    <button
+                      type="button"
+                      disabled={isBusy}
+                      onClick={() => handleDelete(payment.id)}
+                      className="px-4 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--card)] hover:border-rose-500 hover:text-rose-500 text-[var(--muted-foreground)] text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      <span>{t("erase_payment", "مسح السجل")}</span>
+                    </button>
+
+                    {isPending && (
+                      <>
+                        <button
+                          type="button"
+                          disabled={isBusy}
+                          onClick={() => openRefuseModal(payment.id)}
+                          className="px-5 py-2.5 rounded-xl border-2 border-rose-500/60 bg-rose-500/10 hover:bg-rose-500 text-rose-500 hover:text-white text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                        >
+                          <X className="w-4 h-4" />
+                          <span>{t("reject_payment_red", "رفض الدفع (Red ✗)")}</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          disabled={isBusy}
+                          onClick={() => handleApprove(payment.id)}
+                          className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold shadow-lg hover:shadow-xl transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                        >
+                          {isBusy ? (
+                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          ) : (
+                            <Check className="w-4 h-4" />
+                          )}
+                          <span>{t("approve_and_upgrade_client", "اعتماد وترقية العميل فوراً (Green ✓)")}</span>
+                        </button>
+                      </>
+                    )}
+                  </div>
 
                   {!isPending && payment.admin_message && (
                     <div className="p-2.5 rounded-xl bg-[var(--card)] border border-[var(--border)] text-xs text-[var(--muted-foreground)]">
@@ -491,7 +616,63 @@ export default function SubscriptionPayments() {
         </div>
       )}
 
-      {/* Full Zoom Image Modal */}
+      {refuseModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+          onClick={() => setRefuseModal(null)}
+        >
+          <div
+            className="w-full max-w-md rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5 space-y-4 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-2">
+              <XCircle className="w-5 h-5 text-rose-500" />
+              <h2 className="font-bold text-[var(--foreground)]">
+                {t("refuse_payment_title", "رفض الدفع — رسالة مطلوبة")}
+              </h2>
+            </div>
+            <p className="text-xs text-[var(--muted-foreground)]">
+              {t(
+                "refuse_payment_hint",
+                "أدخل رسالة تُرسل إلى العميل عبر البريد قبل تأكيد الرفض."
+              )}
+            </p>
+            <textarea
+              value={refuseModal.message}
+              onChange={(e) => setRefuseModal({ ...refuseModal, message: e.target.value })}
+              rows={4}
+              placeholder={t(
+                "message_reject_placeholder",
+                "مثال: يرجى إرسال إيصال التحويل البنكي الأصلي متضمناً رقم المعاملة وتاريخ التحويل."
+              )}
+              className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--background)] text-xs text-[var(--foreground)] outline-none focus:border-rose-400 resize-y"
+            />
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setRefuseModal(null)}
+                className="px-4 py-2 rounded-xl border border-[var(--border)] text-xs font-bold text-[var(--muted-foreground)] cursor-pointer"
+              >
+                {t("cancel", "إلغاء")}
+              </button>
+              <button
+                type="button"
+                disabled={processingId === refuseModal.id || !refuseModal.message.trim()}
+                onClick={handleRefuseConfirm}
+                className="px-4 py-2 rounded-xl bg-rose-500 text-white text-xs font-bold cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
+              >
+                {processingId === refuseModal.id ? (
+                  <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <X className="w-3.5 h-3.5" />
+                )}
+                {t("confirm_refuse", "تأكيد الرفض")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {activeProofModal && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4 animate-in fade-in"

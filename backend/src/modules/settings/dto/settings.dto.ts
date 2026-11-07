@@ -5,7 +5,7 @@ export class UpdateSettingsDto {
     @IsOptional()
     allowRegistration?: boolean;
 
-    @IsIn(['en', 'fr', 'ar', 'es'])
+    @IsIn(['en', 'fr', 'ar', 'es', 'it', 'mt'])
     @IsOptional()
     defaultLanguage?: string;
 

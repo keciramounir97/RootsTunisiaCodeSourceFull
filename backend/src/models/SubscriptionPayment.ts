@@ -11,6 +11,8 @@ export class SubscriptionPayment extends BaseModel {
     payment_method!: string;
     proof_url?: string;
     notes?: string;
+    admin_message?: string | null;
+    flag?: 'refund' | 'false_payment' | 'fraudulent' | null;
     status!: 'pending' | 'approved' | 'rejected';
     reviewed_by?: number;
     reviewed_at?: string;
@@ -26,6 +28,8 @@ export class SubscriptionPayment extends BaseModel {
             currency: { type: 'string', minLength: 3, maxLength: 3 },
             payment_method: { type: 'string' },
             status: { type: 'string', enum: ['pending', 'approved', 'rejected'] },
+            admin_message: { type: ['string', 'null'] },
+            flag: { type: ['string', 'null'] },
         },
     };
 }

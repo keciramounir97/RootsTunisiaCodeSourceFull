@@ -4,6 +4,7 @@ import { PageHero, Section, SectionHeading, InfoCard } from "../components/site/
 import TunisiaGovernoratesMap from "../components/TunisiaGovernoratesMap";
 import SEO from "../components/SEO";
 import { useTranslation } from "../context/TranslationContext";
+import { useSiteContent } from "../hooks/useSiteContent";
 import carthage from "../assets/slider-carthage.jpg";
 import kairouan from "../assets/slider-kairouan.jpg";
 import manuscript from "../assets/family-archive.jpg";
@@ -11,6 +12,16 @@ import medina from "../assets/medina-tunis.jpg";
 
 export default function About() {
   const { t, isRtl } = useTranslation();
+  const { getText, getImage } = useSiteContent();
+
+  // Public Content Manager overrides (hardcoded/i18n defaults when unset).
+  const heroEyebrow = getText("about", "hero", "eyebrow") ?? t("nav_about");
+  const heroTitle = getText("about", "hero", "title") ?? t("about_hero_title");
+  const heroSubtitle = getText("about", "hero", "subtitle") ?? t("about_hero_subtitle");
+  const heroImage = getImage("about", "hero", "image") ?? carthage;
+  const missionTitle = getText("about", "mission", "title") ?? t("about_mission_title");
+  const missionIntro = getText("about", "mission", "intro") ?? t("about_mission_intro");
+  const ctaTitle = getText("about", "cta", "title") ?? t("about_cta_title");
 
   const pillars = [
     {
@@ -73,10 +84,10 @@ export default function About() {
       />
 
       <PageHero
-        eyebrow={t("nav_about")}
-        title={t("about_hero_title")}
-        subtitle={t("about_hero_subtitle")}
-        image={carthage}
+        eyebrow={heroEyebrow}
+        title={heroTitle}
+        subtitle={heroSubtitle}
+        image={heroImage}
       >
         <Link to="/sources" className="btn-base btn-gold w-full sm:w-auto min-w-[180px]">
           <Search className="h-4 w-4" />
@@ -92,8 +103,8 @@ export default function About() {
         <SectionHeading
           center={true}
           eyebrow={t("about_pillars_eyebrow")}
-          title={t("about_mission_title")}
-          intro={t("about_mission_intro")}
+          title={missionTitle}
+          intro={missionIntro}
         />
         <div className="mt-10 sm:mt-12 grid gap-5 sm:gap-6 sm:grid-cols-2 lg:grid-cols-4 items-stretch">
           {pillars.map((pillar) => {
@@ -280,7 +291,7 @@ export default function About() {
           <div className="relative z-10 flex w-full flex-col items-center justify-center px-6 py-12 sm:px-12 sm:py-16 text-center">
             <p className="eyebrow !text-[#f5c857] text-shadow-dark font-bold">{t("site_title")}</p>
             <h2 className="display-lg mt-3 max-w-3xl !text-white font-semibold hero-title-shadow">
-              {t("about_cta_title")}
+              {ctaTitle}
             </h2>
             <div className="mt-8 flex w-full sm:w-auto flex-col sm:flex-row flex-wrap justify-center gap-3">
               <Link to="/sources" className="btn-base btn-gold w-full sm:w-auto min-w-[200px]">

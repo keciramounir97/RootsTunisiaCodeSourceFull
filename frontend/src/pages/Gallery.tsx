@@ -28,6 +28,7 @@ import carthage from "../assets/slider-carthage.jpg";
 import kairouan from "../assets/slider-kairouan.jpg";
 import manuscript from "../assets/family-archive.jpg";
 import SEO from "../components/SEO";
+import { useSiteContent } from "../hooks/useSiteContent";
 
 interface CuratedItem {
   id: string;
@@ -110,6 +111,7 @@ const baseCuratedItems: CuratedItem[] = [
 export default function Gallery() {
   const location = useLocation();
   const { t, isRtl } = useTranslation();
+  const { getText, getImage } = useSiteContent();
   const { user } = useAuth();
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -199,10 +201,10 @@ export default function Gallery() {
       />
 
       <PageHero
-        eyebrow={t("nav_photos")}
-        title={t("gallery_teaser_title")}
-        subtitle={t("gallery_teaser_subtitle")}
-        image={sidiBouSaid}
+        eyebrow={getText("gallery", "hero", "eyebrow") ?? t("nav_photos")}
+        title={getText("gallery", "hero", "title") ?? t("gallery_teaser_title")}
+        subtitle={getText("gallery", "hero", "subtitle") ?? t("gallery_teaser_subtitle")}
+        image={getImage("gallery", "hero", "image") ?? sidiBouSaid}
       />
 
       {/* Sub-Galleries Tab Navigation Bar */}

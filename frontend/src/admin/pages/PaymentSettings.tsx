@@ -1,19 +1,13 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Wallet,
   Plus,
   Trash2,
-  Edit2,
-  Check,
+  Pencil,
   Save,
   X,
-  CreditCard,
-  Building2,
-  Smartphone,
-  Info,
   CheckCircle2,
   AlertCircle,
-  Eye,
 } from "lucide-react";
 import { api } from "../../api/client";
 import { useTranslation } from "../../context/TranslationContext";
@@ -30,36 +24,50 @@ export interface PaymentMethodItem {
   sort_order: number;
 }
 
-const EMPTY_FORM: Omit<PaymentMethodItem, "id"> = {
+type FormState = Omit<PaymentMethodItem, "id">;
+
+const EMPTY_FORM: FormState = {
   code: "",
   name: "",
   account_details: "",
   instructions: "",
-  fee_note: "Sans frais supplémentaires",
+  fee_note: "",
   badge: "",
   is_active: true,
   sort_order: 1,
 };
+
+function unwrapList(payload: any): PaymentMethodItem[] {
+  const raw = payload?.data?.data ?? payload?.data ?? payload;
+  return Array.isArray(raw) ? raw : [];
+}
 
 export default function PaymentSettings() {
   const { t, isRtl } = useTranslation();
 
   const [methods, setMethods] = useState<PaymentMethodItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [editingItem, setEditingItem] = useState<PaymentMethodItem | null>(null);
-  const [showModal, setShowModal] = useState(false);
-  const [formData, setFormData] = useState<Omit<PaymentMethodItem, "id">>(EMPTY_FORM);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [creating, setCreating] = useState(false);
+  const [formData, setFormData] = useState<FormState>(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
+  const [togglingId, setTogglingId] = useState<number | null>(null);
   const [status, setStatus] = useState<{ type: "success" | "error"; msg: string } | null>(null);
+  const statusTimer = useRef<number | null>(null);
+
+  const showStatus = (type: "success" | "error", msg: string, ms = 3500) => {
+    setStatus({ type, msg });
+    if (statusTimer.current) window.clearTimeout(statusTimer.current);
+    statusTimer.current = window.setTimeout(() => setStatus(null), ms);
+  };
 
   const fetchMethods = async () => {
     try {
       setLoading(true);
       const { data } = await api.get("/admin/payment-methods");
-      const items = Array.isArray(data?.data) ? data.data : Array.isArray(data) ? data : [];
-      setMethods(items);
+      setMethods(unwrapList(data));
     } catch {
-      setStatus({ type: "error", msg: t("payment_methods_load_failed", "Impossible de charger les moyens de paiement.") });
+      showStatus("error", t("payment_methods_load_failed", "Impossible de charger les moyens de paiement."));
     } finally {
       setLoading(false);
     }
@@ -67,20 +75,24 @@ export default function PaymentSettings() {
 
   useEffect(() => {
     void fetchMethods();
+    return () => {
+      if (statusTimer.current) window.clearTimeout(statusTimer.current);
+    };
   }, []);
 
-  const openCreateModal = () => {
-    setEditingItem(null);
+  const startCreate = () => {
+    setEditingId(null);
     setFormData({
       ...EMPTY_FORM,
       code: `method_${Date.now()}`,
       sort_order: methods.length + 1,
     });
-    setShowModal(true);
+    setCreating(true);
   };
 
-  const openEditModal = (item: PaymentMethodItem) => {
-    setEditingItem(item);
+  const startEdit = (item: PaymentMethodItem) => {
+    setCreating(false);
+    setEditingId(item.id);
     setFormData({
       code: item.code,
       name: item.name,
@@ -91,7 +103,12 @@ export default function PaymentSettings() {
       is_active: item.is_active !== false,
       sort_order: item.sort_order || 0,
     });
-    setShowModal(true);
+  };
+
+  const cancelForm = () => {
+    setCreating(false);
+    setEditingId(null);
+    setFormData(EMPTY_FORM);
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -99,378 +116,293 @@ export default function PaymentSettings() {
     if (!formData.name.trim()) return;
 
     setSaving(true);
-    setStatus(null);
     try {
-      if (editingItem) {
-        await api.put(`/admin/payment-methods/${editingItem.id}`, formData);
-        setStatus({
-          type: "success",
-          msg: t("payment_method_updated", `Moyen de paiement "${formData.name}" mis à jour avec succès.`),
-        });
+      if (editingId != null) {
+        await api.put(`/admin/payment-methods/${editingId}`, formData);
+        showStatus("success", t("payment_method_updated", "Moyen de paiement mis à jour."));
       } else {
         await api.post("/admin/payment-methods", formData);
-        setStatus({
-          type: "success",
-          msg: t("payment_method_created", `Nouveau moyen de paiement "${formData.name}" ajouté avec succès.`),
-        });
+        showStatus("success", t("payment_method_created", "Moyen de paiement ajouté."));
       }
-      setShowModal(false);
+      cancelForm();
       await fetchMethods();
-      setTimeout(() => setStatus(null), 4000);
     } catch (err: any) {
-      setStatus({
-        type: "error",
-        msg: err?.response?.data?.message || t("payment_method_save_failed", "Échec de l'enregistrement."),
-      });
+      showStatus(
+        "error",
+        err?.response?.data?.message || t("payment_method_save_failed", "Échec de l'enregistrement."),
+      );
     } finally {
       setSaving(false);
     }
   };
 
   const handleDelete = async (item: PaymentMethodItem) => {
-    if (!window.confirm(t("confirm_delete_payment_method", `Supprimer le moyen de paiement "${item.name}" ?`))) return;
+    if (!window.confirm(t("confirm_delete_payment_method", `Supprimer « ${item.name} » ?`))) return;
     try {
       await api.delete(`/admin/payment-methods/${item.id}`);
       setMethods((prev) => prev.filter((m) => m.id !== item.id));
-      setStatus({ type: "success", msg: t("payment_method_deleted", `Moyen de paiement supprimé.`) });
-      setTimeout(() => setStatus(null), 3000);
+      if (editingId === item.id) cancelForm();
+      showStatus("success", t("payment_method_deleted", "Moyen de paiement supprimé."));
     } catch (err: any) {
-      setStatus({
-        type: "error",
-        msg: err?.response?.data?.message || t("payment_method_delete_failed", "Échec de la suppression."),
-      });
+      showStatus(
+        "error",
+        err?.response?.data?.message || t("payment_method_delete_failed", "Échec de la suppression."),
+      );
     }
   };
 
   const handleToggle = async (item: PaymentMethodItem) => {
+    const nextActive = !item.is_active;
+    setTogglingId(item.id);
+    setMethods((prev) =>
+      prev.map((m) => (m.id === item.id ? { ...m, is_active: nextActive } : m)),
+    );
     try {
-      const nextActive = !item.is_active;
       await api.put(`/admin/payment-methods/${item.id}`, { is_active: nextActive });
+    } catch {
       setMethods((prev) =>
-        prev.map((m) => (m.id === item.id ? { ...m, is_active: nextActive } : m))
+        prev.map((m) => (m.id === item.id ? { ...m, is_active: item.is_active } : m)),
       );
-    } catch (err: any) {
-      setStatus({ type: "error", msg: t("error_toggling_status", "Erreur lors du changement de statut.") });
+      showStatus("error", t("error_toggling_status", "Erreur lors du changement de statut."));
+    } finally {
+      setTogglingId(null);
     }
   };
 
+  const formOpen = creating || editingId != null;
+
   return (
-    <div dir={isRtl ? "rtl" : "ltr"} className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto text-[var(--foreground)]">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-[var(--gold)]/20 pb-5">
+    <div dir={isRtl ? "rtl" : "ltr"} className="p-4 sm:p-6 lg:p-8 space-y-5 max-w-4xl mx-auto text-[var(--foreground)]">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[var(--gold)]/20 pb-4">
         <div className="flex items-center gap-3">
-          <div className="p-3 rounded-xl bg-[var(--gold)]/15 text-[var(--gold)] border border-[var(--gold)]/30">
-            <Wallet className="h-7 w-7" />
+          <div className="p-2.5 rounded-xl bg-[var(--gold)]/15 text-[var(--gold)]">
+            <Wallet className="h-6 w-6" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold font-display tracking-tight text-[var(--foreground)]">
-              {t("payment_settings_title", "Gestion des Moyens de Paiement (Vue Client)")}
+            <h1 className="text-xl font-bold font-display tracking-tight">
+              {t("payment_settings_title", "Modes de Paiement")}
             </h1>
-            <p className="text-xs sm:text-sm text-[var(--muted-foreground)]">
+            <p className="text-xs text-[var(--muted-foreground)]">
               {t(
                 "payment_settings_subtitle",
-                "Ajoutez, modifiez et contrôlez exactement les coordonnées bancaires (RIB, IBAN, Flouci, D17) et instructions affichées aux clients lors du paiement.",
+                "Coordonnées et instructions affichées aux clients sur /payment.",
               )}
             </p>
           </div>
         </div>
 
-        <button
-          type="button"
-          onClick={openCreateModal}
-          className="btn-base btn-gold text-xs py-2.5 px-4 flex items-center gap-2 cursor-pointer shadow"
-        >
-          <Plus className="h-4 w-4" />
-          <span>{t("add_payment_method", "Ajouter un Moyen de Paiement")}</span>
-        </button>
+        {!formOpen && (
+          <button
+            type="button"
+            onClick={startCreate}
+            className="btn-base btn-gold text-xs py-2 px-3.5 inline-flex items-center gap-1.5 cursor-pointer"
+          >
+            <Plus className="h-4 w-4" />
+            {t("add_payment_method", "Ajouter")}
+          </button>
+        )}
       </div>
 
-      {/* Info notice */}
-      <div className="p-4 rounded-xl border border-[var(--gold)]/35 bg-[var(--gold)]/10 text-xs sm:text-sm text-[var(--foreground)] flex items-start gap-3">
-        <Info className="h-5 w-5 text-[var(--gold)] shrink-0 mt-0.5" />
-        <div>
-          <strong className="font-bold text-[var(--gold)]">
-            {t("payment_methods_control_notice", "Contrôle Direct de l'Expérience Client")} :
-          </strong>
-          <span className="ms-1 text-[var(--muted-foreground)]">
-            {t(
-              "payment_methods_control_help",
-              "Les informations et coordonnées saisies ici s'affichent automatiquement au client sur la page de paiement (/payment) lorsqu'il confirme son abonnement.",
-            )}
-          </span>
-        </div>
-      </div>
-
-      {/* Status banner */}
       {status && (
         <div
-          className={`p-4 rounded-lg text-sm flex items-center gap-3 shadow-md ${
+          className={`px-3 py-2.5 rounded-lg text-sm flex items-center gap-2 ${
             status.type === "success"
-              ? "bg-emerald-50 text-emerald-800 border border-emerald-300 dark:bg-emerald-950/80 dark:text-emerald-200"
-              : "bg-rose-50 text-rose-800 border border-rose-300 dark:bg-rose-950/80 dark:text-rose-200"
+              ? "bg-emerald-50 text-emerald-800 border border-emerald-200 dark:bg-emerald-950/70 dark:text-emerald-200 dark:border-emerald-800"
+              : "bg-rose-50 text-rose-800 border border-rose-200 dark:bg-rose-950/70 dark:text-rose-200 dark:border-rose-800"
           }`}
         >
           {status.type === "success" ? (
-            <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-600 dark:text-emerald-400" />
+            <CheckCircle2 className="h-4 w-4 shrink-0" />
           ) : (
-            <AlertCircle className="h-5 w-5 shrink-0 text-rose-600 dark:text-rose-400" />
+            <AlertCircle className="h-4 w-4 shrink-0" />
           )}
-          <span>{status.msg}</span>
+          <span className="flex-1">{status.msg}</span>
+          <button type="button" onClick={() => setStatus(null)} className="opacity-60 hover:opacity-100 cursor-pointer">
+            <X className="h-4 w-4" />
+          </button>
         </div>
       )}
 
-      {/* Methods List */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+      {formOpen && (
+        <form
+          onSubmit={handleSave}
+          className="rounded-xl border border-[var(--gold)]/30 bg-[var(--card)] p-4 space-y-3 shadow-sm"
+        >
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-bold text-[var(--gold)]">
+              {editingId != null
+                ? t("edit_payment_method", "Modifier")
+                : t("add_payment_method", "Nouveau moyen de paiement")}
+            </h2>
+            <button type="button" onClick={cancelForm} className="p-1 rounded hover:bg-[var(--gold)]/10 cursor-pointer">
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <label className="block text-xs space-y-1 sm:col-span-2">
+              <span className="font-semibold">{t("payment_method_name", "Nom")}</span>
+              <input
+                required
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--background)] outline-none focus:border-[var(--gold)]"
+                placeholder="ex: Virement Bancaire BIAT"
+              />
+            </label>
+            <label className="block text-xs space-y-1">
+              <span className="font-semibold">{t("code_identifier", "Code")}</span>
+              <input
+                required
+                value={formData.code}
+                onChange={(e) => setFormData({ ...formData, code: e.target.value })}
+                className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--background)] font-mono outline-none focus:border-[var(--gold)]"
+              />
+            </label>
+            <label className="block text-xs space-y-1">
+              <span className="font-semibold">{t("badge_tag", "Badge")}</span>
+              <input
+                value={formData.badge}
+                onChange={(e) => setFormData({ ...formData, badge: e.target.value })}
+                className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--background)] outline-none focus:border-[var(--gold)]"
+                placeholder="ex: Recommandé"
+              />
+            </label>
+            <label className="block text-xs space-y-1 sm:col-span-2">
+              <span className="font-semibold">{t("account_details_label", "Coordonnées")}</span>
+              <textarea
+                required
+                rows={3}
+                value={formData.account_details}
+                onChange={(e) => setFormData({ ...formData, account_details: e.target.value })}
+                className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--background)] font-mono text-xs outline-none focus:border-[var(--gold)]"
+              />
+            </label>
+            <label className="block text-xs space-y-1 sm:col-span-2">
+              <span className="font-semibold">{t("client_instructions_label", "Instructions")}</span>
+              <textarea
+                rows={2}
+                value={formData.instructions}
+                onChange={(e) => setFormData({ ...formData, instructions: e.target.value })}
+                className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--background)] outline-none focus:border-[var(--gold)]"
+              />
+            </label>
+            <label className="block text-xs space-y-1 sm:col-span-2">
+              <span className="font-semibold">{t("fee_note_label", "Note frais")}</span>
+              <input
+                value={formData.fee_note}
+                onChange={(e) => setFormData({ ...formData, fee_note: e.target.value })}
+                className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--background)] outline-none focus:border-[var(--gold)]"
+                placeholder="Sans frais supplémentaires"
+              />
+            </label>
+          </div>
+
+          <div className="flex items-center justify-between gap-3 pt-1">
+            <label className="inline-flex items-center gap-2 text-xs font-semibold cursor-pointer">
+              <input
+                type="checkbox"
+                checked={formData.is_active}
+                onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
+              />
+              {t("active_visible_to_clients", "Actif")}
+            </label>
+            <div className="flex items-center gap-2">
+              <button type="button" onClick={cancelForm} className="btn-base btn-outline-light text-xs py-1.5 px-3 cursor-pointer">
+                {t("cancel", "Annuler")}
+              </button>
+              <button
+                type="submit"
+                disabled={saving}
+                className="btn-base btn-gold text-xs py-1.5 px-3.5 inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-60"
+              >
+                <Save className="h-3.5 w-3.5" />
+                {saving ? t("saving", "…") : t("save", "Enregistrer")}
+              </button>
+            </div>
+          </div>
+        </form>
+      )}
+
+      <div className="rounded-xl border border-[var(--border)] overflow-hidden bg-[var(--card)]">
         {loading ? (
-          <div className="col-span-full flex justify-center py-16">
-            <div className="w-9 h-9 border-2 border-[var(--gold)] border-t-transparent rounded-full animate-spin" />
+          <div className="py-14 flex justify-center">
+            <div className="w-8 h-8 border-2 border-[var(--gold)] border-t-transparent rounded-full animate-spin" />
           </div>
         ) : methods.length === 0 ? (
-          <div className="col-span-full surface-card frame-gold p-12 text-center rounded-xl space-y-3">
-            <CreditCard className="w-10 h-10 text-[var(--gold)] mx-auto opacity-70" />
-            <h3 className="text-lg font-bold">{t("no_payment_methods", "Aucun moyen de paiement configuré")}</h3>
-            <p className="text-xs text-[var(--muted-foreground)]">
-              {t("click_add_method_hint", "Cliquez sur 'Ajouter un Moyen de Paiement' pour en créer un.")}
-            </p>
+          <div className="py-12 px-4 text-center space-y-2">
+            <Wallet className="w-8 h-8 mx-auto text-[var(--gold)] opacity-70" />
+            <p className="text-sm font-semibold">{t("no_payment_methods", "Aucun moyen de paiement")}</p>
+            <button type="button" onClick={startCreate} className="text-xs text-[var(--gold)] font-bold underline cursor-pointer">
+              {t("add_payment_method", "Ajouter")}
+            </button>
           </div>
         ) : (
-          methods.map((item) => (
-            <div
-              key={item.id}
-              className={`surface-card frame-gold p-5 rounded-xl shadow-md border transition-all flex flex-col justify-between space-y-4 ${
-                item.is_active
-                  ? "border-[var(--gold)]/40 bg-[var(--card)]"
-                  : "border-gray-300 dark:border-gray-800 opacity-60 bg-gray-50 dark:bg-gray-900"
-              }`}
-            >
-              <div className="space-y-3">
-                <div className="flex items-start justify-between gap-3 border-b border-[var(--gold)]/20 pb-3">
-                  <div className="flex items-center gap-2.5">
-                    <div className="p-2 rounded-lg bg-[var(--gold)]/15 text-[var(--gold)]">
-                      {item.code.includes("bank") ? (
-                        <Building2 className="w-5 h-5" />
-                      ) : (
-                        <Smartphone className="w-5 h-5" />
-                      )}
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-base text-[var(--foreground)]">{item.name}</h3>
-                      <div className="flex items-center gap-2 mt-0.5">
-                        <span className="text-[0.68rem] font-mono text-[var(--muted-foreground)]">
-                          #{item.code}
-                        </span>
-                        {item.badge && (
-                          <span className="px-2 py-0.5 rounded text-[0.65rem] font-bold bg-[var(--gold)]/15 text-[var(--gold)] border border-[var(--gold)]/30">
-                            {item.badge}
-                          </span>
-                        )}
-                      </div>
-                    </div>
+          <ul className="divide-y divide-[var(--border)]">
+            {methods.map((item) => (
+              <li
+                key={item.id}
+                className={`p-4 flex flex-col sm:flex-row sm:items-start gap-3 ${
+                  item.is_active ? "" : "opacity-55 bg-[var(--background)]/40"
+                } ${editingId === item.id ? "ring-1 ring-inset ring-[var(--gold)]/40" : ""}`}
+              >
+                <div className="flex-1 min-w-0 space-y-1.5">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h3 className="font-bold text-sm">{item.name}</h3>
+                    {item.badge ? (
+                      <span className="px-1.5 py-0.5 rounded text-[0.65rem] font-bold bg-[var(--gold)]/15 text-[var(--gold)]">
+                        {item.badge}
+                      </span>
+                    ) : null}
+                    <span className="text-[0.65rem] font-mono text-[var(--muted-foreground)]">#{item.code}</span>
                   </div>
-
-                  <label className="inline-flex items-center cursor-pointer" title={t("toggle_visibility", "Activer / Désactiver")}>
-                    <input
-                      type="checkbox"
-                      checked={item.is_active}
-                      onChange={() => handleToggle(item)}
-                      className="sr-only peer"
-                    />
-                    <div className="w-8 h-4 bg-gray-300 dark:bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-[var(--gold)] relative"></div>
-                  </label>
+                  <pre className="text-[0.7rem] font-mono whitespace-pre-wrap text-[var(--muted-foreground)] leading-relaxed">
+                    {item.account_details || "—"}
+                  </pre>
+                  {item.instructions ? (
+                    <p className="text-xs text-[var(--muted-foreground)]">{item.instructions}</p>
+                  ) : null}
+                  {item.fee_note ? (
+                    <p className="text-[0.7rem] text-emerald-600 dark:text-emerald-400">{item.fee_note}</p>
+                  ) : null}
                 </div>
 
-                {/* Account details */}
-                <div className="p-3 rounded-lg bg-[var(--background)] border border-[var(--border)] text-xs font-mono whitespace-pre-wrap leading-relaxed text-[var(--foreground)]">
-                  {item.account_details || t("no_account_details", "Aucune coordonnée bancaire saisie.")}
-                </div>
-
-                {/* Instructions */}
-                {item.instructions && (
-                  <p className="text-xs text-[var(--muted-foreground)] italic leading-relaxed">
-                    💡 {item.instructions}
-                  </p>
-                )}
-
-                {item.fee_note && (
-                  <p className="text-[0.72rem] text-emerald-600 dark:text-emerald-400 font-medium">
-                    ✓ {item.fee_note}
-                  </p>
-                )}
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex items-center justify-between pt-3 border-t border-[var(--gold)]/15">
-                <span className="text-[0.68rem] font-semibold text-[var(--muted-foreground)]">
-                  {item.is_active ? t("active_for_clients", "✓ Visible aux clients") : t("hidden_from_clients", "Désactivé")}
-                </span>
-
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 shrink-0 self-start">
                   <button
                     type="button"
-                    onClick={() => openEditModal(item)}
-                    className="p-1.5 rounded text-[var(--foreground)] hover:text-[var(--gold)] hover:bg-[var(--gold)]/15 transition-colors cursor-pointer"
+                    disabled={togglingId === item.id}
+                    onClick={() => handleToggle(item)}
+                    className={`text-[0.65rem] font-bold px-2 py-1 rounded-full border cursor-pointer ${
+                      item.is_active
+                        ? "border-emerald-400/50 text-emerald-700 dark:text-emerald-300 bg-emerald-500/10"
+                        : "border-gray-300 text-gray-500 dark:border-gray-600"
+                    }`}
+                    title={t("toggle_visibility", "Activer / Désactiver")}
+                  >
+                    {item.is_active ? t("active", "Actif") : t("inactive", "Inactif")}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => startEdit(item)}
+                    className="p-1.5 rounded hover:bg-[var(--gold)]/15 text-[var(--foreground)] cursor-pointer"
                     title={t("edit", "Modifier")}
                   >
-                    <Edit2 className="w-4 h-4" />
+                    <Pencil className="w-4 h-4" />
                   </button>
-
                   <button
                     type="button"
                     onClick={() => handleDelete(item)}
-                    className="p-1.5 rounded text-rose-500 hover:bg-rose-500/15 transition-colors cursor-pointer"
+                    className="p-1.5 rounded hover:bg-rose-500/15 text-rose-500 cursor-pointer"
                     title={t("delete", "Supprimer")}
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
-              </div>
-            </div>
-          ))
+              </li>
+            ))}
+          </ul>
         )}
       </div>
-
-      {/* Modal for Add / Edit */}
-      {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-          <div
-            dir={isRtl ? "rtl" : "ltr"}
-            className="surface-card frame-gold w-full max-w-xl max-h-[90vh] overflow-y-auto p-6 rounded-2xl shadow-2xl space-y-5 text-start"
-          >
-            <div className="flex items-center justify-between border-b border-[var(--gold)]/20 pb-3">
-              <h2 className="text-lg font-bold font-display text-[var(--gold)] flex items-center gap-2">
-                <Wallet className="w-5 h-5" />
-                <span>
-                  {editingItem
-                    ? t("edit_payment_method", "Modifier le Moyen de Paiement")
-                    : t("add_payment_method", "Ajouter un Moyen de Paiement")}
-                </span>
-              </h2>
-              <button
-                type="button"
-                onClick={() => setShowModal(false)}
-                className="p-1.5 rounded-full hover:bg-[var(--gold)]/15 text-[var(--muted-foreground)] hover:text-[var(--foreground)] cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <form onSubmit={handleSave} className="space-y-4 text-xs sm:text-sm">
-              <div>
-                <label className="block font-semibold mb-1 text-[var(--foreground)]">
-                  {t("payment_method_name", "Nom du Moyen de Paiement (ex: Virement Bancaire RIB / IBAN)")}
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="ex: Virement Bancaire (BIAT / Attijari)"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] outline-none focus:border-[var(--gold)] font-medium"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-semibold mb-1 text-[var(--foreground)]">
-                    {t("code_identifier", "Identifiant / Code")}
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="ex: biat_wire"
-                    value={formData.code}
-                    onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-                    className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] font-mono outline-none focus:border-[var(--gold)]"
-                  />
-                </div>
-
-                <div>
-                  <label className="block font-semibold mb-1 text-[var(--foreground)]">
-                    {t("badge_tag", "Badge (ex: Recommandé en Tunisie, Rapide)")}
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="ex: Recommandé en Tunisie"
-                    value={formData.badge}
-                    onChange={(e) => setFormData({ ...formData, badge: e.target.value })}
-                    className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] outline-none focus:border-[var(--gold)]"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block font-semibold mb-1 text-[var(--foreground)]">
-                  {t("account_details_label", "Coordonnées Bancaires / Numéro de Compte (affiché en bloc au client)")}
-                </label>
-                <textarea
-                  rows={4}
-                  required
-                  placeholder={`Banque: BIAT\nRIB: 0800 1234 5678 9012 3456\nIBAN: TN59 0800 1234 5678 9012 3456\nTitulaire: Roots Tunisia\nSWIFT: BIATTNTT`}
-                  value={formData.account_details}
-                  onChange={(e) => setFormData({ ...formData, account_details: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] font-mono text-xs outline-none focus:border-[var(--gold)]"
-                />
-              </div>
-
-              <div>
-                <label className="block font-semibold mb-1 text-[var(--foreground)]">
-                  {t("client_instructions_label", "Instructions Détaillées pour le Client")}
-                </label>
-                <textarea
-                  rows={3}
-                  placeholder="Veuillez effectuer le virement puis saisir ci-dessous le numéro de référence de votre transaction ou votre nom de compte."
-                  value={formData.instructions}
-                  onChange={(e) => setFormData({ ...formData, instructions: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] outline-none focus:border-[var(--gold)]"
-                />
-              </div>
-
-              <div>
-                <label className="block font-semibold mb-1 text-[var(--foreground)]">
-                  {t("fee_note_label", "Note sur les Frais (ex: Sans frais supplémentaires)")}
-                </label>
-                <input
-                  type="text"
-                  placeholder="ex: Sans frais supplémentaires · Validation sous 24h"
-                  value={formData.fee_note}
-                  onChange={(e) => setFormData({ ...formData, fee_note: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] outline-none focus:border-[var(--gold)]"
-                />
-              </div>
-
-              <div className="flex items-center justify-between pt-2">
-                <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold">
-                  <input
-                    type="checkbox"
-                    checked={formData.is_active}
-                    onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
-                    className="rounded border-[var(--border)]"
-                  />
-                  <span>{t("active_visible_to_clients", "Actif (visible immédiatement aux clients)")}</span>
-                </label>
-
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setShowModal(false)}
-                    className="btn-base btn-outline-light text-xs py-2 px-4 cursor-pointer"
-                  >
-                    {t("cancel", "Annuler")}
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={saving}
-                    className="btn-base btn-gold text-xs py-2 px-5 flex items-center gap-2 cursor-pointer shadow"
-                  >
-                    <Save className="w-4 h-4" />
-                    <span>{saving ? t("saving", "Enregistrement...") : t("save", "Enregistrer")}</span>
-                  </button>
-                </div>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

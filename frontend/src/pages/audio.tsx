@@ -5,6 +5,7 @@ import { PageHero, Section, SectionHeading } from "../components/site/Primitives
 import djerba from "../assets/djerba.jpg";
 import SEO from "../components/SEO";
 import { useTranslation } from "../context/TranslationContext";
+import { useSiteContent } from "../hooks/useSiteContent";
 import { api } from "../api/client";
 
 interface RecordingItem {
@@ -18,6 +19,7 @@ interface RecordingItem {
 
 export default function Audio() {
   const { t, isRtl } = useTranslation();
+  const { getText, getImage } = useSiteContent();
   const [recordings, setRecordings] = useState<RecordingItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [playingId, setPlayingId] = useState<number | string | null>(null);
@@ -92,10 +94,10 @@ export default function Audio() {
       />
 
       <PageHero
-        eyebrow={t("oral_histories_eyebrow")}
-        title={t("voices_before_they_disappear")}
-        subtitle={t("access_audio_archives")}
-        image={djerba}
+        eyebrow={getText("audio", "hero", "eyebrow") ?? t("oral_histories_eyebrow")}
+        title={getText("audio", "hero", "title") ?? t("voices_before_they_disappear")}
+        subtitle={getText("audio", "hero", "subtitle") ?? t("access_audio_archives")}
+        image={getImage("audio", "hero", "image") ?? djerba}
       >
         <Link to="/subscriptions" className="btn-base btn-gold w-full sm:w-auto min-w-[180px]">
           {t("access_audio_archives")}

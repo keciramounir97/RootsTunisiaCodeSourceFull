@@ -1,6 +1,15 @@
 import { useEffect, useState } from "react";
-import { Save,
-  Coins, Shield, Globe, Bell, Database, UserCircle2 } from "lucide-react";
+import {
+  Save,
+  Coins,
+  Shield,
+  Globe,
+  Bell,
+  Database,
+  UserCircle2,
+  Moon,
+  Sun,
+} from "lucide-react";
 import { useThemeStore } from "../../store/theme";
 import { api } from "../../api/client";
 import { useAuth } from "../components/AuthContext";
@@ -16,8 +25,15 @@ const LANGUAGES = [
   { value: "mt", label: "Malti" },
 ];
 
+function apiErrorMessage(err: any, fallback: string): string {
+  const raw = err?.response?.data?.message ?? err?.userMessage;
+  if (Array.isArray(raw)) return raw.filter(Boolean).join(", ") || fallback;
+  if (typeof raw === "string" && raw.trim()) return raw;
+  return fallback;
+}
+
 export default function Settings() {
-  const { theme } = useThemeStore();
+  const { theme, setTheme, toggleTheme } = useThemeStore();
   const { user, refreshMe } = useAuth();
   const { t } = useTranslation();
   const { selectedCurrency, setCurrencyCode, currencies } = useCurrency();
@@ -83,7 +99,12 @@ export default function Settings() {
         });
       } catch (err: any) {
         if (!mounted) return;
-        setError(err.response?.data?.message || "Failed to load settings");
+        setError(
+          apiErrorMessage(
+            err,
+            t("load_settings_failed", "Failed to load settings"),
+          ),
+        );
       } finally {
         if (!mounted) return;
         setLoading(false);
@@ -93,7 +114,7 @@ export default function Settings() {
     return () => {
       mounted = false;
     };
-  }, [isAdmin]);
+  }, [isAdmin, t]);
 
   useEffect(() => {
     localStorage.setItem("mockupDataActive", String(settings.mockupDataActive));
@@ -120,9 +141,11 @@ export default function Settings() {
         notifyAdmins: !!settings.notifyAdmins,
         activityRetentionDays: Number(settings.activityRetentionDays) || 90,
       });
-      setSuccess("Settings saved.");
+      setSuccess(t("settings_saved", "Settings saved."));
     } catch (err: any) {
-      setError(err.response?.data?.message || "Save settings failed");
+      setError(
+        apiErrorMessage(err, t("save_settings_failed", "Save settings failed")),
+      );
     } finally {
       setSavingSettings(false);
     }
@@ -138,11 +161,30 @@ export default function Settings() {
         phone: profile.phone.trim(),
       });
       await refreshMe?.();
-      setSuccess("Profile updated.");
+      setSuccess(t("profile_updated", "Profile updated."));
     } catch (err: any) {
-      setError(err.response?.data?.message || "Update profile failed");
+      setError(
+        apiErrorMessage(
+          err,
+          t("update_profile_failed", "Update profile failed"),
+        ),
+      );
     } finally {
       setSavingProfile(false);
+    }
+  };
+
+  const handleThemeToggle = () => {
+    try {
+      toggleTheme();
+      setSuccess(
+        theme === "dark"
+          ? t("light_mode_active", "Light Mode Active")
+          : t("dark_mode_active", "Dark Mode Active"),
+      );
+      setError("");
+    } catch {
+      setError(t("theme_toggle_failed", "Could not switch theme."));
     }
   };
 
@@ -172,10 +214,14 @@ export default function Settings() {
           className={`mb-4 rounded-lg border ${border} ${card} p-4 heritage-panel`}
         >
           {error ? (
-            <div className="text-[#a0552a] font-semibold">{error}</div>
+            <div className="text-[#a0552a] font-semibold" role="alert">
+              {error}
+            </div>
           ) : null}
           {success ? (
-            <div className="text-[#5d4037] font-semibold">{success}</div>
+            <div className="text-[#5d4037] font-semibold" role="status">
+              {success}
+            </div>
           ) : null}
         </div>
       ) : null}
@@ -325,10 +371,138 @@ export default function Settings() {
                 }
                 className={`mt-2 w-full px-3 py-2 rounded-md border
               ${inputBg} ${inputText} ${border}`}
+                disabled={loading || savingSettings}
               />
             </label>
           </div>
         ) : null}
+
+        <div
+          className={`rounded-lg shadow-sm p-5 border ${border} ${card} heritage-panel`}
+        >
+          <div className="flex items-center gap-3 mb-4">
+            <div
+              className={`w-10 h-10 rounded-lg flex items-center justify-center
+              ${isDark ? "bg-[#d4af37]/20" : "bg-[#d4af37]/15"}`}
+            >
+              {isDark ? (
+                <Moon className="w-5 h-5 text-[#d4af37]" />
+              ) : (
+                <Sun className="w-5 h-5 text-[#d4af37]" />
+              )}
+            </div>
+            <div>
+              <div className="font-bold text-lg">
+                {t("language_and_appearance", "Language & Appearance")}
+              </div>
+              <div className="text-sm opacity-70">
+                {t("toggle_theme_desc", "Toggle website color theme display")}
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <div className="font-medium">{t("theme_mode", "Theme Mode:")}</div>
+              <div className="text-sm opacity-70">
+                {isDark
+                  ? t("dark_mode_active", "Dark Mode Active")
+                  : t("light_mode_active", "Light Mode Active")}
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                className={`px-3 py-2 rounded-md border text-sm font-semibold ${border} ${
+                  !isDark ? "bg-[#d4af37]/25" : ""
+                }`}
+                onClick={() => {
+                  setTheme("light");
+                  setSuccess(t("light_mode_active", "Light Mode Active"));
+                  setError("");
+                }}
+                aria-pressed={!isDark}
+              >
+                {t("theme_light_mode", "Light Mode")}
+              </button>
+              <button
+                type="button"
+                className={`px-3 py-2 rounded-md border text-sm font-semibold ${border} ${
+                  isDark ? "bg-[#d4af37]/25" : ""
+                }`}
+                onClick={() => {
+                  setTheme("dark");
+                  setSuccess(t("dark_mode_active", "Dark Mode Active"));
+                  setError("");
+                }}
+                aria-pressed={isDark}
+              >
+                {t("theme_dark_mode", "Dark Mode")}
+              </button>
+              <button
+                type="button"
+                className="heritage-btn heritage-btn--ghost inline-flex items-center gap-2 px-3 py-2 rounded-md"
+                onClick={handleThemeToggle}
+                aria-label={t("theme_toggle_aria", "Toggle theme")}
+              >
+                {t("switch_theme", "Switch Theme")}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div
+          className={`rounded-lg shadow-sm p-5 border ${border} ${card} heritage-panel`}
+        >
+          <div className="flex items-center gap-3 mb-4">
+            <div
+              className={`w-10 h-10 rounded-lg flex items-center justify-center
+              ${isDark ? "bg-white/10" : "bg-[#3e2723]/10"}`}
+            >
+              <Coins className="w-5 h-5 text-[#5d4037]" />
+            </div>
+            <div>
+              <div className="font-bold text-lg">
+                {t("platform_currency", "Display Currency")}
+              </div>
+              <div className="text-sm opacity-70">
+                {t(
+                  "currency_desc",
+                  "Choose the default currency for your account, dashboard, and pricing",
+                )}
+              </div>
+            </div>
+          </div>
+
+          <label className="block">
+            <span className="font-medium">
+              {t("current_currency", "Currently selected currency:")}
+            </span>
+            <select
+              value={selectedCurrency?.code || ""}
+              onChange={(e) => {
+                try {
+                  setCurrencyCode(e.target.value);
+                  setSuccess(t("currency_updated", "Currency updated."));
+                  setError("");
+                } catch {
+                  setError(
+                    t("currency_update_failed", "Could not update currency."),
+                  );
+                }
+              }}
+              className={`mt-2 w-full px-3 py-2 rounded-md border
+              ${inputBg} ${inputText} ${border}`}
+            >
+              {(currencies || []).map((c: any) => (
+                <option key={c.code} value={c.code}>
+                  {c.code}
+                  {c.name ? ` — ${c.name}` : ""}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
 
         <div
           className={`rounded-lg shadow-sm p-5 border ${border} ${card} heritage-panel`}

@@ -612,6 +612,8 @@ export const FEATURE_TRANSLATIONS: Record<string, Record<string, string>> = {
   "payment_settings_saved": "Payment settings saved.",
   "payment_settings_save_failed": "Unable to save payment settings.",
   "payment_settings": "Payment Settings",
+  "flagged_payments": "Flagged Payments",
+
   "payment_settings_help": "These details are shown before a user submits payment proof.",
   "payment_instructions": "Instructions",
   "payment_enabled": "Accept payment requests",
@@ -1525,6 +1527,8 @@ export const FEATURE_TRANSLATIONS: Record<string, Record<string, string>> = {
   "payment_settings_saved": "Payment settings saved.",
   "payment_settings_save_failed": "Unable to save payment settings.",
   "payment_settings": "Payment Settings",
+  "flagged_payments": "Paiements signalés",
+
   "payment_settings_help": "These details are shown before a user submits payment proof.",
   "payment_instructions": "Instructions",
   "payment_enabled": "Accept payment requests",
@@ -2402,6 +2406,8 @@ export const FEATURE_TRANSLATIONS: Record<string, Record<string, string>> = {
   "payment_settings_saved": "Payment settings saved.",
   "payment_settings_save_failed": "Unable to save payment settings.",
   "payment_settings": "Payment Settings",
+  "flagged_payments": "المدفوعات الموسومة",
+
   "payment_settings_help": "These details are shown before a user submits payment proof.",
   "payment_instructions": "Instructions",
   "payment_enabled": "Accept payment requests",
@@ -3285,6 +3291,8 @@ export const FEATURE_TRANSLATIONS: Record<string, Record<string, string>> = {
   "payment_settings_saved": "Payment settings saved.",
   "payment_settings_save_failed": "Unable to save payment settings.",
   "payment_settings": "Payment Settings",
+  "flagged_payments": "Pagos marcados",
+
   "payment_settings_help": "These details are shown before a user submits payment proof.",
   "payment_instructions": "Instructions",
   "payment_enabled": "Accept payment requests",
@@ -4168,6 +4176,8 @@ export const FEATURE_TRANSLATIONS: Record<string, Record<string, string>> = {
   "payment_settings_saved": "Payment settings saved.",
   "payment_settings_save_failed": "Unable to save payment settings.",
   "payment_settings": "Payment Settings",
+  "flagged_payments": "Pagamenti segnalati",
+
   "payment_settings_help": "These details are shown before a user submits payment proof.",
   "payment_instructions": "Instructions",
   "payment_enabled": "Accept payment requests",
@@ -5051,6 +5061,8 @@ export const FEATURE_TRANSLATIONS: Record<string, Record<string, string>> = {
   "payment_settings_saved": "Payment settings saved.",
   "payment_settings_save_failed": "Unable to save payment settings.",
   "payment_settings": "Payment Settings",
+  "flagged_payments": "Ħlasijiet immarkati",
+
   "payment_settings_help": "These details are shown before a user submits payment proof.",
   "payment_instructions": "Instructions",
   "payment_enabled": "Accept payment requests",
@@ -5934,6 +5946,8 @@ export const FEATURE_TRANSLATIONS: Record<string, Record<string, string>> = {
   "payment_settings_saved": "Payment settings saved.",
   "payment_settings_save_failed": "Unable to save payment settings.",
   "payment_settings": "Payment Settings",
+  "flagged_payments": "Markitaj pagoj",
+
   "payment_settings_help": "These details are shown before a user submits payment proof.",
   "payment_instructions": "Instructions",
   "payment_enabled": "Accept payment requests",

@@ -28,6 +28,7 @@ import { PageHero, Section, SectionHeading } from "../components/site/Primitives
 import kairouan from "../assets/slider-kairouan.jpg";
 import SEO from "../components/SEO";
 import { useTranslation } from "../context/TranslationContext";
+import { useSiteContent } from "../hooks/useSiteContent";
 
 type SourceItem = {
   id: string;
@@ -303,6 +304,7 @@ const institutions: ArchiveItem[] = [
 
 export default function SourcesAndArchives() {
   const { t, isRtl } = useTranslation();
+  const { getText, getImage } = useSiteContent();
   const location = useLocation();
 
   const [activeTab, setActiveTab] = useState<"all" | "sources" | "archives">("all");
@@ -805,10 +807,12 @@ ARCHIVAL CHECKLIST:
       )}
 
       <PageHero
-        eyebrow={t("sources_and_archives_nav")}
-        title={t("tunisian_sources_repositories")}
-        subtitle={t("tunisian_sources_repositories_desc")}
-        image={kairouan}
+        eyebrow={getText("research", "hero", "eyebrow") ?? t("sources_and_archives_nav")}
+        title={getText("research", "hero", "title") ?? t("tunisian_sources_repositories")}
+        subtitle={
+          getText("research", "hero", "subtitle") ?? t("tunisian_sources_repositories_desc")
+        }
+        image={getImage("research", "hero", "image") ?? kairouan}
       >
         <Link to="/periods" className="btn-base btn-gold w-full sm:w-auto min-w-[180px]">
           {t("see_the_timeline")}

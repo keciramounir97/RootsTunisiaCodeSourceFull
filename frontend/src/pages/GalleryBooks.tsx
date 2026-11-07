@@ -20,6 +20,7 @@ import {
 import { api } from "../api/client";
 import { useTranslation } from "../context/TranslationContext";
 import { useTheme } from "../context/ThemeContext";
+import { useSiteContent } from "../hooks/useSiteContent";
 import RootsPageShell from "../components/RootsPageShell";
 import manuscriptImage from "../assets/family-archive.jpg";
 
@@ -46,6 +47,7 @@ interface BookItem {
 export default function GalleryBooks() {
   const { theme } = useTheme();
   const { t, isRtl } = useTranslation();
+  const { getText, getImage } = useSiteContent();
 
   const [books, setBooks] = useState<BookItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -117,20 +119,23 @@ export default function GalleryBooks() {
 
   return (
     <RootsPageShell
+      heroBackgroundUrl={getImage("library", "hero", "image")}
       hero={
         <div className="space-y-4 text-center">
           <p className="eyebrow text-[var(--gold)] text-shadow-gold tracking-widest font-bold">
-            {t("nav_library")}
+            {getText("library", "hero", "eyebrow") ?? t("nav_library")}
           </p>
           <h1 className="display-xl text-white font-bold hero-title-shadow text-shadow-glow tracking-wide">
-            {t("library_title", "Tunisian Manuscripts & Digitized Books")}
+            {getText("library", "hero", "title") ??
+              t("library_title", "Tunisian Manuscripts & Digitized Books")}
           </h1>
           <div className="gold-rule mt-4 w-28 mx-auto shadow-lg" />
           <p className="max-w-3xl mx-auto text-base text-slate-100/95 font-medium drop-shadow-md">
-            {t(
-              "library_desc",
-              "Access digitized Tunisian manuscripts, Beylical chronicles, Charaïques court registers, and Andalusian family waqf deeds.",
-            )}
+            {getText("library", "hero", "subtitle") ??
+              t(
+                "library_desc",
+                "Access digitized Tunisian manuscripts, Beylical chronicles, Charaïques court registers, and Andalusian family waqf deeds.",
+              )}
           </p>
         </div>
       }

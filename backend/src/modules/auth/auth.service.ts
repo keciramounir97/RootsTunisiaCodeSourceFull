@@ -185,6 +185,22 @@ export class AuthService {
             console.warn('Could not persist refresh token or activity log:', err);
         }
 
+        const privileges = Array.isArray(user.permissions)
+            ? user.permissions
+            : Array.isArray(user.privileges)
+              ? user.privileges
+              : (() => {
+                    const raw = user.admin_privileges ?? user.adminPrivileges;
+                    if (!raw) return [];
+                    if (Array.isArray(raw)) return raw.map((v: any) => String(v));
+                    try {
+                        const parsed = JSON.parse(String(raw));
+                        return Array.isArray(parsed) ? parsed.map((v: any) => String(v)) : [];
+                    } catch {
+                        return String(raw).split(',').map((v: string) => v.trim()).filter(Boolean);
+                    }
+                })();
+
         // Use validated user data directly without redundant DB roundtrip
         const fullUser = {
             id: user.id,
@@ -193,10 +209,13 @@ export class AuthService {
             phoneNumber: user.phone_number || user.phoneNumber || null,
             roleId: user.role_id || user.roleId || 1,
             role_id: user.role_id || user.roleId || 1,
+            role: user.role_id || user.roleId || 1,
             roleName: user.roleName || ((user.role_id === 3 || user.roleId === 3) ? 'super_admin' : 'admin'),
             status: user.status || 'active',
             createdAt: user.created_at || user.createdAt,
             lastLogin: user.last_login || user.lastLogin,
+            privileges,
+            permissions: privileges,
         };
 
         return {

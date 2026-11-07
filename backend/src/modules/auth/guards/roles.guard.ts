@@ -2,7 +2,11 @@ import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 
 /** Role IDs: 1=admin, 2=user, 3=super_admin */
-const ADMIN_ROLE_IDS = [1, 3];
+const ROLE_NAME_BY_ID: Record<number, string> = {
+    1: 'admin',
+    2: 'user',
+    3: 'super_admin',
+};
 
 @Injectable()
 export class RolesGuard implements CanActivate {
@@ -20,11 +24,16 @@ export class RolesGuard implements CanActivate {
 
         const roleId = Number(user.role_id ?? user.roleId ?? user.role ?? 0);
         const roleName = String(user.roleName ?? user.role_name ?? '').toLowerCase().trim();
+        const normalizedRoleName = roleName || ROLE_NAME_BY_ID[roleId] || '';
+        const normalizedRequired = requiredRoles.map((r) => String(r).toLowerCase());
 
-        // Admin role ids (1=admin, 3=super_admin) — grant access to admin/super_admin routes
-        if (ADMIN_ROLE_IDS.includes(roleId)) return true;
-        if (roleName && ['admin', 'super_admin'].includes(roleName)) return true;
-        if (roleName && requiredRoles.some((r) => String(r).toLowerCase() === roleName)) return true;
+        // Super admins can access any admin-protected route
+        if (normalizedRoleName === 'super_admin' || roleId === 3) return true;
+
+        // Regular admins only when explicitly allowed
+        if (normalizedRequired.includes(normalizedRoleName)) return true;
+        if (roleId === 1 && normalizedRequired.includes('admin')) return true;
+
         return false;
     }
 }

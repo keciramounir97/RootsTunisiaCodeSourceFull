@@ -73,12 +73,58 @@ const PRIVILEGE_OPTIONS = [
   { key: "newsletter", label: "Newsletter", Icon: Mail },
   { key: "subscriptions", label: "Subscriptions", Icon: Crown },
   { key: "subscription-payments", label: "Subscription Payments", Icon: Wallet },
+  { key: "flagged-payments", label: "Flagged Payments", Icon: Wallet },
   { key: "payment-settings", label: "Payment Methods", Icon: Wallet },
   { key: "currencies", label: "Taux de Change", Icon: Coins },
   { key: "legal-content", label: "Contenu Juridique", Icon: Scale },
   { key: "content", label: "Page Content CMS", Icon: Layout },
   { key: "settings", label: "Settings", Icon: Settings },
 ];
+
+const ADMIN_ROLE_IDS = new Set([1, 3]);
+
+const unwrapPayload = (payload: any): any => {
+  if (payload == null) return payload;
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload?.data)) return payload.data;
+  if (payload?.data && typeof payload.data === "object" && !Array.isArray(payload.data)) {
+    return payload.data;
+  }
+  if (Array.isArray(payload?.admins)) return payload.admins;
+  return payload;
+};
+
+const parsePrivileges = (item: any): string[] => {
+  const raw =
+    item?.privileges ??
+    item?.permissions ??
+    item?.adminPrivileges ??
+    item?.admin_privileges;
+  if (Array.isArray(raw)) return raw.map((v) => String(v));
+  if (typeof raw === "string" && raw.trim()) {
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed.map((v) => String(v));
+    } catch {
+      return raw.split(",").map((v) => v.trim()).filter(Boolean);
+    }
+  }
+  return [];
+};
+
+const normalizeAdmin = (item: any): AdminUser => {
+  const role = Number(item?.role ?? item?.roleId ?? item?.role_id ?? 1);
+  return {
+    id: item?.id,
+    fullName: item?.fullName || item?.full_name || item?.name || item?.email || "Admin",
+    email: item?.email || "",
+    phone: item?.phone || item?.phoneNumber || item?.phone_number || "",
+    role,
+    privileges: parsePrivileges(item),
+    createdAt: item?.createdAt || item?.created_at || "",
+    createdBy: item?.createdBy || item?.created_by,
+  };
+};
 
 export default function AdminManagement() {
   const { theme } = useThemeStore();
@@ -106,6 +152,7 @@ export default function AdminManagement() {
       newsletter: t("newsletter", "النشرة البريدية (Newsletter)"),
       subscriptions: t("subscriptions", "باقات الاشتراكات والحدود (Abonnements)"),
       "subscription-payments": t("subscription_payments", "إشعارات واعتماد المدفوعات (Paiements)"),
+      "flagged-payments": t("flagged_payments", "المدفوعات الموسومة (Flagged Payments)"),
       "payment-settings": t("payment_settings", "وسائل وطرق الدفع (Moyens de Paiement)"),
       currencies: t("currencies_exchange", "أسعار الصرف والعملات (Taux de Change)"),
       "legal-content": t("legal_content", "إدارة المحتوى القانوني (Contenu Juridique)"),
@@ -159,20 +206,12 @@ export default function AdminManagement() {
         shouldFallback
       );
 
-      const list =
-        (data?.success && Array.isArray(data.data) ? data.data : null) ||
-        (Array.isArray(data?.admins) && data.admins) ||
-        (Array.isArray(data) && data) ||
-        [];
+      const unwrapped = unwrapPayload(data);
+      const list = Array.isArray(unwrapped) ? unwrapped : [];
 
-      const normalized = list.map((item: any) => ({
-        ...item,
-        fullName: item.fullName || item.full_name || item.name || item.email || "Admin",
-        role: item.role ?? item.roleId ?? 1,
-        privileges: Array.isArray(item.privileges)
-          ? item.privileges
-          : (typeof item.privileges === "string" ? JSON.parse(item.privileges || "[]") : []),
-      }));
+      const normalized = list
+        .map(normalizeAdmin)
+        .filter((item) => ADMIN_ROLE_IDS.has(Number(item.role)));
       setAdmins(normalized);
     } catch (error) {
       console.error("Failed to load admins:", error);
@@ -244,6 +283,7 @@ export default function AdminManagement() {
       fullName: form.fullName.trim(),
       email: form.email.trim(),
       phone: form.phone.trim(),
+      roleId: 1,
       ...(form.password && { password: form.password }),
       privileges: form.privileges,
     };
@@ -256,37 +296,45 @@ export default function AdminManagement() {
         err?.response?.status === 403;
 
       if (editingAdmin) {
-        await requestWithFallback(
+        const { data } = await requestWithFallback(
           [
             () => api.patch(`/admin/admins/${editingAdmin.id}`, payload),
             () => api.patch(`/admin/users/${editingAdmin.id}`, payload),
           ],
           shouldFallback
         );
+        const updated = normalizeAdmin({
+          ...editingAdmin,
+          ...unwrapPayload(data),
+          ...payload,
+          id: editingAdmin.id,
+          role: editingAdmin.role,
+        });
         setAdmins((prev) =>
-          prev.map((a) => (a.id === editingAdmin.id ? { ...a, ...payload } : a))
+          prev.map((a) => (a.id === editingAdmin.id ? updated : a))
         );
         notify(t("legacy.admin_updated", "Admin updated successfully!"));
       } else {
         const { data } = await requestWithFallback(
           [
             () => api.post("/admin/admins", payload),
-            () => api.post("/admin/users", payload),
+            () => api.post("/admin/users", { ...payload, roleId: 1 }),
           ],
           shouldFallback
         );
-        const newAdmin: AdminUser = {
-          id: data?.id || Date.now(),
+        const created = normalizeAdmin({
+          ...unwrapPayload(data),
           ...payload,
           role: 1,
           createdAt: new Date().toISOString(),
           createdBy: user?.fullName || "Super Admin",
-        };
-        setAdmins((prev) => [...prev, newAdmin]);
+        });
+        setAdmins((prev) => [...prev, created]);
         notify(t("legacy.admin_created", "Admin created successfully!"));
       }
 
       resetForm();
+      await loadAdmins();
     } catch (error) {
       notify(getApiErrorMessage(error, t("failed_save_admin", "فشل حفظ بيانات المشرف")), "error");
     } finally {
@@ -295,9 +343,21 @@ export default function AdminManagement() {
   };
 
   const handleDelete = async (id: number | string) => {
-    if (id === user?.id) {
+    if (String(id) === String(user?.id)) {
       notify(t("legacy.cannot_delete_self", "لا يمكنك حذف حسابك الشخصي"), "error");
       return;
+    }
+
+    const target = admins.find((a) => String(a.id) === String(id));
+    if (target?.role === 3) {
+      const superAdminCount = admins.filter((a) => a.role === 3).length;
+      if (superAdminCount <= 1) {
+        notify(
+          t("legacy.cannot_delete_last_super_admin", "لا يمكن حذف آخر مشرف عام"),
+          "error"
+        );
+        return;
+      }
     }
 
     if (!window.confirm(t("legacy.confirm_delete_admin", "هل أنت متأكد من حذف هذا المشرف؟"))) {
@@ -318,7 +378,7 @@ export default function AdminManagement() {
         shouldFallback
       );
 
-      setAdmins((prev) => prev.filter((a) => a.id !== id));
+      setAdmins((prev) => prev.filter((a) => String(a.id) !== String(id)));
       notify(t("legacy.admin_deleted", "Admin deleted successfully."));
     } catch (error) {
       notify(getApiErrorMessage(error, "Failed to delete admin"), "error");

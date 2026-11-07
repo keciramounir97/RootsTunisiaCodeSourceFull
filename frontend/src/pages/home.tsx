@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   BookOpen,
@@ -29,6 +29,7 @@ import TunisiaGovernoratesMap from "../components/TunisiaGovernoratesMap";
 import SEO from "../components/SEO";
 import { useTranslation } from "../context/TranslationContext";
 import { api } from "../api/client";
+import { useSiteContent } from "../hooks/useSiteContent";
 import { getApiRoot } from "../api/helpers";
 
 function resolveBannerUrl(pathOrUrl?: string | null) {
@@ -142,7 +143,28 @@ export default function Home() {
   const [activeEraIndex, setActiveEraIndex] = useState(5); // Default to Ottoman & Beylical era
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [dbTrees, setDbTrees] = useState<any[]>([]);
-  const [activeSlides, setActiveSlides] = useState<any[]>(slides);
+  const [bannerSlides, setBannerSlides] = useState<any[]>(slides);
+  const { getText, getImage } = useSiteContent();
+
+  // Public Content Manager overrides (fall back to hardcoded/i18n defaults when unset).
+  const heroImageOverride = getImage("home", "hero", "image");
+  const activeSlides = useMemo(
+    () =>
+      heroImageOverride
+        ? [{ image: heroImageOverride, label: "", labelKey: "" }]
+        : bannerSlides,
+    [heroImageOverride, bannerSlides],
+  );
+  const heroBadge = getText("home", "hero", "eyebrow") ?? t("site_badge");
+  const heroTitle = getText("home", "hero", "title") ?? t("hero_title");
+  const heroSubtitle = getText("home", "hero", "subtitle") ?? t("hero_subtitle");
+  const preserveTitle = getText("home", "preserve", "title") ?? t("preserve_lineage_title");
+  const preserveDesc = getText("home", "preserve", "description") ?? t("preserve_lineage_desc");
+  const preserveImage = getImage("home", "preserve", "image") ?? eljem;
+  const whyTitle = getText("home", "why", "title") ?? t("why_roots_tunisia_title");
+  const whyIntro = getText("home", "why", "intro") ?? t("why_roots_tunisia_intro");
+  const ctaTitle = getText("home", "cta", "title") ?? t("cta_preserve_history");
+  const ctaDesc = getText("home", "cta", "description") ?? t("cta_desc");
 
   useEffect(() => {
     (async () => {
@@ -150,7 +172,7 @@ export default function Home() {
         const { data } = await api.get("/banner-slides");
         const list = Array.isArray(data?.data) ? data.data : Array.isArray(data) ? data : [];
         if (list.length > 0) {
-          setActiveSlides(
+          setBannerSlides(
             list.map((row: any) => ({
               image: resolveBannerUrl(row.imagePath || row.image_path || row.imageUrl || row.image_url),
               label: String(row.caption || row.title || "").trim(),
@@ -159,16 +181,17 @@ export default function Home() {
           );
         } else {
           // No active banners yet — keep branded defaults until admin checks slides
-          setActiveSlides(slides);
+          setBannerSlides(slides);
         }
       } catch {
-        setActiveSlides(slides);
+        setBannerSlides(slides);
       }
     })();
   }, []);
 
   useEffect(() => {
     if (!activeSlides.length) return;
+    setActive(0);
     const id = setInterval(() => setActive((i) => (i + 1) % activeSlides.length), 6000);
     return () => clearInterval(id);
   }, [activeSlides.length]);
@@ -268,14 +291,14 @@ export default function Home() {
 
           <div className="relative z-10 flex w-full flex-col items-center justify-center px-5 py-12 sm:px-16 sm:py-16 text-center">
             <p className="eyebrow !text-[#f5c857] text-shadow-dark tracking-widest font-bold">
-              {t("site_badge")}
+              {heroBadge}
             </p>
             <h1 className="display-xl mt-4 max-w-4xl !text-white font-bold hero-title-shadow text-shadow-glow tracking-wide">
-              {t("hero_title")}
+              {heroTitle}
             </h1>
             <div className="gold-rule mt-5 w-32 mx-auto shadow-lg" />
             <p className="mt-5 max-w-2xl text-sm leading-relaxed !text-white drop-shadow-md font-medium sm:text-base">
-              {t("hero_subtitle")}
+              {heroSubtitle}
             </p>
             <div className="mt-8 flex w-full sm:w-auto flex-col sm:flex-row flex-wrap justify-center gap-3">
               <Link to="/sources" className="btn-base btn-gold w-full sm:w-auto min-w-[200px]">
@@ -344,7 +367,7 @@ export default function Home() {
       <Section>
         <div className="frame-gold relative overflow-hidden rounded-md shadow-xl min-h-[320px] sm:min-h-[360px] flex items-center justify-center">
           <img
-            src={eljem}
+            src={preserveImage}
             alt={t("eljem_colosseum_alt")}
             loading="lazy"
             width={1600}
@@ -355,10 +378,10 @@ export default function Home() {
           <div className="relative z-10 flex w-full flex-col items-center justify-center px-5 py-12 sm:px-12 sm:py-16 text-center">
             <p className="eyebrow !text-[#f5c857] text-shadow-dark font-bold">{t("site_title")}</p>
             <h2 className="display-lg mt-3 max-w-3xl !text-white font-semibold hero-title-shadow">
-              {t("preserve_lineage_title")}
+              {preserveTitle}
             </h2>
             <p className="mt-4 max-w-2xl text-sm !text-white/95 leading-relaxed font-medium drop-shadow sm:text-base">
-              {t("preserve_lineage_desc")}
+              {preserveDesc}
             </p>
             <div className="mt-6 flex w-full sm:w-auto flex-col sm:flex-row flex-wrap justify-center gap-3">
               <Link to="/gallery/trees" className="btn-base btn-gold w-full sm:w-auto min-w-[200px]">
@@ -377,8 +400,8 @@ export default function Home() {
         <SectionHeading
           center={true}
           eyebrow={t("why_roots_tunisia_eyebrow")}
-          title={t("why_roots_tunisia_title")}
-          intro={t("why_roots_tunisia_intro")}
+          title={whyTitle}
+          intro={whyIntro}
         />
 
         {/* 3 Symmetric Info Cards */}
@@ -777,10 +800,10 @@ export default function Home() {
           <div className="zellige absolute inset-0 opacity-25 pointer-events-none" />
           <p className="eyebrow relative z-10">{t("start_your_journey")}</p>
           <h2 className="display-lg relative z-10 mt-3 text-[var(--foreground)]">
-            {t("cta_preserve_history")}
+            {ctaTitle}
           </h2>
           <p className="relative z-10 mx-auto mt-4 max-w-xl text-sm leading-relaxed text-[var(--muted-foreground)]">
-            {t("cta_desc")}
+            {ctaDesc}
           </p>
           <div className="relative z-10 mt-8 flex flex-col sm:flex-row flex-wrap justify-center gap-3 sm:gap-4">
             <Link to="/signup" className="btn-base btn-red px-8 py-3.5 w-full sm:w-auto min-w-[200px]">

@@ -153,15 +153,50 @@ export class SubscriptionsController {
         return this.service.listAllPayments(status);
     }
 
+    @Get('admin/subscription-payments/flagged')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(1, 3)
+    async listFlaggedPayments() {
+        return this.service.listFlaggedPayments();
+    }
+
     @Patch('admin/subscription-payments/:id/review')
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles(3)
     async reviewPayment(
         @Param('id', ParseIntPipe) id: number,
-        @Body() body: { decision: 'approved' | 'rejected'; admin_message?: string },
+        @Body()
+        body: {
+            decision: 'approved' | 'rejected';
+            admin_message?: string;
+            flag?: 'refund' | 'false_payment' | 'fraudulent' | null;
+        },
         @Request() req,
     ) {
-        return this.service.reviewPayment(id, req.user.id, body.decision, body.admin_message);
+        return this.service.reviewPayment(
+            id,
+            req.user.id,
+            body.decision,
+            body.admin_message,
+            body.flag,
+        );
+    }
+
+    @Patch('admin/subscription-payments/:id/flag')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(3)
+    async setPaymentFlag(
+        @Param('id', ParseIntPipe) id: number,
+        @Body() body: { flag: 'refund' | 'false_payment' | 'fraudulent' | null },
+    ) {
+        return this.service.setPaymentFlag(id, body.flag ?? null);
+    }
+
+    @Delete('admin/subscription-payments/:id')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(3)
+    async deletePayment(@Param('id', ParseIntPipe) id: number) {
+        return this.service.deletePayment(id);
     }
 
     @Patch('admin/users/:userId/subscription')

@@ -1,821 +1,841 @@
-import { useState, useEffect, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  AlertCircle,
+  Bold,
+  BookOpen,
+  ExternalLink,
+  FileText,
+  Globe,
+  Home as HomeIcon,
+  Image as ImageIcon,
+  Info,
+  Italic,
+  Layers,
+  Layout,
+  Link2,
+  List as ListIcon,
+  Loader2,
+  Mail,
+  Mic,
+  Plus,
+  RefreshCw,
+  RotateCcw,
+  Save,
+  Search,
+  Trash2,
+  Upload,
+  X,
+} from "lucide-react";
 import { useTranslation } from "../../context/TranslationContext";
 import { api } from "../../api/client";
-import {
-  Layout,
-  Save,
-  Eye,
-  CheckCircle2,
-  Image as ImageIcon,
-  Globe,
-  Upload,
-  ArrowRight,
-  ArrowLeft,
-  ChevronRight,
-  ChevronLeft,
-  Sparkles,
-  Layers,
-  FileText,
-  Sliders,
-  Check,
-  RefreshCw,
-} from "lucide-react";
+import { getApiErrorMessage } from "../../api/helpers";
+import { resolveSiteImageUrl } from "../../hooks/useSiteImages";
+import { refreshSiteContent } from "../../hooks/useSiteContent";
 import Toast from "../../components/Toast";
 
-interface SectionContent {
-  badge: string;
-  title: string;
-  subtitle: string;
-  description: string;
-  primaryBtnText: string;
-  primaryBtnLink: string;
-  secondaryBtnText?: string;
-  secondaryBtnLink?: string;
-  imageUrl?: string;
-  stat1Number?: string;
-  stat1Label?: string;
-  stat2Number?: string;
-  stat2Label?: string;
-  stat3Number?: string;
-  stat3Label?: string;
+/* ------------------------------------------------------------------ */
+/* Content model (mirrors backend site-content.model.ts)               */
+/* ------------------------------------------------------------------ */
+
+type FieldType = "text" | "html" | "image" | "list";
+type FieldValue = string | string[];
+
+interface ContentField {
+  key: string;
+  type: FieldType;
+  label: string;
+  hint?: string;
+  value: FieldValue;
+  translations?: Record<string, FieldValue>;
+}
+interface ContentSection {
+  id: string;
+  label: string;
+  description?: string;
+  fields: ContentField[];
+}
+interface ContentPage {
+  id: string;
+  label: string;
+  description?: string;
+  path?: string;
+  sections: ContentSection[];
+}
+interface SiteContentDocument {
+  version: number;
+  updatedAt: string | null;
+  updatedBy: number | null;
+  pages: ContentPage[];
 }
 
+const DEFAULT_LANG = "default";
 const LANGUAGES = [
-  { code: "ar", label: "العربية (Arabic)", flag: "🇹🇳", dir: "rtl" },
-  { code: "fr", label: "Français (French)", flag: "🇫🇷", dir: "ltr" },
-  { code: "en", label: "English (English)", flag: "🇬🇧", dir: "ltr" },
-  { code: "es", label: "Español (Spanish)", flag: "🇪🇸", dir: "ltr" },
-  { code: "it", label: "Italiano (Italian)", flag: "🇮🇹", dir: "ltr" },
-  { code: "mt", label: "Malti (Maltese)", flag: "🇲🇹", dir: "ltr" },
+  { code: DEFAULT_LANG, label: "All languages", short: "ALL", dir: "ltr" as const },
+  { code: "fr", label: "Français", short: "FR", dir: "ltr" as const },
+  { code: "en", label: "English", short: "EN", dir: "ltr" as const },
+  { code: "ar", label: "العربية", short: "AR", dir: "rtl" as const },
+  { code: "es", label: "Español", short: "ES", dir: "ltr" as const },
+  { code: "it", label: "Italiano", short: "IT", dir: "ltr" as const },
+  { code: "mt", label: "Malti", short: "MT", dir: "ltr" as const },
 ];
 
-const PAGES_CONFIG = [
-  { id: "home", label: "الصفحة الرئيسية (Home)", path: "/", icon: "🏠", desc: "الواجهة الكبرى، الإحصائيات، دعوة الانضمام" },
-  { id: "about", label: "عن المنصة ورسالتها (About Us)", path: "/about", icon: "🏛️", desc: "الرؤية التاريخية، الأهداف الأكاديمية" },
-  { id: "periods", label: "الحقب التاريخية (Periods)", path: "/periods", icon: "⏳", desc: "الخط الزمني للحضارات من قرطاج للمعاصر" },
-  { id: "sources", label: "المصادر والأرشيف (Sources & Archives)", path: "/sources", icon: "📜", desc: "سجلات العدول، دفاتر الباي، الحبوب" },
-  { id: "gallery", label: "المعرض التراثي (Gallery Hub)", path: "/gallery", icon: "🖼️", desc: "المجموعات التراثية، الصور التاريخية" },
-  { id: "subscriptions", label: "الباقات والاشتراكات (Subscriptions)", path: "/subscriptions", icon: "👑", desc: "خطط العضوية، الضمانات، الأسئلة الشائعة" },
-  { id: "contact", label: "اتصل بنا وبيانات التواصل (Contact)", path: "/contact", icon: "📞", desc: "بيانات الهاتف، نموذج الرسائل، الدعم" },
-  { id: "footer", label: "تذييل الموقع وروابط التواصل (Footer)", path: "/", icon: "⚓", desc: "النبذة التوثيقية، الروابط السريعة، الحقوق" },
-];
-
-const SECTIONS_CONFIG: Record<string, { id: string; label: string; desc: string; hasImage: boolean }[]> = {
-  home: [
-    { id: "hero", label: "الواجهة الرئيسية والافتتاحية (Hero Banner)", desc: "العنوان الرئيسي الأول، الصورة الكبرى، زر البحث", hasImage: true },
-    { id: "intro", label: "المقدمة والرسالة التراثية (Intro & Mission)", desc: "فقرة التعريف بمنصة جذور تونس وأهدافها", hasImage: true },
-    { id: "stats", label: "الإحصائيات والأرقام (Stats Counters)", desc: "أرقام السجلات الموثقة والولايات والأشجار", hasImage: false },
-    { id: "cta", label: "دعوة للانضمام والبحث (Call To Action)", desc: "شريط الدعوة لإنشاء شجرة العائلة", hasImage: true },
-  ],
-  about: [
-    { id: "hero", label: "شعار الصفحة والافتتاحية (About Hero)", desc: "رأس صفحة من نحن وخلفيتها التراثية", hasImage: true },
-    { id: "vision", label: "الرؤية والهدف الأكاديمي (Vision & Goals)", desc: "رسالة الحفاظ على الهوية والأنساب التونسية", hasImage: true },
-    { id: "values", label: "المبادئ التوثيقية والنزاهة (Archival Principles)", desc: "منهجية الفحص والمصادقة الصارمة", hasImage: false },
-  ],
-  periods: [
-    { id: "hero", label: "مقدمة الحقب التاريخية (Periods Hero)", desc: "عنوان واستكشاف التسلسل الزمني للحضارات", hasImage: true },
-    { id: "timeline", label: "الخط الزمني التفاعلي (Interactive Timeline)", desc: "تفاصيل كل حقبة (القرطاجية، الرومانية، العثمانية...)", hasImage: true },
-  ],
-  sources: [
-    { id: "hero", label: "افتتاحية المصادر وسجلات الأرشيف (Sources Hero)", desc: "عنوان الوصول إلى الوثائق والمخطوطات", hasImage: true },
-    { id: "guide", label: "دليل الاستشارة والبحث الأرشيفي (Consultation Guide)", desc: "خطوات التثبت من السجلات العائلية", hasImage: false },
-  ],
-  gallery: [
-    { id: "hero", label: "واجهة المعرض والأقسام (Gallery Hub Hero)", desc: "رأس المعرض الرقمي للصور والوثائق", hasImage: true },
-    { id: "collections", label: "المجموعات التراثية والصور (Collections Overview)", desc: "أقسام الأرشيف الفوتوغرافي والصوتي والوثائقي", hasImage: true },
-  ],
-  subscriptions: [
-    { id: "hero", label: "رأس صفحة الباقات والأسعار (Tiers Hero & Subtitle)", desc: "العنوان الترويجي لشاشات الخطط والاشتراك", hasImage: false },
-    { id: "guarantee", label: "ضمان الأمان والخصوصية (Security Guarantee)", desc: "بيان حماية البيانات العائلية والشخصية", hasImage: false },
-    { id: "faq", label: "الأسئلة الشائعة للاشتراك (Pricing FAQ)", desc: "إجابات الأسئلة المتكررة حول طرق الدفع والترقية", hasImage: false },
-  ],
-  contact: [
-    { id: "hero", label: "رأس صفحة التواصل (Contact Header)", desc: "افتتاحية صفحة التواصل والدعم المباشر", hasImage: false },
-    { id: "coordinates", label: "بيانات التواصل ورقم الهاتف (+961 36 26 082)", desc: "رقم الدعم الرسمي والبريد وساعات العمل", hasImage: false },
-  ],
-  footer: [
-    { id: "brand", label: "نبذة المنصة في التذييل (Footer Bio)", desc: "نص النبذة المختصرة أسفل كل صفحة", hasImage: false },
-    { id: "copyright", label: "حقوق النشر والشروط (Copyright & Credits)", desc: "سطر الملكية الفكرية والروابط القانونية", hasImage: false },
-  ],
+const PAGE_ICONS: Record<string, typeof Layout> = {
+  home: HomeIcon,
+  about: Info,
+  gallery: ImageIcon,
+  library: BookOpen,
+  audio: Mic,
+  documents: FileText,
+  contact: Mail,
+  research: Search,
 };
 
-const DEFAULT_SECTION_CONTENT: SectionContent = {
-  badge: "ذاكرة تونس الحية عبر العصور",
-  title: "استكشف أصولك التونسية واكتشف تاريخ عائلتك العريق",
-  subtitle: "المنصة الأولى المخصصة للأنساب، السجلات العائلية، والأرشيف التاريخي في تونس والمغرب الكبير.",
-  description: "ابحث في آلاف السجلات التاريخية، ابنِ شجرة عائلتك التفاعلية بصيغة GEDCOM، واستكشف مئات المخطوطات والوثائق الرسمية.",
-  primaryBtnText: "ابدأ البحث الآن",
-  primaryBtnLink: "/gallery",
-  secondaryBtnText: "اكتشف باقات الاشتراك",
-  secondaryBtnLink: "/subscriptions",
-  imageUrl: "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=1200&q=80",
-  stat1Number: "10,000+",
-  stat1Label: "سجل ووثيقة تاريخية",
-  stat2Number: "24",
-  stat2Label: "ولاية مغطاة بالكامل",
-  stat3Number: "3,000+",
-  stat3Label: "شجرة عائلة موثقة",
+const inputClass =
+  "w-full px-3 py-2 rounded-xl border border-[var(--border)] bg-[var(--background)] text-sm text-[var(--foreground)] outline-none transition focus:border-[var(--gold)] focus:ring-2 focus:ring-[var(--gold)]/25 placeholder:text-[var(--muted-foreground)]/70";
+const ghostBtn =
+  "px-3 py-1.5 rounded-lg border border-[var(--border)] text-xs font-semibold text-[var(--foreground)] hover:border-[var(--gold)] hover:text-[var(--gold)] transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed";
+
+/* ------------------------------------------------------------------ */
+/* Helpers                                                             */
+/* ------------------------------------------------------------------ */
+
+const isEmpty = (value: FieldValue | undefined) =>
+  value === undefined ||
+  (Array.isArray(value) ? value.length === 0 : !String(value).trim());
+
+const emptyFor = (type: FieldType): FieldValue => (type === "list" ? [] : "");
+
+const readValue = (field: ContentField, lang: string): FieldValue =>
+  lang === DEFAULT_LANG ? field.value : field.translations?.[lang] ?? emptyFor(field.type);
+
+const isCustomised = (field: ContentField) =>
+  !isEmpty(field.value) ||
+  Object.values(field.translations || {}).some((v) => !isEmpty(v));
+
+const withValue = (field: ContentField, lang: string, value: FieldValue): ContentField => {
+  if (lang === DEFAULT_LANG) return { ...field, value };
+  const translations = { ...(field.translations || {}) };
+  // Strict emptiness here so a leading space typed into a translation is not swallowed.
+  const blank = Array.isArray(value) ? value.length === 0 : value === "";
+  if (blank) delete translations[lang];
+  else translations[lang] = value;
+  return { ...field, translations };
 };
+
+const countCustomised = (fields: ContentField[]) => fields.filter(isCustomised).length;
+
+const MULTILINE_KEY = /(subtitle|description|intro|body|caption)/i;
+
+/* ------------------------------------------------------------------ */
+/* Field editors (module-level so inputs never remount while typing)   */
+/* ------------------------------------------------------------------ */
+
+interface FieldEditorProps {
+  field: ContentField;
+  lang: string;
+  dir: "ltr" | "rtl";
+  onChange: (value: FieldValue) => void;
+  onReset: () => void;
+  onUpload: (file: File) => Promise<string | null>;
+  uploading: boolean;
+  t: (key: string, fallback?: string) => string;
+}
+
+function FieldShell({
+  field,
+  lang,
+  children,
+  onReset,
+  t,
+}: {
+  field: ContentField;
+  lang: string;
+  children: React.ReactNode;
+  onReset: () => void;
+  t: FieldEditorProps["t"];
+}) {
+  const custom = isCustomised(field);
+  const hasValueHere = !isEmpty(readValue(field, lang));
+  return (
+    <div className="p-4 rounded-xl border border-[var(--border)] bg-[var(--card)] space-y-2.5">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <label className="text-xs font-bold text-[var(--foreground)] flex items-center gap-2 flex-wrap">
+            <span>{field.label}</span>
+            <span className="px-1.5 py-0.5 rounded-md text-[0.62rem] font-mono uppercase bg-teal-500/10 text-teal-700 dark:text-teal-300 border border-teal-500/25">
+              {field.type}
+            </span>
+            <span
+              className={`px-1.5 py-0.5 rounded-md text-[0.62rem] font-bold border ${
+                custom
+                  ? "bg-[var(--gold)]/15 text-[var(--gold)] border-[var(--gold)]/30"
+                  : "text-[var(--muted-foreground)] border-[var(--border)]"
+              }`}
+            >
+              {custom ? t("cms_customised", "Customised") : t("cms_site_default", "Site default")}
+            </span>
+          </label>
+          {field.hint && (
+            <p className="mt-1 text-[0.7rem] text-[var(--muted-foreground)]">{field.hint}</p>
+          )}
+        </div>
+        {hasValueHere && (
+          <button
+            type="button"
+            onClick={onReset}
+            title={t("cms_reset_field", "Clear override and use the site default")}
+            className="shrink-0 p-1.5 rounded-lg text-[var(--muted-foreground)] hover:text-red-500 hover:bg-red-500/10 transition-colors cursor-pointer"
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+          </button>
+        )}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function TextField({ field, lang, dir, onChange, onReset, t }: FieldEditorProps) {
+  const value = String(readValue(field, lang) ?? "");
+  const fallbackHint =
+    lang !== DEFAULT_LANG && !isEmpty(field.value) ? String(field.value) : undefined;
+  const placeholder =
+    fallbackHint || t("cms_placeholder_default", "Empty — the built-in site text is used");
+  return (
+    <FieldShell field={field} lang={lang} onReset={onReset} t={t}>
+      {MULTILINE_KEY.test(field.key) ? (
+        <textarea
+          rows={3}
+          dir={dir}
+          value={value}
+          placeholder={placeholder}
+          onChange={(e) => onChange(e.target.value)}
+          className={`${inputClass} leading-relaxed`}
+        />
+      ) : (
+        <input
+          type="text"
+          dir={dir}
+          value={value}
+          placeholder={placeholder}
+          onChange={(e) => onChange(e.target.value)}
+          className={inputClass}
+        />
+      )}
+    </FieldShell>
+  );
+}
+
+function HtmlField({ field, lang, dir, onChange, onReset, t }: FieldEditorProps) {
+  const ref = useRef<HTMLTextAreaElement | null>(null);
+  const value = String(readValue(field, lang) ?? "");
+
+  const wrap = (open: string, close: string, fallbackText = "text") => {
+    const el = ref.current;
+    if (!el) return;
+    const { selectionStart: start, selectionEnd: end } = el;
+    const selected = value.slice(start, end) || fallbackText;
+    const next = `${value.slice(0, start)}${open}${selected}${close}${value.slice(end)}`;
+    onChange(next);
+    requestAnimationFrame(() => {
+      el.focus();
+      el.setSelectionRange(start + open.length, start + open.length + selected.length);
+    });
+  };
+
+  const addLink = () => {
+    const href = window.prompt(t("cms_link_prompt", "Link URL (https://…)"), "https://");
+    if (!href) return;
+    wrap(`<a href="${href.replace(/"/g, "&quot;")}">`, "</a>", "link");
+  };
+
+  const tools = [
+    { icon: Bold, label: "Bold", run: () => wrap("<strong>", "</strong>") },
+    { icon: Italic, label: "Italic", run: () => wrap("<em>", "</em>") },
+    { icon: ListIcon, label: "List", run: () => wrap("<ul>\n  <li>", "</li>\n</ul>", "item") },
+    { icon: Link2, label: "Link", run: addLink },
+  ];
+
+  return (
+    <FieldShell field={field} lang={lang} onReset={onReset} t={t}>
+      <div className="flex items-center gap-1.5 flex-wrap">
+        {tools.map(({ icon: Icon, label, run }) => (
+          <button
+            key={label}
+            type="button"
+            title={label}
+            aria-label={label}
+            onClick={run}
+            className="p-1.5 rounded-lg border border-[var(--border)] text-[var(--foreground)] hover:border-[var(--gold)] hover:text-[var(--gold)] transition-colors cursor-pointer"
+          >
+            <Icon className="w-3.5 h-3.5" />
+          </button>
+        ))}
+        <button
+          type="button"
+          onClick={() => wrap("<p>", "</p>", "paragraph")}
+          className="px-2 py-1 rounded-lg border border-[var(--border)] text-[0.7rem] font-mono text-[var(--foreground)] hover:border-[var(--gold)] hover:text-[var(--gold)] transition-colors cursor-pointer"
+        >
+          &lt;p&gt;
+        </button>
+        <span className="text-[0.68rem] text-[var(--muted-foreground)] ms-auto">
+          {t("cms_html_sanitized", "Unsafe markup is removed on save")}
+        </span>
+      </div>
+      <textarea
+        ref={ref}
+        rows={8}
+        dir={dir}
+        value={value}
+        placeholder={t("cms_placeholder_default", "Empty — the built-in site text is used")}
+        onChange={(e) => onChange(e.target.value)}
+        className={`${inputClass} font-mono text-xs leading-relaxed`}
+      />
+    </FieldShell>
+  );
+}
+
+function ImageField({ field, lang, onChange, onReset, onUpload, uploading, t }: FieldEditorProps) {
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const value = String(field.value ?? "");
+  const preview = resolveSiteImageUrl(value);
+  const shared = lang !== DEFAULT_LANG;
+
+  const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (inputRef.current) inputRef.current.value = "";
+    if (!file) return;
+    const url = await onUpload(file);
+    if (url) onChange(url);
+  };
+
+  return (
+    <FieldShell field={field} lang={DEFAULT_LANG} onReset={onReset} t={t}>
+      {shared && (
+        <p className="text-[0.7rem] text-[var(--muted-foreground)] flex items-center gap-1.5">
+          <Globe className="w-3 h-3" />
+          {t("cms_image_shared", "Images are shared by all languages — edit under “All languages”.")}
+        </p>
+      )}
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="w-full sm:w-44 aspect-video shrink-0 rounded-lg overflow-hidden border border-dashed border-[var(--gold)]/40 bg-black/5 dark:bg-white/5 flex items-center justify-center">
+          {preview ? (
+            <img src={preview} alt={field.label} className="w-full h-full object-cover" />
+          ) : (
+            <ImageIcon className="w-7 h-7 text-[var(--muted-foreground)]" />
+          )}
+        </div>
+        <div className="flex-1 space-y-2 min-w-0">
+          <input
+            ref={inputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/gif,image/webp"
+            className="hidden"
+            onChange={handleFile}
+          />
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              disabled={shared || uploading}
+              onClick={() => inputRef.current?.click()}
+              className="px-3 py-1.5 rounded-lg bg-[var(--gold)] text-black text-xs font-bold flex items-center gap-1.5 shadow-sm hover:opacity-95 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {uploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
+              {value ? t("cms_replace_image", "Replace image") : t("cms_upload_image", "Upload image")}
+            </button>
+            {value && !shared && (
+              <button type="button" onClick={() => onChange("")} className={ghostBtn}>
+                <Trash2 className="w-3.5 h-3.5" />
+                {t("cms_remove_image", "Remove")}
+              </button>
+            )}
+          </div>
+          <input
+            type="text"
+            dir="ltr"
+            disabled={shared}
+            value={value}
+            placeholder="/uploads/site-content/… or https://…"
+            onChange={(e) => onChange(e.target.value)}
+            className={`${inputClass} font-mono text-xs disabled:opacity-60`}
+          />
+        </div>
+      </div>
+    </FieldShell>
+  );
+}
+
+function ListField({ field, lang, dir, onChange, onReset, t }: FieldEditorProps) {
+  const raw = readValue(field, lang);
+  const items = Array.isArray(raw) ? raw : [];
+  // Keep blank rows editable locally; the server drops empty items on save.
+  const setItem = (index: number, text: string) =>
+    onChange(items.map((item, i) => (i === index ? text : item)));
+  const removeItem = (index: number) => onChange(items.filter((_, i) => i !== index));
+  const defaultItems = Array.isArray(field.value) ? field.value : [];
+
+  return (
+    <FieldShell field={field} lang={lang} onReset={onReset} t={t}>
+      {items.length === 0 && (
+        <p className="text-xs text-[var(--muted-foreground)]">
+          {lang !== DEFAULT_LANG && defaultItems.length > 0
+            ? t("cms_list_uses_default", "Using the “All languages” list.")
+            : t("cms_list_empty", "No items — the built-in list is used.")}
+        </p>
+      )}
+      <div className="space-y-2">
+        {items.map((item, index) => (
+          <div key={index} className="flex items-center gap-2">
+            <span className="w-5 text-center text-[0.68rem] font-mono text-[var(--muted-foreground)]">
+              {index + 1}
+            </span>
+            <input
+              type="text"
+              dir={dir}
+              value={item}
+              onChange={(e) => setItem(index, e.target.value)}
+              className={inputClass}
+            />
+            <button
+              type="button"
+              aria-label={t("cms_remove_item", "Remove item")}
+              onClick={() => removeItem(index)}
+              className="p-1.5 rounded-lg text-[var(--muted-foreground)] hover:text-red-500 hover:bg-red-500/10 cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        ))}
+      </div>
+      <button type="button" onClick={() => onChange([...items, ""])} className={ghostBtn}>
+        <Plus className="w-3.5 h-3.5" />
+        {t("cms_add_item", "Add item")}
+      </button>
+    </FieldShell>
+  );
+}
+
+function FieldEditor(props: FieldEditorProps) {
+  switch (props.field.type) {
+    case "html":
+      return <HtmlField {...props} />;
+    case "image":
+      return <ImageField {...props} />;
+    case "list":
+      return <ListField {...props} />;
+    default:
+      return <TextField {...props} />;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Page                                                                */
+/* ------------------------------------------------------------------ */
 
 export default function ContentManager() {
   const { t, isRtl } = useTranslation();
 
-  // Navigation steps: 1 = Page selection, 2 = Section selection, 3 = Language selection, 4 = Content Editor
-  const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
-
-  const [selectedPage, setSelectedPage] = useState<string>("home");
-  const [selectedSection, setSelectedSection] = useState<string>("hero");
-  const [selectedLang, setSelectedLang] = useState<string>("ar");
-
-  const [contentStore, setContentStore] = useState<Record<string, SectionContent>>({});
+  const [pages, setPages] = useState<ContentPage[]>([]);
+  const [baseline, setBaseline] = useState<string>("[]");
+  const [updatedAt, setUpdatedAt] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-  const [showLivePreview, setShowLivePreview] = useState(true);
-  const [uploadingImage, setUploadingImage] = useState(false);
+  const [uploadingKey, setUploadingKey] = useState<string | null>(null);
+
+  const [pageId, setPageId] = useState<string>("home");
+  const [sectionId, setSectionId] = useState<string>("");
+  const [lang, setLang] = useState<string>(DEFAULT_LANG);
   const [toast, setToast] = useState<{ message: string; tone: "success" | "error" }>({
     message: "",
     tone: "success",
   });
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  const currentKey = `${selectedPage}_${selectedSection}_${selectedLang}`;
-  const currentContent: SectionContent = contentStore[currentKey] || {
-    ...DEFAULT_SECTION_CONTENT,
-  };
-
-  // Load from API / LocalStorage
+  const notify = useCallback((message: string, tone: "success" | "error" = "success") => {
+    setToast({ message, tone });
+  }, []);
   useEffect(() => {
-    (async () => {
-      try {
-        const res = await api.get("/admin/settings");
-        const sData = res.data?.data || res.data || {};
-        if (sData.public_content_store) {
-          const parsed = typeof sData.public_content_store === "string"
-            ? JSON.parse(sData.public_content_store)
-            : sData.public_content_store;
-          setContentStore(parsed);
-          return;
-        }
-      } catch {}
+    if (!toast.message) return undefined;
+    const id = window.setTimeout(() => setToast((c) => ({ ...c, message: "" })), 4000);
+    return () => window.clearTimeout(id);
+  }, [toast.message]);
 
-      const local = localStorage.getItem("roots_public_content_store");
-      if (local) {
-        try {
-          setContentStore(JSON.parse(local));
-        } catch {}
-      }
-    })();
+  const applyDocument = useCallback((doc: SiteContentDocument) => {
+    setPages(doc.pages);
+    setBaseline(JSON.stringify(doc.pages));
+    setUpdatedAt(doc.updatedAt);
   }, []);
 
-  const updateCurrentContent = (field: keyof SectionContent, value: any) => {
-    setContentStore((prev) => ({
-      ...prev,
-      [currentKey]: {
-        ...(prev[currentKey] || DEFAULT_SECTION_CONTENT),
-        [field]: value,
-      },
-    }));
-  };
+  const load = useCallback(async () => {
+    setLoading(true);
+    setLoadError(null);
+    try {
+      const res = await api.get("/admin/site-content");
+      const doc = (res.data?.data ?? res.data) as SiteContentDocument;
+      if (!doc || !Array.isArray(doc.pages)) throw new Error("Unexpected response");
+      applyDocument(doc);
+    } catch (err) {
+      setLoadError(
+        getApiErrorMessage(err, t("cms_load_failed", "Could not load site content.")),
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, [applyDocument, t]);
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  useEffect(() => {
+    void load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-    setUploadingImage(true);
-    const reader = new FileReader();
-    reader.onload = () => {
-      const base64 = reader.result as string;
-      updateCurrentContent("imageUrl", base64);
-      setUploadingImage(false);
-      setToast({
-        message: t("image_upload_success", "تم رفع الصورة بنجاح وتعيينها لهذا القسم!"),
-        tone: "success",
-      });
-      if (fileInputRef.current) fileInputRef.current.value = "";
+  const dirty = useMemo(() => JSON.stringify(pages) !== baseline, [pages, baseline]);
+
+  useEffect(() => {
+    if (!dirty) return undefined;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "";
     };
-    reader.readAsDataURL(file);
-  };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [dirty]);
+
+  const activePage = pages.find((p) => p.id === pageId) || pages[0];
+  const activeSection =
+    activePage?.sections.find((s) => s.id === sectionId) || activePage?.sections[0];
+  const activeLang = LANGUAGES.find((l) => l.code === lang) || LANGUAGES[0];
+
+  const updateField = useCallback(
+    (page: string, section: string, key: string, update: (f: ContentField) => ContentField) => {
+      setPages((prev) =>
+        prev.map((p) =>
+          p.id !== page
+            ? p
+            : {
+                ...p,
+                sections: p.sections.map((s) =>
+                  s.id !== section
+                    ? s
+                    : { ...s, fields: s.fields.map((f) => (f.key === key ? update(f) : f)) },
+                ),
+              },
+        ),
+      );
+    },
+    [],
+  );
+
+  const handleUpload = useCallback(
+    async (file: File, key: string): Promise<string | null> => {
+      setUploadingKey(key);
+      try {
+        const form = new FormData();
+        form.append("image", file);
+        const res = await api.post("/admin/site-content/upload", form);
+        const data = res.data?.data ?? res.data;
+        if (!data?.url) throw new Error("Upload returned no URL");
+        notify(t("cms_upload_ok", "Image uploaded. Save to publish it."));
+        return String(data.url);
+      } catch (err) {
+        notify(getApiErrorMessage(err, t("cms_upload_failed", "Image upload failed.")), "error");
+        return null;
+      } finally {
+        setUploadingKey(null);
+      }
+    },
+    [notify, t],
+  );
 
   const handleSave = async () => {
     setSaving(true);
     try {
-      try {
-        await api.post("/admin/settings", {
-          key: "public_content_store",
-          value: JSON.stringify(contentStore),
-        });
-      } catch {
-        await api.put("/settings", {
-          public_content_store: contentStore,
-        });
-      }
-
-      localStorage.setItem("roots_public_content_store", JSON.stringify(contentStore));
-      setToast({
-        message: t(
-          "content_saved_success",
-          `تم حفظ ونشر تعديلات المحتوى بنجاح لجميع اللغات والصفحات!`
-        ),
-        tone: "success",
-      });
-    } catch {
-      localStorage.setItem("roots_public_content_store", JSON.stringify(contentStore));
-      setToast({
-        message: t(
-          "content_saved_cached",
-          "تم حفظ التعديلات بنجاح محلياً وتحديث الواجهة!"
-        ),
-        tone: "success",
-      });
+      const res = await api.put("/admin/site-content", { pages });
+      const doc = (res.data?.data ?? res.data) as SiteContentDocument;
+      if (!doc || !Array.isArray(doc.pages)) throw new Error("Unexpected response");
+      applyDocument(doc);
+      void refreshSiteContent();
+      notify(t("cms_saved", "Content saved and published."));
+    } catch (err) {
+      notify(getApiErrorMessage(err, t("cms_save_failed", "Saving failed — nothing was published.")), "error");
     } finally {
       setSaving(false);
     }
   };
 
-  const activePageObj = PAGES_CONFIG.find((p) => p.id === selectedPage) || PAGES_CONFIG[0];
-  const activeSections = SECTIONS_CONFIG[selectedPage] || [];
-  const activeSectionObj = activeSections.find((s) => s.id === selectedSection) || activeSections[0];
-  const activeLangObj = LANGUAGES.find((l) => l.code === selectedLang) || LANGUAGES[0];
+  const handleDiscard = () => {
+    try {
+      setPages(JSON.parse(baseline));
+    } catch {
+      void load();
+    }
+  };
+
+  const totalCustomised = useMemo(
+    () => pages.reduce((n, p) => n + p.sections.reduce((m, s) => m + countCustomised(s.fields), 0), 0),
+    [pages],
+  );
+
+  /* ---------------------------- render ----------------------------- */
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center gap-2 py-24 text-sm text-[var(--muted-foreground)]">
+        <Loader2 className="w-5 h-5 animate-spin text-[var(--gold)]" />
+        {t("cms_loading", "Loading site content…")}
+      </div>
+    );
+  }
+
+  if (loadError || !activePage) {
+    return (
+      <div className="max-w-md mx-auto py-20 text-center space-y-4">
+        <AlertCircle className="w-10 h-10 mx-auto text-red-500" />
+        <p className="text-sm text-[var(--foreground)]">{loadError || "No content available."}</p>
+        <button type="button" onClick={() => void load()} className={`${ghostBtn} mx-auto`}>
+          <RefreshCw className="w-3.5 h-3.5" />
+          {t("cms_retry", "Retry")}
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div dir={isRtl ? "rtl" : "ltr"} className="space-y-6 text-start pb-20">
-      {toast.message && (
-        <Toast
-          message={toast.message}
-          tone={toast.tone}
-          onClose={() => setToast({ message: "", tone: "success" })}
-        />
-      )}
+      {toast.message && <Toast message={toast.message} tone={toast.tone} />}
 
-      {/* Header Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[var(--gold)]/20">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <div className="p-2.5 rounded-xl bg-[var(--gold)]/20 text-[var(--gold)] border border-[var(--gold)]/30">
-              <Layout className="w-6 h-6" />
-            </div>
-            <div>
-              <h1 className="font-display text-2xl font-bold text-[var(--foreground)]">
-                {t("content_manager_title", "إدارة وتعديل محتوى الموقع الكامل (Full Content CMS)")}
-              </h1>
-              <p className="text-xs text-[var(--muted-foreground)]">
-                {t(
-                  "content_manager_subtitle",
-                  "تحكم كامل في نصوص، صور، روابط، وأزرار كافة الصفحات بجميع اللغات الست مع المعاينة الفورية"
-                )}
-              </p>
-            </div>
+      {/* Header */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-[var(--gold)]/20">
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 rounded-xl bg-[var(--gold)]/20 text-[var(--gold)] border border-[var(--gold)]/30">
+            <Layout className="w-6 h-6" />
+          </div>
+          <div>
+            <h1 className="font-display text-2xl font-bold text-[var(--foreground)]">
+              {t("cms_title", "Public Content Manager")}
+            </h1>
+            <p className="text-xs text-[var(--muted-foreground)]">
+              {t(
+                "cms_subtitle",
+                "Edit headings, rich text, lists and images of the public pages. Empty fields keep the built-in text.",
+              )}
+            </p>
           </div>
         </div>
 
-        {step === 4 && (
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setShowLivePreview(!showLivePreview)}
-              className="px-3.5 py-2 rounded-xl border border-[var(--border)] hover:border-[var(--gold)] text-xs font-semibold text-[var(--foreground)] flex items-center gap-1.5 transition-colors cursor-pointer"
-            >
-              <Eye className="w-4 h-4 text-[var(--gold)]" />
-              <span>{showLivePreview ? t("hide_preview", "إخفاء المعاينة") : t("show_preview", "إظهار المعاينة")}</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={handleSave}
-              disabled={saving}
-              className="px-4 py-2 rounded-xl bg-gradient-to-r from-[var(--gold)] to-amber-600 text-black text-xs font-bold flex items-center gap-1.5 shadow-md hover:opacity-95 transition-all cursor-pointer"
-            >
-              <Save className={`w-4 h-4 ${saving ? "animate-spin" : ""}`} />
-              <span>{t("save_all_content", "حفظ ونشر التعديلات")}</span>
-            </button>
-          </div>
-        )}
-      </div>
-
-      {/* Stepped Breadcrumb Tracker */}
-      <div className="p-3.5 rounded-2xl border border-[var(--border)] bg-[var(--card)] shadow-sm flex items-center justify-between flex-wrap gap-2 text-xs">
-        <div className="flex items-center gap-2 flex-wrap font-medium">
-          <button
-            onClick={() => setStep(1)}
-            className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 ${
-              step === 1
-                ? "bg-[var(--gold)] text-black font-bold shadow-sm"
-                : "text-[var(--foreground)] hover:bg-black/5 dark:hover:bg-white/5"
-            }`}
-          >
-            <span>1. {t("choose_page", "الصفحة")}:</span>
-            <strong className="underline">{activePageObj.label.split(" ")[0]}</strong>
-          </button>
-
-          {isRtl ? <ChevronLeft className="w-4 h-4 text-[var(--muted-foreground)]" /> : <ChevronRight className="w-4 h-4 text-[var(--muted-foreground)]" />}
-
-          <button
-            onClick={() => setStep(2)}
-            disabled={step < 2}
-            className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 ${
-              step === 2
-                ? "bg-[var(--gold)] text-black font-bold shadow-sm"
-                : step > 2
-                ? "text-[var(--foreground)] hover:bg-black/5 dark:hover:bg-white/5"
-                : "opacity-40 cursor-not-allowed"
-            }`}
-          >
-            <span>2. {t("choose_section", "القسم")}:</span>
-            <strong className="underline">{activeSectionObj?.label ? activeSectionObj.label.split(" ")[0] : ""}</strong>
-          </button>
-
-          {isRtl ? <ChevronLeft className="w-4 h-4 text-[var(--muted-foreground)]" /> : <ChevronRight className="w-4 h-4 text-[var(--muted-foreground)]" />}
-
-          <button
-            onClick={() => setStep(3)}
-            disabled={step < 3}
-            className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 ${
-              step === 3
-                ? "bg-[var(--gold)] text-black font-bold shadow-sm"
-                : step > 3
-                ? "text-[var(--foreground)] hover:bg-black/5 dark:hover:bg-white/5"
-                : "opacity-40 cursor-not-allowed"
-            }`}
-          >
-            <span>3. {t("choose_language", "اللغة")}:</span>
-            <strong className="underline">{activeLangObj?.flag} {activeLangObj?.label ? activeLangObj.label.split(" ")[0] : ""}</strong>
-          </button>
-
-          {isRtl ? <ChevronLeft className="w-4 h-4 text-[var(--muted-foreground)]" /> : <ChevronRight className="w-4 h-4 text-[var(--muted-foreground)]" />}
-
+        <div className="flex items-center gap-2 flex-wrap">
           <span
-            className={`px-3 py-1.5 rounded-xl ${
-              step === 4
-                ? "bg-emerald-600 text-white font-bold shadow-sm"
-                : "opacity-40"
+            className={`px-2.5 py-1 rounded-full text-[0.7rem] font-bold border ${
+              dirty
+                ? "bg-amber-500/15 text-amber-600 dark:text-amber-300 border-amber-500/30"
+                : "bg-teal-500/10 text-teal-700 dark:text-teal-300 border-teal-500/25"
             }`}
           >
-            4. {t("edit_inputs_and_image", "تعديل النصوص والصورة")}
+            {dirty
+              ? t("cms_unsaved", "Unsaved changes")
+              : updatedAt
+                ? `${t("cms_saved_at", "Saved")} ${new Date(updatedAt).toLocaleString()}`
+                : t("cms_nothing_saved", "No saved overrides yet")}
           </span>
-        </div>
-
-        {step > 1 && (
+          <span className="text-[0.7rem] text-[var(--muted-foreground)]">
+            {totalCustomised} {t("cms_customised_fields", "customised fields")}
+          </span>
+          <button type="button" onClick={handleDiscard} disabled={!dirty || saving} className={ghostBtn}>
+            <RotateCcw className="w-3.5 h-3.5" />
+            {t("cms_discard", "Discard")}
+          </button>
           <button
             type="button"
-            onClick={() => setStep((s) => (s - 1) as any)}
-            className="px-3 py-1 rounded-xl border border-[var(--border)] text-xs text-[var(--muted-foreground)] hover:text-[var(--foreground)] flex items-center gap-1 transition-colors cursor-pointer"
+            onClick={() => void handleSave()}
+            disabled={!dirty || saving}
+            className="px-4 py-2 rounded-xl bg-gradient-to-r from-[var(--gold)] to-amber-600 text-black text-xs font-bold flex items-center gap-1.5 shadow-md hover:opacity-95 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isRtl ? <ArrowRight className="w-3.5 h-3.5" /> : <ArrowLeft className="w-3.5 h-3.5" />}
-            <span>{t("back_step", "الرجوع للخطوة السابقة")}</span>
+            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+            {t("cms_save", "Save & publish")}
           </button>
-        )}
+        </div>
       </div>
 
-      {/* STEP 1: Select a Page */}
-      {step === 1 && (
-        <div className="space-y-4">
-          <div className="space-y-1">
-            <h2 className="text-base font-bold text-[var(--foreground)] font-display">
-              1. {t("step1_title", "اختر الصفحة المراد تعديل محتواها:")}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* Page + section picker */}
+        <aside className="lg:col-span-4 space-y-5 lg:sticky lg:top-20">
+          <div className="space-y-2">
+            <h2 className="text-[0.7rem] font-bold uppercase tracking-[0.16em] text-[var(--muted-foreground)]">
+              1 · {t("cms_pages", "Pages")}
             </h2>
-            <p className="text-xs text-[var(--muted-foreground)]">
-              {t("step1_subtitle", "انقر على أي صفحة لعرض قائمة كافة الأقسام التابعة لها")}
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {PAGES_CONFIG.map((pg) => {
-              const isSelected = selectedPage === pg.id;
-              const sectionsCount = SECTIONS_CONFIG[pg.id]?.length || 0;
-              return (
-                <div
-                  key={pg.id}
-                  onClick={() => {
-                    setSelectedPage(pg.id);
-                    const firstSec = SECTIONS_CONFIG[pg.id]?.[0]?.id || "hero";
-                    setSelectedSection(firstSec);
-                    setStep(2); // Automatically advance to Step 2
-                  }}
-                  className={`p-5 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between shadow-sm relative overflow-hidden group ${
-                    isSelected
-                      ? "border-[var(--gold)] bg-[var(--gold)]/10 ring-2 ring-[var(--gold)]/30"
-                      : "border-[var(--border)] bg-[var(--card)] hover:border-[var(--gold)]/60 hover:shadow-md"
-                  }`}
-                >
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-3xl">{pg.icon}</span>
-                      <span className="px-2.5 py-0.5 rounded-full text-[0.7rem] font-bold bg-[var(--gold)]/15 text-[var(--gold)] border border-[var(--gold)]/25">
-                        {sectionsCount} {t("sections_count", "أقسام")}
-                      </span>
-                    </div>
-
-                    <div>
-                      <h3 className="text-sm font-bold text-[var(--foreground)] group-hover:text-[var(--gold)] transition-colors">
-                        {pg.label}
-                      </h3>
-                      <p className="text-xs text-[var(--muted-foreground)] mt-1 leading-relaxed">
-                        {pg.desc}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="pt-4 mt-2 border-t border-[var(--border)]/60 flex items-center justify-between text-xs font-bold text-[var(--gold)]">
-                    <span>{t("select_and_view_sections", "عرض الأقسام")}</span>
-                    {isRtl ? <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" /> : <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* STEP 2: List of Every Section in Selected Page */}
-      {step === 2 && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="space-y-1">
-              <h2 className="text-base font-bold text-[var(--foreground)] font-display">
-                2. {t("step2_title", "أقسام صفحة:")} <span className="text-[var(--gold)]">{activePageObj.label}</span>
-              </h2>
-              <p className="text-xs text-[var(--muted-foreground)]">
-                {t("step2_subtitle", "اختر القسم الذي تريد تعديل نصوصه أو صورته")}
-              </p>
-            </div>
-
-            <button
-              onClick={() => setStep(1)}
-              className="px-3 py-1.5 rounded-xl border border-[var(--border)] text-xs text-[var(--muted-foreground)] hover:text-[var(--foreground)] cursor-pointer"
-            >
-              {t("change_page", "تغيير الصفحة")}
-            </button>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {activeSections.map((sec) => {
-              const isSelected = selectedSection === sec.id;
-              return (
-                <div
-                  key={sec.id}
-                  onClick={() => {
-                    setSelectedSection(sec.id);
-                    setStep(3); // Advance to Step 3: Which language?
-                  }}
-                  className={`p-5 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between shadow-sm relative group ${
-                    isSelected
-                      ? "border-[var(--gold)] bg-[var(--gold)]/10 ring-2 ring-[var(--gold)]/30"
-                      : "border-[var(--border)] bg-[var(--card)] hover:border-[var(--gold)]/60 hover:shadow-md"
-                  }`}
-                >
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <div className="p-2 rounded-xl bg-[var(--gold)]/20 text-[var(--gold)]">
-                        <Layers className="w-5 h-5" />
-                      </div>
-                      {sec.hasImage && (
-                        <span className="px-2 py-0.5 rounded-md text-[0.68rem] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
-                          <ImageIcon className="w-3 h-3" />
-                          <span>{t("has_image", "يتضمن صورة")}</span>
-                        </span>
-                      )}
-                    </div>
-
-                    <div>
-                      <h3 className="text-sm font-bold text-[var(--foreground)] group-hover:text-[var(--gold)] transition-colors">
-                        {sec.label}
-                      </h3>
-                      <p className="text-xs text-[var(--muted-foreground)] mt-1 leading-relaxed">
-                        {sec.desc}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="pt-4 mt-3 border-t border-[var(--border)]/60 flex items-center justify-between text-xs font-bold text-[var(--gold)]">
-                    <span>{t("select_language_prompt", "اختيار اللغة وتعديل المحتوى")}</span>
-                    {isRtl ? <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" /> : <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* STEP 3: Prompt "Which Language do you want to change?" */}
-      {step === 3 && (
-        <div className="space-y-5 max-w-3xl mx-auto py-6">
-          <div className="text-center space-y-2">
-            <div className="w-14 h-14 rounded-2xl bg-[var(--gold)]/20 text-[var(--gold)] border border-[var(--gold)]/30 flex items-center justify-center mx-auto">
-              <Globe className="w-7 h-7" />
-            </div>
-            <h2 className="text-xl font-bold font-display text-[var(--foreground)]">
-              {t("which_language_question", "أي لغة تريد تعديل محتواها لهذا القسم؟")}
-            </h2>
-            <p className="text-xs text-[var(--muted-foreground)]">
-              {t("section_target_indicator", "القسم المحدد:")} <strong className="text-[var(--gold)]">{activePageObj.label} &gt; {activeSectionObj?.label}</strong>
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 pt-2">
-            {LANGUAGES.map((lang) => {
-              const isSelected = selectedLang === lang.code;
-              return (
-                <div
-                  key={lang.code}
-                  onClick={() => {
-                    setSelectedLang(lang.code);
-                    setStep(4); // Advance to Step 4: Content Inputs & Image
-                  }}
-                  className={`p-5 rounded-2xl border text-center transition-all cursor-pointer space-y-2 shadow-sm group ${
-                    isSelected
-                      ? "border-[var(--gold)] bg-[var(--gold)]/10 ring-2 ring-[var(--gold)]/30 shadow-md"
-                      : "border-[var(--border)] bg-[var(--card)] hover:border-[var(--gold)]/60 hover:scale-102"
-                  }`}
-                >
-                  <span className="text-4xl block">{lang.flag}</span>
-                  <div>
-                    <h3 className="text-sm font-bold text-[var(--foreground)] group-hover:text-[var(--gold)] transition-colors">
-                      {lang.label}
-                    </h3>
-                    <span className="text-[0.68rem] text-[var(--muted-foreground)] uppercase tracking-wider font-mono">
-                      {lang.dir.toUpperCase()} • Code: {lang.code}
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* STEP 4: Content Inputs & Section Image */}
-      {step === 4 && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          {/* Inputs Column */}
-          <div className={`${showLivePreview ? "lg:col-span-7" : "lg:col-span-12"} space-y-5`}>
-            <div className="p-5 rounded-2xl border border-[var(--border)] bg-[var(--card)] shadow-sm space-y-4">
-              {/* Header Info */}
-              <div className="flex items-center justify-between pb-3 border-b border-[var(--border)]">
-                <div>
-                  <h3 className="text-sm font-bold text-[var(--foreground)]">
-                    {activePageObj.label} &gt; {activeSectionObj?.label}
-                  </h3>
-                  <p className="text-[0.7rem] text-[var(--muted-foreground)]">
-                    {t("active_language", "اللغة النشطة:")} <strong className="text-[var(--gold)]">{activeLangObj.flag} {activeLangObj.label}</strong>
-                  </p>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <select
-                    value={selectedLang}
-                    onChange={(e) => setSelectedLang(e.target.value)}
-                    className="px-2.5 py-1 rounded-xl border border-[var(--border)] bg-[var(--background)] text-xs text-[var(--foreground)] font-bold outline-none cursor-pointer"
-                  >
-                    {LANGUAGES.map((l) => (
-                      <option key={l.code} value={l.code}>
-                        {l.flag} {l.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              {/* Section Image Uploader / Changer */}
-              <div className="p-4 rounded-xl border border-[var(--gold)]/30 bg-[var(--gold)]/5 space-y-3">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-bold text-[var(--foreground)] flex items-center gap-1.5">
-                    <ImageIcon className="w-4 h-4 text-[var(--gold)]" />
-                    <span>{t("section_image_prompt", "صورة هذا القسم (تغيير أو رفع صورة جديدة):")}</span>
-                  </label>
-
-                  <input
-                    type="file"
-                    ref={fileInputRef}
-                    onChange={handleImageUpload}
-                    accept="image/*"
-                    className="hidden"
-                  />
+            <div className="grid grid-cols-2 gap-2">
+              {pages.map((page) => {
+                const Icon = PAGE_ICONS[page.id] || Layout;
+                const selected = page.id === activePage.id;
+                const custom = page.sections.reduce((n, s) => n + countCustomised(s.fields), 0);
+                return (
                   <button
+                    key={page.id}
                     type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={uploadingImage}
-                    className="px-3 py-1.5 rounded-lg bg-[var(--gold)] text-black text-xs font-bold flex items-center gap-1 shadow-sm cursor-pointer"
+                    onClick={() => {
+                      setPageId(page.id);
+                      setSectionId("");
+                    }}
+                    aria-pressed={selected}
+                    className={`p-3 rounded-xl border text-start transition-all cursor-pointer ${
+                      selected
+                        ? "border-[var(--gold)] bg-[var(--gold)]/10 ring-2 ring-[var(--gold)]/25"
+                        : "border-[var(--border)] bg-[var(--card)] hover:border-[var(--gold)]/60"
+                    }`}
                   >
-                    <Upload className={`w-3.5 h-3.5 ${uploadingImage ? "animate-bounce" : ""}`} />
-                    <span>{t("upload_image", "رفع صورة من جهازك")}</span>
-                  </button>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  {currentContent.imageUrl ? (
-                    <img
-                      src={currentContent.imageUrl}
-                      alt="Thumbnail"
-                      className="w-16 h-12 object-cover rounded-lg border border-[var(--gold)]/40 shrink-0"
-                    />
-                  ) : (
-                    <div className="w-16 h-12 rounded-lg border border-dashed border-[var(--border)] flex items-center justify-center shrink-0">
-                      <ImageIcon className="w-5 h-5 text-[var(--muted-foreground)]" />
+                    <div className="flex items-center justify-between">
+                      <Icon className={`w-4 h-4 ${selected ? "text-[var(--gold)]" : "text-teal-600 dark:text-teal-300"}`} />
+                      {custom > 0 && (
+                        <span className="px-1.5 rounded-full text-[0.62rem] font-bold bg-[var(--gold)]/20 text-[var(--gold)]">
+                          {custom}
+                        </span>
+                      )}
                     </div>
-                  )}
-                  <input
-                    type="text"
-                    value={currentContent.imageUrl || ""}
-                    onChange={(e) => updateCurrentContent("imageUrl", e.target.value)}
-                    placeholder="https://... رابط الصورة المباشر أو المحملة"
-                    className="w-full px-3 py-2 rounded-xl border border-[var(--border)] bg-[var(--background)] text-xs text-[var(--foreground)] outline-none focus:border-[var(--gold)] font-mono"
-                  />
-                </div>
-              </div>
-
-              {/* Text Inputs */}
-              <div className="grid grid-cols-1 gap-3.5">
-                <div>
-                  <label className="block text-xs font-bold text-[var(--foreground)] mb-1">
-                    {t("badge_text", "النص الترويجي الصغير (Badge / Eyebrow):")}
-                  </label>
-                  <input
-                    type="text"
-                    dir={activeLangObj.dir}
-                    value={currentContent.badge || ""}
-                    onChange={(e) => updateCurrentContent("badge", e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-[var(--border)] bg-[var(--background)] text-xs text-[var(--foreground)] outline-none focus:border-[var(--gold)]"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-[var(--foreground)] mb-1">
-                    {t("main_title", "العنوان الرئيسي (Main Heading):")}
-                  </label>
-                  <input
-                    type="text"
-                    dir={activeLangObj.dir}
-                    value={currentContent.title || ""}
-                    onChange={(e) => updateCurrentContent("title", e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-[var(--border)] bg-[var(--background)] text-xs font-bold text-[var(--foreground)] outline-none focus:border-[var(--gold)]"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-[var(--foreground)] mb-1">
-                    {t("subtitle_text", "العنوان الفرعي (Subtitle / Lead):")}
-                  </label>
-                  <input
-                    type="text"
-                    dir={activeLangObj.dir}
-                    value={currentContent.subtitle || ""}
-                    onChange={(e) => updateCurrentContent("subtitle", e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-[var(--border)] bg-[var(--background)] text-xs text-[var(--foreground)] outline-none focus:border-[var(--gold)]"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-[var(--foreground)] mb-1">
-                    {t("detailed_description", "الوصف التفصيلي (Detailed Body Copy):")}
-                  </label>
-                  <textarea
-                    rows={4}
-                    dir={activeLangObj.dir}
-                    value={currentContent.description || ""}
-                    onChange={(e) => updateCurrentContent("description", e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-[var(--border)] bg-[var(--background)] text-xs text-[var(--foreground)] outline-none focus:border-[var(--gold)] leading-relaxed"
-                  />
-                </div>
-              </div>
-
-              {/* Buttons & Links */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-[var(--border)]">
-                <div className="space-y-1.5">
-                  <label className="block text-xs font-bold text-[var(--foreground)]">
-                    {t("primary_button_text", "نص الزر الرئيسي:")}
-                  </label>
-                  <input
-                    type="text"
-                    dir={activeLangObj.dir}
-                    value={currentContent.primaryBtnText || ""}
-                    onChange={(e) => updateCurrentContent("primaryBtnText", e.target.value)}
-                    className="w-full px-3 py-1.5 rounded-xl border border-[var(--border)] bg-[var(--background)] text-xs text-[var(--foreground)] outline-none focus:border-[var(--gold)]"
-                  />
-                  <input
-                    type="text"
-                    value={currentContent.primaryBtnLink || ""}
-                    onChange={(e) => updateCurrentContent("primaryBtnLink", e.target.value)}
-                    placeholder="/gallery"
-                    className="w-full px-3 py-1.5 rounded-xl border border-[var(--border)] bg-[var(--background)] text-xs text-[var(--muted-foreground)] outline-none focus:border-[var(--gold)] font-mono"
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="block text-xs font-bold text-[var(--foreground)]">
-                    {t("secondary_button_text", "نص الزر الثانوي:")}
-                  </label>
-                  <input
-                    type="text"
-                    dir={activeLangObj.dir}
-                    value={currentContent.secondaryBtnText || ""}
-                    onChange={(e) => updateCurrentContent("secondaryBtnText", e.target.value)}
-                    className="w-full px-3 py-1.5 rounded-xl border border-[var(--border)] bg-[var(--background)] text-xs text-[var(--foreground)] outline-none focus:border-[var(--gold)]"
-                  />
-                  <input
-                    type="text"
-                    value={currentContent.secondaryBtnLink || ""}
-                    onChange={(e) => updateCurrentContent("secondaryBtnLink", e.target.value)}
-                    placeholder="/subscriptions"
-                    className="w-full px-3 py-1.5 rounded-xl border border-[var(--border)] bg-[var(--background)] text-xs text-[var(--muted-foreground)] outline-none focus:border-[var(--gold)] font-mono"
-                  />
-                </div>
-              </div>
-
-              {/* Bottom Action Save */}
-              <div className="pt-3 border-t border-[var(--border)] flex items-center justify-between">
-                <button
-                  type="button"
-                  onClick={() => setStep(3)}
-                  className="px-3.5 py-1.5 rounded-xl border border-[var(--border)] text-xs text-[var(--muted-foreground)] hover:text-[var(--foreground)] cursor-pointer"
-                >
-                  {t("change_language", "تغيير لغة التعديل")}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={handleSave}
-                  disabled={saving}
-                  className="px-5 py-2 rounded-xl bg-[var(--gold)] text-black text-xs font-bold flex items-center gap-1.5 shadow-sm hover:opacity-95 transition-all cursor-pointer"
-                >
-                  <Save className={`w-4 h-4 ${saving ? "animate-spin" : ""}`} />
-                  <span>{t("save_section_changes", "حفظ تعديلات هذا القسم")}</span>
-                </button>
-              </div>
+                    <p className="mt-2 text-sm font-bold text-[var(--foreground)] truncate">{page.label}</p>
+                    <p className="text-[0.66rem] text-[var(--muted-foreground)]">
+                      {page.sections.length} {t("cms_sections", "sections")}
+                    </p>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
-          {/* Live Visual Preview Column */}
-          {showLivePreview && (
-            <div className="lg:col-span-5 sticky top-20 space-y-3">
-              <div className="p-4 rounded-2xl border border-[var(--gold)]/40 bg-[var(--card)] shadow-lg space-y-4">
-                <div className="flex items-center justify-between pb-2 border-b border-[var(--border)] text-xs">
-                  <span className="font-bold text-[var(--gold)] flex items-center gap-1.5">
-                    <Eye className="w-4 h-4" />
-                    <span>{t("live_preview_card", "المعاينة الحية الفورية (Live Preview)")}</span>
-                  </span>
-                  <span className="text-[0.7rem] text-[var(--muted-foreground)]">
-                    اللغة: <strong>{activeLangObj.label}</strong>
-                  </span>
-                </div>
-
-                {/* Rendered Component Preview Box */}
-                <div
-                  dir={activeLangObj.dir}
-                  className="rounded-xl overflow-hidden border border-[var(--border)] bg-[var(--background)] shadow-inner relative"
-                >
-                  {/* Background Image / Thumbnail */}
-                  {currentContent.imageUrl && (
-                    <div className="relative aspect-video w-full overflow-hidden bg-black/40">
-                      <img
-                        src={currentContent.imageUrl}
-                        alt="Hero preview"
-                        className="w-full h-full object-cover"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+          <div className="space-y-2">
+            <h2 className="text-[0.7rem] font-bold uppercase tracking-[0.16em] text-[var(--muted-foreground)]">
+              2 · {t("cms_sections_of", "Sections of")} {activePage.label}
+            </h2>
+            {activePage.description && (
+              <p className="text-xs text-[var(--muted-foreground)]">{activePage.description}</p>
+            )}
+            <div className="space-y-2">
+              {activePage.sections.map((section) => {
+                const selected = section.id === activeSection?.id;
+                const custom = countCustomised(section.fields);
+                return (
+                  <button
+                    key={section.id}
+                    type="button"
+                    onClick={() => setSectionId(section.id)}
+                    aria-pressed={selected}
+                    className={`w-full p-3 rounded-xl border flex items-center gap-3 text-start transition-all cursor-pointer ${
+                      selected
+                        ? "border-[var(--gold)] bg-[var(--gold)]/10"
+                        : "border-[var(--border)] bg-[var(--card)] hover:border-[var(--gold)]/60"
+                    }`}
+                  >
+                    <div className="p-1.5 rounded-lg bg-teal-500/10 text-teal-700 dark:text-teal-300">
+                      <Layers className="w-4 h-4" />
                     </div>
-                  )}
-
-                  <div className="p-5 space-y-3 relative">
-                    {currentContent.badge && (
-                      <span className="inline-block px-2.5 py-1 rounded-full text-[0.7rem] font-bold bg-[var(--gold)]/20 text-[var(--gold)] border border-[var(--gold)]/30">
-                        {currentContent.badge}
-                      </span>
-                    )}
-
-                    <h3 className="text-base font-bold font-display text-[var(--foreground)] leading-snug">
-                      {currentContent.title || "عنوان القسم التجريبي"}
-                    </h3>
-
-                    {currentContent.subtitle && (
-                      <p className="text-xs font-semibold text-[var(--gold)]">
-                        {currentContent.subtitle}
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-bold text-[var(--foreground)] truncate">{section.label}</p>
+                      <p className="text-[0.66rem] text-[var(--muted-foreground)]">
+                        {section.fields.length} {t("cms_fields", "fields")}
+                        {custom > 0 && ` · ${custom} ${t("cms_customised_lower", "customised")}`}
                       </p>
-                    )}
-
-                    <p className="text-xs text-[var(--muted-foreground)] leading-relaxed">
-                      {currentContent.description || "الوصف والمحتوى التوثيقي لهذا القسم يظهر هنا بشكل فوري..."}
-                    </p>
-
-                    {/* Buttons preview */}
-                    <div className="flex flex-wrap gap-2 pt-2">
-                      {currentContent.primaryBtnText && (
-                        <span className="px-3.5 py-1.5 rounded-lg bg-[var(--gold)] text-black text-xs font-bold shadow-sm inline-block">
-                          {currentContent.primaryBtnText}
-                        </span>
-                      )}
-                      {currentContent.secondaryBtnText && (
-                        <span className="px-3.5 py-1.5 rounded-lg border border-[var(--border)] text-[var(--foreground)] text-xs font-semibold inline-block">
-                          {currentContent.secondaryBtnText}
-                        </span>
-                      )}
                     </div>
-                  </div>
-                </div>
-              </div>
+                  </button>
+                );
+              })}
             </div>
+          </div>
+        </aside>
+
+        {/* Editor */}
+        <section className="lg:col-span-8 space-y-4">
+          {activeSection && (
+            <>
+              <div className="p-4 rounded-2xl border border-[var(--border)] bg-[var(--card)] shadow-sm space-y-3">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <h2 className="text-base font-bold font-display text-[var(--foreground)]">
+                      {activePage.label} <span className="text-[var(--gold)]">›</span> {activeSection.label}
+                    </h2>
+                    {activeSection.description && (
+                      <p className="text-xs text-[var(--muted-foreground)] mt-0.5">{activeSection.description}</p>
+                    )}
+                  </div>
+                  {activePage.path && (
+                    <a
+                      href={activePage.path}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={ghostBtn}
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" />
+                      {t("cms_open_page", "Open page")}
+                    </a>
+                  )}
+                </div>
+
+                <div role="tablist" aria-label="Language" className="flex flex-wrap gap-1.5 pt-1">
+                  {LANGUAGES.map((l) => {
+                    const selected = l.code === lang;
+                    return (
+                      <button
+                        key={l.code}
+                        type="button"
+                        role="tab"
+                        aria-selected={selected}
+                        onClick={() => setLang(l.code)}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-colors cursor-pointer ${
+                          selected
+                            ? "bg-teal-600 text-white border-teal-600 shadow-sm"
+                            : "border-[var(--border)] text-[var(--foreground)] hover:border-teal-500/60"
+                        }`}
+                      >
+                        {l.code === DEFAULT_LANG ? (
+                          <span className="flex items-center gap-1">
+                            <Globe className="w-3 h-3" />
+                            {l.label}
+                          </span>
+                        ) : (
+                          <span>
+                            {l.short} <span className="font-normal opacity-80">· {l.label}</span>
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+                {lang !== DEFAULT_LANG && (
+                  <p className="text-[0.7rem] text-[var(--muted-foreground)]">
+                    {t(
+                      "cms_lang_note",
+                      "Values here apply only to this language and win over “All languages”. Leave empty to inherit.",
+                    )}
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-3">
+                {activeSection.fields.map((field) => (
+                  <FieldEditor
+                    key={`${activePage.id}.${activeSection.id}.${field.key}`}
+                    field={field}
+                    lang={lang}
+                    dir={activeLang.dir}
+                    uploading={uploadingKey === `${activePage.id}.${activeSection.id}.${field.key}`}
+                    t={t}
+                    onChange={(value) =>
+                      updateField(activePage.id, activeSection.id, field.key, (f) =>
+                        withValue(f, f.type === "image" ? DEFAULT_LANG : lang, value),
+                      )
+                    }
+                    onReset={() =>
+                      updateField(activePage.id, activeSection.id, field.key, (f) =>
+                        withValue(f, f.type === "image" ? DEFAULT_LANG : lang, emptyFor(f.type)),
+                      )
+                    }
+                    onUpload={(file) =>
+                      handleUpload(file, `${activePage.id}.${activeSection.id}.${field.key}`)
+                    }
+                  />
+                ))}
+              </div>
+            </>
           )}
-        </div>
-      )}
+        </section>
+      </div>
     </div>
   );
 }

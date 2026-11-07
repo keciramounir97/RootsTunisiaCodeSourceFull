@@ -4,6 +4,8 @@ import { useSiteImages } from "../hooks/useSiteImages";
 interface RootsPageShellProps {
   hero?: ReactNode;
   heroClassName?: string;
+  /** Optional override for the hero background (e.g. Public Content Manager). */
+  heroBackgroundUrl?: string;
   children: ReactNode;
   className?: string;
 }
@@ -11,10 +13,12 @@ interface RootsPageShellProps {
 function RootsPageShell({
   hero,
   heroClassName = "",
+  heroBackgroundUrl,
   children,
   className = "",
 }: RootsPageShellProps) {
   const { heroImage } = useSiteImages();
+  const backgroundUrl = heroBackgroundUrl || heroImage;
 
   return (
     <div
@@ -24,7 +28,7 @@ function RootsPageShell({
         <section
           className={`heritage-hero text-center py-16 px-4 border-b border-gold/40 shadow-lg relative ${heroClassName}`}
           style={{
-            backgroundImage: `linear-gradient(rgba(26, 15, 10, 0.80), rgba(42, 31, 21, 0.90)), url(${heroImage})`,
+            backgroundImage: `linear-gradient(rgba(26, 15, 10, 0.80), rgba(42, 31, 21, 0.90)), url(${backgroundUrl})`,
             backgroundSize: "cover",
             backgroundPosition: "center",
           }}

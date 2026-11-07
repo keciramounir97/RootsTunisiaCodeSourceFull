@@ -8,9 +8,11 @@ import TreesBuilder, { parseGedcom, parseGedcomX } from "../admin/components/Tre
 import ErrorBoundary from "../components/ErrorBoundary";
 import SEO from "../components/SEO";
 import { useTranslation } from "../context/TranslationContext";
+import { useSiteContent } from "../hooks/useSiteContent";
 
 export default function Research() {
   const { t, locale } = useTranslation();
+  const { getText, getImage } = useSiteContent();
   const isArabic = locale === "ar";
   const location = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
@@ -72,10 +74,16 @@ export default function Research() {
       />
 
       <PageHero
-        eyebrow={t("universal_research", "Universal Research")}
-        title={t("search_across_archives", "Search Across the Archives")}
-        subtitle={t("research_subtitle", "Search across family names, tribes, ancestral places, digitized books, civil extracts and oral history indices.")}
-        image={manuscript}
+        eyebrow={getText("research", "hero", "eyebrow") ?? t("universal_research", "Universal Research")}
+        title={getText("research", "hero", "title") ?? t("search_across_archives", "Search Across the Archives")}
+        subtitle={
+          getText("research", "hero", "subtitle") ??
+          t(
+            "research_subtitle",
+            "Search across family names, tribes, ancestral places, digitized books, civil extracts and oral history indices.",
+          )
+        }
+        image={getImage("research", "hero", "image") ?? manuscript}
       />
 
       <Section>

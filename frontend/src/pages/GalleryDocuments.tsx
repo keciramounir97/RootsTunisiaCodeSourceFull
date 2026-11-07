@@ -19,6 +19,7 @@ import {
 import { api } from "../api/client";
 import { useTranslation } from "../context/TranslationContext";
 import { useTheme } from "../context/ThemeContext";
+import { useSiteContent } from "../hooks/useSiteContent";
 import RootsPageShell from "../components/RootsPageShell";
 import manuscriptImage from "../assets/family-archive.jpg";
 
@@ -41,6 +42,7 @@ interface DocumentItem {
 export default function GalleryDocuments() {
   const { theme } = useTheme();
   const { t, isRtl } = useTranslation();
+  const { getText, getImage } = useSiteContent();
 
   const [documents, setDocuments] = useState<DocumentItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -96,20 +98,22 @@ export default function GalleryDocuments() {
 
   return (
     <RootsPageShell
+      heroBackgroundUrl={getImage("documents", "hero", "image")}
       hero={
         <div className="space-y-4 text-center">
           <p className="eyebrow text-[var(--gold)] text-shadow-gold tracking-widest font-bold">
-            {t("nav_documents")}
+            {getText("documents", "hero", "eyebrow") ?? t("nav_documents")}
           </p>
           <h1 className="display-xl text-white font-bold hero-title-shadow text-shadow-glow tracking-wide">
-            {t("doc_inspector_title")}
+            {getText("documents", "hero", "title") ?? t("doc_inspector_title")}
           </h1>
           <div className="gold-rule mt-4 w-28 mx-auto shadow-lg" />
           <p className="max-w-3xl mx-auto text-base text-slate-100/95 font-medium drop-shadow-md">
-            {t(
-              "documents_desc",
-              "Explore high-resolution digitized extracts of Beylical decrees, Sijillat Charaïques, Habous deeds, and municipal civil status records.",
-            )}
+            {getText("documents", "hero", "subtitle") ??
+              t(
+                "documents_desc",
+                "Explore high-resolution digitized extracts of Beylical decrees, Sijillat Charaïques, Habous deeds, and municipal civil status records.",
+              )}
           </p>
         </div>
       }

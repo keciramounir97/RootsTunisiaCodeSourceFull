@@ -17,6 +17,45 @@ export class UsersService {
         private readonly mailerService: MailerService,
     ) { }
 
+    private parsePrivileges(value: any): string[] {
+        if (!value) return [];
+        if (Array.isArray(value)) return value.map((v) => String(v));
+        try {
+            const parsed = JSON.parse(String(value));
+            return Array.isArray(parsed) ? parsed.map((v) => String(v)) : [];
+        } catch {
+            return String(value)
+                .split(',')
+                .map((v) => v.trim())
+                .filter(Boolean);
+        }
+    }
+
+    private serializePrivileges(value: any): string | null {
+        if (value === undefined) return undefined as any;
+        if (value === null) return null;
+        if (!Array.isArray(value)) return null;
+        const cleaned = value.map((v) => String(v).trim()).filter(Boolean);
+        return cleaned.length ? JSON.stringify(cleaned) : null;
+    }
+
+    private mapUserRow(row: any) {
+        const roleId = Number(row.roleId ?? row.role_id ?? row.role ?? 0);
+        const privileges = this.parsePrivileges(
+            row.privileges ?? row.adminPrivileges ?? row.admin_privileges,
+        );
+        return {
+            ...row,
+            role: roleId,
+            roleId,
+            role_id: roleId,
+            phone: row.phone ?? row.phoneNumber ?? row.phone_number ?? null,
+            privileges,
+            permissions: privileges,
+            adminPrivileges: privileges,
+        };
+    }
+
     async findAll() {
         return User.query(this.knex)
             .select(
@@ -26,13 +65,15 @@ export class UsersService {
                 'users.email',
                 'users.role_id as roleId',
                 'users.status',
+                'users.admin_privileges as adminPrivileges',
                 'users.created_at as createdAt',
                 'users.last_login as lastLogin',
                 'role.name as roleName'
             )
             .joinRelated('role')
             .orderBy('users.created_at', 'desc')
-            .limit(100);
+            .limit(100)
+            .then((rows) => rows.map((row: any) => this.mapUserRow(row)));
     }
 
     async findOne(id: number) {
@@ -45,6 +86,7 @@ export class UsersService {
                 'users.role_id',
                 'users.role_id as roleId',
                 'users.status',
+                'users.admin_privileges as adminPrivileges',
                 'users.created_at as createdAt',
                 'users.last_login as lastLogin',
                 'roles.name as roleName'
@@ -54,10 +96,7 @@ export class UsersService {
             .first();
 
         if (!row) throw new NotFoundException('User not found');
-        // Ensure role_id/roleId for guards (some expect role_id, some roleId)
-        row.role_id = row.role_id ?? row.roleId;
-        row.roleId = row.roleId ?? row.role_id;
-        return row;
+        return this.mapUserRow(row);
     }
 
     async findByEmail(email: string) {
@@ -68,27 +107,35 @@ export class UsersService {
         const existing = await this.findByEmail(data.email);
         if (existing) throw new BadRequestException('Email already registered');
 
+        const providedPassword = data.password != null ? String(data.password) : '';
         let passwordHash: string;
-        if (adminId != null) {
-            // Admin creating user: generate random password (user must reset)
+        if (providedPassword) {
+            if (providedPassword.length < 6) {
+                throw new BadRequestException('Password must be at least 6 characters');
+            }
+            passwordHash = await bcrypt.hash(providedPassword, 10);
+        } else if (adminId != null) {
+            // Admin creating regular user without password: generate temporary password
             const randomPassword = crypto.randomBytes(24).toString('hex');
             passwordHash = await bcrypt.hash(randomPassword, 10);
         } else {
-            // Self-signup: use provided password
-            if (!data.password || String(data.password).length < 6) {
-                throw new BadRequestException('Password must be at least 6 characters');
-            }
-            passwordHash = await bcrypt.hash(data.password, 10);
+            throw new BadRequestException('Password must be at least 6 characters');
         }
 
-        const newUser = await User.query(this.knex).insertAndFetch({
+        const privileges = this.serializePrivileges(data.privileges);
+        const insertPayload: Record<string, any> = {
             full_name: data.fullName || data.full_name,
             phone_number: data.phone || data.phoneNumber || data.phone_number || null,
             email: data.email,
             password: passwordHash,
             role_id: data.roleId ?? data.role_id ?? 2,
             status: 'active',
-        });
+        };
+        if (privileges !== undefined) {
+            insertPayload.admin_privileges = privileges;
+        }
+
+        const newUser = await User.query(this.knex).insertAndFetch(insertPayload);
 
         if (adminId != null) {
             await this.activityService.log(adminId, 'users', `Created user: ${data.email}`);
@@ -96,7 +143,7 @@ export class UsersService {
             await this.activityService.log(newUser.id, 'users', `Signed up: ${data.email}`);
         }
 
-        return newUser;
+        return this.findOne(newUser.id);
     }
 
     async update(id: number, data: any, adminId: number) {
@@ -111,15 +158,28 @@ export class UsersService {
         if (data.phoneNumber !== undefined) updateData.phone_number = data.phoneNumber;
         if (data.phone_number !== undefined) updateData.phone_number = data.phone_number;
 
+        if (data.email !== undefined) updateData.email = data.email;
+
         if (data.roleId !== undefined) updateData.role_id = data.roleId;
         if (data.role_id !== undefined) updateData.role_id = data.role_id;
 
         if (data.status !== undefined) updateData.status = data.status;
 
+        if (data.privileges !== undefined) {
+            updateData.admin_privileges = this.serializePrivileges(data.privileges);
+        }
+
+        if (data.password) {
+            if (String(data.password).length < 6) {
+                throw new BadRequestException('Password must be at least 6 characters');
+            }
+            updateData.password = await bcrypt.hash(String(data.password), 10);
+        }
+
         await User.query(this.knex).patch(updateData).where('id', id);
         await this.activityService.log(adminId, 'users', `Updated user #${id}`);
 
-        return { message: 'User updated' };
+        return this.findOne(id);
     }
 
     async delete(id: number, adminId: number) {
@@ -129,6 +189,15 @@ export class UsersService {
 
         const user = await User.query(this.knex).findById(id);
         if (!user) throw new NotFoundException('User not found');
+
+        if (Number(user.role_id) === 3) {
+            const superAdminCount = await User.query(this.knex)
+                .where('role_id', 3)
+                .resultSize();
+            if (superAdminCount <= 1) {
+                throw new BadRequestException('Cannot delete the last super admin');
+            }
+        }
 
         // Transactional deletion
         await User.transaction(this.knex, async (trx) => {
@@ -297,5 +366,68 @@ export class UsersService {
             } catch {}
         }
         return { success: true, message: 'Email sent successfully via SMTP' };
+    }
+
+    private async assertSuperAdmin(actorId: number) {
+        const actor = await User.query(this.knex).findById(actorId);
+        if (!actor || Number(actor.role_id) !== 3) {
+            throw new ForbiddenException('Only super admin can manage admins');
+        }
+        return actor;
+    }
+
+    async findAdmins() {
+        const rows = await this.findAll();
+        return rows.filter((u: any) => {
+            const roleId = Number(u.roleId ?? u.role ?? 0);
+            return roleId === 1 || roleId === 3;
+        });
+    }
+
+    async createAdmin(data: any, superAdminId: number) {
+        await this.assertSuperAdmin(superAdminId);
+
+        const password = data.password != null ? String(data.password) : '';
+        if (!password || password.length < 6) {
+            throw new BadRequestException('Password must be at least 6 characters');
+        }
+
+        const requestedRole = Number(data.roleId ?? data.role_id ?? data.role ?? 1);
+        const roleId = requestedRole === 3 ? 3 : 1;
+
+        return this.create(
+            {
+                ...data,
+                password,
+                roleId,
+                role_id: roleId,
+                privileges: Array.isArray(data.privileges) ? data.privileges : [],
+            },
+            superAdminId,
+        );
+    }
+
+    async updateAdmin(id: number, data: any, superAdminId: number) {
+        await this.assertSuperAdmin(superAdminId);
+
+        const target = await this.findOne(id);
+        const targetRole = Number(target.roleId ?? target.role ?? 0);
+        if (targetRole === 3) {
+            throw new ForbiddenException('Cannot edit super admin through admin manager');
+        }
+        if (targetRole !== 1) {
+            throw new BadRequestException('Target user is not an admin');
+        }
+
+        const updatePayload: any = {
+            ...data,
+            roleId: 1,
+            role_id: 1,
+        };
+        if (data.privileges !== undefined) {
+            updatePayload.privileges = Array.isArray(data.privileges) ? data.privileges : [];
+        }
+
+        return this.update(id, updatePayload, superAdminId);
     }
 }

@@ -20,6 +20,7 @@ import { CorsOptions as ExpressCorsOptions } from 'cors';
 import cors = require('cors');
 import * as bcrypt from 'bcryptjs';
 import { getStoredFilePayload } from './common/utils/db-file.util';
+import { SiteContentService } from './modules/site-content/site-content.service';
 
 /** Custom Nest ConsoleLogger that omits process PID numbers from logs */
 export class CleanConsoleLogger extends ConsoleLogger {
@@ -689,10 +690,31 @@ async function ensureCriticalSchema(knex: Knex) {
                 t.string('status', 50).defaultTo('completed');
                 t.string('payment_method', 100).nullable();
                 t.string('transaction_id', 255).nullable();
+                t.text('proof_url').nullable();
+                t.text('notes').nullable();
+                t.text('admin_message').nullable();
+                t.string('flag', 50).nullable();
+                t.integer('reviewed_by').unsigned().nullable();
+                t.timestamp('reviewed_at').nullable();
                 t.timestamp('created_at').defaultTo(knex.fn.now());
                 t.timestamp('updated_at').defaultTo(knex.fn.now());
             });
             console.log('🟡 Schema patch: created subscription_payments table');
+        } else {
+            const paymentCols = [
+                { name: 'admin_message', add: (t: any) => t.text('admin_message').nullable() },
+                { name: 'flag', add: (t: any) => t.string('flag', 50).nullable() },
+                { name: 'proof_url', add: (t: any) => t.text('proof_url').nullable() },
+                { name: 'notes', add: (t: any) => t.text('notes').nullable() },
+                { name: 'reviewed_by', add: (t: any) => t.integer('reviewed_by').unsigned().nullable() },
+                { name: 'reviewed_at', add: (t: any) => t.timestamp('reviewed_at').nullable() },
+            ] as const;
+            for (const col of paymentCols) {
+                if (!(await knex.schema.hasColumn('subscription_payments', col.name))) {
+                    await knex.schema.alterTable('subscription_payments', col.add);
+                    console.log(`🟡 Schema patch: added subscription_payments.${col.name}`);
+                }
+            }
         }
 
         console.log('🟢 Schema verification complete');
@@ -1129,6 +1151,28 @@ async function bootstrap() {
                 }
             } catch (err: any) {
                 console.warn(`DB upload fallback failed for ${req.path}: ${err?.message || err}`);
+            }
+            next();
+        });
+
+        // Public Content Manager: allow larger JSON bodies (rich text) on the admin save route.
+        // Must be registered before Nest's default body parser (default limit is 100kb).
+        app.use('/api/admin/site-content', require('express').json({ limit: '3mb' }));
+
+        // Public Content Manager: DB-backed fallback for uploaded images missing on disk.
+        const siteContentAssetService = app.get(SiteContentService);
+        app.use(async (req: any, res: any, next: () => void) => {
+            if (req.method !== 'GET' && req.method !== 'HEAD') return next();
+            const match = String(req.path || '').match(/^\/uploads\/site-content\/([^/?#]+)$/i);
+            if (!match) return next();
+            try {
+                const asset = await siteContentAssetService.getAsset(match[1]);
+                if (asset) {
+                    res.setHeader('Cache-Control', 'public, max-age=604800');
+                    return res.type(asset.mimeType).send(asset.data);
+                }
+            } catch (err: any) {
+                console.warn(`Site content asset fallback failed for ${req.path}: ${err?.message || err}`);
             }
             next();
         });

@@ -480,7 +480,7 @@ export class SettingsService implements OnModuleInit {
       return Math.min(365, Math.max(7, Math.round(days)));
     }
     if (key === "defaultLanguage") {
-      return ["en", "fr", "ar", "es"].includes(value)
+      return ["en", "fr", "ar", "es", "it", "mt"].includes(value)
         ? value
         : DEFAULT_SETTINGS.defaultLanguage;
     }

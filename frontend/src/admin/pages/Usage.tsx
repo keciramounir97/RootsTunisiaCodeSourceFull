@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "../../context/TranslationContext";
 import { api } from "../../api/client";
@@ -14,51 +14,104 @@ import {
   ArrowRight,
   AlertTriangle,
   Sparkles,
-  Loader2,
   Archive,
   StickyNote,
   ListChecks,
   CheckCircle2,
 } from "lucide-react";
 
+const REFRESH_INTERVAL_MS = 18_000;
+
+type QuotaItem = { used: number; max: number; custom?: boolean };
+
+function unwrapQuotas(payload: any) {
+  const root = payload?.data?.data ?? payload?.data ?? payload;
+  if (!root || typeof root !== "object") return null;
+  return root;
+}
+
+function QuotaSkeleton() {
+  return (
+    <div className="p-4 md:p-6 space-y-6 animate-pulse">
+      <div className="flex items-center gap-3 border-b border-[var(--border-color)] pb-4">
+        <div className="w-12 h-12 rounded-2xl bg-gray-200 dark:bg-gray-700" />
+        <div className="space-y-2 flex-1">
+          <div className="h-6 w-48 rounded bg-gray-200 dark:bg-gray-700" />
+          <div className="h-3 w-72 rounded bg-gray-200 dark:bg-gray-700" />
+        </div>
+      </div>
+      <div className="h-36 rounded-2xl bg-gray-200 dark:bg-gray-700" />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div key={i} className="h-52 rounded-2xl bg-gray-200 dark:bg-gray-700" />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function Usage() {
   const { t } = useTranslation();
   const { user } = useAuth();
   const [quotas, setQuotas] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const [initialLoading, setInitialLoading] = useState(true);
+  const inFlightRef = useRef(false);
+  const mountedRef = useRef(true);
 
-  const fetchQuotas = async () => {
-    setLoading(true);
+  const fetchQuotas = useCallback(async (opts?: { silent?: boolean }) => {
+    if (inFlightRef.current) return;
+    inFlightRef.current = true;
+    if (!opts?.silent) setInitialLoading(true);
     try {
       const res = await api.get("/my/quotas");
-      setQuotas(res.data?.data || res.data);
+      if (!mountedRef.current) return;
+      setQuotas(unwrapQuotas(res.data) ?? unwrapQuotas(res) ?? null);
     } catch {
-      // fallback
+      // keep last good snapshot on background refresh failures
     } finally {
-      setLoading(false);
+      inFlightRef.current = false;
+      if (mountedRef.current) setInitialLoading(false);
     }
-  };
-
-  useEffect(() => {
-    fetchQuotas();
   }, []);
 
-  if (loading) {
-    return (
-      <div className="p-12 flex justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-[#d9a441]" />
-      </div>
-    );
+  useEffect(() => {
+    mountedRef.current = true;
+    void fetchQuotas({ silent: false });
+
+    const onFocus = () => {
+      if (document.visibilityState === "visible") {
+        void fetchQuotas({ silent: true });
+      }
+    };
+
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onFocus);
+
+    const intervalId = window.setInterval(() => {
+      if (document.visibilityState === "visible") {
+        void fetchQuotas({ silent: true });
+      }
+    }, REFRESH_INTERVAL_MS);
+
+    return () => {
+      mountedRef.current = false;
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onFocus);
+      window.clearInterval(intervalId);
+    };
+  }, [fetchQuotas]);
+
+  if (initialLoading && !quotas) {
+    return <QuotaSkeleton />;
   }
 
   const isSuperAdmin = Boolean(
     user?.role === 1 ||
       user?.role === 3 ||
-      quotas?.isSuperAdmin ||
-      quotas?.data?.isSuperAdmin
+      quotas?.isSuperAdmin
   );
 
-  const limits = quotas?.limits || {};
+  const limits: Record<string, QuotaItem> = quotas?.limits || {};
 
   const resourceConfig: Array<{
     key: "trees" | "individuals" | "gallery" | "audios" | "documents" | "sources" | "notes" | "tasks";
@@ -77,16 +130,14 @@ export default function Usage() {
     { key: "documents", title: t("documents", "Documents"), desc: t("doc_desc", "Historical documents & PDFs"), Icon: FileText, createUrl: "/admin/documents" },
   ];
 
-  // Check if any resource has reached 100% quota
   const isAnyLimitReached =
     !isSuperAdmin &&
     Object.values(limits).some(
-      (q: any) => q && q.max !== -1 && q.used >= q.max
+      (q) => q && q.max !== -1 && Number(q.used) >= Number(q.max)
     );
 
   return (
     <div className="p-4 md:p-6 space-y-6">
-      {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[var(--border-color)] pb-4">
         <div className="flex items-center gap-3">
           <div className="p-3 rounded-2xl bg-[#d9a441]/15 text-[#d9a441]">
@@ -113,7 +164,6 @@ export default function Usage() {
         )}
       </div>
 
-      {/* Plan Header Card */}
       <div className="rounded-2xl border border-[var(--border-color)] bg-gradient-to-br from-[#092C2B] to-[#124d4b] text-white p-6 shadow-xl relative overflow-hidden">
         <div className="absolute right-0 top-0 w-64 h-64 bg-[#d9a441]/10 rounded-full blur-3xl pointer-events-none" />
 
@@ -157,7 +207,6 @@ export default function Usage() {
         </div>
       </div>
 
-      {/* Global Alert Banner if quota is full */}
       {isAnyLimitReached && (
         <div className="p-4 rounded-2xl bg-amber-500/15 border border-amber-500/40 text-amber-900 dark:text-amber-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
@@ -178,19 +227,25 @@ export default function Usage() {
         </div>
       )}
 
-      {/* Resource Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {resourceConfig.map(({ key, title, desc, Icon, createUrl }) => {
-          const item = limits[key] || { used: 0, max: isSuperAdmin ? -1 : 10, custom: false };
-          const isUnlimited = isSuperAdmin || item.max === -1;
-          const isCustom = Boolean(item.custom);
-          const used = item.used || 0;
-          const max = item.max;
-          const percentage = isUnlimited
-            ? 0
-            : Math.min(100, Math.round((used / Math.max(1, max)) * 100));
-          const isFull = !isUnlimited && used >= max;
+          const item = limits[key];
+          // Prefer API values only — no hardcoded tier caps
+          const used = item ? Number(item.used) || 0 : 0;
+          const max = item && item.max !== undefined && item.max !== null
+            ? Number(item.max)
+            : isSuperAdmin
+            ? -1
+            : null;
+          const isUnlimited = isSuperAdmin || max === -1;
+          const isCustom = Boolean(item?.custom);
+          const percentage =
+            isUnlimited || max === null || max <= 0
+              ? 0
+              : Math.min(100, Math.round((used / max) * 100));
+          const isFull = !isUnlimited && max !== null && used >= max;
           const isNearFull = !isUnlimited && percentage >= 80 && !isFull;
+          const maxLabel = isUnlimited ? "∞" : max === null ? "—" : String(max);
 
           return (
             <div
@@ -238,24 +293,26 @@ export default function Usage() {
                   )}
                 </div>
 
-                {/* Quota Number Display */}
                 <div className="my-4 flex items-baseline justify-between">
                   <div className="flex items-baseline gap-1.5">
                     <span className="text-3xl font-black font-mono text-gray-900 dark:text-white">
                       {used}
                     </span>
                     <span className="text-sm font-bold text-gray-400">
-                      / {isUnlimited ? "∞" : max}
+                      / {maxLabel}
                     </span>
                   </div>
 
                   <span className="text-xs font-semibold text-gray-500">
-                    {isUnlimited ? t("unlimited_access", "Unlimited Access") : `${percentage}% ${t("used", "used")}`}
+                    {isUnlimited
+                      ? t("unlimited_access", "Unlimited Access")
+                      : max === null
+                      ? t("waiting_quota", "Waiting for quota…")
+                      : `${percentage}% ${t("used", "used")}`}
                   </span>
                 </div>
 
-                {/* Progress Bar */}
-                {!isUnlimited ? (
+                {!isUnlimited && max !== null ? (
                   <div className="w-full bg-gray-100 dark:bg-gray-800 h-2.5 rounded-full overflow-hidden">
                     <div
                       className={`h-full transition-all duration-500 ${
@@ -268,14 +325,15 @@ export default function Usage() {
                       style={{ width: `${percentage}%` }}
                     />
                   </div>
-                ) : (
+                ) : isUnlimited ? (
                   <div className="w-full bg-teal-500/10 h-2 rounded-full overflow-hidden">
                     <div className="h-full bg-[#0d9488] w-full" />
                   </div>
+                ) : (
+                  <div className="w-full bg-gray-100 dark:bg-gray-800 h-2.5 rounded-full overflow-hidden" />
                 )}
               </div>
 
-              {/* Action Link */}
               <div className="pt-4 border-t border-[var(--border-color)] flex items-center justify-between">
                 <Link
                   to={createUrl}

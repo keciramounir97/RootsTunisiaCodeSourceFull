@@ -1,12 +1,29 @@
-import { Injectable, Inject, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, Inject, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { SubscriptionTier } from '../../models/SubscriptionTier';
 import { UserSubscription } from '../../models/UserSubscription';
 import { SubscriptionPageAccess } from '../../models/SubscriptionPageAccess';
 import { SubscriptionPayment } from '../../models/SubscriptionPayment';
+import { MailerService } from '../../common/mailer/mailer.service';
+
+export type PaymentFlag = 'refund' | 'false_payment' | 'fraudulent';
 
 @Injectable()
 export class SubscriptionsService {
-    constructor(@Inject('KnexConnection') private readonly knex) {}
+    private readonly logger = new Logger(SubscriptionsService.name);
+
+    constructor(
+        @Inject('KnexConnection') private readonly knex,
+        private readonly mailerService: MailerService,
+    ) {}
+
+    private async sendUserEmail(to: string | null | undefined, subject: string, html: string, text: string) {
+        if (!to) return;
+        try {
+            await this.mailerService.sendMail({ to, subject, html, text });
+        } catch (err: any) {
+            this.logger.warn(`Payment notification email failed for ${to}: ${err?.message || err}`);
+        }
+    }
 
     private mapTier(row: any) {
         if (!row) return row;
@@ -334,28 +351,46 @@ export class SubscriptionsService {
             .orderBy('created_at', 'desc');
     }
 
-    async listAllPayments(status?: string) {
-        let query = this.knex('subscription_payments')
+    private paymentsListQuery() {
+        return this.knex('subscription_payments')
             .leftJoin('users', 'subscription_payments.user_id', 'users.id')
             .leftJoin('subscription_tiers', 'subscription_payments.tier_id', 'subscription_tiers.id')
             .select(
                 'subscription_payments.*',
-                'users.name as user_name',
+                'users.full_name as user_name',
                 'users.email as user_email',
-                'users.phone as user_phone',
+                'users.phone_number as user_phone',
                 'subscription_tiers.name as tier_name',
-                'subscription_tiers.price as tier_price'
+                'subscription_tiers.price as tier_price',
             )
             .orderBy('subscription_payments.created_at', 'desc');
+    }
 
+    async listAllPayments(status?: string) {
+        let query = this.paymentsListQuery();
         if (status && status !== 'all') query = query.where('subscription_payments.status', status);
         return query;
     }
 
-    async reviewPayment(id: number, reviewerId: number, decision: 'approved' | 'rejected', adminMessage?: string) {
+    async listFlaggedPayments() {
+        return this.paymentsListQuery().whereNotNull('subscription_payments.flag');
+    }
+
+    async reviewPayment(
+        id: number,
+        reviewerId: number,
+        decision: 'approved' | 'rejected',
+        adminMessage?: string,
+        flag?: PaymentFlag | null,
+    ) {
         const payment = await SubscriptionPayment.query(this.knex).findById(id);
         if (!payment) throw new NotFoundException('Payment not found');
         if (payment.status !== 'pending') throw new BadRequestException('Payment already reviewed');
+
+        const trimmedMessage = adminMessage != null ? String(adminMessage).trim() : '';
+        if (decision === 'rejected' && !trimmedMessage) {
+            throw new BadRequestException('admin_message is required when refusing a payment');
+        }
 
         const now = new Date().toISOString().slice(0, 19).replace('T', ' ');
 
@@ -364,12 +399,20 @@ export class SubscriptionsService {
             reviewed_by: reviewerId,
             reviewed_at: now,
         };
-        if (adminMessage !== undefined) {
-            patchData.admin_message = adminMessage;
+        if (trimmedMessage || adminMessage !== undefined) {
+            patchData.admin_message = trimmedMessage || null;
+        }
+        if (flag !== undefined) {
+            this.assertValidFlag(flag);
+            patchData.flag = flag;
         }
         const updated = await SubscriptionPayment.query(this.knex).patchAndFetchById(id, patchData);
 
-        // If approved, create or update user subscription
+        const user = await this.knex('users').where({ id: payment.user_id }).first();
+        const userEmail = user?.email as string | undefined;
+        const userName = (user?.full_name || user?.email || `User #${payment.user_id}`) as string;
+
+        // If approved, create or update user subscription and send activation email
         if (decision === 'approved') {
             const existing = await this.getUserSubscription(payment.user_id);
             const tier = await this.getTier(payment.tier_id);
@@ -416,9 +459,53 @@ export class SubscriptionsService {
                     });
                 }
             } catch {}
+
+            const activationNote =
+                trimmedMessage ||
+                `Your Roots Tunisia subscription (${tier.name}) has been activated successfully.`;
+            await this.sendUserEmail(
+                userEmail,
+                'Roots Tunisia — Subscription activated',
+                `<p>Hello ${userName},</p>
+                 <p>Your payment has been approved and your <strong>${tier.name}</strong> subscription is now active.</p>
+                 <p>${activationNote}</p>
+                 <p>Thank you for supporting Roots Tunisia.</p>`,
+                `Hello ${userName},\n\nYour payment has been approved and your ${tier.name} subscription is now active.\n\n${activationNote}\n\nThank you for supporting Roots Tunisia.`,
+            );
+        } else {
+            await this.sendUserEmail(
+                userEmail,
+                'Roots Tunisia — Subscription payment refused',
+                `<p>Hello ${userName},</p>
+                 <p>Your subscription payment could not be approved.</p>
+                 <p>${trimmedMessage}</p>`,
+                `Hello ${userName},\n\nYour subscription payment could not be approved.\n\n${trimmedMessage}`,
+            );
         }
 
         return updated;
+    }
+
+    private assertValidFlag(flag: PaymentFlag | null) {
+        if (flag === null) return;
+        const allowed: PaymentFlag[] = ['refund', 'false_payment', 'fraudulent'];
+        if (!allowed.includes(flag)) {
+            throw new BadRequestException('flag must be one of: refund, false_payment, fraudulent');
+        }
+    }
+
+    async setPaymentFlag(id: number, flag: PaymentFlag | null) {
+        this.assertValidFlag(flag);
+        const payment = await SubscriptionPayment.query(this.knex).findById(id);
+        if (!payment) throw new NotFoundException('Payment not found');
+        return SubscriptionPayment.query(this.knex).patchAndFetchById(id, { flag } as any);
+    }
+
+    async deletePayment(id: number) {
+        const payment = await SubscriptionPayment.query(this.knex).findById(id);
+        if (!payment) throw new NotFoundException('Payment not found');
+        await SubscriptionPayment.query(this.knex).deleteById(id);
+        return { success: true, id };
     }
 
     async upgradeUserSubscription(targetUserId: number, newTierId: number, adminUserId: number) {

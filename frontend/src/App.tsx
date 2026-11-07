@@ -77,6 +77,7 @@ const AccountDeletionRequests = lazy(() => import("./admin/pages/AccountDeletion
 const RoleDistribution = lazy(() => import("./admin/pages/RoleDistribution"));
 const SubscriptionsAdmin = lazy(() => import("./admin/pages/Subscriptions"));
 const SubscriptionPayments = lazy(() => import("./admin/pages/SubscriptionPayments"));
+const FlaggedPayments = lazy(() => import("./admin/pages/FlaggedPayments"));
 const UserUpgrade = lazy(() => import("./admin/pages/UserUpgrade"));
 const UserSettings = lazy(() => import("./admin/pages/UserSettings"));
 const AdminTasks = lazy(() => import("./admin/pages/AdminTasks"));
@@ -557,6 +558,16 @@ function AppRoutes() {
           }
         />
         <Route
+          path="flagged-payments"
+          element={
+            <Suspense fallback={<AdminLoadingFallback />}>
+              <ProtectedRoute roles={[1, 3]}>
+                <FlaggedPayments />
+              </ProtectedRoute>
+            </Suspense>
+          }
+        />
+        <Route
           path="user-upgrade"
           element={
             <Suspense fallback={<AdminLoadingFallback />}>
@@ -647,7 +658,16 @@ function AppRoutes() {
             </Suspense>
           }
         />
-        <Route path="payment-settings" element={<PaymentSettings />} />
+        <Route
+          path="payment-settings"
+          element={
+            <Suspense fallback={<AdminLoadingFallback />}>
+              <ProtectedRoute roles={[3]}>
+                <PaymentSettings />
+              </ProtectedRoute>
+            </Suspense>
+          }
+        />
         <Route
           path="currencies"
           element={
