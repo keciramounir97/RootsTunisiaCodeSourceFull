@@ -1,3 +1,4 @@
+import { startDeployRefreshWatcher } from "./lib/deployRefresh";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
@@ -17,6 +18,8 @@ import { NotificationProvider } from "./context/NotificationContext";
 import { FavoritesProvider } from "./context/FavoritesContext";
 
 // Find root element
+startDeployRefreshWatcher();
+
 const rootElement = document.getElementById("root");
 
 if (rootElement) {

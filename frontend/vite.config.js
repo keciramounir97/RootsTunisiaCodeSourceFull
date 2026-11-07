@@ -1,4 +1,5 @@
 import path from "path";
+import fs from "node:fs";
 import dns from "node:dns";
 import { fileURLToPath } from "url";
 import { defineConfig } from "vite";
@@ -28,6 +29,29 @@ const hmrClientHost =
     ? process.env.VITE_HMR_HOST || "127.0.0.1"
     : serverHost;
 
+
+function rootsBuildIdPlugin() {
+  const id = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+  return {
+    name: "roots-build-id",
+    config() {
+      return {
+        define: {
+          __APP_BUILD_ID__: JSON.stringify(id),
+        },
+      };
+    },
+    writeBundle(options) {
+      const outDir = options.dir || path.resolve(__dirname, "dist");
+      fs.writeFileSync(
+        path.join(outDir, "build-id.json"),
+        JSON.stringify({ id, builtAt: new Date().toISOString() }),
+        "utf8",
+      );
+    },
+  };
+}
+
 export default defineConfig({
   test: {
     globals: true,
@@ -41,6 +65,7 @@ export default defineConfig({
     ),
   },
   plugins: [
+    rootsBuildIdPlugin(),
     react(),
     tailwindcss({
       config: "./tailwind.config.js",
