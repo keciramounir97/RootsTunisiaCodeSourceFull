@@ -79,8 +79,15 @@ export default defineConfig({
   build: {
     outDir: "dist",
     emptyOutDir: true,
+    cssCodeSplit: true,
+    sourcemap: false,
+    target: "es2020",
+    modulePreload: { polyfill: true },
     rollupOptions: {
       output: {
+        entryFileNames: "assets/[name]-[hash].js",
+        chunkFileNames: "assets/[name]-[hash].js",
+        assetFileNames: "assets/[name]-[hash][extname]",
         manualChunks(id) {
           if (id.includes("node_modules/d3")) {
             return "d3-vendor";
