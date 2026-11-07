@@ -2870,7 +2870,104 @@ export default function TreesBuilder({
 
           .on("pointerdown.detail", rememberDetailPointer)
           .on("pointerup.detail", openDetailFromPointer)
-          .on("click.detail", openPersonDetails);
+          .on("click.detail", openPersonDetails)
+          .on("mouseenter.tooltip", (e, d) => {
+            const esc = (v) =>
+              String(v ?? "")
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;");
+            const name = esc(nameOf(d));
+            const gender = esc(displayGender(d.gender));
+            const birthDate = normalizeSpaces(d.birthYear || d.birthDate || "");
+            const birthPlace = normalizeSpaces(d.birthPlace || "");
+            const deathDate = normalizeSpaces(d.deathDate || d.deathYear || "");
+            const deathPlace = normalizeSpaces(d.deathPlace || "");
+            const details = String(d.details || "").trim();
+            const profession = normalizeSpaces(d.profession || "");
+            const archiveSource = Array.isArray(d.archiveSource)
+              ? d.archiveSource.filter(Boolean).join(", ")
+              : normalizeSpaces(d.archiveSource || "");
+            const documentCode = Array.isArray(d.documentCode)
+              ? d.documentCode.filter(Boolean).join(", ")
+              : normalizeSpaces(d.documentCode || "");
+            const reliability = normalizeSpaces(d.reliability || "");
+
+            const getP = (id) => {
+              const found = people.find((x) => String(x.id) === String(id));
+              return found ? nameOf(found) : "";
+            };
+            const fatherName = d.father ? getP(d.father) : "";
+            const motherName = d.mother ? getP(d.mother) : "";
+            const spouseName = d.spouse ? getP(d.spouse) : "";
+
+            const rowHtml = (label, value) =>
+              `<div class="flex justify-between gap-4"><span class="opacity-70">${esc(label)}:</span><span>${esc(value)}</span></div>`;
+            const rows = [];
+            const addRow = (label, value) => {
+              if (!value) return;
+              rows.push(rowHtml(label, value));
+            };
+
+            addRow(t("legacy.gender", "Gender"), displayGender(d.gender));
+            addRow(t("legacy.birth_year", "Born"), birthDate);
+            addRow(t("legacy.birth_place", "Birth place"), birthPlace);
+            addRow(t("legacy.death_date", "Died"), deathDate);
+            addRow(t("legacy.death_place", "Death place"), deathPlace);
+            addRow(t("legacy.profession", "Profession"), profession);
+            addRow(t("legacy.spouse", "Spouse"), spouseName);
+            addRow(t("legacy.father", "Father"), fatherName);
+            addRow(t("legacy.mother", "Mother"), motherName);
+
+            const detailsHtml = details
+              ? `<div class="mt-2 text-[10px] opacity-80 border-t pt-1 whitespace-pre-line">${esc(details)}</div>`
+              : "";
+
+            const sourceRows = [];
+            if (archiveSource) {
+              sourceRows.push(rowHtml(t("legacy.archive_source", "Archive Source"), archiveSource));
+            }
+            if (documentCode) {
+              sourceRows.push(rowHtml(t("legacy.document_code", "Document Code"), documentCode));
+            }
+            if (reliability) {
+              sourceRows.push(rowHtml(t("legacy.reliability", "Reliability"), reliability));
+            }
+
+            const sourcesHtml = sourceRows.length
+              ? `<div class="mt-2 pt-2 border-t text-[10px] space-y-1">${sourceRows.join("")}</div>`
+              : "";
+            const infoHtml = rows.join("");
+            const emptyHtml =
+              !infoHtml && !detailsHtml && !sourcesHtml
+                ? `<div class="opacity-60">${esc(t("legacy.no_details", "No details"))}</div>`
+                : "";
+
+            const tooltipHtml = `
+            <div class="text-sm font-bold border-b pb-1 mb-1">${name} <span class="opacity-70 text-xs">(${gender})</span></div>
+            <div class="space-y-1 text-xs">
+              ${infoHtml}
+              ${emptyHtml}
+              ${detailsHtml}
+              ${sourcesHtml}
+            </div>
+          `;
+
+            tooltip
+              .style("visibility", "visible")
+              .html(tooltipHtml)
+              .style("top", `${e.pageY + 15}px`)
+              .style("left", `${e.pageX + 15}px`);
+          })
+          .on("mousemove.tooltip", (e) => {
+            tooltip
+              .style("top", `${e.pageY + 15}px`)
+              .style("left", `${e.pageX + 15}px`);
+          })
+          .on("mouseleave.tooltip", () => {
+            tooltip.style("visibility", "hidden");
+          });
 
         zoomRect.on("click", () => {
           tooltip.style("visibility", "hidden");
