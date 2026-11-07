@@ -267,8 +267,6 @@ import { useLanguage } from "../../i18n";
 import { getApiRoot } from "../../api/helpers";
 import { api } from "../../api/client";
 import { requestWithFallback, shouldFallbackRoute } from "../../api/helpers";
-import RequestDownloadButton from "../../components/RequestDownloadButton";
-
 const CARD_W = 220;
 
 const CARD_H = 120;
@@ -2115,8 +2113,8 @@ export default function TreesBuilder({
   onAutoSave,
   onPersonClick,
   dataFormat = "gedcom", // "gedcom" | "gedcom7" | "gedcomx" – affects display label and format-specific display
-  treeId,
-  canDownloadDirectly = false,
+  treeId: _treeId,
+  canDownloadDirectly: _canDownloadDirectly = false,
 }: any) {
   const { theme } = useThemeStore();
 
@@ -4599,14 +4597,6 @@ export default function TreesBuilder({
               ) : null}
             </div>
           </div>
-          ) : treeId != null ? (
-            <RequestDownloadButton
-              contentType="tree"
-              contentId={treeId}
-              downloadHref={`${getApiRoot()}/api/trees/${treeId}/download`}
-              fileName={`tree-${treeId}.ged`}
-              canDownloadDirectly={canDownloadDirectly}
-            />
           ) : null}
         </div>
 
