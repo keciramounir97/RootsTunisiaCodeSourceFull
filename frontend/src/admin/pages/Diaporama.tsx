@@ -97,9 +97,30 @@ export default function Diaporama() {
   const loadSlides = async () => {
     setLoading(true);
     try {
-      const res = await api.get("/admin/banner-slides");
-      const raw = res.data?.data ?? res.data;
-      const list = Array.isArray(raw) ? raw : [];
+      let res = await api.get("/admin/banner-slides");
+      let raw = res.data?.data ?? res.data;
+      let list = Array.isArray(raw) ? raw : [];
+
+      // First visit: import the homepage slides already playing so they appear as cards
+      if (list.length === 0) {
+        try {
+          const seeded = await api.post("/admin/banner-slides/seed-defaults");
+          const payload = seeded.data?.data ?? seeded.data;
+          list = Array.isArray(payload?.slides)
+            ? payload.slides
+            : Array.isArray(payload)
+              ? payload
+              : [];
+          if (!list.length) {
+            res = await api.get("/admin/banner-slides");
+            raw = res.data?.data ?? res.data;
+            list = Array.isArray(raw) ? raw : [];
+          }
+        } catch {
+          /* keep empty if seed unavailable */
+        }
+      }
+
       setSlides(list.map(normalizeSlide));
       setUploadErrors([]);
     } catch {
@@ -116,7 +137,79 @@ export default function Diaporama() {
     loadSlides();
   }, []);
 
-  const activeCount = slides.filter((s) => s.isActive).length;
+  const activeSlides = slides.filter((s) => s.isActive);
+  const librarySlides = slides.filter((s) => !s.isActive);
+  const activeCount = activeSlides.length;
+
+  const renderSlideCard = (slide: BannerSlide) => {
+    const thumb = resolveMediaUrl(slide.imagePath || slide.imageUrl);
+    return (
+      <div
+        key={slide.id}
+        className={`rounded-2xl border overflow-hidden flex flex-col shadow-sm ${
+          slide.isActive
+            ? "border-[var(--gold)] bg-[var(--card)] ring-2 ring-[var(--gold)]/20"
+            : "border-[var(--border)] bg-[var(--card)]"
+        }`}
+      >
+        <div className="relative aspect-video w-full bg-black/40 overflow-hidden">
+          <img
+            src={thumb}
+            alt={slide.title || `Banner #${slide.id}`}
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute top-2 end-2 flex flex-col items-end gap-1">
+            {slide.isActive ? (
+              <span className="px-2 py-0.5 rounded-lg text-[0.65rem] font-bold uppercase tracking-wide bg-[var(--gold)] text-black border border-black/10">
+                {t("playing_now_badge", "En lecture")}
+              </span>
+            ) : null}
+            <span className="px-2 py-0.5 rounded-lg text-[0.7rem] font-mono font-bold bg-black/75 text-white/90 border border-white/20">
+              {slide.width || "?"} × {slide.height || "?"}
+            </span>
+          </div>
+          <label className="absolute bottom-2 start-2 flex items-center gap-2 px-3 py-1.5 rounded-xl bg-black/70 backdrop-blur-md border border-white/30 text-white text-xs font-bold cursor-pointer">
+            <input
+              type="checkbox"
+              checked={slide.isActive}
+              onChange={() => togglePlay(slide.id)}
+              className="w-4 h-4 rounded accent-[var(--gold)] cursor-pointer"
+            />
+            <span>{t("play_in_diaporama", "Play in diaporama")}</span>
+          </label>
+        </div>
+
+        <div className="p-4 space-y-3 flex-1 flex flex-col justify-between">
+          <div className="space-y-1.5">
+            <h4 className="text-sm font-bold text-[var(--foreground)] truncate">
+              {slide.title || `Banner #${slide.id}`}
+            </h4>
+            <label className="block text-[0.7rem] font-medium text-[var(--muted-foreground)] mb-1">
+              {t("diaporama_slide_caption", "Légende (optionnelle)")}
+            </label>
+            <input
+              type="text"
+              value={slide.caption || ""}
+              onChange={(e) => updateCaption(slide.id, e.target.value)}
+              placeholder={t("empty_means_no_mention", "Sans légende")}
+              className="w-full px-3 py-1.5 rounded-xl border border-[var(--border)] bg-[var(--background)] text-xs text-[var(--foreground)] outline-none focus:border-[var(--gold)] transition-colors"
+            />
+          </div>
+
+          <div className="pt-2 border-t border-[var(--border)]/60 flex items-center justify-end">
+            <button
+              type="button"
+              onClick={() => handleDelete(slide.id)}
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-rose-500 hover:underline cursor-pointer"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              {t("delete", "Supprimer")}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   const togglePlay = (id: number) => {
     setSlides((prev) =>
@@ -369,73 +462,65 @@ export default function Diaporama() {
           <p className="text-sm font-medium">
             {t("no_banner_slides", "Aucune bannière pour l'instant. Téléversez des images 16:9.")}
           </p>
+          <button
+            type="button"
+            onClick={async () => {
+              setLoading(true);
+              try {
+                await api.post("/admin/banner-slides/seed-defaults");
+                await loadSlides();
+              } catch {
+                setLoading(false);
+                setToast({
+                  message: t("diaporama_seed_error", "Impossible d'importer les bannières actuelles"),
+                  tone: "error",
+                });
+              }
+            }}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-[var(--gold)]/40 text-xs font-bold text-[var(--gold)] hover:bg-[var(--gold)]/10 cursor-pointer"
+          >
+            {t("import_current_banners", "Importer les bannières déjà en lecture")}
+          </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {slides.map((slide) => {
-            const thumb = resolveMediaUrl(slide.imagePath || slide.imageUrl);
-            return (
-              <div
-                key={slide.id}
-                className={`rounded-2xl border overflow-hidden flex flex-col shadow-sm ${
-                  slide.isActive
-                    ? "border-[var(--gold)] bg-[var(--card)] ring-2 ring-[var(--gold)]/20"
-                    : "border-[var(--border)] bg-[var(--card)]"
-                }`}
-              >
-                <div className="relative aspect-video w-full bg-black/40 overflow-hidden">
-                  <img
-                    src={thumb}
-                    alt={slide.title || `Banner #${slide.id}`}
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute top-2 end-2">
-                    <span className="px-2 py-0.5 rounded-lg text-[0.7rem] font-mono font-bold bg-black/75 text-white/90 border border-white/20">
-                      {slide.width || "?"} × {slide.height || "?"}
-                    </span>
-                  </div>
-                  <label className="absolute bottom-2 start-2 flex items-center gap-2 px-3 py-1.5 rounded-xl bg-black/70 backdrop-blur-md border border-white/30 text-white text-xs font-bold cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={slide.isActive}
-                      onChange={() => togglePlay(slide.id)}
-                      className="w-4 h-4 rounded accent-[var(--gold)] cursor-pointer"
-                    />
-                    <span>{t("play_in_diaporama", "Play in diaporama")}</span>
-                  </label>
-                </div>
-
-                <div className="p-4 space-y-3 flex-1 flex flex-col justify-between">
-                  <div className="space-y-1.5">
-                    <h4 className="text-sm font-bold text-[var(--foreground)] truncate">
-                      {slide.title || `Banner #${slide.id}`}
-                    </h4>
-                    <label className="block text-[0.7rem] font-medium text-[var(--muted-foreground)] mb-1">
-                      {t("diaporama_slide_caption", "Légende (optionnelle)")}
-                    </label>
-                    <input
-                      type="text"
-                      value={slide.caption || ""}
-                      onChange={(e) => updateCaption(slide.id, e.target.value)}
-                      placeholder={t("empty_means_no_mention", "Sans légende")}
-                      className="w-full px-3 py-1.5 rounded-xl border border-[var(--border)] bg-[var(--background)] text-xs text-[var(--foreground)] outline-none focus:border-[var(--gold)] transition-colors"
-                    />
-                  </div>
-
-                  <div className="pt-2 border-t border-[var(--border)]/60 flex items-center justify-end">
-                    <button
-                      type="button"
-                      onClick={() => handleDelete(slide.id)}
-                      className="inline-flex items-center gap-1.5 text-xs font-bold text-rose-500 hover:underline cursor-pointer"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                      {t("delete", "Supprimer")}
-                    </button>
-                  </div>
-                </div>
+        <div className="space-y-8">
+          <section className="space-y-3">
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="text-sm font-bold uppercase tracking-[0.14em] text-[var(--gold)]">
+                {t("playing_on_homepage", "En lecture sur l'accueil")} ({activeCount})
+              </h2>
+            </div>
+            {activeSlides.length ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                {activeSlides.map(renderSlideCard)}
               </div>
-            );
-          })}
+            ) : (
+              <p className="text-xs text-[var(--muted-foreground)] italic">
+                {t(
+                  "no_active_banners",
+                  "Aucune diapositive active. Cochez des cartes puis enregistrez la sélection.",
+                )}
+              </p>
+            )}
+          </section>
+
+          <section className="space-y-3">
+            <h2 className="text-sm font-bold uppercase tracking-[0.14em] text-[var(--muted-foreground)]">
+              {t("banner_library", "Bibliothèque / nouvelles uploads")} ({librarySlides.length})
+            </h2>
+            {librarySlides.length ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                {librarySlides.map(renderSlideCard)}
+              </div>
+            ) : (
+              <p className="text-xs text-[var(--muted-foreground)] italic">
+                {t(
+                  "no_inactive_banners",
+                  "Les nouvelles images téléversées apparaîtront ici tant qu'elles ne sont pas cochées pour le diaporama.",
+                )}
+              </p>
+            )}
+          </section>
         </div>
       )}
     </div>

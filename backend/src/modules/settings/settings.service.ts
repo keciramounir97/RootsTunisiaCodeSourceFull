@@ -9,8 +9,10 @@ import { UpdateSettingsDto } from "./dto/settings.dto";
 import {
   resolveStoredFilePath,
   safeUnlink,
+  SITE_UPLOADS_DIR,
 } from "../../common/utils/file.utils";
 import * as fs from "fs";
+import * as path from "path";
 import { imageSize } from "image-size";
 
 type SettingsShape = {
@@ -192,6 +194,138 @@ export class SettingsService implements OnModuleInit {
     }
     const rows = await query;
     return (rows || []).map((row: any) => this.formatBannerSlide(row));
+  }
+
+  /**
+   * Import the homepage's current default diaporama images into the banner
+   * library (idempotent). Used so admin cards show what is already playing.
+   * Dimension hard-reject is skipped for these legacy slides only.
+   */
+  async seedHomepageDefaultBanners(actorId: number) {
+    await this.ensureSettingsSchema();
+    const existing = await this.knex("site_images")
+      .where({ type: "banner" })
+      .select("id", "image_path", "title");
+    const existingPaths = new Set(
+      existing.map((row: any) => String(row.image_path || "")),
+    );
+    const existingTitles = new Set(
+      existing.map((row: any) => String(row.title || "").toLowerCase()),
+    );
+
+    const defaults = [
+      {
+        file: "01_Carthage_Ancient_Ruins_Landscape.jpg",
+        title: "Carthage Ancient Ruins",
+        dest: "banner-default-carthage.jpg",
+      },
+      {
+        file: "11_Sidi_Bou_Said_Blue_Doors_Bougainvillea.jpg",
+        title: "Sidi Bou Said Blue Doors",
+        dest: "banner-default-sidi.jpg",
+      },
+      {
+        file: "14_Kairouan_Mosque_Arched_Doorways_Dome.jpg",
+        title: "Kairouan Mosque",
+        dest: "banner-default-kairouan.jpg",
+      },
+      {
+        file: "04_El_Jem_Amphitheater_Panorama.jpg",
+        title: "El Jem Amphitheater",
+        dest: "banner-default-eljem.jpg",
+      },
+      {
+        file: "16_Medina_Ornate_Door_Blue_Grille.jpg",
+        title: "Medina Ornate Door",
+        dest: "banner-default-medina.jpg",
+      },
+      {
+        file: "17_Fortress_Aerial_Courtyard_Palms.jpg",
+        title: "Fortress Courtyard",
+        dest: "banner-default-fortress.jpg",
+      },
+    ];
+
+    // Prefer bundled backend assets (works in production). Fallback to frontend src in monorepo.
+    const bundledDir = path.join(__dirname, "..", "..", "..", "assets", "banner-defaults");
+    const monorepoFrontendDir = path.join(
+      __dirname,
+      "..",
+      "..",
+      "..",
+      "..",
+      "frontend",
+      "src",
+      "assets",
+    );
+    const assetsDir = fs.existsSync(bundledDir) ? bundledDir : monorepoFrontendDir;
+    const maxRow = await this.knex("site_images")
+      .where({ type: "banner" })
+      .max("sort_order as max")
+      .first();
+    let nextOrder = Number(maxRow?.max || 0);
+    const now = new Date().toISOString().slice(0, 19).replace("T", " ");
+    let created = 0;
+
+    for (const item of defaults) {
+      const imagePath = `/uploads/site/${item.dest}`;
+      if (
+        existingPaths.has(imagePath) ||
+        existingTitles.has(item.title.toLowerCase())
+      ) {
+        continue;
+      }
+
+      const src = path.join(assetsDir, item.file);
+      const destAbs = path.join(SITE_UPLOADS_DIR, item.dest);
+      if (!fs.existsSync(src)) {
+        console.warn(`Banner seed skipped missing asset: ${src}`);
+        continue;
+      }
+      try {
+        fs.copyFileSync(src, destAbs);
+      } catch (err: any) {
+        console.warn(`Banner seed copy failed for ${item.file}: ${err?.message || err}`);
+        continue;
+      }
+
+      let width: number | null = null;
+      let height: number | null = null;
+      try {
+        const dims = imageSize(fs.readFileSync(destAbs));
+        width = Number(dims?.width || 0) || null;
+        height = Number(dims?.height || 0) || null;
+      } catch {
+        /* keep null */
+      }
+
+      nextOrder += 1;
+      await this.knex("site_images").insert({
+        type: "banner",
+        image_path: imagePath,
+        sort_order: nextOrder,
+        title: item.title,
+        caption: null,
+        width,
+        height,
+        is_active: true,
+        created_at: now,
+        updated_at: now,
+      });
+      created += 1;
+    }
+
+    if (created > 0) {
+      await this.activityService.log(
+        actorId,
+        "settings",
+        `Seeded ${created} homepage default banner slide(s)`,
+      );
+    }
+    return {
+      created,
+      slides: await this.listBannerSlides(false),
+    };
   }
 
   async addBannerSlide(

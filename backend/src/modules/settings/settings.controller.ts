@@ -186,6 +186,11 @@ export class AdminBannerSlidesController {
     return this.settingsService.listBannerSlides(false);
   }
 
+  @Post("seed-defaults")
+  async seedHomepageDefaultBanners(@Request() req) {
+    return this.settingsService.seedHomepageDefaultBanners(req.user.id);
+  }
+
   @Post()
   @UseInterceptors(FileInterceptor("image", siteImageUploadOptions))
   async addBannerSlide(
