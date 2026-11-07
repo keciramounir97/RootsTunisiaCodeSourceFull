@@ -129,7 +129,7 @@ export default function Login() {
                 <label className="grid gap-2">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
-                      {t("password", "Password")}
+                      {t("login_password", "Password")}
                     </span>
                     <Link
                       to="/reset-password"
