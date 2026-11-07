@@ -230,7 +230,7 @@ function AppRoutes() {
       <Route path="/research" element={<ResearchPage />} />
       <Route path="/genealogy-gallery" element={<GenealogyGallery />} />
       <Route path="/audio" element={<AudioPage />} />
-      <Route path="/my-download-requests" element={<MyDownloadRequests />} />
+      <Route path="/my-download-requests" element={<Navigate to="/gallery" replace />} />
       <Route path="/help-center" element={<HelpCenter />} />
       <Route path="/library" element={<GalleryBooks />} />
       <Route path="/periods" element={<Periods />} />

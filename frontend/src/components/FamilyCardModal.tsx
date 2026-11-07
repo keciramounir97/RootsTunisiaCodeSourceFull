@@ -532,8 +532,8 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
           </>
         )}
 
-        {/* GEDCOM / ACCESS REQUEST FORM */}
-        {showRequestForm && (
+        {/* Download-request workflow removed — use direct GEDCOM download below */}
+        {false && showRequestForm && (
           <form onSubmit={handleSubmitDownloadRequest} className="space-y-3 p-4 rounded-xl bg-[var(--background)] border border-[var(--gold)]/40 animate-in fade-in">
             <h4 className="font-semibold text-xs text-[var(--foreground)] flex items-center gap-2">
               <ShieldCheck className="h-4 w-4 text-[var(--gold)]" />
@@ -571,7 +571,7 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
             className="btn-base btn-gold text-xs py-2.5 px-4 flex items-center gap-2 cursor-pointer"
           >
             <Download className="h-4 w-4" />
-            <span>{isIndividualModal ? t("download_profile_extract") : t("download_or_request_gedcom")}</span>
+            <span>{isIndividualModal ? t("download_profile_extract") : t("download_gedcom", "Download GEDCOM")}</span>
           </button>
 
           <button

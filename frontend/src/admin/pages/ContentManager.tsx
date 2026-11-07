@@ -606,19 +606,19 @@ export default function ContentManager() {
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-[var(--gold)]/20">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-xl bg-[var(--gold)]/20 text-[var(--gold)] border border-[var(--gold)]/30">
-            <Layout className="w-6 h-6" />
-          </div>
-          <div>
-            <h1 className="font-display text-2xl font-bold text-[var(--foreground)]">
+            <div className="p-2.5 rounded-xl bg-[var(--gold)]/20 text-[var(--gold)] border border-[var(--gold)]/30">
+              <Layout className="w-6 h-6" />
+            </div>
+            <div>
+              <h1 className="font-display text-2xl font-bold text-[var(--foreground)]">
               {t("cms_title", "Public Content Manager")}
-            </h1>
-            <p className="text-xs text-[var(--muted-foreground)]">
-              {t(
+              </h1>
+              <p className="text-xs text-[var(--muted-foreground)]">
+                {t(
                 "cms_subtitle",
                 "Edit headings, rich text, lists and images of the public pages. Empty fields keep the built-in text.",
-              )}
-            </p>
+                )}
+              </p>
           </div>
         </div>
 
@@ -667,11 +667,11 @@ export default function ContentManager() {
                 const Icon = PAGE_ICONS[page.id] || Layout;
                 const selected = page.id === activePage.id;
                 const custom = page.sections.reduce((n, s) => n + countCustomised(s.fields), 0);
-                return (
+              return (
                   <button
                     key={page.id}
                     type="button"
-                    onClick={() => {
+                  onClick={() => {
                       setPageId(page.id);
                       setSectionId("");
                     }}
@@ -687,7 +687,7 @@ export default function ContentManager() {
                       {custom > 0 && (
                         <span className="px-1.5 rounded-full text-[0.62rem] font-bold bg-[var(--gold)]/20 text-[var(--gold)]">
                           {custom}
-                        </span>
+                      </span>
                       )}
                     </div>
                     <p className="mt-2 text-sm font-bold text-[var(--foreground)] truncate">{page.label}</p>
@@ -695,8 +695,8 @@ export default function ContentManager() {
                       {page.sections.length} {t("cms_sections", "sections")}
                     </p>
                   </button>
-                );
-              })}
+              );
+            })}
             </div>
           </div>
 
@@ -711,7 +711,7 @@ export default function ContentManager() {
               {activePage.sections.map((section) => {
                 const selected = section.id === activeSection?.id;
                 const custom = countCustomised(section.fields);
-                return (
+              return (
                   <button
                     key={section.id}
                     type="button"
@@ -734,8 +734,8 @@ export default function ContentManager() {
                       </p>
                     </div>
                   </button>
-                );
-              })}
+              );
+            })}
             </div>
           </div>
         </aside>
@@ -794,9 +794,9 @@ export default function ContentManager() {
                           </span>
                         )}
                       </button>
-                    );
-                  })}
-                </div>
+              );
+            })}
+          </div>
                 {lang !== DEFAULT_LANG && (
                   <p className="text-[0.7rem] text-[var(--muted-foreground)]">
                     {t(
@@ -835,7 +835,7 @@ export default function ContentManager() {
             </>
           )}
         </section>
-      </div>
+        </div>
     </div>
   );
 }

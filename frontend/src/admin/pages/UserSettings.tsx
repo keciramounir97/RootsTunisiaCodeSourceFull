@@ -461,14 +461,6 @@ export default function UserSettings() {
             </p>
           </div>
         </div>
-
-        <button
-          onClick={() => setShowDeleteModal(true)}
-          className="px-5 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs flex items-center gap-2 shadow transition-all"
-        >
-          <Trash2 className="w-4 h-4" />
-          <span>{t("delete_my_account", "Delete My Account")}</span>
-        </button>
       </div>
 
       {/* Delete Account Modal */}
