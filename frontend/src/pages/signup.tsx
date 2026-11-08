@@ -5,9 +5,9 @@ import { useTranslation } from "../context/TranslationContext";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import kairouan from "../assets/slider-kairouan.jpg";
 import { Logo } from "../components/site/Logo";
 import SEO from "../components/SEO";
+import TunisiaGovernoratesMap from "../components/TunisiaGovernoratesMap";
 import { Eye, EyeOff, AlertCircle } from "lucide-react";
 
 const signupFormSchema = z.object({
@@ -129,25 +129,9 @@ export default function SignUp() {
 
       <div className="mx-auto max-w-[var(--content-max)] px-3 sm:px-5">
         <div className="surface-card grid lg:grid-cols-2 rounded-lg border border-[var(--gold)]/40 overflow-hidden shadow-2xl min-h-[620px]">
-          {/* Left Photo Part */}
-          <div className="relative hidden lg:block overflow-hidden min-h-[600px]">
-            <img
-              src={kairouan}
-              alt={t("kairouan_courtyard_alt", "صحن جامع القيروان الكبير")}
-              width={1600}
-              height={1000}
-              className="h-full w-full object-cover"
-            />
-            <div className="hero-scrim absolute inset-0" />
-            <div className="absolute bottom-12 left-12 right-12 max-w-md z-10 rtl:text-right">
-              <p className="eyebrow text-[var(--gold)]">{t("roots_tunisia", "Roots Tunisia")}</p>
-              <p className="mt-3 font-display text-3xl text-white font-semibold leading-snug">
-                {t("signup_hero_title", "Preserve your family story for generations to come.")}
-              </p>
-              <p className="mt-2 text-xs text-white/80 leading-relaxed">
-                {t("signup_hero_desc", "Build multi-generational lineages with verified archival citations from across 24 Tunisian governorates.")}
-              </p>
-            </div>
+          {/* Left — homepage interactive map */}
+          <div className="relative hidden lg:block overflow-auto min-h-[600px] bg-[var(--card)] p-3">
+            <TunisiaGovernoratesMap />
           </div>
 
           {/* Right Form Part */}

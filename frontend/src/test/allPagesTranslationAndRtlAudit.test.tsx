@@ -90,7 +90,6 @@ describe("All User, Admin & Super Admin Pages Translation and RTL/LTR Audit", ()
       "admins",
       "subscriptions",
       "subscription_payments",
-      "tier_features_title",
       "currencies_exchange",
       "payment_settings",
       "legal_content",

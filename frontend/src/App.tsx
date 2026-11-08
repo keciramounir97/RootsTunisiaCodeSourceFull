@@ -105,8 +105,6 @@ const Diaporama = lazy(() => import("./admin/pages/Diaporama"));
 const EmailTemplates = lazy(() => import("./admin/pages/EmailTemplates"));
 const DownloadRequests = lazy(() => import("./admin/pages/DownloadRequests"));
 const AdminArticles = lazy(() => import("./admin/pages/Articles"));
-const TierFeatures = lazy(() => import("./admin/pages/TierFeatures"));
-
 /** Pages where WhatsApp button should appear */
 const WHATSAPP_PAGES = ["/", "/contact", "/subscriptions", "/tasks", "/notes", "/reminders"];
 
@@ -608,16 +606,6 @@ function AppRoutes() {
             <Suspense fallback={<AdminLoadingFallback />}>
               <ProtectedRoute privileges={["articles"]}>
                 <AdminArticles />
-              </ProtectedRoute>
-            </Suspense>
-          }
-        />
-        <Route
-          path="tier-features"
-          element={
-            <Suspense fallback={<AdminLoadingFallback />}>
-              <ProtectedRoute roles={[3]}>
-                <TierFeatures />
               </ProtectedRoute>
             </Suspense>
           }

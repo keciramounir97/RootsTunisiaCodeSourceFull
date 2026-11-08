@@ -6,9 +6,9 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { loginSchema } from "../api/validation";
 import { z } from "zod";
-import carthage from "../assets/slider-carthage.jpg";
 import { Logo } from "../components/site/Logo";
 import SEO from "../components/SEO";
+import TunisiaGovernoratesMap from "../components/TunisiaGovernoratesMap";
 import { Eye, EyeOff, Lock, Mail, AlertCircle } from "lucide-react";
 
 type LoginFormData = z.infer<typeof loginSchema>;
@@ -71,25 +71,9 @@ export default function Login() {
 
       <div className="mx-auto max-w-[var(--content-max)] px-3 sm:px-5">
         <div className="surface-card grid lg:grid-cols-2 rounded-lg border border-[var(--gold)]/40 overflow-hidden shadow-2xl min-h-[620px]">
-          {/* Left Photo Part */}
-          <div className="relative hidden lg:block overflow-hidden min-h-[600px]">
-            <img
-              src={carthage}
-              alt={t("carthage_ruins_alt", "آثار قرطاج المطلة على البحر الأبيض المتوسط")}
-              width={1600}
-              height={1000}
-              className="h-full w-full object-cover"
-            />
-            <div className="hero-scrim absolute inset-0" />
-            <div className="absolute bottom-12 left-12 right-12 max-w-md z-10 rtl:text-right">
-              <p className="eyebrow text-[var(--gold)]">{t("roots_tunisia", "Roots Tunisia")}</p>
-              <p className="mt-3 font-display text-3xl text-white font-semibold leading-snug">
-                {t("login_hero_title", "Your lineage is waiting in the registers.")}
-              </p>
-              <p className="mt-2 text-xs text-white/80 leading-relaxed">
-                {t("login_hero_desc", "Connect ancestors across Ottoman sijillat, central état civil, and Mediterranean archival collections.")}
-              </p>
-            </div>
+          {/* Left — homepage interactive map */}
+          <div className="relative hidden lg:block overflow-auto min-h-[600px] bg-[var(--card)] p-3">
+            <TunisiaGovernoratesMap />
           </div>
 
           {/* Right Form Part */}
