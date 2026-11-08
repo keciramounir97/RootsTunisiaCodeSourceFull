@@ -1052,9 +1052,17 @@ async function bootstrap() {
     try {
         const app = await NestFactory.create<NestExpressApplication>(AppModule, {
             logger: new CleanConsoleLogger(),
+            // Custom parsers below — Nest's default JSON parser was not receiving
+            // bodies behind the production reverse proxy (form-urlencoded still worked).
+            bodyParser: false,
         });
         // Running behind EasyPanel reverse proxy (X-Forwarded-* headers).
         app.set('trust proxy', 1);
+
+        const expressJson = require('express').json({ limit: '3mb' });
+        const expressUrlencoded = require('express').urlencoded({ extended: true, limit: '3mb' });
+        app.use(expressJson);
+        app.use(expressUrlencoded);
 
         // Top-level CORS handling for all incoming HTTP requests & OPTIONS preflights
         const corsOrigins = getCorsOrigins();

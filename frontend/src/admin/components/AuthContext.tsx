@@ -9,6 +9,7 @@ import {
   ReactNode,
 } from "react";
 import { api } from "../../api/client";
+import { encodeAuthFormBody } from "../../utils/authFormCredentials";
 
 export interface User {
   id: number;
@@ -154,12 +155,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     }
 
-    const res = await api.post("/auth/signup", {
-      fullName: String(fullName || "").trim(),
-      phone: phone ? String(phone).trim() : undefined,
-      email: normalizeEmail(email),
-      password: String(password || ""),
-    });
+    const res = await api.post(
+      "/auth/signup",
+      encodeAuthFormBody({
+        fullName: String(fullName || "").trim(),
+        phone: phone ? String(phone).trim() : undefined,
+        email: normalizeEmail(email),
+        password: String(password || ""),
+      }),
+    );
 
     const data = res.data.data || res.data;
     if (data && data.token) {
@@ -175,10 +179,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   /* LOGIN */
   const login = async (email: string, password: string) => {
-    const res = await api.post("/auth/login", {
-      email: normalizeEmail(email),
-      password,
-    });
+    const normalized = normalizeEmail(email);
+    if (!normalized) {
+      throw new Error("Email is required");
+    }
+    if (!password) {
+      throw new Error("Password is required");
+    }
+    const res = await api.post(
+      "/auth/login",
+      encodeAuthFormBody({
+        email: normalized,
+        password: String(password),
+      }),
+    );
     // Backend returns wrapped response: { data: { token, user, ... } }
     const data = res.data.data || res.data;
     localStorage.setItem("token", data.token);
@@ -196,14 +210,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   /* PASSWORD RESET */
   const requestReset = (email: string) =>
-    api.post("/auth/reset", { email: normalizeEmail(email) });
+    api.post(
+      "/auth/reset",
+      encodeAuthFormBody({ email: normalizeEmail(email) }),
+    );
 
   const verifyReset = (email: string, code: string, newPassword: string) =>
-    api.post("/auth/reset/verify", {
-      email: normalizeEmail(email),
-      code: String(code || "").trim(),
-      newPassword,
-    });
+    api.post(
+      "/auth/reset/verify",
+      encodeAuthFormBody({
+        email: normalizeEmail(email),
+        code: String(code || "").trim(),
+        newPassword,
+      }),
+    );
 
   /* LOGOUT */
   const logout = async () => {

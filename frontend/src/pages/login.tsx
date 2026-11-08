@@ -1,23 +1,25 @@
-import { Link, useNavigate } from "react-router-dom";
+import { useThemeStore } from "../store/theme";
+import { NavLink, useNavigate } from "react-router-dom";
+import {
+  Lock,
+  Mail,
+  Eye,
+  EyeOff,
+  ArrowRight,
+  LogIn,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { useAuth } from "../admin/components/AuthContext";
 import { useTranslation } from "../context/TranslationContext";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { loginSchema } from "../api/validation";
-import { z } from "zod";
-import { Logo } from "../components/site/Logo";
-import SEO from "../components/SEO";
 import TunisiaGovernoratesMap from "../components/TunisiaGovernoratesMap";
-import { Eye, EyeOff, Mail, AlertCircle } from "lucide-react";
+import SEO from "../components/SEO";
 import {
   formatAuthApiError,
   readLoginCredentials,
 } from "../utils/authFormCredentials";
 
-type LoginFormData = z.infer<typeof loginSchema>;
-
 export default function Login() {
+  const { theme } = useThemeStore();
   const { login, user } = useAuth();
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -25,19 +27,7 @@ export default function Login() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-
-  const {
-    register,
-    handleSubmit,
-    setValue,
-    formState: { errors },
-  } = useForm<LoginFormData>({
-    resolver: zodResolver(loginSchema),
-    defaultValues: {
-      email: "",
-      password: "",
-    },
-  });
+  const [fieldErrors, setFieldErrors] = useState<{ email?: string; password?: string }>({});
 
   useEffect(() => {
     if (user) {
@@ -45,11 +35,29 @@ export default function Login() {
     }
   }, [user, navigate]);
 
-  const onSubmit = async (data: LoginFormData) => {
+  const isDark = theme === "dark";
+
+  const onFormSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
     setError("");
+    setFieldErrors({});
+
+    const { email, password } = readLoginCredentials(event.currentTarget);
+    const nextErrors: { email?: string; password?: string } = {};
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      nextErrors.email = t("valid_email_required", "Valid email is required");
+    }
+    if (!password) {
+      nextErrors.password = t("password_required", "Password is required");
+    }
+    if (nextErrors.email || nextErrors.password) {
+      setFieldErrors(nextErrors);
+      return;
+    }
+
     setLoading(true);
     try {
-      const loggedUser = await login(data.email.trim().toLowerCase(), data.password);
+      const loggedUser = await login(email, password);
       if (loggedUser) {
         navigate("/admin", { replace: true });
       } else {
@@ -67,107 +75,166 @@ export default function Login() {
     }
   };
 
-  const onFormSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    const { email, password } = readLoginCredentials(event.currentTarget);
-    setValue("email", email, { shouldDirty: true, shouldTouch: true });
-    setValue("password", password, { shouldDirty: true, shouldTouch: true });
-    void handleSubmit(onSubmit)(event);
-  };
-
   return (
-    <div className="bg-[var(--background)] text-[var(--foreground)] min-h-[85vh] py-8 sm:py-12">
+    <div className="bg-[var(--background)] text-[var(--foreground)] min-h-screen flex items-stretch px-4 pt-24 sm:px-6 sm:pt-28 pb-8 lg:px-8">
       <SEO
         title={t("seo_login_title", "تسجيل الدخول — جذور تونس")}
         description="Sign in to your Roots Tunisia account to continue your Tunisian family research."
         keywords={["Login Roots Tunisia", "Tunisian genealogy account"]}
       />
+      <div className="frame-gold w-full max-w-[var(--content-max)] mx-auto flex flex-col lg:flex-row rounded-lg overflow-hidden shadow-2xl border border-[var(--gold)]/40 bg-[var(--paper-color)]">
+        <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden min-h-[500px] bg-[var(--card)]">
+          <TunisiaGovernoratesMap />
+          <div className="absolute inset-y-0 right-0 w-16 pointer-events-none bg-gradient-to-r from-transparent to-[var(--paper-color)] z-[450]" />
+        </div>
 
-      <div className="mx-auto w-full max-w-[var(--content-max)] px-3 sm:px-5">
-        <div className="surface-card grid lg:grid-cols-2 rounded-lg border border-[var(--gold)]/40 overflow-hidden shadow-2xl min-h-[620px]">
-          {/* Left — homepage interactive map */}
-          <div className="relative hidden lg:block overflow-auto min-h-[600px] bg-[var(--card)] p-3">
-            <TunisiaGovernoratesMap />
-          </div>
-
-          {/* Right Form Part */}
-          <div className="flex items-center justify-center p-8 sm:p-12 lg:p-16 bg-[var(--card)]">
-            <form className="w-full max-w-md" onSubmit={onFormSubmit}>
-              <Logo />
-              <h1 className="display-lg mt-8 text-[var(--foreground)]">{t("welcome_back", "Welcome back")}</h1>
-              <p className="mt-2 text-sm text-[var(--muted-foreground)]">
-                {t("signin_continue_building", "Sign in to continue building your Tunisian family tree.")}
+        <div
+          className={`flex-1 flex items-center justify-center p-6 sm:p-10 transition-colors duration-300 ${
+            isDark ? "bg-[var(--teal-dark)]" : "bg-[var(--paper-color)]"
+          }`}
+        >
+          <div className="w-full max-w-md">
+            <div className="mb-8 text-center lg:text-left">
+              <h1
+                className={`text-3xl font-bold mb-2 tracking-wide font-cinzel ${
+                  isDark ? "text-[var(--gold-light)]" : "text-[var(--brand-teal)]"
+                }`}
+              >
+                {t("welcome_back", "Welcome Back")}
+              </h1>
+              <p
+                className={`text-base font-body ${
+                  isDark ? "text-[var(--gold-light)]/60" : "text-[var(--brand-teal)]/60"
+                }`}
+              >
+                {t("login_subtitle", "Sign in to your account")}
               </p>
+            </div>
 
-              {error && (
-                <div className="mt-4 p-4 rounded text-sm bg-red-100 text-red-800 border border-red-300 dark:bg-red-950 dark:text-red-200 flex items-center gap-2">
-                  <AlertCircle className="h-5 w-5 shrink-0" />
-                  <span>{error}</span>
+            <form className="space-y-5" onSubmit={onFormSubmit} noValidate>
+              <div>
+                <label
+                  className={`text-sm font-medium mb-2 block font-body ${
+                    isDark ? "text-[var(--gold-light)]/80" : "text-[var(--brand-teal)]/80"
+                  }`}
+                >
+                  {t("email", "Email")}
+                </label>
+                <div
+                  className={`flex items-center gap-3 px-4 py-3.5 rounded-2xl border-2 transition-all focus-within:border-[var(--brand-gold)] focus-within:shadow-lg focus-within:shadow-[var(--brand-gold)]/10 ${
+                    fieldErrors.email
+                      ? "border-red-500/50"
+                      : isDark
+                        ? "bg-white/5 border-white/10"
+                        : "bg-white border-[var(--border-color)]"
+                  }`}
+                >
+                  <Mail className="w-5 h-5 text-[var(--brand-gold)] shrink-0" />
+                  <input
+                    type="email"
+                    name="email"
+                    autoComplete="username"
+                    placeholder={t("email_placeholder", "example@email.com")}
+                    className={`bg-transparent outline-none flex-1 text-base font-body ${
+                      isDark
+                        ? "text-white placeholder:text-white/30"
+                        : "text-[var(--brand-teal)] placeholder:text-[var(--brand-teal)]/30"
+                    }`}
+                  />
                 </div>
-              )}
-
-              <div className="mt-8 grid gap-5">
-                <label className="grid gap-2">
-                  <span className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
-                    {t("email", "Email")}
-                  </span>
-                  <div className="relative">
-                    <input
-                      {...register("email")}
-                      type="email"
-                      name="email"
-                      autoComplete="username"
-                      required
-                      className="w-full rounded-sm border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm text-[var(--foreground)] outline-none focus:border-[var(--gold)] rtl:text-right"
-                      placeholder={t("placeholder_email_example", "you@example.tn")}
-                    />
-                    <Mail className="absolute right-3 rtl:right-auto rtl:left-3 top-3.5 h-4 w-4 text-[var(--muted-foreground)] pointer-events-none" />
-                  </div>
-                  {errors.email && <p className="text-xs text-red-500">{errors.email.message}</p>}
-                </label>
-
-                <label className="grid gap-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
-                      {t("login_password", "Password")}
-                    </span>
-                    <Link
-                      to="/reset-password"
-                      className="text-xs font-semibold text-[var(--gold)] hover:underline"
-                    >
-                      {t("forgot_password_q", "Forgot password?")}
-                    </Link>
-                  </div>
-                  <div className="relative">
-                    <input
-                      {...register("password")}
-                      type={showPassword ? "text" : "password"}
-                      name="password"
-                      autoComplete="current-password"
-                      required
-                      className="w-full rounded-sm border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm text-[var(--foreground)] outline-none focus:border-[var(--gold)] rtl:text-right"
-                      placeholder="••••••••"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 rtl:right-auto rtl:left-3 top-3.5 text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
-                    >
-                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    </button>
-                  </div>
-                  {errors.password && <p className="text-xs text-red-500">{errors.password.message}</p>}
-                </label>
-
-                <button type="submit" disabled={loading} className="btn-base btn-red w-full mt-2">
-                  {loading ? t("signing_in", "Signing in…") : t("sign_in_account", "Sign in to account")}
-                </button>
+                {fieldErrors.email ? (
+                  <p className="text-red-500 text-xs mt-1 font-medium font-body">{fieldErrors.email}</p>
+                ) : null}
               </div>
 
-              <p className="mt-8 text-sm text-[var(--muted-foreground)] text-center">
-                {t("new_to_roots_tunisia", "New to Roots Tunisia?")}{" "}
-                <Link to="/signup" className="font-semibold text-[var(--gold)] hover:underline">
-                  {t("create_an_account", "Create an account")}
-                </Link>
+              <div>
+                <label
+                  className={`text-sm font-medium mb-2 block font-body ${
+                    isDark ? "text-[var(--gold-light)]/80" : "text-[var(--brand-teal)]/80"
+                  }`}
+                >
+                  {t("login_password", "Password")}
+                </label>
+                <div
+                  className={`flex items-center gap-3 px-4 py-3.5 rounded-2xl border-2 transition-all focus-within:border-[var(--brand-gold)] focus-within:shadow-lg focus-within:shadow-[var(--brand-gold)]/10 ${
+                    fieldErrors.password
+                      ? "border-red-500/50"
+                      : isDark
+                        ? "bg-white/5 border-white/10"
+                        : "bg-white border-[var(--border-color)]"
+                  }`}
+                >
+                  <Lock className="w-5 h-5 text-[var(--brand-gold)] shrink-0" />
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    name="password"
+                    autoComplete="current-password"
+                    placeholder="••••••••"
+                    className={`bg-transparent outline-none flex-1 text-base font-body ${
+                      isDark
+                        ? "text-white placeholder:text-white/30"
+                        : "text-[var(--brand-teal)] placeholder:text-[var(--brand-teal)]/30"
+                    }`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    className="text-[var(--brand-gold)]/60 hover:text-[var(--brand-gold)] transition-colors"
+                  >
+                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
+                {fieldErrors.password ? (
+                  <p className="text-red-500 text-xs mt-1 font-medium font-body">{fieldErrors.password}</p>
+                ) : null}
+              </div>
+
+              <div className="flex justify-end">
+                <NavLink
+                  to="/resetpassword"
+                  className="text-sm text-[var(--teal-light,#24766f)] hover:text-[var(--brand-gold)] transition-colors font-medium font-body"
+                >
+                  {t("forgot_password", "Forgot password?")}
+                </NavLink>
+              </div>
+
+              {error ? (
+                <div className="p-4 rounded-2xl bg-red-500/10 border border-red-500/20">
+                  <p className="text-red-500 text-sm text-center font-medium font-body">{error}</p>
+                </div>
+              ) : null}
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="group w-full py-4 rounded-2xl text-white font-bold text-base shadow-xl bg-gradient-to-r from-[var(--teal-dark)] via-[var(--brand-teal)] to-[var(--brand-gold)] hover:shadow-2xl hover:shadow-[var(--brand-gold)]/20 transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 font-body"
+              >
+                {loading ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    {t("please_wait", "Please wait...")}
+                  </>
+                ) : (
+                  <>
+                    <LogIn className="w-5 h-5" />
+                    {t("login", "Login")}
+                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  </>
+                )}
+              </button>
+
+              <p
+                className={`text-center text-sm pt-2 font-body ${
+                  isDark ? "text-[var(--gold-light)]/50" : "text-[var(--brand-teal)]/50"
+                }`}
+              >
+                {t("no_account_yet", "Don't have an account?")}{" "}
+                <NavLink
+                  to="/signup"
+                  className="text-[var(--teal-light,#24766f)] font-bold hover:text-[var(--brand-gold)] transition-colors"
+                >
+                  {t("create_account", "Create account")}
+                </NavLink>
               </p>
             </form>
           </div>

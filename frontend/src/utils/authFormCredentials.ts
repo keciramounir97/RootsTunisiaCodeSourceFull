@@ -1,4 +1,20 @@
 /**
+ * Encode auth payloads as application/x-www-form-urlencoded.
+ * Production reverse-proxies currently drop JSON bodies on several Roots hosts
+ * while form bodies parse correctly in Nest ValidationPipe.
+ */
+export function encodeAuthFormBody(
+  payload: Record<string, string | undefined | null>,
+): URLSearchParams {
+  const params = new URLSearchParams();
+  Object.entries(payload).forEach(([key, value]) => {
+    if (value === undefined || value === null) return;
+    params.set(key, String(value));
+  });
+  return params;
+}
+
+/**
  * Read login credentials from the live form DOM.
  * Browser password-managers / autofill often fill inputs without firing React
  * onChange, so React state and react-hook-form can still be empty on submit.

@@ -1,316 +1,355 @@
-import { Link, useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useThemeStore } from "../store/theme";
+import { NavLink, useNavigate } from "react-router-dom";
+import {
+  Lock,
+  Mail,
+  User,
+  Eye,
+  EyeOff,
+  ArrowRight,
+  UserPlus,
+} from "lucide-react";
+import { useEffect, useState } from "react";
 import { useAuth } from "../admin/components/AuthContext";
 import { useTranslation } from "../context/TranslationContext";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { Logo } from "../components/site/Logo";
-import SEO from "../components/SEO";
 import TunisiaGovernoratesMap from "../components/TunisiaGovernoratesMap";
-import { Eye, EyeOff, AlertCircle } from "lucide-react";
-
-const signupFormSchema = z.object({
-  name: z.string().min(1, "Name is required"),
-  email: z.string().email("Valid email is required"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
-  role: z.number().optional(),
-  agreeTermsAndAge: z.boolean().refine((val) => val === true, {
-    message: "You must be at least 16 years old and agree to the Terms of Service and Privacy Policy",
-  }),
-  marketingConsent: z.boolean().optional(),
-});
-
-type RegisterFormData = z.infer<typeof signupFormSchema>;
-
-const governorates = [
-  "Tunis", "Ariana", "Ben Arous", "La Manouba", "Nabeul", "Zaghouan", "Bizerte",
-  "Béja", "Jendouba", "Le Kef", "Siliana", "Sousse", "Monastir", "Mahdia",
-  "Sfax", "Kairouan", "Kasserine", "Sidi Bouzid", "Gafsa", "Tozeur", "Kébili",
-  "Gabès", "Médenine", "Tataouine", "Diaspora / International",
-];
+import SEO from "../components/SEO";
+import { formatAuthApiError } from "../utils/authFormCredentials";
 
 export default function SignUp() {
-  const { register: registerAuth } = useAuth();
+  const { theme } = useThemeStore();
+  const { register: registerAuth, user } = useAuth();
   const navigate = useNavigate();
   const { t } = useTranslation();
 
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [verificationPending, setVerificationPending] = useState(false);
-  const [registeredEmail, setRegisteredEmail] = useState("");
-  const [verificationCode, setVerificationCode] = useState("");
-  const [verifying, setVerifying] = useState(false);
-  const [verifySuccess, setVerifySuccess] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<RegisterFormData>({
-    resolver: zodResolver(signupFormSchema),
-    defaultValues: {
-      name: "",
-      email: "",
-      password: "",
-      role: 2,
-      agreeTermsAndAge: false,
-      marketingConsent: false,
-    },
-  });
+  useEffect(() => {
+    if (user) {
+      navigate("/admin", { replace: true });
+    }
+  }, [user, navigate]);
 
-  
-  const handleVerifyAccount = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!verificationCode.trim()) {
-      setError(t("code_required", "يرجى إدخال رمز التحقق المكون من 6 أرقام"));
+  const isDark = theme === "dark";
+
+  const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setError("");
+    setFieldErrors({});
+
+    const form = event.currentTarget;
+    const data = new FormData(form);
+    const fullName = String(data.get("fullName") || "").trim();
+    const email = String(data.get("email") || "").trim().toLowerCase();
+    const password = String(data.get("password") || "");
+    const confirmPassword = String(data.get("confirmPassword") || "");
+
+    const nextErrors: Record<string, string> = {};
+    if (!fullName) nextErrors.fullName = t("name_required", "Name is required");
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      nextErrors.email = t("valid_email_required", "Valid email is required");
+    }
+    if (password.length < 6) {
+      nextErrors.password = t("password_min_6", "Password must be at least 6 characters");
+    }
+    if (password !== confirmPassword) {
+      nextErrors.confirmPassword = t("passwords_do_not_match", "Passwords do not match");
+    }
+    if (Object.keys(nextErrors).length) {
+      setFieldErrors(nextErrors);
       return;
     }
-    setVerifying(true);
-    setError("");
-    try {
-      await fetch("/api/auth/verify-account", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: registeredEmail,
-          code: verificationCode.trim(),
-        }),
-      });
-      setVerifySuccess(true);
-      setTimeout(() => {
-        navigate("/admin", { replace: true });
-      }, 1500);
-    } catch {
-      setError(t("verification_failed", "فشل التحقق من الرمز المدخل"));
-    } finally {
-      setVerifying(false);
-    }
-  };
 
-  const onSubmit = async (data: RegisterFormData) => {
-    setError("");
     setLoading(true);
     try {
-      setRegisteredEmail(data.email.trim().toLowerCase());
-      await registerAuth(data.name.trim(), undefined, data.email.trim().toLowerCase(), data.password, (data as any).dob);
-      setVerificationPending(true);
-      if (data.marketingConsent) {
-        try {
-          await fetch("/api/newsletter/subscribe", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email: data.email.trim().toLowerCase() }),
-          });
-        } catch {
-          // Non-blocking newsletter subscription
-        }
-      }
-      navigate("/admin", { replace: true });
-    } catch (err: any) {
-      const errorMessage =
-        err.response?.data?.message ||
-        err.message ||
-        t("registration_failed", "Registration failed. Please try again.");
-      setError(errorMessage);
+      await registerAuth(fullName, undefined, email, password);
+      setSuccess(true);
+    } catch (err: unknown) {
+      setError(
+        formatAuthApiError(
+          err,
+          t("registration_failed", "Registration failed. Please try again."),
+        ),
+      );
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="bg-[var(--background)] text-[var(--foreground)] min-h-[85vh] py-8 sm:py-12">
+    <div className="bg-[var(--background)] text-[var(--foreground)] min-h-screen flex items-stretch px-4 pt-24 sm:px-6 sm:pt-28 pb-8 lg:px-8">
       <SEO
         title={t("seo_signup_title", "إنشاء حساب — جذور تونس")}
-        description="Join Roots Tunisia to document your family tree, search archive registers and preserve Tunisian heritage."
-        keywords={["Register Roots Tunisia", "Create Tunisian genealogy account"]}
+        description="Create a Roots Tunisia account to explore Tunisian family trees and archives."
+        keywords={["Signup Roots Tunisia", "Tunisian genealogy account"]}
       />
+      <div className="frame-gold w-full max-w-[var(--content-max)] mx-auto flex flex-col lg:flex-row rounded-lg overflow-hidden shadow-2xl border border-[var(--gold)]/40 bg-[var(--paper-color)]">
+        <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden min-h-[500px] bg-[var(--card)]">
+          <TunisiaGovernoratesMap />
+          <div className="absolute inset-y-0 right-0 w-16 pointer-events-none bg-gradient-to-r from-transparent to-[var(--paper-color)] z-[450]" />
+        </div>
 
-      <div className="mx-auto w-full max-w-[var(--content-max)] px-3 sm:px-5">
-        <div className="surface-card grid lg:grid-cols-2 rounded-lg border border-[var(--gold)]/40 overflow-hidden shadow-2xl min-h-[620px]">
-          {/* Left — homepage interactive map */}
-          <div className="relative hidden lg:block overflow-auto min-h-[600px] bg-[var(--card)] p-3">
-            <TunisiaGovernoratesMap />
-          </div>
-
-          {/* Right Form Part */}
-          <div className="flex items-center justify-center p-8 sm:p-12 lg:p-16 bg-[var(--card)]">
-            {verificationPending ? (
-              <div className="w-full max-w-md p-6 rounded-2xl border border-[var(--gold)]/40 bg-[var(--card)] shadow-2xl text-center space-y-5">
-                <div className="w-14 h-14 rounded-full bg-[var(--gold)]/20 text-[var(--gold)] flex items-center justify-center mx-auto border border-[var(--gold)]/30">
-                  <Eye className="w-7 h-7" />
+        <div
+          className={`flex-1 flex items-center justify-center p-6 sm:p-10 transition-colors duration-300 ${
+            isDark ? "bg-[var(--teal-dark)]" : "bg-[var(--paper-color)]"
+          }`}
+        >
+          <div className="w-full max-w-md py-6">
+            {success ? (
+              <div className="text-center">
+                <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-gradient-to-br from-[var(--brand-teal)] to-[var(--brand-gold)] flex items-center justify-center shadow-2xl shadow-[var(--brand-gold)]/30">
+                  <UserPlus className="w-10 h-10 text-white" />
                 </div>
-                <div>
-                  <h2 className="text-xl font-bold font-display text-[var(--foreground)]">
-                    {t("verify_account_title", "تأكيد ملكية الحساب عبر البريد")}
-                  </h2>
-                  <p className="text-xs text-[var(--muted-foreground)] mt-1.5 leading-relaxed">
-                    {t("verify_account_instructions", "تم إرسال رمز تحقق مكون من 6 أرقام إلى بريدك الإلكتروني:")}
-                    <br />
-                    <strong className="text-[var(--gold)] font-mono">{registeredEmail}</strong>
+                <h2
+                  className={`text-2xl font-bold mb-3 font-cinzel ${
+                    isDark ? "text-[var(--gold-light)]" : "text-[var(--brand-teal)]"
+                  }`}
+                >
+                  {t("account_created", "Account Created!")}
+                </h2>
+                <p
+                  className={`mb-6 font-body ${
+                    isDark ? "text-[var(--gold-light)]/60" : "text-[var(--brand-teal)]/60"
+                  }`}
+                >
+                  {t(
+                    "account_ready_login",
+                    "Your account is ready. You can sign in and start exploring Tunisian trees and archives.",
+                  )}
+                </p>
+                <NavLink to="/login" className="inline-flex items-center gap-2 heritage-btn text-sm">
+                  <ArrowRight className="w-4 h-4" />
+                  {t("back_to_login", "Back to Login")}
+                </NavLink>
+              </div>
+            ) : (
+              <>
+                <div className="mb-8 text-center lg:text-left">
+                  <h1
+                    className={`text-3xl font-bold mb-2 tracking-wide font-cinzel ${
+                      isDark ? "text-[var(--gold-light)]" : "text-[var(--brand-teal)]"
+                    }`}
+                  >
+                    {t("create_account", "Create Account")}
+                  </h1>
+                  <p
+                    className={`text-base font-body ${
+                      isDark ? "text-[var(--gold-light)]/60" : "text-[var(--brand-teal)]/60"
+                    }`}
+                  >
+                    {t("signup_subtitle", "Join the Roots Tunisia community")}
                   </p>
                 </div>
 
-                {error && (
-                  <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-500 text-xs">
-                    {error}
+                <form className="space-y-4" onSubmit={onSubmit} noValidate>
+                  <div>
+                    <label
+                      className={`text-sm font-medium mb-2 block font-body ${
+                        isDark ? "text-[var(--gold-light)]/80" : "text-[var(--brand-teal)]/80"
+                      }`}
+                    >
+                      {t("full_name", "Full Name")}
+                    </label>
+                    <div
+                      className={`flex items-center gap-3 px-4 py-3.5 rounded-2xl border-2 transition-all focus-within:border-[var(--brand-gold)] ${
+                        fieldErrors.fullName
+                          ? "border-red-500/50"
+                          : isDark
+                            ? "bg-white/5 border-white/10"
+                            : "bg-white border-[var(--border-color)]"
+                      }`}
+                    >
+                      <User className="w-5 h-5 text-[var(--brand-gold)] shrink-0" />
+                      <input
+                        type="text"
+                        name="fullName"
+                        autoComplete="name"
+                        placeholder={t("full_name_placeholder", "Your full name")}
+                        className={`bg-transparent outline-none flex-1 text-base font-body ${
+                          isDark
+                            ? "text-white placeholder:text-white/30"
+                            : "text-[var(--brand-teal)] placeholder:text-[var(--brand-teal)]/30"
+                        }`}
+                      />
+                    </div>
+                    {fieldErrors.fullName ? (
+                      <p className="text-red-500 text-xs mt-1 font-medium font-body">
+                        {fieldErrors.fullName}
+                      </p>
+                    ) : null}
                   </div>
-                )}
 
-                {verifySuccess ? (
-                  <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 text-sm font-bold">
-                    ✓ {t("account_confirmed_welcome", "تم تأكيد الحساب بنجاح! جاري تحويلك إلى لوحة التحكم...")}
+                  <div>
+                    <label
+                      className={`text-sm font-medium mb-2 block font-body ${
+                        isDark ? "text-[var(--gold-light)]/80" : "text-[var(--brand-teal)]/80"
+                      }`}
+                    >
+                      {t("email", "Email")}
+                    </label>
+                    <div
+                      className={`flex items-center gap-3 px-4 py-3.5 rounded-2xl border-2 transition-all focus-within:border-[var(--brand-gold)] ${
+                        fieldErrors.email
+                          ? "border-red-500/50"
+                          : isDark
+                            ? "bg-white/5 border-white/10"
+                            : "bg-white border-[var(--border-color)]"
+                      }`}
+                    >
+                      <Mail className="w-5 h-5 text-[var(--brand-gold)] shrink-0" />
+                      <input
+                        type="email"
+                        name="email"
+                        autoComplete="email"
+                        placeholder={t("email_placeholder", "example@email.com")}
+                        className={`bg-transparent outline-none flex-1 text-base font-body ${
+                          isDark
+                            ? "text-white placeholder:text-white/30"
+                            : "text-[var(--brand-teal)] placeholder:text-[var(--brand-teal)]/30"
+                        }`}
+                      />
+                    </div>
+                    {fieldErrors.email ? (
+                      <p className="text-red-500 text-xs mt-1 font-medium font-body">
+                        {fieldErrors.email}
+                      </p>
+                    ) : null}
                   </div>
-                ) : (
-                  <form onSubmit={handleVerifyAccount} className="space-y-4">
-                    <input
-                      type="text"
-                      maxLength={6}
-                      value={verificationCode}
-                      onChange={(e) => setVerificationCode(e.target.value)}
-                      placeholder="000000"
-                      className="w-48 mx-auto text-center font-mono text-2xl font-bold tracking-[8px] py-2 px-3 rounded-xl border-2 border-[var(--gold)] bg-[var(--background)] text-[var(--foreground)] outline-none"
-                    />
 
-                    <div className="space-y-2">
-                      <button
-                        type="submit"
-                        disabled={verifying || !verificationCode.trim()}
-                        className="btn-base btn-gold w-full text-xs font-bold py-2.5 rounded-xl cursor-pointer disabled:opacity-50"
-                      >
-                        {verifying ? t("verifying", "جاري التحقق...") : t("confirm_and_activate", "تأكيد وتفعيل الحساب")}
-                      </button>
-
+                  <div>
+                    <label
+                      className={`text-sm font-medium mb-2 block font-body ${
+                        isDark ? "text-[var(--gold-light)]/80" : "text-[var(--brand-teal)]/80"
+                      }`}
+                    >
+                      {t("password", "Password")}
+                    </label>
+                    <div
+                      className={`flex items-center gap-3 px-4 py-3.5 rounded-2xl border-2 transition-all focus-within:border-[var(--brand-gold)] ${
+                        fieldErrors.password
+                          ? "border-red-500/50"
+                          : isDark
+                            ? "bg-white/5 border-white/10"
+                            : "bg-white border-[var(--border-color)]"
+                      }`}
+                    >
+                      <Lock className="w-5 h-5 text-[var(--brand-gold)] shrink-0" />
+                      <input
+                        type={showPassword ? "text" : "password"}
+                        name="password"
+                        autoComplete="new-password"
+                        placeholder="••••••••"
+                        className={`bg-transparent outline-none flex-1 text-base font-body ${
+                          isDark
+                            ? "text-white placeholder:text-white/30"
+                            : "text-[var(--brand-teal)] placeholder:text-[var(--brand-teal)]/30"
+                        }`}
+                      />
                       <button
                         type="button"
-                        onClick={() => navigate("/admin", { replace: true })}
-                        className="text-xs text-[var(--muted-foreground)] hover:text-[var(--foreground)] underline block mx-auto cursor-pointer"
+                        onClick={() => setShowPassword((prev) => !prev)}
+                        className="text-[var(--brand-gold)]/60 hover:text-[var(--brand-gold)] transition-colors"
                       >
-                        {t("continue_to_dashboard", "المتابعة لاحقاً إلى لوحة التحكم")}
+                        {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                       </button>
                     </div>
-                  </form>
-                )}
-              </div>
-            ) : (
-            <form className="w-full max-w-md" onSubmit={handleSubmit(onSubmit)}>
-              <Logo />
-              <h1 className="display-lg mt-8 text-[var(--foreground)]">{t("create_account", "Create your account")}</h1>
-              <p className="mt-2 text-sm text-[var(--muted-foreground)]">
-                {t("signup_subtitle", "Start building your Tunisian family tree with verified records.")}
-              </p>
-
-              {error && (
-                <div className="mt-4 p-4 rounded text-sm bg-red-100 text-red-800 border border-red-300 dark:bg-red-950 dark:text-red-200 flex items-center gap-2">
-                  <AlertCircle className="h-5 w-5 shrink-0" />
-                  <span>{error}</span>
-                </div>
-              )}
-
-              <div className="mt-8 grid gap-4">
-                <label className="grid gap-1.5">
-                  <span className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
-                    {t("full_name", "Full Name")}
-                  </span>
-                  <input
-                    {...register("name")}
-                    type="text"
-                    required
-                    className="rounded-sm border border-[var(--border)] bg-[var(--background)] px-4 py-2.5 text-sm text-[var(--foreground)] outline-none focus:border-[var(--gold)] rtl:text-right"
-                    placeholder={t("placeholder_name_example", "Mohamed Ben Amor")}
-                  />
-                  {errors.name && <p className="text-xs text-red-500">{errors.name.message}</p>}
-                </label>
-
-                <label className="grid gap-1.5">
-                  <span className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
-                    {t("email_address", "Email Address")}
-                  </span>
-                  <input
-                    {...register("email")}
-                    type="email"
-                    required
-                    className="rounded-sm border border-[var(--border)] bg-[var(--background)] px-4 py-2.5 text-sm text-[var(--foreground)] outline-none focus:border-[var(--gold)] rtl:text-right"
-                    placeholder={t("placeholder_email_example", "you@example.tn")}
-                  />
-                  {errors.email && <p className="text-xs text-red-500">{errors.email.message}</p>}
-                </label>
-
-                <label className="grid gap-1.5">
-                  <span className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--muted-foreground)]">
-                    {t("password", "Password")}
-                  </span>
-                  <div className="relative">
-                    <input
-                      {...register("password")}
-                      type={showPassword ? "text" : "password"}
-                      required
-                      className="w-full rounded-sm border border-[var(--border)] bg-[var(--background)] px-4 py-2.5 text-sm text-[var(--foreground)] outline-none focus:border-[var(--gold)] rtl:text-right"
-                      placeholder={t("placeholder_min_chars", "At least 6 characters")}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 rtl:right-auto rtl:left-3 top-3 text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
-                    >
-                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    </button>
+                    {fieldErrors.password ? (
+                      <p className="text-red-500 text-xs mt-1 font-medium font-body">
+                        {fieldErrors.password}
+                      </p>
+                    ) : null}
                   </div>
-                  {errors.password && <p className="text-xs text-red-500">{errors.password.message}</p>}
-                </label>
 
-                {/* Explicit Consent & Age Controls */}
-                <div className="space-y-3 pt-2 text-xs text-[var(--muted-foreground)]">
-                  <label className="flex items-start gap-2.5 cursor-pointer select-none">
-                    <input
-                      {...register("agreeTermsAndAge")}
-                      type="checkbox"
-                      id="signup-agree-terms"
-                      className="mt-0.5 h-4 w-4 rounded border-[var(--border)] text-[var(--gold)] focus:ring-[var(--gold)]"
-                    />
-                    <span className="leading-snug">
-                      {t("signup_agree_age_prefix", "I confirm that I am at least 16 years of age and agree to the")}{" "}
-                      <Link to="/terms" target="_blank" className="text-[var(--gold)] underline hover:text-[var(--foreground)]">
-                        {t("terms_of_service", "Terms of Service")}
-                      </Link>{" "}
-                      {t("and", "and")}{" "}
-                      <Link to="/privacy" target="_blank" className="text-[var(--gold)] underline hover:text-[var(--foreground)]">
-                        {t("privacy_policy", "Privacy Policy")}
-                      </Link>
-                      . <span className="text-red-500">*</span>
-                    </span>
-                  </label>
-                  {errors.agreeTermsAndAge && (
-                    <p className="text-xs text-red-500 pl-6.5">{errors.agreeTermsAndAge.message}</p>
-                  )}
+                  <div>
+                    <label
+                      className={`text-sm font-medium mb-2 block font-body ${
+                        isDark ? "text-[var(--gold-light)]/80" : "text-[var(--brand-teal)]/80"
+                      }`}
+                    >
+                      {t("confirm_password", "Confirm Password")}
+                    </label>
+                    <div
+                      className={`flex items-center gap-3 px-4 py-3.5 rounded-2xl border-2 transition-all focus-within:border-[var(--brand-gold)] ${
+                        fieldErrors.confirmPassword
+                          ? "border-red-500/50"
+                          : isDark
+                            ? "bg-white/5 border-white/10"
+                            : "bg-white border-[var(--border-color)]"
+                      }`}
+                    >
+                      <Lock className="w-5 h-5 text-[var(--brand-gold)] shrink-0" />
+                      <input
+                        type={showConfirm ? "text" : "password"}
+                        name="confirmPassword"
+                        autoComplete="new-password"
+                        placeholder="••••••••"
+                        className={`bg-transparent outline-none flex-1 text-base font-body ${
+                          isDark
+                            ? "text-white placeholder:text-white/30"
+                            : "text-[var(--brand-teal)] placeholder:text-[var(--brand-teal)]/30"
+                        }`}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirm((prev) => !prev)}
+                        className="text-[var(--brand-gold)]/60 hover:text-[var(--brand-gold)] transition-colors"
+                      >
+                        {showConfirm ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                      </button>
+                    </div>
+                    {fieldErrors.confirmPassword ? (
+                      <p className="text-red-500 text-xs mt-1 font-medium font-body">
+                        {fieldErrors.confirmPassword}
+                      </p>
+                    ) : null}
+                  </div>
 
-                  <label className="flex items-start gap-2.5 cursor-pointer select-none">
-                    <input
-                      {...register("marketingConsent")}
-                      type="checkbox"
-                      id="signup-marketing-consent"
-                      className="mt-0.5 h-4 w-4 rounded border-[var(--border)] text-[var(--gold)] focus:ring-[var(--gold)]"
-                    />
-                    <span className="leading-snug">
-                      {t("signup_marketing_optin", "(Optional) I would like to receive occasional email updates about newly indexed Tunisian archives and historical records. You can unsubscribe at any time.")}
-                    </span>
-                  </label>
-                </div>
+                  {error ? (
+                    <div className="p-4 rounded-2xl bg-red-500/10 border border-red-500/20">
+                      <p className="text-red-500 text-sm text-center font-medium font-body">{error}</p>
+                    </div>
+                  ) : null}
 
-                <button type="submit" disabled={loading} className="btn-base btn-red w-full mt-3">
-                  {loading ? t("creating_account", "Creating account…") : t("create_free_account", "Create free account")}
-                </button>
-              </div>
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="group w-full py-4 rounded-2xl text-white font-bold text-base shadow-xl bg-gradient-to-r from-[var(--teal-dark)] via-[var(--brand-teal)] to-[var(--brand-gold)] hover:shadow-2xl hover:shadow-[var(--brand-gold)]/20 transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 font-body"
+                  >
+                    {loading ? (
+                      <>
+                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        {t("please_wait", "Please wait...")}
+                      </>
+                    ) : (
+                      <>
+                        <UserPlus className="w-5 h-5" />
+                        {t("create_account", "Create Account")}
+                        <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                      </>
+                    )}
+                  </button>
 
-              <p className="mt-6 text-sm text-[var(--muted-foreground)] text-center">
-                {t("already_have_account", "Already have an account?")}{" "}
-                <Link to="/login" className="font-semibold text-[var(--gold)] hover:underline">
-                  {t("login", "Sign in")}
-                </Link>
-              </p>
-            </form>
-          )}
+                  <p
+                    className={`text-center text-sm pt-2 font-body ${
+                      isDark ? "text-[var(--gold-light)]/50" : "text-[var(--brand-teal)]/50"
+                    }`}
+                  >
+                    {t("already_have_account", "Already have an account?")}{" "}
+                    <NavLink
+                      to="/login"
+                      className="text-[var(--teal-light,#24766f)] font-bold hover:text-[var(--brand-gold)] transition-colors"
+                    >
+                      {t("sign_in", "Sign in")}
+                    </NavLink>
+                  </p>
+                </form>
+              </>
+            )}
           </div>
         </div>
       </div>
