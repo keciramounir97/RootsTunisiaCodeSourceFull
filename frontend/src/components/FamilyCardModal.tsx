@@ -34,6 +34,8 @@ import {
   Heart,
   ChevronRight,
   ChevronLeft,
+  Archive,
+  Building,
 } from "lucide-react";
 import { api } from "../api/client";
 import { useTranslation } from "../context/TranslationContext";
@@ -482,15 +484,19 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
     return givenSurname || "Individu";
   };
 
+  // Current person with safe fallback to first member
+  const currentPerson = selectedPerson || (displayPeople.length > 0 ? displayPeople[0] : null);
+
   // Sources for the currently selected person in Volet 2 (Matching TreesBuilder open details)
   const selectedPersonSources = useMemo(() => {
-    if (!selectedPerson) return [];
-    const extracted = typeof extractPersonLinks === "function" ? extractPersonLinks(selectedPerson) : [];
+    const target = selectedPerson || (displayPeople.length > 0 ? displayPeople[0] : null);
+    if (!target) return [];
+    const extracted = typeof extractPersonLinks === "function" ? extractPersonLinks(target) : [];
     if (Array.isArray(extracted) && extracted.length > 0) return extracted;
 
-    const pName = nameOf(selectedPerson);
+    const pName = nameOf(target);
     const matched = archivalDocuments.filter((d) =>
-      d.memberId === selectedPerson.id ||
+      d.memberId === target.id ||
       (pName && d.memberName && d.memberName.toLowerCase().includes(pName.toLowerCase()))
     );
 
@@ -517,7 +523,7 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
         memberName: pName,
       },
     ];
-  }, [selectedPerson, archivalDocuments, locale]);
+  }, [selectedPerson, displayPeople, archivalDocuments, locale]);
 
   return (
     <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/80 backdrop-blur-md p-2 sm:p-4 overflow-y-auto">
@@ -648,10 +654,10 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
           /* ========================================================================= */
           /* CASE 2: TREE MODAL WITH SYMMETRICAL VERTICAL 3-VOLET NAVIGATION           */
           /* ========================================================================= */
-          <div className="flex flex-col md:flex-row gap-5 pt-3 flex-1 overflow-hidden min-h-0">
+          <div className="flex flex-col md:flex-row gap-5 pt-3 flex-1 overflow-y-auto md:overflow-hidden min-h-0">
             
             {/* 3-VOLET NAVIGATION: ONE UNDER ONE, VERTICALEMENT ALIGNÉ & SYMÉTRIQUE */}
-            <div className="w-full md:w-64 shrink-0 flex flex-col justify-start">
+            <div className="w-full md:w-64 shrink-0 flex flex-col justify-start relative z-20 pointer-events-auto">
               <div className="p-2.5 rounded-2xl bg-[var(--background)]/90 border border-[var(--gold)]/40 shadow-md space-y-2.5">
                 <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-[var(--gold)] px-2 block text-center md:text-start">
                   Navigation des 3 Volets
@@ -662,10 +668,14 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                   {/* VOLET 1 */}
                   <button
                     type="button"
-                    onClick={() => setActiveTab("schema")}
-                    className={`w-full py-3 px-3 rounded-xl text-xs font-semibold flex items-center gap-3 transition-all cursor-pointer border ${
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setActiveTab("schema");
+                    }}
+                    className={`w-full py-3 px-3 rounded-xl text-xs font-semibold flex items-center gap-3 transition-all cursor-pointer border select-none ${
                       activeTab === "schema"
-                        ? "bg-[var(--gold)] text-black border-[var(--gold)] shadow-md font-bold"
+                        ? "bg-[var(--gold)] text-black border-[var(--gold)] shadow-md font-bold ring-2 ring-[var(--gold)]/40"
                         : "bg-[var(--card)]/60 text-[var(--foreground)] border-[var(--border)] hover:border-[var(--gold)]/60 hover:bg-[var(--gold)]/10"
                     }`}
                   >
@@ -678,7 +688,7 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                     </div>
                     <div className="text-start min-w-0 flex-1">
                       <div className="font-bold text-xs leading-snug truncate">Schéma Graphique</div>
-                      <div className={`text-[10px] truncate ${activeTab === "schema" ? "text-black/80" : "text-[var(--muted-foreground)]"}`}>
+                      <div className={`text-[10px] truncate ${activeTab === "schema" ? "text-black/80 font-medium" : "text-[var(--muted-foreground)]"}`}>
                         Arbre interactif & liens
                       </div>
                     </div>
@@ -687,10 +697,17 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                   {/* VOLET 2 */}
                   <button
                     type="button"
-                    onClick={() => setActiveTab("details")}
-                    className={`w-full py-3 px-3 rounded-xl text-xs font-semibold flex items-center gap-3 transition-all cursor-pointer border ${
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setActiveTab("details");
+                      if (!selectedPerson && displayPeople.length > 0) {
+                        setSelectedPerson(displayPeople[0]);
+                      }
+                    }}
+                    className={`w-full py-3 px-3 rounded-xl text-xs font-semibold flex items-center gap-3 transition-all cursor-pointer border select-none ${
                       activeTab === "details"
-                        ? "bg-[var(--gold)] text-black border-[var(--gold)] shadow-md font-bold"
+                        ? "bg-[var(--gold)] text-black border-[var(--gold)] shadow-md font-bold ring-2 ring-[var(--gold)]/40"
                         : "bg-[var(--card)]/60 text-[var(--foreground)] border-[var(--border)] hover:border-[var(--gold)]/60 hover:bg-[var(--gold)]/10"
                     }`}
                   >
@@ -703,7 +720,7 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                     </div>
                     <div className="text-start min-w-0 flex-1">
                       <div className="font-bold text-xs leading-snug truncate">Fiche & GEDCOM</div>
-                      <div className={`text-[10px] truncate ${activeTab === "details" ? "text-black/80" : "text-[var(--muted-foreground)]"}`}>
+                      <div className={`text-[10px] truncate ${activeTab === "details" ? "text-black/80 font-medium" : "text-[var(--muted-foreground)]"}`}>
                         Personnes & Détails
                       </div>
                     </div>
@@ -712,10 +729,14 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                   {/* VOLET 3 */}
                   <button
                     type="button"
-                    onClick={() => setActiveTab("sources")}
-                    className={`w-full py-3 px-3 rounded-xl text-xs font-semibold flex items-center gap-3 transition-all cursor-pointer border ${
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setActiveTab("sources");
+                    }}
+                    className={`w-full py-3 px-3 rounded-xl text-xs font-semibold flex items-center gap-3 transition-all cursor-pointer border select-none ${
                       activeTab === "sources"
-                        ? "bg-[var(--gold)] text-black border-[var(--gold)] shadow-md font-bold"
+                        ? "bg-[var(--gold)] text-black border-[var(--gold)] shadow-md font-bold ring-2 ring-[var(--gold)]/40"
                         : "bg-[var(--card)]/60 text-[var(--foreground)] border-[var(--border)] hover:border-[var(--gold)]/60 hover:bg-[var(--gold)]/10"
                     }`}
                   >
@@ -728,7 +749,7 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                     </div>
                     <div className="text-start min-w-0 flex-1">
                       <div className="font-bold text-xs leading-snug truncate">Aperçu des Sources</div>
-                      <div className={`text-[10px] truncate ${activeTab === "sources" ? "text-black/80" : "text-[var(--muted-foreground)]"}`}>
+                      <div className={`text-[10px] truncate ${activeTab === "sources" ? "text-black/80 font-medium" : "text-[var(--muted-foreground)]"}`}>
                         Documents & Liens réels
                       </div>
                     </div>
@@ -867,7 +888,7 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                         {displayPeople.map((p: any, idx: number) => {
                           const pName = p.names?.fr || p.names?.en || `${p.given || ""} ${p.surname || ""}`.trim() || `Individu #${idx + 1}`;
                           const isFem = (p.gender || "").toUpperCase().startsWith("F");
-                          const isSelected = selectedPerson?.id === p.id;
+                          const isSelected = (currentPerson?.id === p.id);
                           const role = idx === 0 ? "Patriarche / Fondateur" : isFem && idx === 1 ? "Épouse" : p.father || p.mother ? "Enfant" : "Membre de la branche";
 
                           return (
@@ -904,7 +925,7 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
 
                       {/* SELECTED PERSON DETAIL CARD ("KINDA LIKE INDIVIDUALS") */}
                       <div className="lg:col-span-7">
-                        {selectedPerson ? (
+                        {currentPerson ? (
                           <div className="p-4 sm:p-5 rounded-2xl border border-[var(--gold)]/40 bg-[var(--background)] shadow-xl space-y-4">
                             {/* 3D TILT PERSON CARD */}
                             <div
@@ -922,7 +943,7 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                               <div className="flex items-center justify-between text-xs border-b border-[var(--gold)]/20 pb-2">
                                 <span className="font-mono text-[0.68rem] uppercase tracking-wider text-[var(--gold)] flex items-center gap-1">
                                   <User className="h-3.5 w-3.5" />
-                                  <span>Fiche Personne • GEDCOM ID: {selectedPerson.id}</span>
+                                  <span>Fiche Personne • GEDCOM ID: {currentPerson.id}</span>
                                 </span>
                                 <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-semibold text-[0.65rem] flex items-center gap-1">
                                   <ShieldCheck className="w-3 h-3" />
@@ -933,18 +954,18 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                               <div className="flex items-center gap-3 pt-1">
                                 <div
                                   className={`w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold text-white shadow-md border-2 border-[var(--gold)]/50 ${
-                                    (selectedPerson.gender || "").toUpperCase().startsWith("F") ? "bg-rose-600" : "bg-[#0d9488]"
+                                    (currentPerson.gender || "").toUpperCase().startsWith("F") ? "bg-rose-600" : "bg-[#0d9488]"
                                   }`}
                                 >
-                                  {(selectedPerson.names?.fr || selectedPerson.given || "I").charAt(0).toUpperCase()}
+                                  {(currentPerson.names?.fr || currentPerson.given || "I").charAt(0).toUpperCase()}
                                 </div>
                                 <div>
                                   <h4 className="font-serif text-lg font-bold text-amber-100">
-                                    {selectedPerson.names?.fr || selectedPerson.names?.en || `${selectedPerson.given || ""} ${selectedPerson.surname || ""}`.trim()}
+                                    {currentPerson.names?.fr || currentPerson.names?.en || `${currentPerson.given || ""} ${currentPerson.surname || ""}`.trim()}
                                   </h4>
                                   <p className="text-xs text-[var(--gold)] font-medium flex items-center gap-1 mt-0.5">
                                     <Briefcase className="h-3 w-3" />
-                                    <span>{selectedPerson.occupation || "Profession répertoriée aux actes"}</span>
+                                    <span>{currentPerson.occupation || "Profession répertoriée aux actes"}</span>
                                   </p>
                                 </div>
                               </div>
@@ -954,20 +975,20 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                                 <div className="p-2.5 rounded-lg bg-black/40 border border-[var(--gold)]/30 space-y-0.5">
                                   <span className="text-[0.65rem] text-slate-400 block uppercase font-bold">Naissance</span>
                                   <strong className="text-white block">
-                                    {selectedPerson.birthDate ? `° ${selectedPerson.birthDate}` : "Date non précisée"}
+                                    {currentPerson.birthDate ? `° ${currentPerson.birthDate}` : "Date non précisée"}
                                   </strong>
                                   <span className="text-slate-300 block text-[11px] truncate">
-                                    {selectedPerson.birthPlace || governorate}
+                                    {currentPerson.birthPlace || governorate}
                                   </span>
                                 </div>
 
                                 <div className="p-2.5 rounded-lg bg-black/40 border border-[var(--gold)]/30 space-y-0.5">
                                   <span className="text-[0.65rem] text-slate-400 block uppercase font-bold">Décès</span>
                                   <strong className="text-white block">
-                                    {selectedPerson.deathDate ? `+ ${selectedPerson.deathDate}` : "Non répertorié"}
+                                    {currentPerson.deathDate ? `+ ${currentPerson.deathDate}` : "Non répertorié"}
                                   </strong>
                                   <span className="text-slate-300 block text-[11px] truncate">
-                                    {selectedPerson.deathPlace || "—"}
+                                    {currentPerson.deathPlace || "—"}
                                   </span>
                                 </div>
                               </div>
@@ -986,13 +1007,13 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                                 <div className="p-2 rounded-lg bg-[var(--card)] border border-[var(--border)]">
                                   <span className="text-[10px] text-[var(--muted-foreground)] block">Père déclaré</span>
                                   <span className="font-semibold text-[var(--foreground)] truncate block">
-                                    {selectedPerson.father ? `ID: ${selectedPerson.father}` : "Ascendance à indexer"}
+                                    {currentPerson.father ? `ID: ${currentPerson.father}` : "Ascendance à indexer"}
                                   </span>
                                 </div>
                                 <div className="p-2 rounded-lg bg-[var(--card)] border border-[var(--border)]">
                                   <span className="text-[10px] text-[var(--muted-foreground)] block">Mère déclarée</span>
                                   <span className="font-semibold text-[var(--foreground)] truncate block">
-                                    {selectedPerson.mother ? `ID: ${selectedPerson.mother}` : "Ascendance à indexer"}
+                                    {currentPerson.mother ? `ID: ${currentPerson.mother}` : "Ascendance à indexer"}
                                   </span>
                                 </div>
                               </div>
@@ -1048,7 +1069,7 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                                               url: s.url,
                                               label: s.label || s.title || "Document d'Archives",
                                               kind: s.kind,
-                                              memberName: nameOf(selectedPerson),
+                                              memberName: nameOf(currentPerson),
                                             })
                                           }
                                           className="inline-flex items-center gap-1 rounded-md bg-[var(--gold)]/15 px-2 py-1 text-[11px] font-semibold text-[var(--gold)] hover:bg-[var(--gold)]/25 transition cursor-pointer"
