@@ -9,7 +9,11 @@ import { z } from "zod";
 import { Logo } from "../components/site/Logo";
 import SEO from "../components/SEO";
 import TunisiaGovernoratesMap from "../components/TunisiaGovernoratesMap";
-import { Eye, EyeOff, Lock, Mail, AlertCircle } from "lucide-react";
+import { Eye, EyeOff, Mail, AlertCircle } from "lucide-react";
+import {
+  formatAuthApiError,
+  readLoginCredentials,
+} from "../utils/authFormCredentials";
 
 type LoginFormData = z.infer<typeof loginSchema>;
 
@@ -25,6 +29,7 @@ export default function Login() {
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors },
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -50,15 +55,23 @@ export default function Login() {
       } else {
         setError(t("login_failed_no_user", "Login failed: No user data received"));
       }
-    } catch (err: any) {
-      const errorMessage =
-        err.response?.data?.message ||
-        err.message ||
-        t("invalid_credentials", "Invalid credentials. Please check your email and password.");
-      setError(errorMessage);
+    } catch (err: unknown) {
+      setError(
+        formatAuthApiError(
+          err,
+          t("invalid_credentials", "Invalid credentials. Please check your email and password."),
+        ),
+      );
     } finally {
       setLoading(false);
     }
+  };
+
+  const onFormSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    const { email, password } = readLoginCredentials(event.currentTarget);
+    setValue("email", email, { shouldDirty: true, shouldTouch: true });
+    setValue("password", password, { shouldDirty: true, shouldTouch: true });
+    void handleSubmit(onSubmit)(event);
   };
 
   return (
@@ -78,7 +91,7 @@ export default function Login() {
 
           {/* Right Form Part */}
           <div className="flex items-center justify-center p-8 sm:p-12 lg:p-16 bg-[var(--card)]">
-            <form className="w-full max-w-md" onSubmit={handleSubmit(onSubmit)}>
+            <form className="w-full max-w-md" onSubmit={onFormSubmit}>
               <Logo />
               <h1 className="display-lg mt-8 text-[var(--foreground)]">{t("welcome_back", "Welcome back")}</h1>
               <p className="mt-2 text-sm text-[var(--muted-foreground)]">
@@ -101,6 +114,8 @@ export default function Login() {
                     <input
                       {...register("email")}
                       type="email"
+                      name="email"
+                      autoComplete="username"
                       required
                       className="w-full rounded-sm border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm text-[var(--foreground)] outline-none focus:border-[var(--gold)] rtl:text-right"
                       placeholder={t("placeholder_email_example", "you@example.tn")}
@@ -126,6 +141,8 @@ export default function Login() {
                     <input
                       {...register("password")}
                       type={showPassword ? "text" : "password"}
+                      name="password"
+                      autoComplete="current-password"
                       required
                       className="w-full rounded-sm border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm text-[var(--foreground)] outline-none focus:border-[var(--gold)] rtl:text-right"
                       placeholder="••••••••"
