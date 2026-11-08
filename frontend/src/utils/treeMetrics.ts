@@ -64,3 +64,4 @@ export function getTreeMetrics(tree: any): TreeMetrics {
 
   return { individuals, generations, couplesCount, sourcesCount };
 }
+
