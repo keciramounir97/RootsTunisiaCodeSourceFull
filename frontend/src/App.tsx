@@ -13,15 +13,16 @@ import ProtectedRoute from "./admin/components/protectedRoute";
 import Home from "./pages/home";
 import SeoHead from "./seo/SeoHead";
 import { splitLocaleFromPath } from "./seo/localeRouting";
+// Auth pages are eager so /login never hangs on a lazy chunk cycle with the main bundle.
+import Login from "./pages/login";
+import Signup from "./pages/signup";
+import ResetPassword from "./pages/resetpassword";
 
 // ===== LAZY LOADED ROUTE COMPONENTS =====
 const GalleryPage = lazy(() => import("./pages/Gallery"));
 const Periods = lazy(() => import("./pages/periods"));
 const SourcesAndArchives = lazy(() => import("./pages/SourcesAndArchives"));
 const ContactUs = lazy(() => import("./pages/contactUs"));
-const Login = lazy(() => import("./pages/login"));
-const Signup = lazy(() => import("./pages/signup"));
-const ResetPassword = lazy(() => import("./pages/resetpassword"));
 const ErrorPage = lazy(() => import("./pages/error"));
 
 // ===== GALLERY SUB-PAGES =====
