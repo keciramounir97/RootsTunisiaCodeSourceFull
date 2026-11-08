@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import {
   Save,
   Coins,
@@ -9,6 +10,7 @@ import {
   UserCircle2,
   Moon,
   Sun,
+  Share2,
 } from "lucide-react";
 import { useThemeStore } from "../../store/theme";
 import { api } from "../../api/client";
@@ -573,6 +575,28 @@ export default function Settings() {
               </button>
             </div>
           </div>
+        </div>
+
+        {/* Social Networks & Contact Channels (FB, Instagram, WhatsApp) */}
+        <div className={`p-6 rounded-lg border shadow-sm ${card} ${border} md:col-span-2`}>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+            <div className="flex items-center gap-3">
+              <Share2 className="w-5 h-5 text-[#d9a441]" />
+              <h2 className="font-display font-semibold text-lg">
+                Canaux Sociaux & Contact (Facebook, Instagram & WhatsApp)
+              </h2>
+            </div>
+            <Link
+              to="/admin/footer-settings"
+              className="heritage-btn heritage-btn--ghost inline-flex items-center gap-2 px-3 py-1.5 text-xs rounded-md border border-[#d9a441]/40 text-[#d9a441] hover:bg-[#d9a441]/15 transition-colors"
+            >
+              <Globe className="w-3.5 h-3.5" />
+              <span>Ouvrir l&apos;Éditeur de Canaux</span>
+            </Link>
+          </div>
+          <p className="text-sm opacity-75 leading-relaxed">
+            Configurez et modifiez directement les liens de votre page Facebook, compte Instagram, numéro WhatsApp et coordonnées directes. Ces paramètres mettent à jour automatiquement le Pied de page (Footer) et la Page Contact (/contact).
+          </p>
         </div>
       </div>
 

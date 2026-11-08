@@ -178,12 +178,12 @@ export default function FooterSettings() {
             <div>
               <p className={labelClass}>{t("admin", "Admin")}</p>
               <h1 className="mt-1 text-2xl font-bold">
-                {t("footer_settings", "Footer Settings")}
+                {t("footer_settings", "Pied de page & Canaux de Contact (Footer & Contact)")}
               </h1>
               <p className="mt-2 max-w-2xl text-sm opacity-70">
                 {t(
                   "footer_settings_desc",
-                  "Manage the public footer contact details and social links from one clean control surface.",
+                  "Gérez les réseaux sociaux (Facebook, Instagram, WhatsApp) et coordonnées directes affichés sur le Pied de page (Footer) et sur la Page Contact (/contact).",
                 )}
               </p>
             </div>

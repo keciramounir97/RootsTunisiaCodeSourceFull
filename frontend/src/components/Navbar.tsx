@@ -44,7 +44,7 @@ export function Navbar() {
   };
 
   const navClass =
-    "text-xs font-semibold uppercase tracking-[0.14em] text-[var(--muted-foreground)] transition-colors hover:text-[var(--gold)] py-1";
+    "inline-flex items-center justify-center text-xs font-semibold uppercase tracking-[0.14em] text-[var(--muted-foreground)] transition-colors hover:text-[var(--gold)] h-8 leading-none select-none";
 
   const exploreLinks = [
     {
@@ -139,17 +139,17 @@ export function Navbar() {
               `${navClass} ${isActive ? "!text-[var(--gold)]" : ""}`
             }
           >
-            {t("nav_home")}
+            <span>{t("nav_home")}</span>
           </NavLink>
 
           {/* Explore Dropdown */}
           <div
-            className="relative"
+            className="relative flex items-center h-8"
             onMouseEnter={() => setExploreOpen(true)}
             onMouseLeave={() => setExploreOpen(false)}
           >
             <button
-              className={`${navClass} flex items-center gap-1.5 cursor-pointer ${
+              className={`${navClass} gap-1.5 cursor-pointer ${
                 isExploreActive ? "!text-[var(--gold)]" : ""
               }`}
             >
@@ -176,12 +176,12 @@ export function Navbar() {
 
           {/* Gallery Dropdown */}
           <div
-            className="relative"
+            className="relative flex items-center h-8"
             onMouseEnter={() => setGalleryOpen(true)}
             onMouseLeave={() => setGalleryOpen(false)}
           >
             <button
-              className={`${navClass} flex items-center gap-1.5 cursor-pointer ${
+              className={`${navClass} gap-1.5 cursor-pointer ${
                 isGalleryActive ? "!text-[var(--gold)]" : ""
               }`}
             >
@@ -219,7 +219,7 @@ export function Navbar() {
               `${navClass} ${isActive ? "!text-[var(--gold)]" : ""}`
             }
           >
-            {t("nav_about")}
+            <span>{t("nav_about")}</span>
           </NavLink>
         </nav>
 
