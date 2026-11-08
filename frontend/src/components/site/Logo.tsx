@@ -1,36 +1,37 @@
 import { Link } from "react-router-dom";
-import { useTranslation } from "../../context/TranslationContext";
+import { useThemeStore } from "../../store/theme";
+import logoLight from "../../assets/roots-tunisia-logo-light.png";
+import logoDark from "../../assets/roots-tunisia-logo-dark.png";
 
-export function Logo({ light = false }: { light?: boolean }) {
-  const { t } = useTranslation();
+type LogoProps = {
+  /** Force the white-text (dark-mode) lockup — e.g. on dark overlays. */
+  light?: boolean;
+  className?: string;
+};
+
+/**
+ * Official Roots Tunisia wordmark + mosaic emblem.
+ * Switches light/dark artwork with the site theme so it blends on both backgrounds.
+ */
+export function Logo({ light = false, className = "" }: LogoProps) {
+  const { theme } = useThemeStore();
+  const useDarkArtwork = light || theme === "dark";
+  const src = useDarkArtwork ? logoDark : logoLight;
 
   return (
-    <Link to="/" className="flex items-center gap-2.5 shrink-0 text-start group transition-transform duration-200 hover:scale-[1.02]">
-      {/* Authentic Roots Tunisia 9-tile geometric mosaic emblem */}
-      <span className="grid h-9 w-9 shrink-0 grid-cols-3 grid-rows-3 gap-[2px] rounded-sm p-[3px] ring-1 ring-[var(--gold)]/60 bg-[var(--card)] shadow-sm">
-        {Array.from({ length: 9 }).map((_, i) => (
-          <span
-            key={i}
-            className={
-              [0, 2, 4, 6, 8].includes(i)
-                ? "rounded-[1px] bg-[var(--gold)]"
-                : "rounded-[1px] bg-[#E70013]/80"
-            }
-          />
-        ))}
-      </span>
-      <span className="leading-[1.05]">
-        <span
-          className={`block font-display text-lg font-semibold tracking-wide ${
-            light ? "text-white" : "text-[var(--foreground)]"
-          }`}
-        >
-          {t("brand_roots")}
-        </span>
-        <span className="block font-display text-lg font-semibold tracking-wide text-[var(--gold)]">
-          {t("brand_tunisia")}
-        </span>
-      </span>
+    <Link
+      to="/"
+      className={`inline-flex items-center shrink-0 transition-opacity duration-200 hover:opacity-90 ${className}`}
+      aria-label="Roots Tunisia"
+    >
+      <img
+        src={src}
+        alt="Roots Tunisia"
+        className="block h-8 w-auto max-w-[min(52vw,11.5rem)] object-contain object-left sm:h-9 sm:max-w-[13rem] md:h-10 md:max-w-[14.5rem]"
+        width={290}
+        height={148}
+        decoding="async"
+      />
     </Link>
   );
 }
