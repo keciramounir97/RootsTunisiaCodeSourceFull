@@ -59,7 +59,8 @@ export default function Notes() {
   };
 
   return (
-    <div className="page-container py-8">
+    <div className="bg-[var(--background)] text-[var(--foreground)] min-h-screen px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
+    <div className="mx-auto w-full max-w-[var(--content-max)]">
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-3xl font-bold font-cinzel text-[var(--brand-teal)] dark:text-[var(--gold-light)]">
           {t("notes", "Notes")}
@@ -170,6 +171,7 @@ export default function Notes() {
           </div>
         </div>
       )}
+    </div>
     </div>
   );
 }

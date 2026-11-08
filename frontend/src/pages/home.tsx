@@ -256,7 +256,7 @@ export default function Home() {
 
       {/* Hero slider (Diaporama) */}
       <section className="w-full px-4 pt-4 sm:px-6 lg:px-8">
-        <div className="frame-gold relative mx-auto max-w-[var(--content-max)] overflow-hidden rounded-md min-h-[460px] sm:min-h-[540px] lg:min-h-[600px] flex items-center justify-center">
+        <div className="frame-gold relative mx-auto w-full max-w-[var(--content-max)] overflow-hidden rounded-md min-h-[460px] sm:min-h-[540px] lg:min-h-[600px] flex items-center justify-center">
           {activeSlides.map((s, i) => (
             <img
               key={s.labelKey || s.image || i}
@@ -342,7 +342,7 @@ export default function Home() {
 
       {/* Stats */}
       <section className="w-full px-4 pt-6 sm:px-6 sm:pt-8 lg:px-8">
-        <div className="mx-auto max-w-[var(--content-max)]">
+        <div className="mx-auto w-full max-w-[var(--content-max)]">
           <div className="grid grid-cols-2 gap-px overflow-hidden rounded-md border border-[var(--gold)]/45 bg-[var(--gold)]/35 md:grid-cols-4 shadow-md">
             {stats.map((s) => (
               <Link

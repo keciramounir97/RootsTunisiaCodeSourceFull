@@ -213,7 +213,7 @@ export default function Gallery() {
         image={getImage("gallery", "hero", "image") ?? sidiBouSaid}
       />
 
-      <div className="mx-auto max-w-[var(--content-max)] px-4 sm:px-6 lg:px-8 pb-2">
+      <div className="mx-auto w-full max-w-[var(--content-max)] px-4 sm:px-6 lg:px-8 pb-2">
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
           {[
             { to: "/gallery/trees", label: t("nav_trees"), hint: t("hub_trees_hint", "Nasab & GEDCOM lineages"), icon: GitBranch },
@@ -241,7 +241,7 @@ export default function Gallery() {
       </div>
 
       {/* Sub-Galleries Tab Navigation Bar */}
-      <div className="mx-auto max-w-[var(--content-max)] px-4 sm:px-6 lg:px-8 pt-6">
+      <div className="mx-auto w-full max-w-[var(--content-max)] px-4 sm:px-6 lg:px-8 pt-6">
         <div className="flex items-center gap-2 overflow-x-auto pb-2 border-b border-[var(--border)] scrollbar-thin">
           <Link
             to="/gallery/images"
@@ -282,7 +282,7 @@ export default function Gallery() {
       </div>
 
       {/* Search & Actions Bar */}
-      <div className="mx-auto max-w-[var(--content-max)] px-4 sm:px-6 lg:px-8 pt-6">
+      <div className="mx-auto w-full max-w-[var(--content-max)] px-4 sm:px-6 lg:px-8 pt-6">
         <div className="surface-card p-4 sm:p-5 rounded-lg border border-[var(--gold)]/35 bg-[var(--card)]/95 shadow-md flex flex-col sm:flex-row gap-3 items-center justify-between">
           <div className="relative w-full sm:max-w-xl">
             <Search className="h-4 w-4 text-[var(--muted-foreground)] absolute start-3 top-1/2 -translate-y-1/2 pointer-events-none" />

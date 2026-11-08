@@ -417,7 +417,7 @@ export default function Subscriptions() {
           </div>
         </div>
 
-        <div className="mt-12 sm:mt-16 grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 items-stretch max-w-[var(--content-max)] mx-auto">
+        <div className="mt-12 sm:mt-16 grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 items-stretch w-full max-w-[var(--content-max)] mx-auto">
           {tiers.map((tier) => {
             const isBasic = tier.id === 1;
 

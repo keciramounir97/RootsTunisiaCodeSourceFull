@@ -1,6 +1,8 @@
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 
+const SHELL = "mx-auto w-full max-w-[var(--content-max)]";
+
 export function PageHero({
   eyebrow,
   title,
@@ -16,7 +18,9 @@ export function PageHero({
 }) {
   return (
     <section className="px-4 pt-4 sm:px-6 lg:px-8">
-      <div className="frame-gold relative mx-auto max-w-[var(--content-max)] overflow-hidden rounded-md min-h-[340px] sm:min-h-[420px] flex items-center justify-center">
+      <div
+        className={`frame-gold relative ${SHELL} overflow-hidden rounded-md min-h-[340px] sm:min-h-[420px] flex items-center justify-center border border-[var(--gold)]/45`}
+      >
         <img
           src={image}
           alt={title}
@@ -52,7 +56,7 @@ export function Section({
 }) {
   return (
     <section id={id} className={`w-full px-4 py-10 sm:px-6 sm:py-14 lg:px-8 lg:py-16 ${className}`}>
-      <div className={`mx-auto max-w-[var(--content-max)] ${containerClassName}`}>{children}</div>
+      <div className={`${SHELL} ${containerClassName}`}>{children}</div>
     </section>
   );
 }

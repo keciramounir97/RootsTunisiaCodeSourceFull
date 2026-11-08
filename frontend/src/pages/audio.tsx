@@ -110,7 +110,7 @@ export default function Audio() {
       {/* Audio Stream Player Banner (shown when a track is active) */}
       {activeRecording && (
         <section className="w-full px-4 pt-6 sm:px-6 sm:pt-8 lg:px-8">
-          <div className="mx-auto max-w-[var(--content-max)]">
+          <div className="mx-auto w-full max-w-[var(--content-max)]">
             <div className="surface-card frame-gold p-4 sm:p-6 rounded-lg bg-[var(--card)]/95 shadow-md flex flex-col md:flex-row items-center justify-between gap-4 text-start">
               <div className="flex items-center gap-3 w-full md:w-auto">
                 <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--gold)]/15 text-[var(--gold)] ring-1 ring-[var(--gold)]/40 shrink-0">

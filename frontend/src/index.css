@@ -620,15 +620,20 @@ body::before {
    Mobile (320+) | Tablet (640+) | Desktop (1024+) | Wide (1440+) | Ultrawide (1920+)
    Linux ultrawide, Windows 1920, mobile - all supported
    =========================================== */
-.page-container {
-  width: calc(100% - 2.5rem);
+/* Match Section / homepage: full bleed outer, content capped at --content-max via children or max-width alone. */
+.page-container,
+.roots-shell {
+  width: 100%;
   max-width: var(--content-max);
   margin-left: auto;
   margin-right: auto;
-  padding-left: var(--container-padding-x);
-  padding-right: var(--container-padding-x);
-  padding-top: var(--container-padding-y);
-  padding-bottom: var(--container-padding-y);
+}
+
+.page-container {
+  padding-left: max(1rem, var(--container-padding-x, 1rem));
+  padding-right: max(1rem, var(--container-padding-x, 1rem));
+  padding-top: var(--container-padding-y, 2rem);
+  padding-bottom: var(--container-padding-y, 2rem);
 }
 
 @media (min-width: 640px) {
@@ -1043,12 +1048,13 @@ html {
   }
 }
 
+/* Width comes from RootsPageShell / Section parent (--content-max). Do not re-cap here. */
 .roots-section {
-  width: calc(100% - 2.5rem);
-  max-width: var(--content-max);
-  margin-left: auto;
-  margin-right: auto;
-  padding: 3rem;
+  width: 100%;
+  max-width: none;
+  margin-left: 0;
+  margin-right: 0;
+  padding: clamp(1.5rem, 3vw, 3rem);
   border-radius: 16px;
   background: var(--paper-color);
   border: 1px solid var(--border-color);
@@ -4957,7 +4963,7 @@ body, .roots-shell, .admin-shell { background-image: linear-gradient(rgba(253,25
 .roots-modal-nav-right { right: clamp(.5rem, 2vw, 2rem); }
 
 /* Responsive floating navbar with clean top spacing matching hero container width. */
-.navbar-wrapper { position: fixed; top: clamp(1.25rem, 2.5vw, 1.75rem); left: 50%; transform: translateX(-50%); z-index: 1200; width: min(calc(100% - 2.5rem), var(--content-max)); max-width: 100%; overflow: visible; margin: 0 auto; }
+.navbar-wrapper { position: fixed; top: clamp(1.25rem, 2.5vw, 1.75rem); left: 50%; transform: translateX(-50%); z-index: 1200; width: min(calc(100% - 1rem), var(--content-max)); max-width: 100%; overflow: visible; margin: 0 auto; }
 .navbar-container, .navbar-left, .navbar-nav, .navbar-right { min-width: 0; }
 .navbar-nav { flex: 1 1 auto; justify-content: center; gap: clamp(.2rem, 1vw, 1.25rem); }
 .navbar-link, .navbar-dropdown-trigger { white-space: nowrap; }

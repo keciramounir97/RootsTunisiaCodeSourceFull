@@ -109,7 +109,7 @@ export function Navbar() {
       dir={isRtl ? "rtl" : "ltr"}
       className="sticky top-0 z-40 px-4 pt-3.5 sm:px-6 lg:px-8"
     >
-      <div className="mx-auto flex max-w-[var(--content-max)] items-center gap-3 sm:gap-6 lg:gap-8 rounded-lg border border-[var(--gold)]/35 bg-[var(--card)]/95 px-3.5 py-3 sm:px-7 shadow-xl backdrop-blur-md">
+      <div className="mx-auto flex w-full max-w-[var(--content-max)] items-center gap-3 sm:gap-6 lg:gap-8 rounded-lg border border-[var(--gold)]/35 bg-[var(--card)]/95 px-3.5 py-3 sm:px-7 shadow-xl backdrop-blur-md">
         <Logo />
 
         {/* Desktop Nav */}
@@ -319,7 +319,7 @@ export function Navbar() {
 
       {/* Mobile Drawer */}
       {open && (
-        <div className="mx-auto mt-2 max-w-[var(--content-max)] rounded-lg border border-[var(--gold)]/30 bg-[var(--card)] p-4 text-start shadow-xl backdrop-blur-md md:hidden">
+        <div className="mx-auto mt-2 w-full max-w-[var(--content-max)] rounded-lg border border-[var(--gold)]/30 bg-[var(--card)] p-4 text-start shadow-xl backdrop-blur-md md:hidden">
           <form onSubmit={handleSearchSubmit} className="mb-3 flex items-center gap-2 border border-[var(--border)] bg-[var(--background)] px-3 py-2 rounded-sm">
             <Search className="h-4 w-4 text-[var(--muted-foreground)] shrink-0" />
             <input

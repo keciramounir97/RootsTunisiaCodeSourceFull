@@ -59,7 +59,8 @@ export default function Tasks() {
   const getColumnTasks = (status: Task["status"]) => tasks.filter(t => t.status === status);
 
   return (
-    <div className="page-container py-8">
+    <div className="bg-[var(--background)] text-[var(--foreground)] min-h-screen px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
+    <div className="mx-auto w-full max-w-[var(--content-max)]">
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-3xl font-bold font-cinzel text-[var(--brand-teal)] dark:text-[var(--gold-light)]">
           {t("task_board", "Task Board")}
@@ -153,6 +154,7 @@ export default function Tasks() {
           ))}
         </div>
       )}
+    </div>
     </div>
   );
 }

@@ -172,7 +172,7 @@ export default function GalleryAudios() {
         </div>
       }
     >
-      <div className="max-w-[var(--content-max)] mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+      <div className="w-full space-y-8">
         {/* Hidden Audio Engine */}
         <audio
           ref={audioRef}

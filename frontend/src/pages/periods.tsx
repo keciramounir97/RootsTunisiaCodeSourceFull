@@ -520,7 +520,7 @@ export default function Periods() {
 
       {/* Top Symmetric Stats & Coverage Bar */}
       <section className="w-full px-4 pt-6 sm:px-6 sm:pt-8 lg:px-8">
-        <div className="mx-auto max-w-[var(--content-max)]">
+        <div className="mx-auto w-full max-w-[var(--content-max)]">
           <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 items-stretch">
             {stats.map((s, idx) => {
               const Icon = s.icon;
@@ -549,7 +549,7 @@ export default function Periods() {
 
       {/* Interactive Decade Selector / Where to Start Tool */}
       <section className="w-full px-4 pt-6 sm:px-6 sm:pt-8 lg:px-8">
-        <div className="mx-auto max-w-[var(--content-max)]">
+        <div className="mx-auto w-full max-w-[var(--content-max)]">
           <div className="surface-card frame-gold p-5 sm:p-6 rounded-lg bg-[var(--card)]/95 shadow-md text-start">
             <div className="flex items-center gap-2.5 mb-2">
               <Sparkles className="h-5 w-5 text-[var(--gold)]" />
@@ -623,7 +623,7 @@ export default function Periods() {
 
       {/* Interactive Horizontal Timeline Ribbon */}
       <section className="w-full px-4 pt-6 sm:px-6 sm:pt-8 lg:px-8">
-        <div className="mx-auto max-w-[var(--content-max)]">
+        <div className="mx-auto w-full max-w-[var(--content-max)]">
           <div className="surface-card p-4 sm:p-5 rounded-lg border border-[var(--gold)]/35 bg-[var(--card)]/95 shadow-md">
             <div className="flex items-center justify-between gap-3 mb-3">
               <span className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--gold)] flex items-center gap-1.5">
@@ -664,7 +664,7 @@ export default function Periods() {
 
       {/* Interactive Category Filter Ribbon */}
       <section className="w-full px-4 pt-6 sm:px-6 sm:pt-8 lg:px-8">
-        <div className="mx-auto max-w-[var(--content-max)]">
+        <div className="mx-auto w-full max-w-[var(--content-max)]">
           <div className="surface-card p-4 sm:p-5 rounded-lg border border-[var(--gold)]/35 bg-[var(--card)]/95 shadow-md">
             <div className="flex items-center justify-between gap-3 mb-3">
               <span className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--muted-foreground)]">

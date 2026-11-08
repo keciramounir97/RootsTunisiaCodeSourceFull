@@ -192,7 +192,7 @@ export default function ContactUs() {
 
       {/* 3 Symmetric Quick Contact Cards */}
       <section className="w-full px-4 pt-6 sm:px-6 sm:pt-8 lg:px-8">
-        <div className="mx-auto max-w-[var(--content-max)]">
+        <div className="mx-auto w-full max-w-[var(--content-max)]">
           <div className="grid gap-4 sm:gap-6 sm:grid-cols-3 items-stretch">
             {/* Email Card */}
             <a
