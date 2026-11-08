@@ -100,6 +100,7 @@ const Backups = lazy(() => import("./admin/pages/Backups"));
 const AdminSuggestions = lazy(() => import("./admin/pages/Suggestions"));
 const LegalContent = lazy(() => import("./admin/pages/LegalContent"));
 const ContentManager = lazy(() => import("./admin/pages/ContentManager"));
+const SiteImagePlaceholders = lazy(() => import("./admin/pages/SiteImagePlaceholders"));
 const Diaporama = lazy(() => import("./admin/pages/Diaporama"));
 const EmailTemplates = lazy(() => import("./admin/pages/EmailTemplates"));
 const DownloadRequests = lazy(() => import("./admin/pages/DownloadRequests"));
@@ -702,6 +703,16 @@ function AppRoutes() {
             <Suspense fallback={<AdminLoadingFallback />}>
               <ProtectedRoute roles={[3]}>
                 <ContentManager />
+              </ProtectedRoute>
+            </Suspense>
+          }
+        />
+        <Route
+          path="site-image-placeholders"
+          element={
+            <Suspense fallback={<AdminLoadingFallback />}>
+              <ProtectedRoute roles={[3]}>
+                <SiteImagePlaceholders />
               </ProtectedRoute>
             </Suspense>
           }

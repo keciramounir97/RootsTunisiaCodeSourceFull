@@ -1,5 +1,6 @@
 import { memo, ReactNode } from "react";
-import { useSiteImages } from "../hooks/useSiteImages";
+import { useSiteImages, resolveSiteImageUrl } from "../hooks/useSiteImages";
+import { DEFAULT_SITE_HERO } from "../config/siteImageLibrary";
 
 interface RootsPageShellProps {
   hero?: ReactNode;
@@ -10,6 +11,13 @@ interface RootsPageShellProps {
   className?: string;
 }
 
+const isAllowedSiteImage = (url: string) =>
+  Boolean(url) &&
+  (/\/heritage\//.test(url) ||
+    /\/uploads\//.test(url) ||
+    /\/assets\//.test(url) ||
+    /^https?:\/\//i.test(url));
+
 function RootsPageShell({
   hero,
   heroClassName = "",
@@ -18,7 +26,10 @@ function RootsPageShell({
   className = "",
 }: RootsPageShellProps) {
   const { heroImage } = useSiteImages();
-  const backgroundUrl = heroBackgroundUrl || heroImage;
+  const SAFE_DEFAULT = DEFAULT_SITE_HERO;
+  const candidate = String(heroBackgroundUrl || heroImage || SAFE_DEFAULT).trim();
+  const resolved = resolveSiteImageUrl(candidate) || candidate;
+  const backgroundUrl = isAllowedSiteImage(resolved) ? resolved : SAFE_DEFAULT;
 
   return (
     <div

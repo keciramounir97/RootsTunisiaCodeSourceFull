@@ -33,6 +33,7 @@ import {
   Gauge,
   Coins,
   Flag,
+  MapPinned,
 } from "lucide-react";
 
 const links = [
@@ -61,6 +62,12 @@ const links = [
   { to: "/admin/currencies", labelKey: "currencies_exchange", Icon: Coins },
   { to: "/admin/legal-content", labelKey: "legal_content", Icon: Scale },
   { to: "/admin/content", labelKey: "public_content_manager", Icon: Layout },
+  {
+    to: "/admin/site-image-placeholders",
+    labelKey: "site_image_placeholders",
+    Icon: MapPinned,
+    roles: [3],
+  },
   { to: "/admin/settings", labelKey: "settings", Icon: Settings },
   { to: "/admin/activity", labelKey: "activity", Icon: Activity },
   { to: "/admin/footer-settings", labelKey: "footer_settings", Icon: Globe },
@@ -81,6 +88,7 @@ const superAdminOnlyRoutes = [
   "/admin/currencies",
   "/admin/legal-content",
   "/admin/content",
+  "/admin/site-image-placeholders",
   "/admin/settings",
   "/admin/backups",
 ];
@@ -98,6 +106,7 @@ const labelFallbacks: Record<string, string> = {
   admin_notes: "Mes Notes & Références d'Archives",
   gallery: "Galerie",
   diaporama: "Diaporama de la Bannière",
+  site_image_placeholders: "Emplacements d'Images (Pages)",
   audios: "Audio & Récits Oraux",
   documents: "Documents Numérisés",
   books: "Livres & Manuscrits",

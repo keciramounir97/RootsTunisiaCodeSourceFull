@@ -201,11 +201,44 @@ export default function Gallery() {
       />
 
       <PageHero
-        eyebrow={getText("gallery", "hero", "eyebrow") ?? t("nav_photos")}
-        title={getText("gallery", "hero", "title") ?? t("gallery_teaser_title")}
-        subtitle={getText("gallery", "hero", "subtitle") ?? t("gallery_teaser_subtitle")}
+        eyebrow={getText("gallery", "hero", "eyebrow") ?? t("gallery_hub_eyebrow", "Roots Tunisia · Collections")}
+        title={getText("gallery", "hero", "title") ?? t("gallery_hub_title", "Tunisia Collections Hub")}
+        subtitle={
+          getText("gallery", "hero", "subtitle") ??
+          t(
+            "gallery_hub_intro",
+            "One door to Tunisian family trees, photo archives, manuscripts, oral histories, documents, and research articles — each collection has its own identity.",
+          )
+        }
         image={getImage("gallery", "hero", "image") ?? sidiBouSaid}
       />
+
+      <div className="mx-auto max-w-[var(--content-max)] px-4 sm:px-6 lg:px-8 pb-2">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+          {[
+            { to: "/gallery/trees", label: t("nav_trees"), hint: t("hub_trees_hint", "Nasab & GEDCOM lineages"), icon: GitBranch },
+            { to: "/gallery/images", label: t("nav_photo_archives", "Photo archives"), hint: t("hub_photos_hint", "Carthage, Kairouan, Sahel"), icon: Camera },
+            { to: "/library", label: t("nav_library"), hint: t("hub_books_hint", "Habous & nasab works"), icon: BookOpen },
+            { to: "/gallery/documents", label: t("nav_documents"), hint: t("hub_docs_hint", "Sijill & notarial deeds"), icon: FileText },
+            { to: "/audio", label: t("nav_audios"), hint: t("hub_audio_hint", "Malouf & oral testimony"), icon: Headphones },
+            { to: "/gallery/articles", label: t("nav_articles"), hint: t("hub_articles_hint", "Essays on Tunisian heritage"), icon: FileText },
+          ].map(({ to, label, hint, icon: Icon }) => (
+            <Link
+              key={to}
+              to={to}
+              className="surface-card group flex flex-col items-start gap-3 border border-[var(--gold)]/35 p-4 transition-all hover:-translate-y-1 hover:border-[var(--gold)] rounded-md"
+            >
+              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--gold)]/15 text-[var(--gold)]">
+                <Icon className="h-5 w-5" />
+              </span>
+              <span className="font-display text-lg font-bold text-[var(--foreground)] group-hover:text-[var(--gold)]">
+                {label}
+              </span>
+              <span className="text-xs text-[var(--muted-foreground)]">{hint}</span>
+            </Link>
+          ))}
+        </div>
+      </div>
 
       {/* Sub-Galleries Tab Navigation Bar */}
       <div className="mx-auto max-w-[var(--content-max)] px-4 sm:px-6 lg:px-8 pt-6">

@@ -139,6 +139,19 @@ export function buildDefaultPages(): ContentPage[] {
           ],
         },
         {
+          id: "gallery",
+          label: "Home photo strip",
+          description: "Tunisian heritage stills on the home page (not Gallery des images).",
+          fields: [
+            image("image_1", "Photo 1"),
+            image("image_2", "Photo 2"),
+            image("image_3", "Photo 3"),
+            image("image_4", "Photo 4"),
+            image("image_5", "Photo 5"),
+            image("image_6", "Photo 6"),
+          ],
+        },
+        {
           id: "why",
           label: "Why Roots Tunisia",
           fields: [text("title", "Heading"), text("intro", "Intro")],
@@ -180,9 +193,37 @@ export function buildDefaultPages(): ContentPage[] {
     },
     {
       id: "gallery",
-      label: "Gallery",
+      label: "Gallery hub",
       path: "/gallery",
-      description: "Photo and heritage gallery hub.",
+      description: "Tunisia collections hub (trees, photos, books, audio, documents).",
+      sections: [heroSection(), introSection()],
+    },
+    {
+      id: "gallery_images",
+      label: "Photo archives",
+      path: "/gallery/images",
+      description: "Community & curated Tunisian photo archives.",
+      sections: [heroSection(), introSection()],
+    },
+    {
+      id: "gallery_trees",
+      label: "Family trees gallery",
+      path: "/gallery/trees",
+      description: "Public Tunisian family trees.",
+      sections: [heroSection(), introSection()],
+    },
+    {
+      id: "gallery_articles",
+      label: "Articles gallery",
+      path: "/gallery/articles",
+      description: "Essays and research notes on Tunisian heritage.",
+      sections: [heroSection(), introSection()],
+    },
+    {
+      id: "gallery_documents",
+      label: "Documents gallery",
+      path: "/gallery/documents",
+      description: "Archival documents shared in the gallery.",
       sections: [heroSection(), introSection()],
     },
     {
@@ -233,7 +274,7 @@ export function buildDefaultPages(): ContentPage[] {
     },
     {
       id: "research",
-      label: "Research",
+      label: "Sources & archives",
       path: "/sources",
       description: "Research guidance, sources and archives.",
       sections: [
@@ -245,6 +286,44 @@ export function buildDefaultPages(): ContentPage[] {
           fields: [list("items", "Tips", "One tip per line.")],
         },
       ],
+    },
+    {
+      id: "periods",
+      label: "Historical periods",
+      path: "/periods",
+      description: "Tunisia historical eras timeline.",
+      sections: [heroSection(), introSection()],
+    },
+    {
+      id: "subscriptions",
+      label: "Subscriptions",
+      path: "/subscriptions",
+      description: "Membership tiers and checkout.",
+      sections: [heroSection()],
+    },
+    {
+      id: "refund",
+      label: "Refund policy",
+      path: "/refund",
+      sections: [heroSection()],
+    },
+    {
+      id: "privacy",
+      label: "Privacy",
+      path: "/privacy",
+      sections: [heroSection()],
+    },
+    {
+      id: "terms",
+      label: "Terms",
+      path: "/terms",
+      sections: [heroSection()],
+    },
+    {
+      id: "cookies",
+      label: "Cookies",
+      path: "/cookies",
+      sections: [heroSection()],
     },
   ];
 }
@@ -327,8 +406,14 @@ export function sanitizeImageRef(value: unknown, where = "image"): string {
   }
   if (/^https?:\/\/[^\s]+$/i.test(raw)) return raw;
   if (/^\/uploads\/[A-Za-z0-9._\-\/]+$/.test(raw) && !raw.includes("..")) return raw;
+  if (
+    /^\/(heritage|assets)\/[A-Za-z0-9._\-\/]+$/.test(raw) &&
+    !raw.includes("..")
+  ) {
+    return raw;
+  }
   throw new BadRequestException(
-    `Invalid image reference (${where}). Use an uploaded image or an http(s) URL.`,
+    `Invalid image reference (${where}). Use an uploaded image, /heritage/…, /assets/…, or an http(s) URL.`,
   );
 }
 

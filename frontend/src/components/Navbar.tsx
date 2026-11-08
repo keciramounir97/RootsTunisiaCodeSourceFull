@@ -53,12 +53,41 @@ export function Navbar() {
   ];
 
   const galleryLinks = [
-    { to: "/gallery/trees", label: t("nav_trees") },
-    { to: "/gallery", label: t("nav_photos") },
-    { to: "/library", label: t("nav_library") },
-    { to: "/gallery/articles", label: t("nav_articles") },
-    { to: "/audio", label: t("nav_audios") },
-    { to: "/gallery/documents", label: t("nav_documents") },
+    {
+      to: "/gallery",
+      label: t("nav_gallery_hub", "Collections hub"),
+      hint: t("nav_gallery_hub_hint", "Tunisia trees, photos & fonds"),
+    },
+    {
+      to: "/gallery/images",
+      label: t("nav_photo_archives", "Photo archives"),
+      hint: t("nav_photo_archives_hint", "Carthage, Kairouan, Medina & Sahel"),
+    },
+    {
+      to: "/gallery/trees",
+      label: t("nav_trees", "Family trees"),
+      hint: t("nav_trees_hint", "Nasab & GEDCOM lineages"),
+    },
+    {
+      to: "/library",
+      label: t("nav_library", "Manuscript library"),
+      hint: t("nav_library_hint", "Habous registers & nasab works"),
+    },
+    {
+      to: "/audio",
+      label: t("nav_audios", "Oral histories"),
+      hint: t("nav_audios_hint", "Malouf, elders & testimony"),
+    },
+    {
+      to: "/gallery/documents",
+      label: t("nav_documents", "Archive documents"),
+      hint: t("nav_documents_hint", "Sijill, beylical & notarial deeds"),
+    },
+    {
+      to: "/gallery/articles",
+      label: t("nav_articles", "Research articles"),
+      hint: t("nav_articles_hint", "Essays on Tunisian heritage"),
+    },
   ];
 
   const isExploreActive = ["/periods", "/sources", "/archives", "/subscriptions"].includes(
@@ -143,16 +172,23 @@ export function Navbar() {
               <ChevronDown className="h-3 w-3 shrink-0" />
             </button>
             {galleryOpen && (
-              <div className="absolute start-0 top-full w-56 pt-2 z-50 text-start">
+              <div className="absolute start-0 top-full w-72 pt-2 z-50 text-start">
                 <div className="surface-card overflow-hidden p-1.5 shadow-xl border border-[var(--gold)]/40 rounded-sm">
                   {galleryLinks.map((l) => (
                     <Link
                       key={l.to}
                       to={l.to}
                       onClick={() => setGalleryOpen(false)}
-                      className="block rounded-sm px-3 py-2 text-xs font-semibold tracking-wide text-[var(--foreground)] text-start transition-colors hover:bg-[var(--gold)]/15 hover:text-[var(--gold)]"
+                      className="block rounded-sm px-3 py-2.5 text-start transition-colors hover:bg-[var(--gold)]/15 hover:text-[var(--gold)]"
                     >
-                      {l.label}
+                      <span className="block text-xs font-semibold tracking-wide text-[var(--foreground)]">
+                        {l.label}
+                      </span>
+                      {"hint" in l && l.hint ? (
+                        <span className="mt-0.5 block text-[0.65rem] font-normal text-[var(--muted-foreground)]">
+                          {l.hint}
+                        </span>
+                      ) : null}
                     </Link>
                   ))}
                 </div>
