@@ -294,8 +294,15 @@ export default function GalleryTrees() {
                       </span>
                     </div>
 
-                    <h3 className="text-lg sm:text-xl font-display font-bold text-[var(--foreground)] leading-snug">
-                      {titleStr}
+                    <h3
+                      onClick={() => setActiveTree(tree)}
+                      className="text-lg sm:text-xl font-display font-bold text-[var(--foreground)] leading-snug cursor-pointer hover:text-[var(--gold)] transition-colors flex items-center justify-between gap-2 group/title"
+                      title="Cliquer pour ouvrir l'arbre généalogique"
+                    >
+                      <span>{titleStr}</span>
+                      <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[var(--gold)]/10 text-[var(--gold)] border border-[var(--gold)]/30 group-hover/title:bg-[var(--gold)] group-hover/title:text-black transition-colors font-semibold shrink-0">
+                        Voir l'Arbre ↗
+                      </span>
                     </h3>
 
                     <p className="text-xs text-[var(--foreground)]/80 leading-relaxed line-clamp-3">

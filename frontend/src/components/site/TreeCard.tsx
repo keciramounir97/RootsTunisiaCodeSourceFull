@@ -113,12 +113,14 @@ export function TreeCard({ tree }: { tree: TreeRecord }) {
             <span>{locationStr}</span>
           </Link>
         </div>
-        <Link
-          to={`/gallery/trees?q=${encodeURIComponent(titleStr)}`}
-          className="mt-3 font-serif text-xl font-bold leading-snug text-[var(--foreground)] hover:text-[var(--gold)] transition-colors"
+        <button
+          type="button"
+          onClick={() => setShowModal(true)}
+          className="mt-3 text-start font-serif text-xl font-bold leading-snug text-[var(--foreground)] hover:text-[var(--gold)] transition-colors cursor-pointer block"
+          title="Cliquer pour ouvrir la carte et le schéma de cet arbre"
         >
           {titleStr}
-        </Link>
+        </button>
         <p className="mt-1 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--muted-foreground)]">
           {t("by_author")} {ownerStr}
         </p>

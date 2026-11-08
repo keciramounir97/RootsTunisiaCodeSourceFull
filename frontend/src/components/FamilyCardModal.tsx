@@ -25,6 +25,8 @@ import {
   Award,
   Search,
   Maximize2,
+  ZoomIn,
+  ZoomOut,
   Share2,
   ArrowRight,
   Heart,
@@ -73,6 +75,8 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
   // Selected Source in Volet 3 (Aperçu des Sources) for live preview of links and documents
   const [selectedSourceId, setSelectedSourceId] = useState<string>("src-1");
   const [sourceZoom, setSourceZoom] = useState(false);
+  const [previewModalSource, setPreviewModalSource] = useState<ArchivalDocumentItem | null>(null);
+  const [sourceZoomLevel, setSourceZoomLevel] = useState<number>(1);
 
   // 3D Card Tilt State for Standalone Individual Modal
   const [previewTilt, setPreviewTilt] = useState({ x: 0, y: 0, active: false });
@@ -359,9 +363,9 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
         location: `${governorate} — Registres Municipaux`,
         repository: "Archives Nationales & Registres de l'État Civil",
         cote: `EC-${governorate.slice(0, 3).toUpperCase()}-1898-N-${treeIdClean}`,
-        linkUrl: `/assets/gallery/gallery-2be085cd7933bd4990b216825e89c51b.png`,
-        previewImage: `/assets/gallery/gallery-2be085cd7933bd4990b216825e89c51b.png`,
-        summary: "Extrait officiel du registre d'état civil certifiant la filiation paternelle et maternelle directe avec signatures des témoins.",
+        linkUrl: `/assets/gallery/gallery-23d42dbda236debb753376b4f3046223.jpeg`,
+        previewImage: `/assets/gallery/gallery-23d42dbda236debb753376b4f3046223.jpeg`,
+        summary: "Extrait officiel du registre d'état civil certifiant la filiation paternelle et maternelle directe avec signatures des témoins et sceau du greffe municipal.",
       },
       {
         id: "src-2",
@@ -374,9 +378,9 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
         location: `${governorate} — Journal Officiel`,
         repository: "Centre des Archives d'Outre-Mer (ANOM) / Journal Officiel",
         cote: `NAT-JO-1929-F-${parseInt(treeIdClean, 10) + 120}`,
-        linkUrl: `/assets/gallery/gallery-82a090cabe06858332def1494d079e78.png`,
-        previewImage: `/assets/gallery/gallery-82a090cabe06858332def1494d079e78.png`,
-        summary: "Publication officielle du décret de naturalisation et fixation définitive de l'orthographe patronymique de la lignée.",
+        linkUrl: `/assets/gallery/gallery-406579d6ca9e71a5619f4a5d7ec6aacb.jpeg`,
+        previewImage: `/assets/gallery/gallery-406579d6ca9e71a5619f4a5d7ec6aacb.jpeg`,
+        summary: "Publication officielle du décret de naturalisation et fixation définitive de l'orthographe patronymique de la lignée avec visa ministériel.",
       },
       {
         id: "src-3",
@@ -389,9 +393,9 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
         location: `${governorate} — Étude Notariale`,
         repository: "Conservation Foncière & Archives du Notariat",
         cote: `NOT-${governorate.slice(0, 3).toUpperCase()}-1912-M-${treeIdClean}`,
-        linkUrl: `/assets/gallery/gallery-a553da4fa56a136d4e06685ff4227878.png`,
-        previewImage: `/assets/gallery/gallery-a553da4fa56a136d4e06685ff4227878.png`,
-        summary: "Acte authentique de célébration du mariage civil, reconnaissance des apports dotaux et filiation des descendants.",
+        linkUrl: `/assets/gallery/gallery-ed77376d6038f1b4b3a76abae84a8354.jpeg`,
+        previewImage: `/assets/gallery/gallery-ed77376d6038f1b4b3a76abae84a8354.jpeg`,
+        summary: "Acte authentique de célébration du mariage civil, reconnaissance des apports dotaux, régime patrimonial et filiation légitime des descendants.",
       },
       {
         id: "src-4",
@@ -404,9 +408,9 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
         location: `${governorate} — Tribunal de Première Instance`,
         repository: "Sijillat Notariaux & Cotes Foncières Historiques",
         cote: `SIJ-${governorate.slice(0, 3).toUpperCase()}-1921-T-889`,
-        linkUrl: `/assets/gallery/gallery-f85c73d3d2191d7809e771c0df5d53a9.png`,
-        previewImage: `/assets/gallery/gallery-f85c73d3d2191d7809e771c0df5d53a9.png`,
-        summary: "Procès-verbal de délimitation de la propriété familiale et transmission héréditaire enregistrée au greffe foncier.",
+        linkUrl: `/assets/gallery/gallery-26af214f1c8b3bf735c91e0b19434b6d.jpeg`,
+        previewImage: `/assets/gallery/gallery-26af214f1c8b3bf735c91e0b19434b6d.jpeg`,
+        summary: "Procès-verbal de délimitation de la propriété familiale, transcription des limites de la parcelle et transmission héréditaire enregistrée au greffe foncier.",
       },
       {
         id: "src-5",
@@ -419,9 +423,9 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
         location: `${governorate} — Circonscription Urbaine`,
         repository: "Fonds Général des Recensements de la Population",
         cote: `REC-POP-1936-SEC-4`,
-        linkUrl: `/assets/gallery/gallery-ed77376d6038f1b4b3a76abae84a8354.jpeg`,
-        previewImage: `/assets/gallery/gallery-ed77376d6038f1b4b3a76abae84a8354.jpeg`,
-        summary: "Dénombrement nominatif du foyer familial : chef de famille, conjointe, et héritiers avec mention des professions et domiciliation.",
+        linkUrl: `/assets/gallery/gallery-d8a073e7662663d89908e46862a7ea52.jpeg`,
+        previewImage: `/assets/gallery/gallery-d8a073e7662663d89908e46862a7ea52.jpeg`,
+        summary: "Dénombrement nominatif du foyer familial : chef de famille, conjointe, et héritiers avec mention des professions, domiciliation et parenté déclarée.",
       },
     ];
   }, [tree, displayPeople, title, governorate]);
@@ -484,9 +488,20 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                 <span>{t("verified_patrimony", "Patrimoine Vérifié")}</span>
               </span>
             </div>
-            <h2 className="text-xl sm:text-2xl font-serif font-bold text-[var(--foreground)] tracking-wide">
-              {title}
-            </h2>
+            <button
+              type="button"
+              onClick={() => setActiveTab("schema")}
+              className="text-start group cursor-pointer block"
+              title="Cliquer pour afficher le schéma interactif de l'arbre"
+            >
+              <h2 className="text-xl sm:text-2xl font-serif font-bold text-[var(--foreground)] tracking-wide group-hover:text-[var(--gold)] transition-colors flex items-center gap-2.5 flex-wrap">
+                <span>{title}</span>
+                <span className="inline-flex items-center gap-1 text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-[var(--gold)]/15 text-[var(--gold)] border border-[var(--gold)]/35 group-hover:bg-[var(--gold)] group-hover:text-black transition-colors">
+                  <GitBranch className="h-3 w-3" />
+                  <span>Voir l'Arbre</span>
+                </span>
+              </h2>
+            </button>
           </div>
 
           <button
@@ -989,44 +1004,50 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
               )}
 
               {/* ======================================================== */}
-              {/* VOLET 3: APERÇU DES SOURCES (PREVIEW LIENS & DOCUMENTS)  */}
+              {/* VOLET 3: APERÇU DES SOURCES (SANS PETITE FENÊTRE ÉTRIQUÉE)*/}
               {/* ======================================================== */}
               {activeTab === "sources" && (
-                <div className="space-y-5 animate-in fade-in duration-200">
-                  <div className="p-3.5 rounded-xl border border-[var(--gold)]/30 bg-[var(--background)] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <div className="space-y-4 animate-in fade-in duration-200">
+                  {/* VOLET 3 HEADER BAR WITH DIRECT TREE LINK */}
+                  <div className="p-3.5 sm:p-4 rounded-xl border border-[var(--gold)]/35 bg-[var(--background)] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-sm">
                     <div className="space-y-0.5">
-                      <h4 className="font-serif text-base font-bold text-[var(--foreground)] flex items-center gap-2">
+                      <h4 className="font-serif text-base sm:text-lg font-bold text-[var(--foreground)] flex items-center gap-2">
                         <FileText className="h-4 w-4 text-[var(--gold)]" />
-                        <span>Aperçu des Documents d'Archives & Liens Directs</span>
+                        <span>Aperçu des Sources & Documents d'Archives</span>
                       </h4>
                       <p className="text-xs text-[var(--muted-foreground)]">
-                        Visualisez et prévisualisez les actes, décrets et registres rattachés à chaque individu directement dans ce volet.
+                        Consultez les actes officiels et pièces d'archives. Cliquez pour prévisualiser en grand format modal ou ouvrir dans une nouvelle page.
                       </p>
                     </div>
-                    <span className="px-3 py-1 rounded-full text-xs font-mono font-bold bg-[var(--gold)]/15 text-[var(--gold)] border border-[var(--gold)]/30 shrink-0">
-                      {archivalDocuments.length} documents répertoriés
-                    </span>
+
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className="px-2.5 py-1 rounded-full text-xs font-mono font-bold bg-[var(--gold)]/15 text-[var(--gold)] border border-[var(--gold)]/30">
+                        {archivalDocuments.length} documents répertoriés
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setActiveTab("schema")}
+                        className="btn-base btn-gold text-xs py-1.5 px-3 flex items-center gap-1.5 cursor-pointer shadow-sm font-semibold"
+                        title="Situer dans le schéma de l'arbre interactif"
+                      >
+                        <GitBranch className="h-3.5 w-3.5" />
+                        <span>Voir l'Arbre</span>
+                      </button>
+                    </div>
                   </div>
 
-                  {/* PREVIEW CONTAINER: IN-VOLET PREVIEW (LARGE PREVIEW + SOURCE LINKS GRID) */}
-                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-                    
-                    {/* SOURCES LIST WITH MEMBER BADGES & REAL CLICKABLE LINKS */}
-                    <div className="lg:col-span-5 space-y-3 max-h-[500px] overflow-y-auto custom-scrollbar pr-1">
-                      {archivalDocuments.map((doc) => {
-                        const isSelected = selectedSourceId === doc.id;
-                        const badge = getCategoryBadge(doc.category);
+                  {/* GENEROUS SOURCES GRID (NO CRAMPED PREVIEW WINDOW!) */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 pb-2">
+                    {archivalDocuments.map((doc) => {
+                      const badge = getCategoryBadge(doc.category);
 
-                        return (
-                          <div
-                            key={doc.id}
-                            onClick={() => setSelectedSourceId(doc.id)}
-                            className={`p-3.5 rounded-xl border transition-all cursor-pointer space-y-2.5 ${
-                              isSelected
-                                ? "bg-[var(--gold)]/15 border-[var(--gold)] shadow-md"
-                                : "bg-[var(--card)] border-[var(--border)] hover:border-[var(--gold)]/50"
-                            }`}
-                          >
+                      return (
+                        <div
+                          key={doc.id}
+                          className="rounded-xl border border-[var(--border)] hover:border-[var(--gold)]/70 bg-[var(--card)] p-4 shadow-md hover:shadow-xl transition-all duration-200 flex flex-col justify-between group space-y-3"
+                        >
+                          <div className="space-y-3">
+                            {/* Badges bar */}
                             <div className="flex items-center justify-between gap-2">
                               <span className={`px-2 py-0.5 rounded-md text-[10px] font-mono font-bold border ${badge.color}`}>
                                 {badge.label}
@@ -1036,118 +1057,356 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                               </span>
                             </div>
 
-                            <div className="flex items-start gap-3">
-                              {/* Thumbnail preview */}
+                            {/* Document Visual Preview Card - click opens Modal Preview */}
+                            <div
+                              onClick={() => {
+                                setPreviewModalSource(doc);
+                                setSourceZoomLevel(1);
+                              }}
+                              className="relative h-44 w-full rounded-lg overflow-hidden border border-[var(--gold)]/30 bg-stone-900 cursor-pointer group/img shadow-inner"
+                              title="Cliquer pour ouvrir l'aperçu modal grand format"
+                            >
                               <img
                                 src={doc.previewImage}
                                 alt={doc.title}
-                                className="w-14 h-14 object-cover rounded-lg border border-[var(--gold)]/30 shrink-0 bg-black/20"
+                                onError={(e) => {
+                                  e.currentTarget.src = "/assets/gallery/gallery-23d42dbda236debb753376b4f3046223.jpeg";
+                                }}
+                                className="w-full h-full object-cover transition-transform duration-300 group-hover/img:scale-105"
                               />
-                              <div className="min-w-0 flex-1">
-                                <h5 className="font-serif text-sm font-bold text-[var(--foreground)] leading-snug line-clamp-1">
-                                  {doc.title}
-                                </h5>
-                                <div className="text-[11px] text-[var(--gold)] font-mono font-semibold flex items-center gap-1 mt-0.5">
-                                  <span>👤 {doc.memberName}</span>
-                                </div>
-                                <div className="text-[10px] text-[var(--muted-foreground)] font-mono truncate">
-                                  {doc.repository}
-                                </div>
+                              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30 opacity-80 group-hover/img:opacity-60 transition-opacity" />
+                              
+                              {/* Floating Seal & Click hint */}
+                              <div className="absolute top-2 start-2 flex items-center gap-1 bg-black/60 backdrop-blur-sm px-2 py-0.5 rounded text-[10px] text-emerald-400 font-mono font-semibold border border-emerald-500/30">
+                                <ShieldCheck className="h-3 w-3" />
+                                <span>Document Certifié</span>
+                              </div>
+
+                              <div className="absolute bottom-2 start-2 end-2 flex items-center justify-between text-xs text-white">
+                                <span className="text-[11px] font-mono text-amber-300 font-bold flex items-center gap-1 drop-shadow-md truncate max-w-[65%]">
+                                  <User className="h-3 w-3 shrink-0" />
+                                  <span className="truncate">{doc.memberName}</span>
+                                </span>
+                                <span className="px-2 py-0.5 rounded bg-black/70 text-[10px] font-mono text-[var(--gold)] border border-[var(--gold)]/40 flex items-center gap-1 shrink-0 backdrop-blur-sm">
+                                  <Maximize2 className="h-2.5 w-2.5" />
+                                  <span>Aperçu</span>
+                                </span>
                               </div>
                             </div>
 
-                            {/* LINK BUTTONS */}
-                            <div className="flex items-center justify-between gap-2 pt-1 border-t border-[var(--border)]/50">
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setSelectedSourceId(doc.id);
+                            {/* Title & Archival Info */}
+                            <div className="space-y-1.5">
+                              <h5
+                                onClick={() => {
+                                  setPreviewModalSource(doc);
+                                  setSourceZoomLevel(1);
                                 }}
-                                className="text-[11px] text-[var(--gold)] font-semibold flex items-center gap-1 hover:underline cursor-pointer"
+                                className="font-serif text-sm sm:text-base font-bold text-[var(--foreground)] group-hover:text-[var(--gold)] transition-colors leading-snug cursor-pointer line-clamp-2"
                               >
-                                <Eye className="h-3 w-3" />
-                                <span>Prévisualiser</span>
-                              </button>
+                                {doc.title}
+                              </h5>
 
-                              <a
-                                href={doc.linkUrl}
-                                target="_blank"
-                                rel="noreferrer"
-                                onClick={(e) => e.stopPropagation()}
-                                className="text-[11px] text-sky-400 font-semibold flex items-center gap-1 hover:underline"
-                              >
-                                <ExternalLink className="h-3 w-3" />
-                                <span>Ouvrir le lien</span>
-                              </a>
+                              <div className="text-[11px] text-[var(--gold)] font-mono font-semibold flex items-center gap-1.5">
+                                <User className="h-3 w-3 shrink-0" />
+                                <span className="truncate">{doc.memberName}</span>
+                                <span className="text-[10px] text-[var(--muted-foreground)] shrink-0">({doc.memberRole})</span>
+                              </div>
+
+                              <div className="text-[11px] text-[var(--muted-foreground)] font-mono flex items-center gap-1.5 truncate">
+                                <Building className="h-3 w-3 shrink-0 text-slate-400" />
+                                <span className="truncate">{doc.repository}</span>
+                              </div>
+
+                              <div className="text-[11px] text-[var(--muted-foreground)] font-mono flex items-center gap-1.5">
+                                <Calendar className="h-3 w-3 shrink-0 text-slate-400" />
+                                <span className="truncate">{doc.date} — {doc.location}</span>
+                              </div>
+
+                              <p className="text-xs text-[var(--foreground)]/80 leading-relaxed font-light line-clamp-2 pt-0.5">
+                                {doc.summary}
+                              </p>
                             </div>
                           </div>
-                        );
-                      })}
-                    </div>
 
-                    {/* IN-VOLET PREVIEWER (LARGE EMBEDDED PREVIEW VIEWER - USER REQUIREMENT) */}
-                    <div className="lg:col-span-7 flex flex-col rounded-2xl border border-[var(--gold)]/50 bg-[var(--background)] p-4 shadow-xl space-y-3">
-                      <div className="flex items-center justify-between border-b border-[var(--border)] pb-2.5">
-                        <div className="min-w-0">
-                          <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[var(--gold)] block">
-                            Aperçu Visuel de la Source & du Lien
-                          </span>
-                          <h4 className="font-serif text-base font-bold text-[var(--foreground)] truncate">
-                            {activeSource.title}
-                          </h4>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <a
-                            href={activeSource.linkUrl}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="btn-base btn-gold text-xs py-1.5 px-3 flex items-center gap-1.5 cursor-pointer shadow-sm"
-                          >
-                            <ExternalLink className="h-3.5 w-3.5" />
-                            <span>Consulter la Source</span>
-                          </a>
-                        </div>
-                      </div>
+                          {/* DUAL ACTION CONTROLS: CHOOSE MODAL PREVIEW OR NEW PAGE PREVIEW + TREE ACTION */}
+                          <div className="pt-3 border-t border-[var(--border)] flex items-center gap-2">
+                            {/* CHOICE 1: APERÇU MODAL */}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setPreviewModalSource(doc);
+                                setSourceZoomLevel(1);
+                              }}
+                              className="btn-base btn-gold flex-1 text-xs py-2 px-2.5 flex items-center justify-center gap-1.5 cursor-pointer shadow-sm font-semibold"
+                              title="Ouvrir l'aperçu grand format dans une fenêtre modale"
+                            >
+                              <Maximize2 className="h-3.5 w-3.5" />
+                              <span>Aperçu Modal</span>
+                            </button>
 
-                      {/* EMBEDDED VISUAL PREVIEW OF THE DOCUMENT */}
-                      <div className="relative w-full h-[340px] sm:h-[380px] rounded-xl overflow-hidden border-2 border-[var(--gold)]/40 bg-stone-900 flex items-center justify-center group shadow-inner">
-                        <img
-                          src={activeSource.previewImage}
-                          alt={activeSource.title}
-                          className="w-full h-full object-contain p-1 transition-transform duration-300 group-hover:scale-105"
-                        />
-                        <div className="absolute bottom-2 start-2 end-2 bg-black/75 backdrop-blur-sm p-2.5 rounded-lg border border-[var(--gold)]/30 text-xs text-white space-y-0.5">
-                          <div className="flex items-center justify-between font-mono text-[11px]">
-                            <span className="text-amber-300 font-bold">👤 Membre: {activeSource.memberName}</span>
-                            <span className="text-slate-300">Cote: {activeSource.cote}</span>
+                            {/* CHOICE 2: NOUVELLE PAGE */}
+                            <a
+                              href={doc.linkUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="btn-base btn-outline flex-1 text-xs py-2 px-2.5 flex items-center justify-center gap-1.5 cursor-pointer font-semibold hover:border-[var(--gold)] hover:text-[var(--gold)] text-center transition-colors"
+                              title="Ouvrir la source dans un nouvel onglet"
+                            >
+                              <ExternalLink className="h-3.5 w-3.5" />
+                              <span>Nouvelle Page</span>
+                            </a>
+
+                            {/* TREE LINK */}
+                            <button
+                              type="button"
+                              onClick={() => setActiveTab("schema")}
+                              className="p-2 rounded-lg border border-[var(--border)] hover:border-[var(--gold)] hover:bg-[var(--gold)]/10 text-[var(--gold)] transition-colors cursor-pointer shrink-0"
+                              title="Situer cet individu et cette source dans l'arbre interactif"
+                            >
+                              <GitBranch className="h-4 w-4" />
+                            </button>
                           </div>
-                          <p className="text-[11px] text-slate-200 line-clamp-1">{activeSource.summary}</p>
                         </div>
-                      </div>
-
-                      {/* DOCUMENT METADATA FOOTER */}
-                      <div className="p-3 rounded-xl bg-[var(--card)] border border-[var(--border)] font-mono text-xs space-y-1">
-                        <div className="flex items-center justify-between">
-                          <span className="text-[var(--muted-foreground)]">Dépôt d'Archives :</span>
-                          <span className="font-bold text-[var(--foreground)]">{activeSource.repository}</span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-[var(--muted-foreground)]">Date & Circonscription :</span>
-                          <span className="font-bold text-[var(--foreground)]">{activeSource.date} — {activeSource.location}</span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-[var(--muted-foreground)]">Lien direct :</span>
-                          <a href={activeSource.linkUrl} target="_blank" rel="noreferrer" className="text-sky-400 truncate max-w-[280px] hover:underline flex items-center gap-1">
-                            <Link2 className="h-3 w-3 shrink-0" />
-                            <span className="truncate">{activeSource.linkUrl}</span>
-                          </a>
-                        </div>
-                      </div>
-                    </div>
+                      );
+                    })}
                   </div>
                 </div>
               )}
+            </div>
+          </div>
+        )}
+
+        {/* ========================================================================= */}
+        {/* GRAND MODAL PREVIEW DIALOG FOR SOURCES (IMMERSIVE HIGH-RES PREVIEW)      */}
+        {/* ========================================================================= */}
+        {previewModalSource && (
+          <div className="fixed inset-0 z-[1200] flex items-center justify-center bg-black/85 backdrop-blur-md p-2 sm:p-4 overflow-y-auto animate-in fade-in duration-200">
+            <div className="relative w-full max-w-5xl rounded-2xl bg-[var(--card)] border-2 border-[var(--gold)] shadow-2xl p-4 sm:p-6 my-auto text-[var(--foreground)] flex flex-col max-h-[94vh] space-y-4">
+              
+              {/* MODAL PREVIEW HEADER */}
+              <div className="flex items-start sm:items-center justify-between gap-3 border-b border-[var(--border)] pb-3 shrink-0">
+                <div className="space-y-1 min-w-0 flex-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className={`px-2 py-0.5 rounded-md text-[10px] font-mono font-bold border ${getCategoryBadge(previewModalSource.category).color}`}>
+                      {getCategoryBadge(previewModalSource.category).label}
+                    </span>
+                    <span className="text-[10px] font-mono font-bold text-[var(--gold)] bg-[var(--gold)]/10 px-2 py-0.5 rounded border border-[var(--gold)]/30">
+                      Cote: {previewModalSource.cote}
+                    </span>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
+                      <ShieldCheck className="h-3 w-3" />
+                      <span>Document Certifié Conforme</span>
+                    </span>
+                  </div>
+                  <h3 className="font-serif text-lg sm:text-xl font-bold text-[var(--foreground)] truncate">
+                    {previewModalSource.title}
+                  </h3>
+                </div>
+
+                {/* MODAL ACTIONS BAR: NEW PAGE + SEE TREE + CLOSE */}
+                <div className="flex items-center gap-2 shrink-0">
+                  <a
+                    href={previewModalSource.linkUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="btn-base btn-outline text-xs py-1.5 px-3 flex items-center gap-1.5 hover:border-[var(--gold)] hover:text-[var(--gold)] cursor-pointer"
+                    title="Ouvrir cette source dans une nouvelle page / onglet"
+                  >
+                    <ExternalLink className="h-3.5 w-3.5" />
+                    <span className="hidden sm:inline">Nouvelle Page</span>
+                  </a>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPreviewModalSource(null);
+                      setActiveTab("schema");
+                    }}
+                    className="btn-base btn-gold text-xs py-1.5 px-3 flex items-center gap-1.5 cursor-pointer shadow-sm font-semibold"
+                    title="Situer cet individu et cette source dans l'arbre généalogique"
+                  >
+                    <GitBranch className="h-3.5 w-3.5" />
+                    <span>Voir l'Arbre</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setPreviewModalSource(null)}
+                    className="p-1.5 rounded-full hover:bg-[var(--border)] text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
+                    title="Fermer l'aperçu"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
+              </div>
+
+              {/* NOTIFICATION BANNER WITH EXPLICIT CHOICE HINT */}
+              <div className="p-2.5 rounded-lg bg-[var(--gold)]/10 border border-[var(--gold)]/30 text-xs flex flex-wrap items-center justify-between gap-2 shrink-0">
+                <span className="text-[var(--foreground)] font-mono text-[11px] flex items-center gap-1.5">
+                  <Eye className="h-3.5 w-3.5 text-[var(--gold)]" />
+                  <span>Aperçu Modal Grand Format • Vous examinez la pièce d'archives intégrale et son relevé officiel.</span>
+                </span>
+                <a
+                  href={previewModalSource.linkUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-xs font-bold text-[var(--gold)] hover:underline flex items-center gap-1 font-mono"
+                >
+                  <span>Ouvrir dans une nouvelle page</span>
+                  <ExternalLink className="h-3 w-3" />
+                </a>
+              </div>
+
+              {/* PREVIEW CONTENT: SPLIT HIGH-RES IMAGE & ARCHIVE TRANSCRIPTION */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 flex-1 overflow-y-auto custom-scrollbar pr-1 min-h-0">
+                {/* HIGH-RES ARCHIVAL VIEWER */}
+                <div className="lg:col-span-7 flex flex-col space-y-2">
+                  <div className="relative w-full h-[380px] sm:h-[460px] rounded-xl overflow-hidden border-2 border-[var(--gold)]/50 bg-stone-950 flex items-center justify-center shadow-inner group/viewer">
+                    <img
+                      src={previewModalSource.previewImage}
+                      alt={previewModalSource.title}
+                      onError={(e) => {
+                        e.currentTarget.src = "/assets/gallery/gallery-23d42dbda236debb753376b4f3046223.jpeg";
+                      }}
+                      style={{
+                        transform: `scale(${sourceZoomLevel})`,
+                        transition: "transform 0.2s ease-out",
+                      }}
+                      className="w-full h-full object-contain p-2 select-none"
+                    />
+
+                    {/* Quick action buttons overlay over image */}
+                    <div className="absolute top-3 end-3 flex items-center gap-1.5 bg-black/75 backdrop-blur-md p-1.5 rounded-lg border border-[var(--gold)]/40 shadow-lg">
+                      <button
+                        type="button"
+                        onClick={() => setSourceZoomLevel((z) => Math.min(2.5, z + 0.25))}
+                        className="p-1 rounded text-white hover:text-[var(--gold)] hover:bg-white/10 transition-colors cursor-pointer"
+                        title="Zoomer +"
+                      >
+                        <ZoomIn className="h-4 w-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setSourceZoomLevel((z) => Math.max(0.75, z - 0.25))}
+                        className="p-1 rounded text-white hover:text-[var(--gold)] hover:bg-white/10 transition-colors cursor-pointer"
+                        title="Dézoomer -"
+                      >
+                        <ZoomOut className="h-4 w-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setSourceZoomLevel(1)}
+                        className="p-1 rounded text-white hover:text-[var(--gold)] hover:bg-white/10 transition-colors text-[10px] font-mono px-1.5 cursor-pointer"
+                        title="Réinitialiser zoom"
+                      >
+                        100%
+                      </button>
+                      <a
+                        href={previewModalSource.linkUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="p-1 rounded text-[var(--gold)] hover:bg-[var(--gold)]/20 transition-colors cursor-pointer"
+                        title="Ouvrir dans une nouvelle page"
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                      </a>
+                    </div>
+
+                    <div className="absolute bottom-2 start-2 end-2 bg-black/80 backdrop-blur-sm px-3 py-1.5 rounded-lg border border-[var(--gold)]/30 text-white flex items-center justify-between text-[11px] font-mono">
+                      <span>👤 {previewModalSource.memberName}</span>
+                      <span className="text-[var(--gold)] font-bold">{previewModalSource.cote}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* ARCHIVAL METADATA & RELEVE */}
+                <div className="lg:col-span-5 flex flex-col justify-between space-y-4">
+                  <div className="space-y-4">
+                    {/* Associated member card */}
+                    <div className="p-3.5 rounded-xl border border-[var(--gold)]/40 bg-[var(--background)] space-y-2">
+                      <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[var(--gold)] block">
+                        Individu Rattaché
+                      </span>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h4 className="font-serif text-sm font-bold text-[var(--foreground)]">
+                            {previewModalSource.memberName}
+                          </h4>
+                          <p className="text-xs text-[var(--gold)] font-medium">
+                            {previewModalSource.memberRole}
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setPreviewModalSource(null);
+                            if (previewModalSource.memberId) {
+                              const found = displayPeople.find((p: any) => p.id === previewModalSource.memberId);
+                              if (found) setSelectedPerson(found);
+                            }
+                            setActiveTab("details");
+                          }}
+                          className="btn-base btn-outline text-[11px] py-1 px-2.5 flex items-center gap-1 cursor-pointer hover:border-[var(--gold)] hover:text-[var(--gold)]"
+                        >
+                          <User className="h-3 w-3" />
+                          <span>Voir sa fiche</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Registry details */}
+                    <div className="p-3.5 rounded-xl bg-[var(--background)] border border-[var(--border)] font-mono text-xs space-y-2.5">
+                      <div>
+                        <span className="text-[10px] text-[var(--muted-foreground)] block uppercase">Dépôt d'Archives & Greffe :</span>
+                        <strong className="text-[var(--foreground)]">{previewModalSource.repository}</strong>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-[var(--muted-foreground)] block uppercase">Date & Circonscription :</span>
+                        <strong className="text-[var(--foreground)]">{previewModalSource.date} — {previewModalSource.location}</strong>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-[var(--muted-foreground)] block uppercase">Cote Officielle :</span>
+                        <span className="text-[var(--gold)] font-bold">{previewModalSource.cote}</span>
+                      </div>
+                    </div>
+
+                    {/* Transcription */}
+                    <div className="p-3.5 rounded-xl bg-[var(--background)] border border-[var(--border)] space-y-1.5">
+                      <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[var(--gold)] block">
+                        Transcription & Analyse de l'Acte
+                      </span>
+                      <p className="text-xs text-[var(--foreground)]/90 leading-relaxed font-light">
+                        {previewModalSource.summary}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* BOTTOM ACTION BUTTONS */}
+                  <div className="pt-2 flex flex-col gap-2">
+                    <a
+                      href={previewModalSource.linkUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="btn-base btn-gold w-full text-xs py-2.5 flex items-center justify-center gap-2 cursor-pointer shadow-md font-bold"
+                    >
+                      <ExternalLink className="h-4 w-4" />
+                      <span>Ouvrir dans une Nouvelle Page</span>
+                    </a>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPreviewModalSource(null);
+                        setActiveTab("schema");
+                      }}
+                      className="btn-base btn-outline w-full text-xs py-2 flex items-center justify-center gap-2 cursor-pointer hover:border-[var(--gold)] hover:text-[var(--gold)] font-semibold"
+                    >
+                      <GitBranch className="h-4 w-4 text-[var(--gold)]" />
+                      <span>Explorer dans le Schéma de l'Arbre</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         )}
