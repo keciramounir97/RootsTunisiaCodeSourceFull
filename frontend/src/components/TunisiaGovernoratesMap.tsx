@@ -200,18 +200,38 @@ type TileLayerKey = keyof typeof OPEN_SOURCE_TILE_LAYERS;
 function MapCenterController({ coords, zoom }: { coords: [number, number]; zoom: number }) {
   const map = useMap();
   useEffect(() => {
-    if (coords) {
-      map.flyTo(coords, zoom, { duration: 1.1 });
-    }
+    const [lat, lng] = coords || [NaN, NaN];
+    if (!Number.isFinite(lat) || !Number.isFinite(lng) || !Number.isFinite(zoom)) return;
+    const size = map.getSize();
+    if (!size.x || !size.y) return;
+    map.flyTo(coords, zoom, { duration: 1.1 });
   }, [coords, zoom, map]);
   return null;
 }
 
-export default function TunisiaGovernoratesMap() {
+export default function TunisiaGovernoratesMap({
+  variant = "full",
+}: {
+  /** Auth side panels use `embed` inside `hidden lg:flex` — delay Leaflet until lg. */
+  variant?: "full" | "embed";
+} = {}) {
   const { t, isRtl } = useTranslation();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [activeRegion, setActiveRegion] = useState<RegionId>("all_tunisia");
   const [tileStyle, setTileStyle] = useState<TileLayerKey>("osm");
+  const [viewportReady, setViewportReady] = useState(variant !== "embed");
+
+  useEffect(() => {
+    if (variant !== "embed" || typeof window === "undefined") {
+      setViewportReady(true);
+      return;
+    }
+    const mq = window.matchMedia("(min-width: 1024px)");
+    const sync = () => setViewportReady(mq.matches);
+    sync();
+    mq.addEventListener("change", sync);
+    return () => mq.removeEventListener("change", sync);
+  }, [variant]);
 
   const activeDossier = useMemo(() => {
     return regionDossiers[activeRegion] || regionDossiers.all_tunisia;
@@ -254,6 +274,10 @@ export default function TunisiaGovernoratesMap() {
   const formatFamName = (famKey: string) => t(`fam_${famKey}`);
 
   const currentLayer = OPEN_SOURCE_TILE_LAYERS[tileStyle];
+
+  if (variant === "embed" && !viewportReady) {
+    return <div className="absolute inset-0 w-full h-full bg-[var(--card)] animate-pulse" />;
+  }
 
   return (
     <div dir={isRtl ? "rtl" : "ltr"} className="w-full">

@@ -75,7 +75,7 @@ export default function ResetPassword() {
       />
       <div className="frame-gold w-full max-w-[var(--content-max)] mx-auto flex flex-col lg:flex-row rounded-lg overflow-hidden shadow-2xl border border-[var(--gold)]/40 bg-[var(--paper-color)]">
         <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden min-h-[500px] bg-[var(--card)]">
-          <TunisiaGovernoratesMap />
+          <TunisiaGovernoratesMap variant="embed" />
           <div className="absolute inset-y-0 right-0 w-16 pointer-events-none bg-gradient-to-r from-transparent to-[var(--paper-color)] z-[450]" />
         </div>
 
