@@ -1,3 +1,4 @@
+import { getTreeMetrics } from "../utils/treeMetrics";
 import { useEffect, useMemo, useState } from "react";
 import AOS from "aos";
 import "aos/dist/aos.css";
@@ -274,8 +275,7 @@ export default function GalleryTrees() {
               const creatorStr = tree.owner?.full_name || tree.creator || t("heritage_research");
               const descStr = tree.description || tree.notes || tree.provenance || "";
               const govStr = tree.governorate || tree.region || "Tunisia";
-              const memberCount = tree.people?.length ?? tree.membersCount ?? 0;
-              const genCount = tree.generations ?? (memberCount > 0 ? Math.ceil(Math.log2(memberCount + 1)) : 1);
+              const { individuals: memberCount, generations: genCount } = getTreeMetrics(tree);
 
               return (
                 <article

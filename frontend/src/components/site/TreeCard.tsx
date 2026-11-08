@@ -1,3 +1,4 @@
+import { getTreeMetrics } from "../../utils/treeMetrics";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Layers, Users, Eye, MapPin } from "lucide-react";
@@ -97,8 +98,7 @@ export function TreeCard({ tree }: { tree: TreeRecord }) {
         ? t("tunisia")
         : rawLocation;
 
-  const members = tree.people?.length ?? tree.membersCount ?? tree.people_count ?? 0;
-  const gens = tree.generations ?? (members > 0 ? Math.ceil(Math.log2(members + 1)) : 1);
+  const { individuals: members, generations: gens } = getTreeMetrics(tree);
 
   return (
     <>

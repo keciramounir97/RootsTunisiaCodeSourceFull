@@ -2629,6 +2629,33 @@ export default function TreesBuilder({
 
         d3.selectAll(".d3-tooltip").remove();
 
+        const tooltip = d3
+          .select("body")
+          .append("div")
+          .attr("class", "d3-tooltip")
+          .style("position", "fixed")
+          .style("visibility", "hidden")
+          .style("pointer-events", "none")
+          .style("z-index", "9999999")
+          .style("background", isDark ? "rgba(13, 27, 42, 0.96)" : "rgba(248, 245, 239, 0.97)")
+          .style("color", isDark ? "#f8f5ef" : "#0d1b2a")
+          .style("border", isDark ? "1px solid rgba(212, 169, 86, 0.5)" : "1px solid rgba(212, 169, 86, 0.6)")
+          .style("padding", "10px 14px")
+          .style("border-radius", "8px")
+          .style("font-size", "12px")
+          .style("box-shadow", "0 10px 25px -5px rgba(0, 0, 0, 0.3)")
+          .style("backdrop-filter", "blur(8px)")
+          .style("max-width", "320px")
+          .style("line-height", "1.4");
+
+        const updateTooltipPos = (e: any) => {
+          const clientX = e.clientX ?? (e.sourceEvent ? e.sourceEvent.clientX : 0);
+          const clientY = e.clientY ?? (e.sourceEvent ? e.sourceEvent.clientY : 0);
+          const left = Math.min(window.innerWidth - 320, Math.max(12, clientX + 16));
+          const top = Math.min(window.innerHeight - 150, Math.max(12, clientY + 16));
+          tooltip.style("left", `${left}px`).style("top", `${top}px`);
+        };
+
         svg.attr("width", width).attr("height", height);
 
         svg.selectAll("*").remove();
@@ -2734,21 +2761,18 @@ export default function TreesBuilder({
           .attr("stroke-linecap", "round")
           .attr("stroke-linejoin", "round")
           .attr("opacity", 1)
-          .on("mouseover", function (e, d) {
+          .on("mouseenter", function (e, d) {
             const sourceName = nameOf(d.source);
             const targetName = nameOf(d.target);
             tooltip
               .style("visibility", "visible")
-              .html(`<div class="text-sm font-bold">${t("legacy.parent_relationship", "Parent Relationship")}</div><div class="text-xs mt-1">${sourceName} ↔ ${targetName}</div><div class="text-xs opacity-70 mt-1">${t("legacy.parents_connected", "Parents connected")}</div>`)
-              .style("top", `${e.pageY + 15}px`)
-              .style("left", `${e.pageX + 15}px`);
+              .html(`<div style="font-weight:700;font-size:13px;color:#d4a956;margin-bottom:4px;display:flex;align-items:center;gap:6px;"><span>💍</span> <span>${t("legacy.parent_relationship", "Union & Couple")}</span></div><div style="font-weight:600;font-size:12px;margin-bottom:4px;">${sourceName} ⟷ ${targetName}</div><div style="font-size:11px;opacity:0.8;">${t("legacy.parents_connected", "Parents / Conjoints documentés")}</div>`);
+            updateTooltipPos(e);
           })
           .on("mousemove", (e) => {
-            tooltip
-              .style("top", `${e.pageY + 15}px`)
-              .style("left", `${e.pageX + 15}px`);
+            updateTooltipPos(e);
           })
-          .on("mouseout", () => {
+          .on("mouseleave", () => {
             tooltip.style("visibility", "hidden");
           });
 
@@ -2780,58 +2804,26 @@ export default function TreesBuilder({
           .attr("stroke-linecap", "round")
           .attr("stroke-linejoin", "round")
           .attr("opacity", 0.9)
-          .on("mouseover", function (e, d) {
+          .on("mouseenter", function (e, d) {
             const sourceName = nameOf(d.source);
             const targetName = nameOf(d.target);
-            // Determine relationship type
             const isParentChild = d.source.gen < d.target.gen;
             const relationshipType = isParentChild
               ? t("legacy.parent_to_child", "Parent to Child")
               : t("legacy.descendant_relationship", "Descendant Relationship");
             tooltip
               .style("visibility", "visible")
-              .html(`<div class="text-sm font-bold">${relationshipType}</div><div class="text-xs mt-1">${sourceName} → ${targetName}</div><div class="text-xs opacity-70 mt-1">${isParentChild ? t("legacy.parent_children", "Parent-Child") : t("legacy.parent_descendant", "Parent-Descendant")}</div>`)
-              .style("top", `${e.pageY + 15}px`)
-              .style("left", `${e.pageX + 15}px`);
+              .html(`<div style="font-weight:700;font-size:13px;color:#38bdf8;margin-bottom:4px;display:flex;align-items:center;gap:6px;"><span>🌿</span> <span>${relationshipType}</span></div><div style="font-weight:600;font-size:12px;margin-bottom:4px;">${sourceName} ➔ ${targetName}</div><div style="font-size:11px;opacity:0.8;">${isParentChild ? t("legacy.parent_children", "Filiation directe") : t("legacy.parent_descendant", "Lignée & descendance")}</div>`);
+            updateTooltipPos(e);
           })
           .on("mousemove", (e) => {
-            tooltip
-              .style("top", `${e.pageY + 15}px`)
-              .style("left", `${e.pageX + 15}px`);
+            updateTooltipPos(e);
           })
-          .on("mouseout", () => {
+          .on("mouseleave", () => {
             tooltip.style("visibility", "hidden");
           });
 
-        let tooltip = d3.select("body").select(".d3-tooltip");
-
-        if (tooltip.empty()) {
-          tooltip = d3
-
-            .select("body")
-
-            .append("div")
-
-            .attr("class", "d3-tooltip")
-
-            .style("position", "absolute")
-
-            .style("visibility", "hidden")
-
-            .style("background", isDark ? "#0d1b2a" : "#f8f5ef")
-
-            .style("color", isDark ? "#f8f5ef" : "#0d1b2a")
-
-            .style("border", isDark ? "1px solid #0d1b2a" : "1px solid #e8dfca")
-            .style("padding", "8px 12px")
-            .style("border-radius", "4px")
-            .style("font-size", "12px")
-            .style("font-family", "Manrope")
-            .style("box-shadow", "0 6px 16px rgba(0,0,0,0.18)")
-            .style("pointer-events", "none")
-
-            .style("z-index", "9999");
-        }
+        
 
         const sim = d3
           .forceSimulation(nodes)

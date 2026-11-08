@@ -101,7 +101,7 @@ export class TreesService implements OnModuleInit {
         const cached = this.getCached('public');
         if (cached) return cached;
 
-        const countSelect = this.knex.raw('0 as people_count');
+        const countSelect = this.knex.raw('(SELECT COUNT(*) FROM persons WHERE persons.tree_id = family_trees.id) as people_count');
 
         const rows = await Tree.query(this.knex)
             .select(this.backupFlagSelect())
@@ -137,7 +137,7 @@ export class TreesService implements OnModuleInit {
         const cached = this.getCached(cacheKey);
         if (cached) return cached;
 
-        const countSelect = this.knex.raw('0 as people_count');
+        const countSelect = this.knex.raw('(SELECT COUNT(*) FROM persons WHERE persons.tree_id = family_trees.id) as people_count');
 
         const rows = await Tree.query(this.knex)
             .select(this.backupFlagSelect())
@@ -155,7 +155,7 @@ export class TreesService implements OnModuleInit {
         const cached = this.getCached('admin');
         if (cached) return cached;
 
-        const countSelect = this.knex.raw('0 as people_count');
+        const countSelect = this.knex.raw('(SELECT COUNT(*) FROM persons WHERE persons.tree_id = family_trees.id) as people_count');
 
         const rows = await Tree.query(this.knex)
             .select(this.backupFlagSelect())

@@ -149,14 +149,13 @@ export function recordAdminUpload(
     const raw = localStorage.getItem(UPLOADS_STORAGE_KEY);
     const store = raw ? JSON.parse(raw) : {};
     const list = Array.isArray(store[kind]) ? store[kind] : [];
-    // Deduplicate by id or title
     const filtered = list.filter((x: any) => x.id !== item.id && x.title !== item.title);
     filtered.unshift({
       ...item,
       isUserUpload: true,
       uploadedAt: new Date().toISOString(),
     });
-    store[kind] = filtered.slice(0, 50);
+    store[kind] = filtered.slice(0, 100);
     localStorage.setItem(UPLOADS_STORAGE_KEY, JSON.stringify(store));
     window.dispatchEvent(new CustomEvent("roots:uploads-changed", { detail: { kind, item } }));
   } catch {
@@ -166,13 +165,44 @@ export function recordAdminUpload(
 
 export function getTrackedUploads(kind: "images" | "books" | "audios" | "documents" | "trees" | "articles"): any[] {
   if (typeof window === "undefined") return [];
-  try {
-    const raw = localStorage.getItem(UPLOADS_STORAGE_KEY);
-    if (!raw) return [];
-    const store = JSON.parse(raw);
-    return Array.isArray(store[kind]) ? store[kind] : [];
-  } catch {
-    return [];
-  }
-}
+  const results: any[] = [];
+  const seenIds = new Set<string>();
 
+  const checkAndAdd = (item: any) => {
+    if (!item) return;
+    const key = String(item.id || item.title || item.name || "");
+    if (!key || seenIds.has(key)) return;
+    seenIds.add(key);
+    results.push(item);
+  };
+
+  const keysToCheck = [
+    UPLOADS_STORAGE_KEY,
+    "roots_custom_uploads",
+    "roots_uploads",
+    "roots_admin_uploads",
+    "roots_gallery_uploads",
+    `roots_uploaded_${kind}`,
+    `roots_${kind}_uploads`,
+  ];
+
+  for (const k of keysToCheck) {
+    try {
+      const raw = localStorage.getItem(k);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          parsed.forEach(checkAndAdd);
+        } else if (parsed && typeof parsed === "object") {
+          if (Array.isArray(parsed[kind])) {
+            parsed[kind].forEach(checkAndAdd);
+          }
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  return results;
+}
