@@ -79,7 +79,16 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
   // Selected Source in Volet 3 (Aperçu des Sources) for live preview of links and documents
   const [selectedSourceId, setSelectedSourceId] = useState<string>("src-1");
   const [sourceZoom, setSourceZoom] = useState(false);
-  const [previewSource, setPreviewSource] = useState<{ url: string; label: string; kind?: string; memberName?: string } | null>(null);
+  const [previewSource, setPreviewSource] = useState<{
+    url: string;
+    label: string;
+    kind?: string;
+    memberName?: string;
+    repository?: string;
+    cote?: string;
+    date?: string;
+    location?: string;
+  } | null>(null);
   const [sourceZoomLevel, setSourceZoomLevel] = useState<number>(1);
 
   // 3D Card Tilt State for Standalone Individual Modal
@@ -1070,6 +1079,10 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                                               label: s.label || s.title || "Document d'Archives",
                                               kind: s.kind,
                                               memberName: nameOf(currentPerson),
+                                              repository: s.repository || "Archives Municipales & État Civil",
+                                              cote: s.cote || "Fonds Patronymique",
+                                              date: s.date || currentPerson?.birthDate || "",
+                                              location: s.location || currentPerson?.birthPlace || governorate,
                                             })
                                           }
                                           className="inline-flex items-center gap-1 rounded-md bg-[var(--gold)]/15 px-2 py-1 text-[11px] font-semibold text-[var(--gold)] hover:bg-[var(--gold)]/25 transition cursor-pointer"
@@ -1212,6 +1225,10 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                                   label: doc.title,
                                   kind: doc.category === "civil" || doc.category === "notary" || doc.category === "decree" ? "document" : "image",
                                   memberName: doc.memberName,
+                                  repository: doc.repository,
+                                  cote: doc.cote,
+                                  date: doc.date,
+                                  location: doc.location,
                                 });
                               }}
                               className="relative h-44 w-full rounded-lg overflow-hidden border border-[var(--gold)]/30 bg-stone-900 cursor-pointer group/img shadow-inner"
@@ -1283,9 +1300,9 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                             </div>
                           </div>
 
-                          {/* ACTION CONTROLS */}
-                          <div className="pt-3 border-t border-[var(--border)] flex items-center gap-2">
-                            {/* PREVIEW BUTTON */}
+                          {/* ACTION CONTROLS (NO NOUVELLE PAGE BUTTON HERE TO PREVENT OVERFLOW) */}
+                          <div className="pt-3 border-t border-[var(--border)] flex items-center gap-2.5">
+                            {/* PREVIEW BUTTON - CLEAN FULL WIDTH */}
                             <button
                               type="button"
                               onClick={() => {
@@ -1294,32 +1311,24 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                                   label: doc.title,
                                   kind: doc.category === "civil" || doc.category === "notary" || doc.category === "decree" ? "document" : "image",
                                   memberName: doc.memberName,
+                                  repository: doc.repository,
+                                  cote: doc.cote,
+                                  date: doc.date,
+                                  location: doc.location,
                                 });
                               }}
-                              className="btn-base btn-gold flex-1 text-xs py-2 px-2.5 flex items-center justify-center gap-1.5 cursor-pointer shadow-sm font-semibold"
-                              title="Ouvrir l'aperçu du document"
+                              className="btn-base btn-gold flex-1 text-xs py-2.5 px-3 flex items-center justify-center gap-2 cursor-pointer shadow-md font-bold tracking-wide"
+                              title="Consulter l'aperçu du document"
                             >
-                              <Eye className="h-3.5 w-3.5" />
-                              <span>Aperçu</span>
+                              <Eye className="h-4 w-4" />
+                              <span>Consulter l'Aperçu</span>
                             </button>
-
-                            {/* OPEN NEW TAB */}
-                            <a
-                              href={doc.linkUrl}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="btn-base btn-outline flex-1 text-xs py-2 px-2.5 flex items-center justify-center gap-1.5 cursor-pointer font-semibold hover:border-[var(--gold)] hover:text-[var(--gold)] text-center transition-colors"
-                              title="Ouvrir la source dans un nouvel onglet"
-                            >
-                              <ExternalLink className="h-3.5 w-3.5" />
-                              <span>Nouvelle Page</span>
-                            </a>
 
                             {/* TREE LINK */}
                             <button
                               type="button"
                               onClick={() => setActiveTab("schema")}
-                              className="p-2 rounded-lg border border-[var(--border)] hover:border-[var(--gold)] hover:bg-[var(--gold)]/10 text-[var(--gold)] transition-colors cursor-pointer shrink-0"
+                              className="p-2.5 rounded-lg border border-[var(--border)] hover:border-[var(--gold)] hover:bg-[var(--gold)]/15 text-[var(--gold)] transition-colors cursor-pointer shrink-0"
                               title="Situer cet individu et cette source dans l'arbre interactif"
                             >
                               <GitBranch className="h-4 w-4" />
@@ -1350,30 +1359,54 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
               onClick={(e) => e.stopPropagation()}
             >
               {/* Header */}
-              <div className="flex shrink-0 items-center justify-between gap-4 border-b border-[var(--border)] px-5 py-4 bg-[var(--background)]/80">
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="px-2 py-0.5 text-[9px] font-mono font-bold uppercase rounded-md bg-[var(--gold)]/15 text-[var(--gold)] border border-[var(--gold)]/30">
+              <div className="flex shrink-0 items-center justify-between gap-4 border-b border-[var(--border)] px-5 py-4 bg-[var(--background)]/90 backdrop-blur-md">
+                <div className="min-w-0 flex-1 space-y-1.5">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="px-2.5 py-0.5 text-[9px] font-mono font-bold uppercase tracking-wider rounded-md bg-[var(--gold)]/15 text-[var(--gold)] border border-[var(--gold)]/35">
                       {previewSource.kind || "SOURCE D'ARCHIVES"}
                     </span>
+                    {previewSource.cote && (
+                      <span className="px-2 py-0.5 text-[10px] font-mono font-bold rounded-md bg-stone-800 text-amber-200 border border-[var(--gold)]/30">
+                        {previewSource.cote}
+                      </span>
+                    )}
                     {previewSource.memberName && (
-                      <span className="text-xs font-mono text-[var(--gold)] flex items-center gap-1">
-                        <User className="h-3 w-3" />
-                        <span>{previewSource.memberName}</span>
+                      <span className="text-xs font-mono text-[var(--gold)] flex items-center gap-1 font-semibold">
+                        <User className="h-3 w-3 shrink-0" />
+                        <span className="truncate">{previewSource.memberName}</span>
                       </span>
                     )}
                   </div>
-                  <h3 className="font-serif font-bold text-lg truncate text-[var(--foreground)] mt-1">
+                  <h3 className="font-serif font-bold text-lg sm:text-xl text-[var(--foreground)] tracking-wide leading-snug">
                     {previewSource.label}
                   </h3>
-                  <p className="text-[11px] text-[var(--muted-foreground)] truncate font-mono">
-                    {previewSource.url}
-                  </p>
+                  {/* Clean Archival Citation - NO raw /assets/gallery/... file path */}
+                  <div className="text-xs text-[var(--muted-foreground)] flex items-center gap-2 flex-wrap font-mono">
+                    {previewSource.repository && (
+                      <span className="flex items-center gap-1 truncate max-w-[320px]">
+                        <Building className="h-3 w-3 text-slate-400 shrink-0" />
+                        <span className="truncate">{previewSource.repository}</span>
+                      </span>
+                    )}
+                    {previewSource.date && (
+                      <span className="flex items-center gap-1 shrink-0">
+                        <span>•</span>
+                        <Calendar className="h-3 w-3 text-slate-400 shrink-0" />
+                        <span>{previewSource.date}</span>
+                        {previewSource.location && <span>({previewSource.location})</span>}
+                      </span>
+                    )}
+                    <span className="inline-flex items-center gap-1 text-[10px] text-emerald-400 font-bold shrink-0">
+                      <ShieldCheck className="h-3 w-3" />
+                      <span>Archive Certifiée</span>
+                    </span>
+                  </div>
                 </div>
                 <button
                   type="button"
                   onClick={() => setPreviewSource(null)}
-                  className="p-1.5 rounded-lg text-[var(--muted-foreground)] hover:text-red-500 hover:bg-black/10 transition-colors cursor-pointer"
+                  className="p-2 rounded-xl text-[var(--muted-foreground)] hover:text-red-500 hover:bg-black/10 transition-colors cursor-pointer shrink-0 border border-transparent hover:border-red-500/30"
+                  title="Fermer"
                 >
                   <X className="w-5 h-5" />
                 </button>

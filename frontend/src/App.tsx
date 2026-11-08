@@ -668,13 +668,7 @@ function AppRoutes() {
 
         <Route
           path="diaporama"
-          element={
-            <Suspense fallback={<AdminLoadingFallback />}>
-              <ProtectedRoute roles={[1, 3]}>
-                <Diaporama />
-              </ProtectedRoute>
-            </Suspense>
-          }
+          element={<Navigate to="/admin/site-image-placeholders" replace />}
         />
         <Route
           path="emails"

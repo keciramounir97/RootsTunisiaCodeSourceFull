@@ -45,7 +45,6 @@ const links = [
   { to: "/admin/tasks", labelKey: "tasks", Icon: ListChecks },
   { to: "/admin/notes", labelKey: "notes", Icon: StickyNote },
   { to: "/admin/gallery", labelKey: "gallery", Icon: Image },
-  { to: "/admin/diaporama", labelKey: "diaporama", Icon: SlidersHorizontal },
   { to: "/admin/audios", labelKey: "audios", Icon: Music },
   { to: "/admin/documents", labelKey: "documents", Icon: FileText },
   { to: "/admin/books", labelKey: "books", Icon: BookOpen },
