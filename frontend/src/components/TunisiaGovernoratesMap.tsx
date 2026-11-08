@@ -202,9 +202,14 @@ function MapCenterController({ coords, zoom }: { coords: [number, number]; zoom:
   useEffect(() => {
     const [lat, lng] = coords || [NaN, NaN];
     if (!Number.isFinite(lat) || !Number.isFinite(lng) || !Number.isFinite(zoom)) return;
-    const size = map.getSize();
-    if (!size.x || !size.y) return;
-    map.flyTo(coords, zoom, { duration: 1.1 });
+    try {
+      map.invalidateSize(false);
+      const size = map.getSize();
+      if (!size.x || !size.y) return;
+      map.flyTo([lat, lng], zoom, { duration: 1.1 });
+    } catch {
+      // Leaflet throws Invalid LatLng when the container is still zero-sized.
+    }
   }, [coords, zoom, map]);
   return null;
 }
@@ -248,15 +253,26 @@ export default function TunisiaGovernoratesMap({
   }, [activeRegion]);
 
   const mapView = useMemo<{ coords: [number, number]; zoom: number }>(() => {
+    const fallback: [number, number] = [34.4, 9.6];
     if (selectedGov) {
-      return { coords: selectedGov.coords, zoom: 9 };
+      const [lat, lng] = selectedGov.coords || [NaN, NaN];
+      if (Number.isFinite(lat) && Number.isFinite(lng)) {
+        return { coords: [lat, lng], zoom: 9 };
+      }
     }
     if (activeRegion !== "all_tunisia" && filteredGovernorates.length > 0) {
-      const avgLat = filteredGovernorates.reduce((acc, g) => acc + g.coords[0], 0) / filteredGovernorates.length;
-      const avgLng = filteredGovernorates.reduce((acc, g) => acc + g.coords[1], 0) / filteredGovernorates.length;
-      return { coords: [avgLat, avgLng], zoom: 7 };
+      const valid = filteredGovernorates.filter(
+        (g) => Number.isFinite(g.coords?.[0]) && Number.isFinite(g.coords?.[1]),
+      );
+      if (valid.length) {
+        const avgLat = valid.reduce((acc, g) => acc + g.coords[0], 0) / valid.length;
+        const avgLng = valid.reduce((acc, g) => acc + g.coords[1], 0) / valid.length;
+        if (Number.isFinite(avgLat) && Number.isFinite(avgLng)) {
+          return { coords: [avgLat, avgLng], zoom: 7 };
+        }
+      }
     }
-    return { coords: [34.4, 9.6], zoom: 6 };
+    return { coords: fallback, zoom: 6 };
   }, [selectedGov, activeRegion, filteredGovernorates]);
 
   const handleRegionClick = (reg: RegionId) => {
@@ -275,8 +291,121 @@ export default function TunisiaGovernoratesMap({
 
   const currentLayer = OPEN_SOURCE_TILE_LAYERS[tileStyle];
 
-  if (variant === "embed" && !viewportReady) {
+  const isEmbed = variant === "embed";
+
+  if (isEmbed && !viewportReady) {
     return <div className="absolute inset-0 w-full h-full bg-[var(--card)] animate-pulse" />;
+  }
+
+  // Auth pages: interactive map only — no dossier card (matches Maghreb embed).
+  if (isEmbed) {
+    return (
+      <div
+        dir={isRtl ? "rtl" : "ltr"}
+        className="absolute inset-0 z-0 flex h-full w-full flex-col bg-[var(--card)]"
+      >
+        <div className="flex shrink-0 flex-wrap items-center justify-center gap-1.5 border-b border-[var(--gold)]/25 bg-[var(--card)]/95 px-2 py-2 z-[500]">
+          {REGIONS.map((reg) => {
+            const isActive = activeRegion === reg;
+            return (
+              <button
+                key={reg}
+                type="button"
+                onClick={() => handleRegionClick(reg)}
+                className={`rounded-md px-2.5 py-1 text-[0.65rem] font-bold uppercase tracking-[0.12em] transition-all cursor-pointer border ${
+                  isActive
+                    ? "bg-[#b81428] !text-white border-[#b81428] shadow-md"
+                    : "bg-[var(--card)] text-[var(--foreground)] border-[var(--gold)]/40 hover:border-[var(--gold)] hover:bg-[var(--gold)]/15"
+                }`}
+              >
+                {formatRegionLabel(reg)}
+              </button>
+            );
+          })}
+        </div>
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden p-2 sm:p-3">
+          <div className="mb-2 flex shrink-0 flex-wrap items-center justify-between gap-2 px-1">
+            <div className="flex items-center gap-1.5 text-xs font-bold text-[var(--foreground)]">
+              <MapPin className="h-4 w-4 text-[var(--primary)]" />
+              <span>
+                {selectedGov
+                  ? formatGovName(selectedGov.id)
+                  : `${formatRegionLabel(activeRegion)} · ${filteredGovernorates.length}`}
+              </span>
+            </div>
+            <div className="flex items-center gap-1 rounded-md border border-[var(--gold)]/35 bg-[var(--background)] p-1">
+              <Layers className="h-3.5 w-3.5 text-[var(--gold)] mx-1.5" />
+              {(Object.keys(OPEN_SOURCE_TILE_LAYERS) as TileLayerKey[]).map((key) => {
+                const layer = OPEN_SOURCE_TILE_LAYERS[key];
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => setTileStyle(key)}
+                    className={`rounded px-2.5 py-1 text-[0.65rem] font-bold uppercase tracking-wider transition-colors cursor-pointer ${
+                      tileStyle === key
+                        ? "bg-[#d9a441] !text-[#1f160f] shadow-sm"
+                        : "text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
+                    }`}
+                  >
+                    {t(layer.labelKey)}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+          <div className="relative min-h-0 flex-1 overflow-hidden rounded-lg border border-[var(--gold)]/30">
+            <MapContainer
+              center={[34.4, 9.6]}
+              zoom={6}
+              scrollWheelZoom
+              zoomControl
+              attributionControl={false}
+              className="h-full w-full z-0"
+              style={{ background: "#e8e0d0" }}
+            >
+              <MapCenterController coords={mapView.coords} zoom={mapView.zoom} />
+              <TileLayer key={currentLayer.id} url={currentLayer.url} maxZoom={18} />
+              {filteredGovernorates.map((gov) => {
+                const [glat, glng] = gov.coords || [NaN, NaN];
+                if (!Number.isFinite(glat) || !Number.isFinite(glng)) return null;
+                const isSelected = selectedId === gov.id;
+                return (
+                  <Marker
+                    key={gov.id}
+                    position={[glat, glng]}
+                    icon={isSelected ? selectedIcon : goldIcon}
+                    eventHandlers={{ click: () => handleGovSelect(gov) }}
+                  >
+                    <Tooltip direction="top" offset={[0, -10]}>
+                      <span className="font-display font-bold text-sm">
+                        {formatGovName(gov.id)}
+                      </span>
+                    </Tooltip>
+                  </Marker>
+                );
+              })}
+            </MapContainer>
+          </div>
+          <div className="mt-2 flex shrink-0 items-center gap-2 overflow-x-auto border-t border-[var(--gold)]/25 pt-2 text-xs">
+            {filteredGovernorates.map((g) => (
+              <button
+                key={g.id}
+                type="button"
+                onClick={() => handleGovSelect(g)}
+                className={`shrink-0 rounded-md border px-3 py-1 text-xs font-semibold cursor-pointer ${
+                  selectedId === g.id
+                    ? "border-[#b81428] bg-[#b81428] !text-white"
+                    : "border-[var(--gold)]/35 bg-[var(--background)] text-[var(--foreground)]"
+                }`}
+              >
+                {formatGovName(g.id)}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -373,12 +502,14 @@ export default function TunisiaGovernoratesMap({
                 maxZoom={18}
               />
               {filteredGovernorates.map((gov) => {
+                const [glat, glng] = gov.coords || [NaN, NaN];
+                if (!Number.isFinite(glat) || !Number.isFinite(glng)) return null;
                 const isSelected = selectedId === gov.id;
                 const govLabel = formatGovName(gov.id);
                 return (
                   <Marker
                     key={gov.id}
-                    position={gov.coords}
+                    position={[glat, glng]}
                     icon={isSelected ? selectedIcon : goldIcon}
                     eventHandlers={{
                       click: () => handleGovSelect(gov),
