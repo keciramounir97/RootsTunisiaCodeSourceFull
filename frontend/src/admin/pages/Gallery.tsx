@@ -31,6 +31,7 @@ import {
   unwrapGalleryResponse,
   withLocalGalleryFallback,
 } from "../../utils/galleryData";
+import { recordAdminUpload } from "../../utils/gallerySocial";
 
 interface GalleryItem {
   id: number | string;
@@ -316,6 +317,16 @@ export default function AdminGallery() {
           [() => api.post("/admin/gallery", formData), () => api.post("/my/gallery", formData)],
           shouldFallbackWrite
         );
+        recordAdminUpload("images", {
+          id: `gallery-upload-${Date.now()}`,
+          title: form.title,
+          description: form.description,
+          category: form.category || "Heritage Archives",
+          location: form.location,
+          year: form.year,
+          image_path: previewUrl,
+          imageUrl: previewUrl,
+        });
         notify(t("legacy.gallery_created", "Image uploaded."));
       }
 

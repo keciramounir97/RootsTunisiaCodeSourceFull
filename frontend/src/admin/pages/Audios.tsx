@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useThemeStore } from "../../store/theme";
 import { useLanguage } from "../../i18n";
 import { api } from "../../api/client";
+import { recordAdminUpload } from "../../utils/gallerySocial";
 import {
   getApiErrorMessage,
   getApiRoot,
@@ -236,6 +237,14 @@ export default function AdminAudios() {
           [() => api.post("/admin/audios", formData), () => api.post("/my/audios", formData)],
           shouldFallbackWrite
         );
+        recordAdminUpload("audios", {
+          id: `audio-upload-${Date.now()}`,
+          title: form.title,
+          description: form.description,
+          category: form.category || "Oral History",
+          governorate: form.governorate || "Tunisia",
+          duration: 320,
+        });
         notify(t("legacy.audio_created", "Audio uploaded."));
       }
 

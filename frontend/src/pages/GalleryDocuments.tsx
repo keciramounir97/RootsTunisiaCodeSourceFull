@@ -15,12 +15,21 @@ import {
   MapPin,
   ExternalLink,
   BookOpen,
+  Heart,
+  MessageSquare,
 } from "lucide-react";
 import { api } from "../api/client";
 import { useTranslation } from "../context/TranslationContext";
 import { useTheme } from "../context/ThemeContext";
 import { useSiteContent } from "../hooks/useSiteContent";
 import RootsPageShell from "../components/RootsPageShell";
+import GalleryCommentsModal from "../components/GalleryCommentsModal";
+import {
+  getSocialLikes,
+  toggleSocialLike,
+  getTrackedUploads,
+  resolveAnyMediaUrl,
+} from "../utils/gallerySocial";
 import manuscriptImage from "../assets/family-archive.jpg";
 
 interface DocumentItem {
@@ -37,6 +46,8 @@ interface DocumentItem {
   summary: string;
   documentUrl?: string;
   previewImage?: string;
+  likes?: number;
+  isLiked?: boolean;
 }
 
 export default function GalleryDocuments() {
@@ -49,15 +60,28 @@ export default function GalleryDocuments() {
   const [query, setQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState("All");
   const [activeDoc, setActiveDoc] = useState<DocumentItem | null>(null);
+  const [commentTarget, setCommentTarget] = useState<{
+    mediaKey: string;
+    title: string;
+    subtitle?: string;
+    likes: number;
+  } | null>(null);
 
-  useEffect(() => {
-    AOS.init({ duration: 800, once: true });
-    (async () => {
+  const loadAllDocuments = async () => {
+    try {
+      setLoading(true);
+      let items: any[] = [];
       try {
-        setLoading(true);
         const { data } = await api.get("/documents");
-        const items = Array.isArray(data?.data) ? data.data : Array.isArray(data) ? data : [];
-        const formatted = items.map((d: any) => ({
+        items = Array.isArray(data?.data) ? data.data : Array.isArray(data) ? data : [];
+      } catch {
+        // fallback
+      }
+
+      const formatted = items.map((d: any) => {
+        const key = `gallery_doc_${d.id}`;
+        const social = getSocialLikes(key, 15);
+        return {
           id: d.id,
           title: d.title || "Archival Document",
           type: d.type || "Historical Deed",
@@ -65,16 +89,58 @@ export default function GalleryDocuments() {
           dateStr: d.date || d.dateStr || "19th Century",
           archiveFonds: d.archive_fonds || d.archiveFonds || "Archives Nationales de Tunisie",
           summary: d.summary || d.description || "",
-          previewImage: d.preview_image || d.previewImage || manuscriptImage,
-        }));
-        setDocuments(formatted);
-      } catch {
-        setDocuments([]);
-      } finally {
-        setLoading(false);
+          previewImage: resolveAnyMediaUrl(d.file_path || d.filePath || d.preview_image || d.previewImage, undefined, manuscriptImage),
+          likes: social.count,
+          isLiked: social.isLiked,
+        };
+      });
+
+      const tracked = getTrackedUploads("documents").map((d: any) => {
+        const key = `gallery_doc_${d.id}`;
+        const social = getSocialLikes(key, 1);
+        return {
+          id: d.id,
+          title: d.title || "Uploaded Document",
+          type: d.type || "Historical Deed",
+          governorate: d.governorate || "Tunisia",
+          dateStr: d.dateStr || d.date || "Archived",
+          archiveFonds: d.archiveFonds || "National Archives",
+          summary: d.summary || "",
+          previewImage: resolveAnyMediaUrl(d.file_path || d.filePath || d.preview_image, undefined, manuscriptImage),
+          likes: social.count,
+          isLiked: social.isLiked,
+        };
+      });
+
+      setDocuments([...tracked, ...formatted]);
+    } catch {
+      setDocuments([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    AOS.init({ duration: 800, once: true });
+    loadAllDocuments();
+
+    const handleUploadsChanged = (e: any) => {
+      if (!e.detail || e.detail.kind === "documents") {
+        loadAllDocuments();
       }
-    })();
+    };
+    window.addEventListener("roots:uploads-changed", handleUploadsChanged);
+    return () => window.removeEventListener("roots:uploads-changed", handleUploadsChanged);
   }, []);
+
+  const toggleDocLike = async (id: number | string) => {
+    const key = `gallery_doc_${id}`;
+    const target = documents.find((d) => d.id === id);
+    const result = await toggleSocialLike(key, target?.likes || 0);
+    setDocuments((prev) =>
+      prev.map((d) => (d.id === id ? { ...d, isLiked: result.isLiked, likes: result.count } : d))
+    );
+  };
 
   const typeOptions = [
     { key: "All", labelKey: "cat_all" },
@@ -223,11 +289,35 @@ export default function GalleryDocuments() {
                       <Eye className="w-3.5 h-3.5" />
                       <span>{t("preview_extract")}</span>
                     </button>
+                    <button
+                      type="button"
+                      onClick={() => toggleDocLike(doc.id)}
+                      className="btn-base btn-outline text-xs py-2 px-2.5 flex items-center justify-center gap-1 cursor-pointer"
+                      title={t("like", "Like")}
+                    >
+                      <Heart className={`w-3.5 h-3.5 ${doc.isLiked ? "fill-rose-500 text-rose-500" : "text-[var(--gold)]"}`} />
+                      <span className="text-[0.65rem]">{doc.likes || 0}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setCommentTarget({
+                          mediaKey: `gallery_doc_${doc.id}`,
+                          title: doc.title,
+                          subtitle: `${doc.type} • ${doc.governorate}`,
+                          likes: doc.likes || 0,
+                        })
+                      }
+                      className="btn-base btn-outline text-xs py-2 px-2.5 flex items-center justify-center cursor-pointer"
+                      title={t("comments", "Comments")}
+                    >
+                      <MessageSquare className="w-3.5 h-3.5 text-[var(--gold)]" />
+                    </button>
                     <a
                       href="http://www.archives.nat.tn"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="btn-base btn-outline text-xs py-2 px-3 flex items-center justify-center cursor-pointer"
+                      className="btn-base btn-outline text-xs py-2 px-2.5 flex items-center justify-center cursor-pointer"
                       title={t("official_portal_link")}
                     >
                       <ExternalLink className="w-3.5 h-3.5 text-[var(--gold)]" />
@@ -306,11 +396,34 @@ export default function GalleryDocuments() {
 
             <div className="mt-6 pt-4 border-t border-[var(--gold)]/20 flex flex-wrap items-center justify-between gap-3">
               <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => toggleDocLike(activeDoc.id)}
+                  className="btn-base btn-outline text-xs py-2 px-3 flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Heart className={`h-4 w-4 ${activeDoc.isLiked ? "fill-rose-500 text-rose-500" : "text-[var(--gold)]"}`} />
+                  <span>{activeDoc.likes || 0}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setCommentTarget({
+                      mediaKey: `gallery_doc_${activeDoc.id}`,
+                      title: activeDoc.title,
+                      subtitle: `${activeDoc.type} • ${activeDoc.governorate}`,
+                      likes: activeDoc.likes || 0,
+                    })
+                  }
+                  className="btn-base btn-gold text-xs py-2 px-3 flex items-center gap-1.5 cursor-pointer"
+                >
+                  <MessageSquare className="h-4 w-4" />
+                  <span>{t("comments", "Comments")}</span>
+                </button>
                 <a
                   href="http://www.archives.nat.tn"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="btn-base btn-gold text-xs py-2 px-4 flex items-center gap-1.5"
+                  className="btn-base btn-outline text-xs py-2 px-4 flex items-center gap-1.5"
                 >
                   <ExternalLink className="h-3.5 w-3.5" />
                   <span>{t("official_portal_link")}</span>
@@ -327,6 +440,17 @@ export default function GalleryDocuments() {
             </div>
           </div>
         </div>
+      )}
+
+      {commentTarget && (
+        <GalleryCommentsModal
+          isOpen={Boolean(commentTarget)}
+          onClose={() => setCommentTarget(null)}
+          mediaKey={commentTarget.mediaKey}
+          itemTitle={commentTarget.title}
+          itemSubtitle={commentTarget.subtitle}
+          defaultLikes={commentTarget.likes}
+        />
       )}
     </RootsPageShell>
   );

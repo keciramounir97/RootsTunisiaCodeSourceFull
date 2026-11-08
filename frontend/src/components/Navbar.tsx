@@ -3,6 +3,7 @@ import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { Logo } from "./site/Logo";
 import LanguageMenu from "./LanguageMenu";
 import { useTranslation } from "../context/TranslationContext";
+import { getTunisiaDropdownText } from "../utils/navDropdownTranslations";
 import { splitLocaleFromPath } from "../seo/localeRouting";
 import { useTheme } from "../context/ThemeContext";
 import { useAuth } from "../admin/components/AuthContext";
@@ -29,7 +30,7 @@ export function Navbar() {
   const location = useLocation();
   const { path: seoPath } = splitLocaleFromPath(location.pathname);
   const navigate = useNavigate();
-  const { t, isRtl } = useTranslation();
+  const { t, locale, isRtl } = useTranslation();
   const { theme, toggleTheme } = useTheme();
   const { user, logout } = useAuth();
 
@@ -46,47 +47,63 @@ export function Navbar() {
     "text-xs font-semibold uppercase tracking-[0.14em] text-[var(--muted-foreground)] transition-colors hover:text-[var(--gold)] py-1";
 
   const exploreLinks = [
-    { to: "/periods", label: t("nav_periods") },
-    { to: "/sources", label: t("nav_sources") },
-    { to: "/archives", label: t("nav_archives") },
-    { to: "/subscriptions", label: t("nav_subscriptions") },
+    {
+      to: "/periods",
+      label: getTunisiaDropdownText(locale, "nav_periods"),
+      hint: getTunisiaDropdownText(locale, "nav_periods_hint"),
+    },
+    {
+      to: "/sources",
+      label: getTunisiaDropdownText(locale, "nav_sources"),
+      hint: getTunisiaDropdownText(locale, "nav_sources_hint"),
+    },
+    {
+      to: "/archives",
+      label: getTunisiaDropdownText(locale, "nav_archives"),
+      hint: getTunisiaDropdownText(locale, "nav_archives_hint"),
+    },
+    {
+      to: "/subscriptions",
+      label: getTunisiaDropdownText(locale, "nav_subscriptions"),
+      hint: getTunisiaDropdownText(locale, "nav_subscriptions_hint"),
+    },
   ];
 
   const galleryLinks = [
     {
       to: "/gallery",
-      label: t("nav_gallery_hub", "Collections hub"),
-      hint: t("nav_gallery_hub_hint", "Tunisia trees, photos & fonds"),
+      label: getTunisiaDropdownText(locale, "nav_gallery_hub"),
+      hint: getTunisiaDropdownText(locale, "nav_gallery_hub_hint"),
     },
     {
       to: "/gallery/images",
-      label: t("nav_photo_archives", "Photo archives"),
-      hint: t("nav_photo_archives_hint", "Carthage, Kairouan, Medina & Sahel"),
+      label: getTunisiaDropdownText(locale, "nav_photo_archives"),
+      hint: getTunisiaDropdownText(locale, "nav_photo_archives_hint"),
     },
     {
       to: "/gallery/trees",
-      label: t("nav_trees", "Family trees"),
-      hint: t("nav_trees_hint", "Nasab & GEDCOM lineages"),
+      label: getTunisiaDropdownText(locale, "nav_trees"),
+      hint: getTunisiaDropdownText(locale, "nav_trees_hint"),
     },
     {
       to: "/library",
-      label: t("nav_library", "Manuscript library"),
-      hint: t("nav_library_hint", "Habous registers & nasab works"),
+      label: getTunisiaDropdownText(locale, "nav_library"),
+      hint: getTunisiaDropdownText(locale, "nav_library_hint"),
     },
     {
       to: "/audio",
-      label: t("nav_audios", "Oral histories"),
-      hint: t("nav_audios_hint", "Malouf, elders & testimony"),
+      label: getTunisiaDropdownText(locale, "nav_audios"),
+      hint: getTunisiaDropdownText(locale, "nav_audios_hint"),
     },
     {
       to: "/gallery/documents",
-      label: t("nav_documents", "Archive documents"),
-      hint: t("nav_documents_hint", "Sijill, beylical & notarial deeds"),
+      label: getTunisiaDropdownText(locale, "nav_documents"),
+      hint: getTunisiaDropdownText(locale, "nav_documents_hint"),
     },
     {
       to: "/gallery/articles",
-      label: t("nav_articles", "Research articles"),
-      hint: t("nav_articles_hint", "Essays on Tunisian heritage"),
+      label: getTunisiaDropdownText(locale, "nav_articles"),
+      hint: getTunisiaDropdownText(locale, "nav_articles_hint"),
     },
   ];
 
@@ -136,7 +153,7 @@ export function Navbar() {
                 isExploreActive ? "!text-[var(--gold)]" : ""
               }`}
             >
-              <span>{t("nav_explore")}</span>
+              <span>{getTunisiaDropdownText(locale, "nav_explore")}</span>
               <ChevronDown className="h-3 w-3 shrink-0" />
             </button>
             {exploreOpen && (
@@ -168,7 +185,7 @@ export function Navbar() {
                 isGalleryActive ? "!text-[var(--gold)]" : ""
               }`}
             >
-              <span>{t("nav_gallery")}</span>
+              <span>{getTunisiaDropdownText(locale, "nav_gallery")}</span>
               <ChevronDown className="h-3 w-3 shrink-0" />
             </button>
             {galleryOpen && (
@@ -348,7 +365,7 @@ export function Navbar() {
 
             <div className="py-1">
               <p className="px-3 text-[0.65rem] font-bold uppercase tracking-wider text-[var(--gold)]">
-                {t("nav_explore")}
+                {getTunisiaDropdownText(locale, "nav_explore")}
               </p>
               {exploreLinks.map((l) => (
                 <NavLink
@@ -370,7 +387,7 @@ export function Navbar() {
 
             <div className="py-1">
               <p className="px-3 text-[0.65rem] font-bold uppercase tracking-wider text-[var(--gold)]">
-                {t("nav_gallery")}
+                {getTunisiaDropdownText(locale, "nav_gallery")}
               </p>
               {galleryLinks.map((l) => (
                 <NavLink

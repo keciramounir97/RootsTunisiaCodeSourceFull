@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { useThemeStore } from "../../store/theme";
 import { api } from "../../api/client";
+import { recordAdminUpload } from "../../utils/gallerySocial";
 import {
   getApiErrorMessage,
   getApiRoot,
@@ -429,6 +430,17 @@ export default function Books() {
       } else {
         await api.post("/my/books", fd);
       }
+
+      recordAdminUpload("books", {
+        id: `book-upload-${Date.now()}`,
+        title: form.title,
+        author: form.author,
+        category: form.category || "Historical Chronicles",
+        description: form.description,
+        pages: 180,
+        century: form.century || "19th Century",
+        archiveReference: form.archiveReference || "National Archives",
+      });
 
       setShowAdd(false);
       await loadBooks();

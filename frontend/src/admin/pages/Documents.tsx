@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useThemeStore } from "../../store/theme";
 import { useLanguage } from "../../i18n";
 import { api } from "../../api/client";
+import { recordAdminUpload } from "../../utils/gallerySocial";
 import {
   getApiErrorMessage,
   getApiRoot,
@@ -244,6 +245,15 @@ export default function AdminDocuments() {
           [() => api.post("/admin/documents", formData), () => api.post("/my/documents", formData)],
           shouldFallbackWrite
         );
+        recordAdminUpload("documents", {
+          id: `document-upload-${Date.now()}`,
+          title: form.title,
+          summary: form.summary || form.description,
+          type: form.type || "Historical Deed",
+          governorate: form.governorate || "Tunisia",
+          dateStr: form.date || "19th Century",
+          archiveFonds: form.archiveFonds || "Archives Nationales de Tunisie",
+        });
         notify(t("legacy.document_created", "Document uploaded."));
       }
 

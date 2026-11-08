@@ -16,12 +16,21 @@ import {
   Copy,
   Check,
   ExternalLink,
+  Heart,
+  MessageSquare,
 } from "lucide-react";
 import { api } from "../api/client";
 import { useTranslation } from "../context/TranslationContext";
 import { useTheme } from "../context/ThemeContext";
 import { useSiteContent } from "../hooks/useSiteContent";
 import RootsPageShell from "../components/RootsPageShell";
+import GalleryCommentsModal from "../components/GalleryCommentsModal";
+import {
+  getSocialLikes,
+  toggleSocialLike,
+  getTrackedUploads,
+  resolveAnyMediaUrl,
+} from "../utils/gallerySocial";
 import manuscriptImage from "../assets/family-archive.jpg";
 
 interface BookItem {
@@ -42,6 +51,8 @@ interface BookItem {
   archiveReferenceKey?: string;
   archiveReference?: string;
   isBookmarked?: boolean;
+  likes?: number;
+  isLiked?: boolean;
 }
 
 export default function GalleryBooks() {
@@ -56,15 +67,28 @@ export default function GalleryBooks() {
   const [activeBook, setActiveBook] = useState<BookItem | null>(null);
   const [showReaderModal, setShowReaderModal] = useState(false);
   const [copiedCitation, setCopiedCitation] = useState(false);
+  const [commentTarget, setCommentTarget] = useState<{
+    mediaKey: string;
+    title: string;
+    subtitle?: string;
+    likes: number;
+  } | null>(null);
 
-  useEffect(() => {
-    AOS.init({ duration: 800, once: true });
-    (async () => {
+  const loadAllBooks = async () => {
+    try {
+      setLoading(true);
+      let items: any[] = [];
       try {
-        setLoading(true);
         const { data } = await api.get("/books");
-        const items = Array.isArray(data?.data) ? data.data : Array.isArray(data) ? data : [];
-        const formatted = items.map((b: any) => ({
+        items = Array.isArray(data?.data) ? data.data : Array.isArray(data) ? data : [];
+      } catch {
+        // fallback
+      }
+
+      const formatted = items.map((b: any) => {
+        const key = `gallery_book_${b.id}`;
+        const social = getSocialLikes(key, 18);
+        return {
           id: b.id,
           title: b.title || "Archival Manuscript",
           author: b.author || "Tunisian Scholar",
@@ -72,17 +96,60 @@ export default function GalleryBooks() {
           category: b.category || "Historical Chronicles",
           description: b.description || "",
           pages: b.pages || 180,
-          coverImage: b.cover_image || b.coverImage || manuscriptImage,
+          coverImage: resolveAnyMediaUrl(b.cover_image || b.coverImage || b.cover_path, undefined, manuscriptImage),
           archiveReference: b.archive_reference || b.archiveReference || "Archives Nationales de Tunisie",
-        }));
-        setBooks(formatted);
-      } catch {
-        setBooks([]);
-      } finally {
-        setLoading(false);
+          likes: social.count,
+          isLiked: social.isLiked,
+        };
+      });
+
+      const tracked = getTrackedUploads("books").map((b: any) => {
+        const key = `gallery_book_${b.id}`;
+        const social = getSocialLikes(key, 1);
+        return {
+          id: b.id,
+          title: b.title || "Uploaded Manuscript",
+          author: b.author || "Contributor",
+          century: b.century || "19th Century",
+          category: b.category || "Historical Chronicles",
+          description: b.description || "",
+          pages: b.pages || 140,
+          coverImage: resolveAnyMediaUrl(b.cover_image || b.coverImage || b.cover_path, undefined, manuscriptImage),
+          archiveReference: b.archiveReference || "National Archives",
+          likes: social.count,
+          isLiked: social.isLiked,
+        };
+      });
+
+      setBooks([...tracked, ...formatted]);
+    } catch {
+      setBooks([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    AOS.init({ duration: 800, once: true });
+    loadAllBooks();
+
+    const handleUploadsChanged = (e: any) => {
+      if (!e.detail || e.detail.kind === "books") {
+        loadAllBooks();
       }
-    })();
+    };
+    window.addEventListener("roots:uploads-changed", handleUploadsChanged);
+    return () => window.removeEventListener("roots:uploads-changed", handleUploadsChanged);
   }, []);
+
+  const toggleBookLike = async (id: number | string) => {
+    const key = `gallery_book_${id}`;
+    const target = books.find((b) => b.id === id);
+    const result = await toggleSocialLike(key, target?.likes || 0);
+    setBooks((prev) =>
+      prev.map((b) => (b.id === id ? { ...b, isLiked: result.isLiked, likes: result.count } : b))
+    );
+  };
 
   const categoryOptions = [
     { key: "All", labelKey: "cat_all" },
@@ -255,8 +322,32 @@ export default function GalleryBooks() {
                     </button>
                     <button
                       type="button"
+                      onClick={() => toggleBookLike(book.id)}
+                      className="btn-base btn-outline text-xs py-2 px-2.5 flex items-center justify-center gap-1 cursor-pointer"
+                      title={t("like", "Like")}
+                    >
+                      <Heart className={`w-3.5 h-3.5 ${book.isLiked ? "fill-rose-500 text-rose-500" : "text-[var(--gold)]"}`} />
+                      <span className="text-[0.65rem]">{book.likes || 0}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setCommentTarget({
+                          mediaKey: `gallery_book_${book.id}`,
+                          title: book.title,
+                          subtitle: `${book.author} • ${book.century}`,
+                          likes: book.likes || 0,
+                        })
+                      }
+                      className="btn-base btn-outline text-xs py-2 px-2.5 flex items-center justify-center cursor-pointer"
+                      title={t("comments", "Comments")}
+                    >
+                      <MessageSquare className="w-3.5 h-3.5 text-[var(--gold)]" />
+                    </button>
+                    <button
+                      type="button"
                       onClick={() => handleCopyCitation(book)}
-                      className="btn-base btn-outline text-xs py-2 px-3 flex items-center justify-center cursor-pointer"
+                      className="btn-base btn-outline text-xs py-2 px-2.5 flex items-center justify-center cursor-pointer"
                       title={t("copy_citation_btn")}
                     >
                       <Copy className="w-3.5 h-3.5 text-[var(--gold)]" />
@@ -337,8 +428,31 @@ export default function GalleryBooks() {
               <div className="flex flex-wrap items-center gap-2">
                 <button
                   type="button"
+                  onClick={() => toggleBookLike(activeBook.id)}
+                  className="btn-base btn-outline text-xs py-2 px-3 flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Heart className={`h-4 w-4 ${activeBook.isLiked ? "fill-rose-500 text-rose-500" : "text-[var(--gold)]"}`} />
+                  <span>{activeBook.likes || 0}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setCommentTarget({
+                      mediaKey: `gallery_book_${activeBook.id}`,
+                      title: activeBook.title,
+                      subtitle: `${activeBook.author} • ${activeBook.century}`,
+                      likes: activeBook.likes || 0,
+                    })
+                  }
+                  className="btn-base btn-gold text-xs py-2 px-3 flex items-center gap-1.5 cursor-pointer"
+                >
+                  <MessageSquare className="h-4 w-4" />
+                  <span>{t("comments", "Comments")}</span>
+                </button>
+                <button
+                  type="button"
                   onClick={() => handleCopyCitation(activeBook)}
-                  className="btn-base btn-gold text-xs py-2 px-4 flex items-center gap-2 cursor-pointer"
+                  className="btn-base btn-outline text-xs py-2 px-4 flex items-center gap-2 cursor-pointer"
                 >
                   {copiedCitation ? <Check className="h-3.5 w-3.5 text-emerald-300" /> : <Copy className="h-3.5 w-3.5" />}
                   <span>{copiedCitation ? t("book_citation_copied") : t("copy_citation_btn")}</span>
@@ -364,6 +478,17 @@ export default function GalleryBooks() {
             </div>
           </div>
         </div>
+      )}
+
+      {commentTarget && (
+        <GalleryCommentsModal
+          isOpen={Boolean(commentTarget)}
+          onClose={() => setCommentTarget(null)}
+          mediaKey={commentTarget.mediaKey}
+          itemTitle={commentTarget.title}
+          itemSubtitle={commentTarget.subtitle}
+          defaultLikes={commentTarget.likes}
+        />
       )}
     </RootsPageShell>
   );

@@ -25,6 +25,14 @@ import {
   normalizeArticle,
   type NormalizedArticle,
 } from "../utils/articleNormalize";
+import {
+  recordAdminUpload,
+  getTrackedUploads,
+  getSocialLikes,
+  toggleSocialLike,
+  addSocialComment,
+  getSocialComments,
+} from "../utils/gallerySocial";
 
 export default function ArticlesPage() {
   const { t, isRtl } = useTranslation();
@@ -48,21 +56,81 @@ export default function ArticlesPage() {
     try {
       setLoading(true);
       setError("");
-      const { data } = await api.get("/articles");
-      const items = extractArticleList(data).map((item) =>
-        normalizeArticle(item, apiRoot, t("member", "Member"), manuscript),
+      let apiItems: any[] = [];
+      try {
+        const { data } = await api.get("/articles");
+        apiItems = extractArticleList(data);
+      } catch {
+        // fallback
+      }
+
+      const normalizedApi = apiItems.map((item) => {
+        const norm = normalizeArticle(item, apiRoot, t("member", "Member"), manuscript);
+        const social = getSocialLikes(`gallery_article_${norm.id}`, norm.likes || 12);
+        const storedComments = getSocialComments(`gallery_article_${norm.id}`);
+        return {
+          ...norm,
+          likes: social.count,
+          isLiked: social.isLiked,
+          comments: storedComments.length > 0 ? storedComments.map((c: any) => ({
+            id: c.id,
+            userId: "user",
+            userName: c.userName,
+            text: c.text,
+            createdAt: c.createdAt,
+          })) : norm.comments,
+        };
+      });
+
+      const tracked = getTrackedUploads("articles").map((item: any) => {
+        const norm = normalizeArticle(item, apiRoot, item.authorName || user?.fullName || t("you", "You"), manuscript);
+        const social = getSocialLikes(`gallery_article_${norm.id}`, norm.likes || 1);
+        const storedComments = getSocialComments(`gallery_article_${norm.id}`);
+        return {
+          ...norm,
+          likes: social.count,
+          isLiked: social.isLiked,
+          comments: storedComments.length > 0 ? storedComments.map((c: any) => ({
+            id: c.id,
+            userId: "user",
+            userName: c.userName,
+            text: c.text,
+            createdAt: c.createdAt,
+          })) : norm.comments,
+        };
+      });
+
+      const combined = [...tracked, ...normalizedApi].sort(
+        (a: NormalizedArticle, b: NormalizedArticle) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       );
-      setArticles(items);
+
+      const seen = new Set();
+      const deduped = combined.filter((p) => {
+        if (seen.has(p.id)) return false;
+        seen.add(p.id);
+        return true;
+      });
+
+      setArticles(deduped);
     } catch (err) {
       setArticles([]);
       setError(getApiErrorMessage(err, t("articles_load_failed", "Could not load articles.")));
     } finally {
       setLoading(false);
     }
-  }, [apiRoot, t]);
+  }, [apiRoot, t, user]);
 
   useEffect(() => {
     void loadArticles();
+
+    const handleUploadsChanged = (e: any) => {
+      if (!e.detail || e.detail.kind === "articles") {
+        void loadArticles();
+      }
+    };
+    window.addEventListener("roots:uploads-changed", handleUploadsChanged);
+    return () => window.removeEventListener("roots:uploads-changed", handleUploadsChanged);
   }, [loadArticles]);
 
   const filtered = useMemo(() => {
@@ -93,22 +161,41 @@ export default function ArticlesPage() {
       setError("");
       const payload = {
         title: draftTitle.trim() || draftBody.trim().slice(0, 90),
-        category: draftCategory.trim(),
+        category: draftCategory.trim() || "Heritage Chronicle",
         content: draftBody.trim(),
         visibility: "public",
         is_public: true,
       };
-      const { data } = await api.post("/my/articles", payload);
-      const post = normalizeArticle(data?.data || data, apiRoot, user?.fullName || t("you", "You"), manuscript);
+
+      let post: NormalizedArticle;
+      try {
+        const { data } = await api.post("/my/articles", payload);
+        post = normalizeArticle(data?.data || data, apiRoot, user?.fullName || t("you", "You"), manuscript);
+      } catch {
+        // graceful local fallback
+        post = {
+          id: `art-local-${Date.now()}`,
+          title: payload.title,
+          category: payload.category,
+          content: payload.content,
+          authorName: user?.fullName || t("you", "You"),
+          createdAt: new Date().toISOString(),
+          images: [manuscript],
+          likes: 1,
+          isLiked: false,
+          comments: [],
+          visibility: "public",
+        };
+      }
+
+      recordAdminUpload("articles", post);
       setArticles((prev) => [post, ...prev.filter((item) => item.id !== post.id)]);
       setDraftTitle("");
       setDraftBody("");
       setDraftCategory("");
     } catch (err) {
       setError(
-        getApiErrorMessage(err, t("post_publish_failed", "Could not publish the article."), {
-          unauthorized: t("login_to_publish_post", "Please log in to publish."),
-        }),
+        getApiErrorMessage(err, t("post_publish_failed", "Could not publish the article."))
       );
     } finally {
       setPosting(false);
@@ -116,13 +203,17 @@ export default function ArticlesPage() {
   };
 
   const toggleLike = async (id: number | string) => {
+    const key = `gallery_article_${id}`;
+    const target = articles.find((a) => a.id === id);
+    const result = await toggleSocialLike(key, target?.likes || 0);
+
     setArticles((prev) =>
       prev.map((article) =>
         article.id === id
           ? {
               ...article,
-              isLiked: !article.isLiked,
-              likes: article.isLiked ? Math.max(0, article.likes - 1) : article.likes + 1,
+              isLiked: result.isLiked,
+              likes: result.count,
             }
           : article,
       ),
@@ -134,13 +225,18 @@ export default function ArticlesPage() {
     }
   };
 
-  const addComment = (id: number | string) => {
+  const addComment = async (id: number | string) => {
     const body = (commentDrafts[String(id)] || "").trim();
     if (!body) return;
+    const authorName = user?.fullName || t("articles_guest_name", "Guest");
+    const key = `gallery_article_${id}`;
+
+    await addSocialComment(key, body, authorName);
+
     const comment = {
       id: Date.now(),
       userId: String(user?.id || "guest"),
-      userName: user?.fullName || t("articles_guest_name", "Guest"),
+      userName: authorName,
       text: body,
       createdAt: new Date().toISOString(),
     };

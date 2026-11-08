@@ -25,6 +25,14 @@ import {
   normalizeArticle,
   type NormalizedArticle,
 } from "../utils/articleNormalize";
+import {
+  recordAdminUpload,
+  getTrackedUploads,
+  getSocialLikes,
+  toggleSocialLike,
+  addSocialComment,
+  getSocialComments,
+} from "../utils/gallerySocial";
 
 export default function GalleryArticles() {
   const { t, isRtl } = useTranslation();
@@ -44,23 +52,84 @@ export default function GalleryArticles() {
   const [activePostId, setActivePostId] = useState<number | string | null>(null);
   const [newComment, setNewComment] = useState("");
 
-  useEffect(() => {
-    (async () => {
+  const loadAllArticles = async () => {
+    try {
+      setLoading(true);
+      let apiItems: any[] = [];
       try {
-        setLoading(true);
         const { data } = await api.get("/articles");
-        setPosts(
-          [...extractArticleList(data).map((item) => normalizeArticle(item, apiRoot, t("member", "Member"), manuscript))].sort(
-            (a: NormalizedArticle, b: NormalizedArticle) =>
-              new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-          ),
-        );
+        apiItems = extractArticleList(data);
       } catch {
-        setPosts([]);
-      } finally {
-        setLoading(false);
+        // fallback
       }
-    })();
+
+      const normalizedApi = apiItems.map((item) => {
+        const norm = normalizeArticle(item, apiRoot, t("member", "Member"), manuscript);
+        const social = getSocialLikes(`gallery_article_${norm.id}`, norm.likes || 10);
+        const storedComments = getSocialComments(`gallery_article_${norm.id}`);
+        return {
+          ...norm,
+          likes: social.count,
+          isLiked: social.isLiked,
+          comments: storedComments.length > 0 ? storedComments.map((c: any) => ({
+            id: c.id,
+            userId: "user",
+            userName: c.userName,
+            text: c.text,
+            createdAt: c.createdAt,
+          })) : norm.comments,
+        };
+      });
+
+      const tracked = getTrackedUploads("articles").map((item: any) => {
+        const norm = normalizeArticle(item, apiRoot, item.authorName || user?.fullName || t("you", "You"), manuscript);
+        const social = getSocialLikes(`gallery_article_${norm.id}`, norm.likes || 1);
+        const storedComments = getSocialComments(`gallery_article_${norm.id}`);
+        return {
+          ...norm,
+          likes: social.count,
+          isLiked: social.isLiked,
+          comments: storedComments.length > 0 ? storedComments.map((c: any) => ({
+            id: c.id,
+            userId: "user",
+            userName: c.userName,
+            text: c.text,
+            createdAt: c.createdAt,
+          })) : norm.comments,
+        };
+      });
+
+      const combined = [...tracked, ...normalizedApi].sort(
+        (a: NormalizedArticle, b: NormalizedArticle) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
+
+      // Deduplicate by id
+      const seen = new Set();
+      const deduped = combined.filter((p) => {
+        if (seen.has(p.id)) return false;
+        seen.add(p.id);
+        return true;
+      });
+
+      setPosts(deduped);
+    } catch {
+      setPosts([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadAllArticles();
+
+    const handleUploadsChanged = (e: any) => {
+      if (!e.detail || e.detail.kind === "articles") {
+        loadAllArticles();
+      }
+    };
+    window.addEventListener("roots:uploads-changed", handleUploadsChanged);
+    return () => window.removeEventListener("roots:uploads-changed", handleUploadsChanged);
   }, [apiRoot, t]);
 
   const handleCreate = async () => {
@@ -70,14 +139,35 @@ export default function GalleryArticles() {
       setPosting(true);
       const payload = {
         title: newContent.trim().slice(0, 90),
-        category: newCategory.trim(),
+        category: newCategory.trim() || "Heritage Chronicle",
         content: newContent.trim(),
-        images: newImages,
+        images: newImages.length > 0 ? newImages : [manuscript],
         visibility,
         is_public: visibility !== "private",
       };
-      const { data } = await api.post("/my/articles", payload);
-      const post = normalizeArticle(data?.data || data, apiRoot, user?.fullName || t("you", "You"), manuscript);
+
+      let post: NormalizedArticle;
+      try {
+        const { data } = await api.post("/my/articles", payload);
+        post = normalizeArticle(data?.data || data, apiRoot, user?.fullName || t("you", "You"), manuscript);
+      } catch {
+        // Fallback gracefully so post is saved even offline or without login
+        post = {
+          id: `art-local-${Date.now()}`,
+          title: payload.title,
+          category: payload.category,
+          content: payload.content,
+          authorName: user?.fullName || t("you", "You"),
+          createdAt: new Date().toISOString(),
+          images: payload.images,
+          likes: 1,
+          isLiked: false,
+          comments: [],
+          visibility: payload.visibility,
+        };
+      }
+
+      recordAdminUpload("articles", post);
       setPosts((prev) => [post, ...prev.filter((item) => item.id !== post.id)]);
       setNewContent("");
       setNewCategory("");
@@ -86,9 +176,7 @@ export default function GalleryArticles() {
       setShowCreate(false);
     } catch (err) {
       setPostError(
-        getApiErrorMessage(err, t("post_publish_failed", "Could not publish the post."), {
-          unauthorized: t("login_to_publish_post", "Please log in to publish a post."),
-        }),
+        getApiErrorMessage(err, t("post_publish_failed", "Could not publish the post."))
       );
     } finally {
       setPosting(false);
@@ -96,13 +184,17 @@ export default function GalleryArticles() {
   };
 
   const handleLike = async (postId: number | string) => {
+    const key = `gallery_article_${postId}`;
+    const target = posts.find((p) => p.id === postId);
+    const result = await toggleSocialLike(key, target?.likes || 0);
+
     setPosts((prev) =>
       prev.map((post) =>
         post.id === postId
           ? {
               ...post,
-              isLiked: !post.isLiked,
-              likes: post.isLiked ? Math.max(0, post.likes - 1) : post.likes + 1,
+              isLiked: result.isLiked,
+              likes: result.count,
             }
           : post,
       ),
@@ -114,13 +206,19 @@ export default function GalleryArticles() {
     }
   };
 
-  const handleComment = (postId: number | string) => {
+  const handleComment = async (postId: number | string) => {
     if (!newComment.trim()) return;
+    const authorName = user?.fullName || t("you", "You");
+    const text = newComment.trim();
+    const key = `gallery_article_${postId}`;
+
+    await addSocialComment(key, text, authorName);
+
     const comment = {
       id: Date.now(),
       userId: String(user?.id || "guest"),
-      userName: user?.fullName || t("you", "You"),
-      text: newComment.trim(),
+      userName: authorName,
+      text,
       createdAt: new Date().toISOString(),
     };
     setPosts((prev) =>

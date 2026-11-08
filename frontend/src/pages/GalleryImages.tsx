@@ -13,11 +13,19 @@ import {
   Heart,
   Upload,
   ZoomIn,
+  MessageSquare,
 } from "lucide-react";
 import { api } from "../api/client";
 import { useTranslation } from "../context/TranslationContext";
 import { useTheme } from "../context/ThemeContext";
 import RootsPageShell from "../components/RootsPageShell";
+import GalleryCommentsModal from "../components/GalleryCommentsModal";
+import {
+  getSocialLikes,
+  toggleSocialLike,
+  getTrackedUploads,
+  resolveAnyMediaUrl,
+} from "../utils/gallerySocial";
 
 import carthage from "../assets/slider-carthage.jpg";
 import kairouan from "../assets/slider-kairouan.jpg";
@@ -119,35 +127,86 @@ export default function GalleryImages() {
   const [query, setQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("All");
   const [activeImage, setActiveImage] = useState<ImageItem | null>(null);
+  const [commentTarget, setCommentTarget] = useState<{
+    mediaKey: string;
+    title: string;
+    subtitle?: string;
+    likes: number;
+  } | null>(null);
+
+  const loadAllImages = async () => {
+    try {
+      setLoading(true);
+      let items: any[] = [];
+      try {
+        const { data } = await api.get("/gallery");
+        items = Array.isArray(data?.data) ? data.data : Array.isArray(data) ? data : [];
+      } catch {
+        // fallback
+      }
+
+      const formatted = items.map((it: any) => {
+        const key = `gallery_img_${it.id}`;
+        const social = getSocialLikes(key, it.likes || 12);
+        return {
+          id: it.id,
+          title: it.title || "Archival Image",
+          category: it.category || "Regional Heritage",
+          governorate: it.governorate || it.location || "Tunisia",
+          yearStr: it.year || "",
+          imageUrl: resolveAnyMediaUrl(it.image_path || it.imageUrl || it.url, undefined, medina),
+          description: it.description || it.caption || "",
+          likes: social.count,
+          isLiked: social.isLiked,
+        };
+      });
+
+      const tracked = getTrackedUploads("images").map((it: any) => {
+        const key = `gallery_img_${it.id}`;
+        const social = getSocialLikes(key, it.likes || 1);
+        return {
+          id: it.id,
+          title: it.title || "Uploaded Image",
+          category: it.category || "Heritage Archives",
+          governorate: it.location || it.governorate || "Tunisia",
+          yearStr: it.year || "Uploaded",
+          imageUrl: resolveAnyMediaUrl(it.image_path || it.imageUrl || it.url, undefined, medina),
+          description: it.description || "",
+          likes: social.count,
+          isLiked: social.isLiked,
+          isUserUpload: true,
+        };
+      });
+
+      const curated = baseCuratedImages.map((it) => {
+        const key = `gallery_img_${it.id}`;
+        const social = getSocialLikes(key, it.likes || 25);
+        return {
+          ...it,
+          likes: social.count,
+          isLiked: social.isLiked,
+        };
+      });
+
+      setImages([...tracked, ...formatted, ...curated]);
+    } catch {
+      setImages(baseCuratedImages);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     AOS.init({ duration: 800, once: true });
-    (async () => {
-      try {
-        setLoading(true);
-        const { data } = await api.get("/gallery");
-        const items = Array.isArray(data?.data) ? data.data : Array.isArray(data) ? data : [];
-        if (items.length > 0) {
-          const formatted = items.map((it: any) => ({
-            id: it.id,
-            title: it.title || "Archival Image",
-            category: it.category || "Regional Heritage",
-            governorate: it.governorate || it.location || "Tunisia",
-            yearStr: it.year || "",
-            imageUrl: it.imageUrl || it.url || medina,
-            description: it.description || it.caption || "",
-            likes: it.likes || 12,
-          }));
-          setImages([...formatted, ...baseCuratedImages]);
-        } else {
-          setImages(baseCuratedImages);
-        }
-      } catch {
-        setImages(baseCuratedImages);
-      } finally {
-        setLoading(false);
+    loadAllImages();
+
+    const handleUploadsChanged = (e: any) => {
+      if (!e.detail || e.detail.kind === "images") {
+        loadAllImages();
       }
-    })();
+    };
+    window.addEventListener("roots:uploads-changed", handleUploadsChanged);
+    return () => window.removeEventListener("roots:uploads-changed", handleUploadsChanged);
   }, []);
 
   const categoryOptions = [
@@ -171,15 +230,17 @@ export default function GalleryImages() {
     });
   }, [images, query, categoryFilter]);
 
-  const toggleLike = (id: number | string) => {
+  const toggleLike = async (id: number | string) => {
+    const key = `gallery_img_${id}`;
+    const target = images.find((i) => i.id === id);
+    const result = await toggleSocialLike(key, target?.likes || 0);
     setImages((prev) =>
       prev.map((img) => {
         if (img.id === id) {
-          const isLiked = !img.isLiked;
           return {
             ...img,
-            isLiked,
-            likes: (img.likes || 0) + (isLiked ? 1 : -1),
+            isLiked: result.isLiked,
+            likes: result.count,
           };
         }
         return img;
@@ -295,23 +356,42 @@ export default function GalleryImages() {
 
                 <div className="px-4 pb-4 pt-2 border-t border-[var(--gold)]/15 flex items-center justify-between text-xs">
                   {img.governorate && (
-                    <span className="font-semibold text-[var(--gold)] flex items-center gap-1 text-[0.68rem] truncate max-w-[150px]">
+                    <span className="font-semibold text-[var(--gold)] flex items-center gap-1 text-[0.68rem] truncate max-w-[130px]">
                       <MapPin className="h-3 w-3 shrink-0" />
                       <span className="truncate">{img.governorate}</span>
                     </span>
                   )}
-                  <button
-                    type="button"
-                    onClick={() => toggleLike(img.id)}
-                    className="flex items-center gap-1 text-[var(--muted-foreground)] hover:text-rose-400 transition-colors cursor-pointer text-xs"
-                  >
-                    <Heart
-                      className={`h-3.5 w-3.5 ${
-                        img.isLiked ? "fill-rose-500 text-rose-500" : ""
-                      }`}
-                    />
-                    <span>{img.likes || 0}</span>
-                  </button>
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => toggleLike(img.id)}
+                      className="flex items-center gap-1 text-[var(--muted-foreground)] hover:text-rose-400 transition-colors cursor-pointer text-xs"
+                      title={t("like", "Like")}
+                    >
+                      <Heart
+                        className={`h-3.5 w-3.5 ${
+                          img.isLiked ? "fill-rose-500 text-rose-500" : ""
+                        }`}
+                      />
+                      <span>{img.likes || 0}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setCommentTarget({
+                          mediaKey: `gallery_img_${img.id}`,
+                          title: img.title,
+                          subtitle: img.governorate || img.category,
+                          likes: img.likes || 0,
+                        })
+                      }
+                      className="flex items-center gap-1 text-[var(--muted-foreground)] hover:text-[var(--gold)] transition-colors cursor-pointer text-xs"
+                      title={t("comments", "Comments")}
+                    >
+                      <MessageSquare className="h-3.5 w-3.5" />
+                      <span>{t("comment", "Comment")}</span>
+                    </button>
+                  </div>
                 </div>
               </article>
             ))}
@@ -366,6 +446,29 @@ export default function GalleryImages() {
               <div className="flex items-center gap-2 shrink-0">
                 <button
                   type="button"
+                  onClick={() => toggleLike(activeImage.id)}
+                  className="btn-base btn-outline text-xs py-2 px-3 flex items-center gap-1.5"
+                >
+                  <Heart className={`h-4 w-4 ${activeImage.isLiked ? "fill-rose-500 text-rose-500" : ""}`} />
+                  <span>{activeImage.likes || 0}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setCommentTarget({
+                      mediaKey: `gallery_img_${activeImage.id}`,
+                      title: activeImage.title,
+                      subtitle: activeImage.governorate || activeImage.category,
+                      likes: activeImage.likes || 0,
+                    })
+                  }
+                  className="btn-base btn-gold text-xs py-2 px-3 flex items-center gap-1.5"
+                >
+                  <MessageSquare className="h-4 w-4" />
+                  <span>{t("comments", "Comments")}</span>
+                </button>
+                <button
+                  type="button"
                   onClick={() => setActiveImage(null)}
                   className="btn-base btn-outline text-xs py-2 px-4"
                 >
@@ -375,6 +478,17 @@ export default function GalleryImages() {
             </div>
           </div>
         </div>
+      )}
+
+      {commentTarget && (
+        <GalleryCommentsModal
+          isOpen={Boolean(commentTarget)}
+          onClose={() => setCommentTarget(null)}
+          mediaKey={commentTarget.mediaKey}
+          itemTitle={commentTarget.title}
+          itemSubtitle={commentTarget.subtitle}
+          defaultLikes={commentTarget.likes}
+        />
       )}
     </RootsPageShell>
   );

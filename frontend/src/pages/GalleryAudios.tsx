@@ -21,11 +21,19 @@ import {
   Headphones,
   MapPin,
   Radio,
+  MessageSquare,
 } from "lucide-react";
 import { api } from "../api/client";
 import { useTranslation } from "../context/TranslationContext";
 import { useTheme } from "../context/ThemeContext";
 import RootsPageShell from "../components/RootsPageShell";
+import GalleryCommentsModal from "../components/GalleryCommentsModal";
+import {
+  getSocialLikes,
+  toggleSocialLike,
+  getTrackedUploads,
+  resolveAnyMediaUrl,
+} from "../utils/gallerySocial";
 
 interface AudioItem {
   id: number | string;
@@ -66,34 +74,89 @@ export default function GalleryAudios() {
   const [isMuted, setIsMuted] = useState(false);
   const [volume, setVolume] = useState(0.8);
   const [showUploadModal, setShowUploadModal] = useState(false);
+  const [commentTarget, setCommentTarget] = useState<{
+    mediaKey: string;
+    title: string;
+    subtitle?: string;
+    likes: number;
+  } | null>(null);
 
-  useEffect(() => {
-    AOS.init({ duration: 800, once: true });
-    (async () => {
+  const loadAllAudios = async () => {
+    try {
+      setLoading(true);
+      let items: any[] = [];
       try {
-        setLoading(true);
         const { data } = await api.get("/audios");
-        const items = Array.isArray(data?.data) ? data.data : Array.isArray(data) ? data : [];
-        const formatted = items.map((a: any) => ({
+        items = Array.isArray(data?.data) ? data.data : Array.isArray(data) ? data : [];
+      } catch {
+        // fallback
+      }
+
+      const formatted = items.map((a: any) => {
+        const key = `gallery_audio_${a.id}`;
+        const social = getSocialLikes(key, a.likes || 14);
+        return {
           id: a.id,
           title: a.title || "Archival Audio",
           description: a.description || "",
-          audioPath: a.audio_path || a.audioPath || "",
+          audioPath: resolveAnyMediaUrl(a.audio_path || a.audioPath || a.url || a.audio_url),
           duration: a.duration || 300,
           category: a.category || "Oral History",
           governorate: a.governorate || "Tunisia",
           archiveSource: a.archive_source || a.archiveSource || "National Archives",
-          likes: a.likes || 0,
+          likes: social.count,
+          isLiked: social.isLiked,
           comments: [],
-        }));
-        setAudios(formatted);
-      } catch {
-        setAudios([]);
-      } finally {
-        setLoading(false);
+        };
+      });
+
+      const tracked = getTrackedUploads("audios").map((a: any) => {
+        const key = `gallery_audio_${a.id}`;
+        const social = getSocialLikes(key, 1);
+        return {
+          id: a.id,
+          title: a.title || "Uploaded Audio",
+          description: a.description || "",
+          audioPath: resolveAnyMediaUrl(a.audio_path || a.audioPath || a.url || a.audio_url),
+          duration: a.duration || 300,
+          category: a.category || "Oral History",
+          governorate: a.governorate || "Tunisia",
+          archiveSource: a.archiveSource || "Community Archives",
+          likes: social.count,
+          isLiked: social.isLiked,
+          comments: [],
+        };
+      });
+
+      setAudios([...tracked, ...formatted]);
+    } catch {
+      setAudios([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    AOS.init({ duration: 800, once: true });
+    loadAllAudios();
+
+    const handleUploadsChanged = (e: any) => {
+      if (!e.detail || e.detail.kind === "audios") {
+        loadAllAudios();
       }
-    })();
+    };
+    window.addEventListener("roots:uploads-changed", handleUploadsChanged);
+    return () => window.removeEventListener("roots:uploads-changed", handleUploadsChanged);
   }, []);
+
+  const toggleAudioLike = async (id: number | string) => {
+    const key = `gallery_audio_${id}`;
+    const target = audios.find((a) => a.id === id);
+    const result = await toggleSocialLike(key, target?.likes || 0);
+    setAudios((prev) =>
+      prev.map((a) => (a.id === id ? { ...a, isLiked: result.isLiked, likes: result.count } : a))
+    );
+  };
 
   const categoryOptions = [
     { key: "all", labelKey: "cat_all" },
@@ -336,17 +399,43 @@ export default function GalleryAudios() {
                   </div>
 
                   <div className="mt-6 pt-3 border-t border-[var(--gold)]/15 flex items-center justify-between text-xs">
-                    <span className="text-[0.68rem] text-[var(--muted-foreground)] truncate max-w-[200px]">
+                    <span className="text-[0.68rem] text-[var(--muted-foreground)] truncate max-w-[140px]">
                       {item.archiveSource}
                     </span>
-                    <button
-                      type="button"
-                      onClick={() => playAudio(item)}
-                      className="font-bold text-[var(--gold)] hover:underline flex items-center gap-1 cursor-pointer"
-                    >
-                      {isThisPlaying ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
-                      <span>{isThisPlaying ? "Pause" : "Play Recording"}</span>
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => toggleAudioLike(item.id)}
+                        className="p-1.5 rounded text-[var(--muted-foreground)] hover:text-rose-400 flex items-center gap-1 cursor-pointer transition-colors"
+                        title={t("like", "Like")}
+                      >
+                        <Heart className={`h-3.5 w-3.5 ${item.isLiked ? "fill-rose-500 text-rose-500" : ""}`} />
+                        <span className="text-[0.68rem]">{item.likes || 0}</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setCommentTarget({
+                            mediaKey: `gallery_audio_${item.id}`,
+                            title: item.title,
+                            subtitle: `${item.category || "Audio"} • ${item.governorate || "Tunisia"}`,
+                            likes: item.likes || 0,
+                          })
+                        }
+                        className="p-1.5 rounded text-[var(--muted-foreground)] hover:text-[var(--gold)] flex items-center gap-1 cursor-pointer transition-colors"
+                        title={t("comments", "Comments")}
+                      >
+                        <MessageSquare className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => playAudio(item)}
+                        className="font-bold text-[var(--gold)] hover:underline flex items-center gap-1 cursor-pointer ml-1"
+                      >
+                        {isThisPlaying ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
+                        <span>{isThisPlaying ? "Pause" : "Play"}</span>
+                      </button>
+                    </div>
                   </div>
                 </article>
               );
@@ -354,6 +443,17 @@ export default function GalleryAudios() {
           </div>
         )}
       </div>
+
+      {commentTarget && (
+        <GalleryCommentsModal
+          isOpen={Boolean(commentTarget)}
+          onClose={() => setCommentTarget(null)}
+          mediaKey={commentTarget.mediaKey}
+          itemTitle={commentTarget.title}
+          itemSubtitle={commentTarget.subtitle}
+          defaultLikes={commentTarget.likes}
+        />
+      )}
     </RootsPageShell>
   );
 }

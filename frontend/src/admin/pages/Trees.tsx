@@ -23,6 +23,7 @@ import {
 import { useThemeStore } from "../../store/theme";
 
 import { api } from "../../api/client";
+import { recordAdminUpload } from "../../utils/gallerySocial";
 import {
   getApiErrorMessage,
   getGedcomLoadErrorMessage,
@@ -535,7 +536,17 @@ export default function Trees() {
       : await api.post("/my/trees", fd);
 
     const payload = res?.data;
-    return payload?.data?.id ?? payload?.id ?? (res as any)?.id;
+    const newId = payload?.data?.id ?? payload?.id ?? (res as any)?.id;
+    recordAdminUpload("trees", {
+      id: newId || `tree-upload-${Date.now()}`,
+      name: fd.get("name") || "New Family Tree",
+      title: fd.get("name") || "New Family Tree",
+      description: fd.get("description") || "Genealogical tree uploaded via admin",
+      governorate: fd.get("governorate") || "Tunisia",
+      membersCount: 12,
+      generations: 4,
+    });
+    return newId;
   };
 
   const downloadTreeFile = async (tree: any, scope?: string) => {

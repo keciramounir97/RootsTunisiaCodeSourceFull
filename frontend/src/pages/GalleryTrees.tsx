@@ -12,12 +12,20 @@ import {
   MapPin,
   Calendar,
   Sparkles,
+  Heart,
+  MessageSquare,
 } from "lucide-react";
 import { api } from "../api/client";
 import { useTranslation } from "../context/TranslationContext";
 import RootsPageShell from "../components/RootsPageShell";
 import { Link, useLocation } from "react-router-dom";
 import FamilyCardModal from "../components/FamilyCardModal";
+import GalleryCommentsModal from "../components/GalleryCommentsModal";
+import {
+  getSocialLikes,
+  toggleSocialLike,
+  getTrackedUploads,
+} from "../utils/gallerySocial";
 
 interface TreeItem {
   id: number | string;
@@ -36,6 +44,8 @@ interface TreeItem {
   updated_at?: string;
   created_at?: string;
   people?: any[];
+  likes?: number;
+  isLiked?: boolean;
 }
 
 export default function GalleryTrees() {
@@ -47,6 +57,51 @@ export default function GalleryTrees() {
   const [query, setQuery] = useState(() => new URLSearchParams(location.search).get("q") || "");
   const [selectedGov, setSelectedGov] = useState("All");
   const [activeTree, setActiveTree] = useState<TreeItem | null>(null);
+  const [commentTarget, setCommentTarget] = useState<{
+    mediaKey: string;
+    title: string;
+    subtitle?: string;
+    likes: number;
+  } | null>(null);
+
+  const loadAllTrees = async () => {
+    try {
+      setLoading(true);
+      let items: any[] = [];
+      try {
+        const { data } = await api.get("/trees");
+        items = Array.isArray(data?.data) ? data.data : Array.isArray(data) ? data : [];
+      } catch {
+        // fallback
+      }
+
+      const formatted = items.map((tr: any) => {
+        const key = `gallery_tree_${tr.id}`;
+        const social = getSocialLikes(key, 24);
+        return {
+          ...tr,
+          likes: social.count,
+          isLiked: social.isLiked,
+        };
+      });
+
+      const tracked = getTrackedUploads("trees").map((tr: any) => {
+        const key = `gallery_tree_${tr.id}`;
+        const social = getSocialLikes(key, 1);
+        return {
+          ...tr,
+          likes: social.count,
+          isLiked: social.isLiked,
+        };
+      });
+
+      setTrees([...tracked, ...formatted]);
+    } catch {
+      setTrees([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     const qParam = new URLSearchParams(location.search).get("q");
@@ -57,19 +112,25 @@ export default function GalleryTrees() {
 
   useEffect(() => {
     AOS.init({ duration: 800, once: true });
-    (async () => {
-      try {
-        setLoading(true);
-        const { data } = await api.get("/trees");
-        const items = Array.isArray(data?.data) ? data.data : Array.isArray(data) ? data : [];
-        setTrees(items);
-      } catch {
-        setTrees([]);
-      } finally {
-        setLoading(false);
+    loadAllTrees();
+
+    const handleUploadsChanged = (e: any) => {
+      if (!e.detail || e.detail.kind === "trees") {
+        loadAllTrees();
       }
-    })();
+    };
+    window.addEventListener("roots:uploads-changed", handleUploadsChanged);
+    return () => window.removeEventListener("roots:uploads-changed", handleUploadsChanged);
   }, []);
+
+  const toggleTreeLike = async (id: number | string) => {
+    const key = `gallery_tree_${id}`;
+    const target = trees.find((t) => t.id === id);
+    const result = await toggleSocialLike(key, target?.likes || 0);
+    setTrees((prev) =>
+      prev.map((t) => (t.id === id ? { ...t, isLiked: result.isLiked, likes: result.count } : t))
+    );
+  };
 
   const governorateOptions = [
     { key: "All", labelKey: "gov_all" },
@@ -259,14 +320,38 @@ export default function GalleryTrees() {
                       <span>{tree.updated_at ? new Date(tree.updated_at).toLocaleDateString() : t("recently_updated")}</span>
                     </div>
 
-                    <div className="pt-2">
+                    <div className="pt-2 flex items-center gap-2">
                       <button
                         type="button"
                         onClick={() => setActiveTree(tree)}
-                        className="btn-base btn-gold w-full text-xs py-2 flex items-center justify-center gap-2 cursor-pointer"
+                        className="btn-base btn-gold flex-1 text-xs py-2 flex items-center justify-center gap-2 cursor-pointer"
                       >
                         <Sparkles className="w-3.5 h-3.5" />
                         <span>{t("explore_family_card")}</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => toggleTreeLike(tree.id)}
+                        className="btn-base btn-outline text-xs py-2 px-2.5 flex items-center justify-center gap-1 cursor-pointer"
+                        title={t("like", "Like")}
+                      >
+                        <Heart className={`w-3.5 h-3.5 ${tree.isLiked ? "fill-rose-500 text-rose-500" : "text-[var(--gold)]"}`} />
+                        <span className="text-[0.65rem]">{tree.likes || 0}</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setCommentTarget({
+                            mediaKey: `gallery_tree_${tree.id}`,
+                            title: titleStr,
+                            subtitle: `${govStr} • ${genCount} ${t("generations_label")}`,
+                            likes: tree.likes || 0,
+                          })
+                        }
+                        className="btn-base btn-outline text-xs py-2 px-2.5 flex items-center justify-center cursor-pointer"
+                        title={t("comments", "Comments")}
+                      >
+                        <MessageSquare className="w-3.5 h-3.5 text-[var(--gold)]" />
                       </button>
                     </div>
                   </div>
@@ -282,6 +367,17 @@ export default function GalleryTrees() {
         <FamilyCardModal
           tree={activeTree}
           onClose={() => setActiveTree(null)}
+        />
+      )}
+
+      {commentTarget && (
+        <GalleryCommentsModal
+          isOpen={Boolean(commentTarget)}
+          onClose={() => setCommentTarget(null)}
+          mediaKey={commentTarget.mediaKey}
+          itemTitle={commentTarget.title}
+          itemSubtitle={commentTarget.subtitle}
+          defaultLikes={commentTarget.likes}
         />
       )}
     </RootsPageShell>
