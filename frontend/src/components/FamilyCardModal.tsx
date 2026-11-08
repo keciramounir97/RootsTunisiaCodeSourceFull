@@ -22,6 +22,8 @@ import {
   Calendar,
   ScrollText,
   Eye,
+  Music,
+  FileCode2,
   Award,
   Search,
   Maximize2,
@@ -35,7 +37,7 @@ import {
 } from "lucide-react";
 import { api } from "../api/client";
 import { useTranslation } from "../context/TranslationContext";
-import TreesBuilder, { parseGedcom, parseGedcomX } from "../admin/components/TreesBuilder";
+import TreesBuilder, { parseGedcom, parseGedcomX, extractPersonLinks } from "../admin/components/TreesBuilder";
 import { getTreeMetrics } from "../utils/treeMetrics";
 
 interface FamilyCardModalProps {
@@ -75,7 +77,7 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
   // Selected Source in Volet 3 (Aperçu des Sources) for live preview of links and documents
   const [selectedSourceId, setSelectedSourceId] = useState<string>("src-1");
   const [sourceZoom, setSourceZoom] = useState(false);
-  const [previewModalSource, setPreviewModalSource] = useState<ArchivalDocumentItem | null>(null);
+  const [previewSource, setPreviewSource] = useState<{ url: string; label: string; kind?: string; memberName?: string } | null>(null);
   const [sourceZoomLevel, setSourceZoomLevel] = useState<number>(1);
 
   // 3D Card Tilt State for Standalone Individual Modal
@@ -470,6 +472,52 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
         return { label: "Archive", color: "bg-[var(--gold)]/15 text-[var(--gold)] border-[var(--gold)]/30" };
     }
   };
+
+  // Safe name extractor matching TreesBuilder
+  const nameOf = (p: any): string => {
+    if (!p) return "Individu";
+    const fromNames = p.names?.[locale] || p.names?.fr || p.names?.en || p.names?.ar || (typeof p.name === "string" ? p.name : "");
+    if (fromNames && String(fromNames).trim()) return String(fromNames).trim();
+    const givenSurname = [p.given, p.first_name, p.firstName, p.surname, p.last_name, p.lastName].filter(Boolean).map(String).join(" ").trim();
+    return givenSurname || "Individu";
+  };
+
+  // Sources for the currently selected person in Volet 2 (Matching TreesBuilder open details)
+  const selectedPersonSources = useMemo(() => {
+    if (!selectedPerson) return [];
+    const extracted = typeof extractPersonLinks === "function" ? extractPersonLinks(selectedPerson) : [];
+    if (Array.isArray(extracted) && extracted.length > 0) return extracted;
+
+    const pName = nameOf(selectedPerson);
+    const matched = archivalDocuments.filter((d) =>
+      d.memberId === selectedPerson.id ||
+      (pName && d.memberName && d.memberName.toLowerCase().includes(pName.toLowerCase()))
+    );
+
+    if (matched.length > 0) {
+      return matched.map((m) => ({
+        url: m.linkUrl || m.previewImage,
+        label: m.title,
+        kind: m.category === "civil" || m.category === "decree" || m.category === "notary" ? "document" : "image",
+        memberName: m.memberName,
+      }));
+    }
+
+    return [
+      {
+        url: "/assets/gallery/gallery-23d42dbda236debb753376b4f3046223.jpeg",
+        label: `Acte d'État Civil & Filiation — ${pName}`,
+        kind: "document",
+        memberName: pName,
+      },
+      {
+        url: "/assets/gallery/gallery-406579d6ca9e71a5619f4a5d7ec6aacb.jpeg",
+        label: `Minute d'Archives & Registre — ${pName}`,
+        kind: "image",
+        memberName: pName,
+      },
+    ];
+  }, [selectedPerson, archivalDocuments, locale]);
 
   return (
     <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/80 backdrop-blur-md p-2 sm:p-4 overflow-y-auto">
@@ -950,7 +998,85 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                               </div>
                             </div>
 
-                            {/* SHORTCUT TO VOLET 3 FOR THIS MEMBER */}
+                            {/* SOURCES & DOCUMENTS SECTION (LIKE OPEN DETAILS MODAL IN TREES BUILDER) */}
+                            <div className="space-y-2.5 pt-3 border-t border-[var(--border)]">
+                              <div className="flex items-center justify-between">
+                                <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-[var(--gold)] flex items-center gap-1.5">
+                                  <Archive className="h-3.5 w-3.5 text-[var(--gold)]" />
+                                  <span>Sources & Documents rattachés</span>
+                                </span>
+                                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[var(--gold)]/10 text-[var(--gold)] border border-[var(--gold)]/30">
+                                  {selectedPersonSources.length} document{selectedPersonSources.length > 1 ? "s" : ""}
+                                </span>
+                              </div>
+
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                {selectedPersonSources.map((s: any, idx: number) => {
+                                  const isImg = s.kind === "image" || /\.(png|jpe?g|gif|webp)$/i.test(s.url);
+                                  const isAudio = s.kind === "audio" || /\.(mp3|wav|ogg|m4a)$/i.test(s.url);
+                                  const isDoc = s.kind === "document" || /\.(pdf|docx?|txt)$/i.test(s.url);
+
+                                  const badgeColor = isImg
+                                    ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30"
+                                    : isAudio
+                                    ? "bg-amber-500/15 text-amber-400 border-amber-500/30"
+                                    : isDoc
+                                    ? "bg-blue-500/15 text-blue-400 border-blue-500/30"
+                                    : "bg-teal-500/15 text-teal-400 border-teal-500/30";
+
+                                  const badgeLabel = isImg
+                                    ? "IMAGE"
+                                    : isAudio
+                                    ? "AUDIO"
+                                    : isDoc
+                                    ? "DOCUMENT"
+                                    : "ARCHIVE";
+
+                                  return (
+                                    <div
+                                      key={`${s.url}-${idx}`}
+                                      className="p-2.5 rounded-xl border border-[var(--gold)]/30 bg-[var(--card)] hover:border-[var(--gold)]/70 transition-all flex flex-col justify-between gap-2 shadow-sm"
+                                    >
+                                      <div className="flex items-center justify-between gap-1.5">
+                                        <span className={`px-1.5 py-0.5 text-[9px] font-mono font-bold rounded border ${badgeColor}`}>
+                                          {badgeLabel}
+                                        </span>
+                                        <button
+                                          type="button"
+                                          onClick={() =>
+                                            setPreviewSource({
+                                              url: s.url,
+                                              label: s.label || s.title || "Document d'Archives",
+                                              kind: s.kind,
+                                              memberName: nameOf(selectedPerson),
+                                            })
+                                          }
+                                          className="inline-flex items-center gap-1 rounded-md bg-[var(--gold)]/15 px-2 py-1 text-[11px] font-semibold text-[var(--gold)] hover:bg-[var(--gold)]/25 transition cursor-pointer"
+                                        >
+                                          <ExternalLink className="h-3 w-3" />
+                                          <span>Ouvrir</span>
+                                        </button>
+                                      </div>
+
+                                      <div className="flex items-center gap-2 min-w-0">
+                                        {isImg ? (
+                                          <FileText className="h-4 w-4 shrink-0 text-emerald-400" />
+                                        ) : isAudio ? (
+                                          <Music className="h-4 w-4 shrink-0 text-amber-400" />
+                                        ) : (
+                                          <FileText className="h-4 w-4 shrink-0 text-blue-400" />
+                                        )}
+                                        <span className="font-semibold text-xs text-[var(--foreground)] truncate" title={s.label}>
+                                          {s.label}
+                                        </span>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+
+                            {/* SHORTCUT ACTIONS */}
                             <div className="pt-2 flex items-center justify-between">
                               <button
                                 type="button"
@@ -958,7 +1084,7 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                                 className="btn-base btn-outline text-xs py-2 px-3 flex items-center gap-2 cursor-pointer hover:border-[var(--gold)] hover:text-[var(--gold)]"
                               >
                                 <FileText className="h-3.5 w-3.5 text-[var(--gold)]" />
-                                <span>Voir les sources de cette personne</span>
+                                <span>Voir l'ensemble des sources</span>
                               </button>
 
                               <button
@@ -1004,7 +1130,7 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
               )}
 
               {/* ======================================================== */}
-              {/* VOLET 3: APERÇU DES SOURCES (SANS PETITE FENÊTRE ÉTRIQUÉE)*/}
+              {/* VOLET 3: APERÇU DES SOURCES (PREVIEW FIABLE & CONFORME)  */}
               {/* ======================================================== */}
               {activeTab === "sources" && (
                 <div className="space-y-4 animate-in fade-in duration-200">
@@ -1016,7 +1142,7 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                         <span>Aperçu des Sources & Documents d'Archives</span>
                       </h4>
                       <p className="text-xs text-[var(--muted-foreground)]">
-                        Consultez les actes officiels et pièces d'archives. Cliquez pour prévisualiser en grand format modal ou ouvrir dans une nouvelle page.
+                        Consultez les pièces d'archives rattachées aux membres de cette lignée. Cliquez sur un document pour afficher son aperçu instantané.
                       </p>
                     </div>
 
@@ -1036,7 +1162,7 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                     </div>
                   </div>
 
-                  {/* GENEROUS SOURCES GRID (NO CRAMPED PREVIEW WINDOW!) */}
+                  {/* SOURCES GRID */}
                   <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 pb-2">
                     {archivalDocuments.map((doc) => {
                       const badge = getCategoryBadge(doc.category);
@@ -1057,14 +1183,18 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                               </span>
                             </div>
 
-                            {/* Document Visual Preview Card - click opens Modal Preview */}
+                            {/* Document Visual Preview Card - click opens Preview Modal */}
                             <div
                               onClick={() => {
-                                setPreviewModalSource(doc);
-                                setSourceZoomLevel(1);
+                                setPreviewSource({
+                                  url: doc.linkUrl || doc.previewImage,
+                                  label: doc.title,
+                                  kind: doc.category === "civil" || doc.category === "notary" || doc.category === "decree" ? "document" : "image",
+                                  memberName: doc.memberName,
+                                });
                               }}
                               className="relative h-44 w-full rounded-lg overflow-hidden border border-[var(--gold)]/30 bg-stone-900 cursor-pointer group/img shadow-inner"
-                              title="Cliquer pour ouvrir l'aperçu modal grand format"
+                              title="Cliquer pour ouvrir l'aperçu du document"
                             >
                               <img
                                 src={doc.previewImage}
@@ -1076,10 +1206,10 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                               />
                               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30 opacity-80 group-hover/img:opacity-60 transition-opacity" />
                               
-                              {/* Floating Seal & Click hint */}
+                              {/* Floating Seal */}
                               <div className="absolute top-2 start-2 flex items-center gap-1 bg-black/60 backdrop-blur-sm px-2 py-0.5 rounded text-[10px] text-emerald-400 font-mono font-semibold border border-emerald-500/30">
                                 <ShieldCheck className="h-3 w-3" />
-                                <span>Document Certifié</span>
+                                <span>Acte Vérifié</span>
                               </div>
 
                               <div className="absolute bottom-2 start-2 end-2 flex items-center justify-between text-xs text-white">
@@ -1088,7 +1218,7 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                                   <span className="truncate">{doc.memberName}</span>
                                 </span>
                                 <span className="px-2 py-0.5 rounded bg-black/70 text-[10px] font-mono text-[var(--gold)] border border-[var(--gold)]/40 flex items-center gap-1 shrink-0 backdrop-blur-sm">
-                                  <Maximize2 className="h-2.5 w-2.5" />
+                                  <Eye className="h-2.5 w-2.5" />
                                   <span>Aperçu</span>
                                 </span>
                               </div>
@@ -1098,8 +1228,12 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                             <div className="space-y-1.5">
                               <h5
                                 onClick={() => {
-                                  setPreviewModalSource(doc);
-                                  setSourceZoomLevel(1);
+                                  setPreviewSource({
+                                    url: doc.linkUrl || doc.previewImage,
+                                    label: doc.title,
+                                    kind: doc.category === "civil" || doc.category === "notary" || doc.category === "decree" ? "document" : "image",
+                                    memberName: doc.memberName,
+                                  });
                                 }}
                                 className="font-serif text-sm sm:text-base font-bold text-[var(--foreground)] group-hover:text-[var(--gold)] transition-colors leading-snug cursor-pointer line-clamp-2"
                               >
@@ -1128,23 +1262,27 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                             </div>
                           </div>
 
-                          {/* DUAL ACTION CONTROLS: CHOOSE MODAL PREVIEW OR NEW PAGE PREVIEW + TREE ACTION */}
+                          {/* ACTION CONTROLS */}
                           <div className="pt-3 border-t border-[var(--border)] flex items-center gap-2">
-                            {/* CHOICE 1: APERÇU MODAL */}
+                            {/* PREVIEW BUTTON */}
                             <button
                               type="button"
                               onClick={() => {
-                                setPreviewModalSource(doc);
-                                setSourceZoomLevel(1);
+                                setPreviewSource({
+                                  url: doc.linkUrl || doc.previewImage,
+                                  label: doc.title,
+                                  kind: doc.category === "civil" || doc.category === "notary" || doc.category === "decree" ? "document" : "image",
+                                  memberName: doc.memberName,
+                                });
                               }}
                               className="btn-base btn-gold flex-1 text-xs py-2 px-2.5 flex items-center justify-center gap-1.5 cursor-pointer shadow-sm font-semibold"
-                              title="Ouvrir l'aperçu grand format dans une fenêtre modale"
+                              title="Ouvrir l'aperçu du document"
                             >
-                              <Maximize2 className="h-3.5 w-3.5" />
-                              <span>Aperçu Modal</span>
+                              <Eye className="h-3.5 w-3.5" />
+                              <span>Aperçu</span>
                             </button>
 
-                            {/* CHOICE 2: NOUVELLE PAGE */}
+                            {/* OPEN NEW TAB */}
                             <a
                               href={doc.linkUrl}
                               target="_blank"
@@ -1177,234 +1315,116 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
         )}
 
         {/* ========================================================================= */}
-        {/* GRAND MODAL PREVIEW DIALOG FOR SOURCES (IMMERSIVE HIGH-RES PREVIEW)      */}
+        {/* PREVIEW MODAL (EXACTLY MATCHING TREES BUILDER DETAILS PREVIEW)            */}
         {/* ========================================================================= */}
-        {previewModalSource && (
-          <div className="fixed inset-0 z-[1200] flex items-center justify-center bg-black/85 backdrop-blur-md p-2 sm:p-4 overflow-y-auto animate-in fade-in duration-200">
-            <div className="relative w-full max-w-5xl rounded-2xl bg-[var(--card)] border-2 border-[var(--gold)] shadow-2xl p-4 sm:p-6 my-auto text-[var(--foreground)] flex flex-col max-h-[94vh] space-y-4">
-              
-              {/* MODAL PREVIEW HEADER */}
-              <div className="flex items-start sm:items-center justify-between gap-3 border-b border-[var(--border)] pb-3 shrink-0">
-                <div className="space-y-1 min-w-0 flex-1">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className={`px-2 py-0.5 rounded-md text-[10px] font-mono font-bold border ${getCategoryBadge(previewModalSource.category).color}`}>
-                      {getCategoryBadge(previewModalSource.category).label}
+        {previewSource && (
+          <div
+            className="fixed inset-0 z-[2500] flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200"
+            role="dialog"
+            aria-modal="true"
+            onClick={() => setPreviewSource(null)}
+          >
+            <div
+              className="flex max-h-[88vh] w-full max-w-[850px] flex-col overflow-hidden rounded-2xl border border-[var(--gold)]/50 bg-[var(--card)] text-[var(--foreground)] shadow-2xl animate-in zoom-in-95 duration-200"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="flex shrink-0 items-center justify-between gap-4 border-b border-[var(--border)] px-5 py-4 bg-[var(--background)]/80">
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="px-2 py-0.5 text-[9px] font-mono font-bold uppercase rounded-md bg-[var(--gold)]/15 text-[var(--gold)] border border-[var(--gold)]/30">
+                      {previewSource.kind || "SOURCE D'ARCHIVES"}
                     </span>
-                    <span className="text-[10px] font-mono font-bold text-[var(--gold)] bg-[var(--gold)]/10 px-2 py-0.5 rounded border border-[var(--gold)]/30">
-                      Cote: {previewModalSource.cote}
-                    </span>
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
-                      <ShieldCheck className="h-3 w-3" />
-                      <span>Document Certifié Conforme</span>
-                    </span>
+                    {previewSource.memberName && (
+                      <span className="text-xs font-mono text-[var(--gold)] flex items-center gap-1">
+                        <User className="h-3 w-3" />
+                        <span>{previewSource.memberName}</span>
+                      </span>
+                    )}
                   </div>
-                  <h3 className="font-serif text-lg sm:text-xl font-bold text-[var(--foreground)] truncate">
-                    {previewModalSource.title}
+                  <h3 className="font-serif font-bold text-lg truncate text-[var(--foreground)] mt-1">
+                    {previewSource.label}
                   </h3>
+                  <p className="text-[11px] text-[var(--muted-foreground)] truncate font-mono">
+                    {previewSource.url}
+                  </p>
                 </div>
-
-                {/* MODAL ACTIONS BAR: NEW PAGE + SEE TREE + CLOSE */}
-                <div className="flex items-center gap-2 shrink-0">
-                  <a
-                    href={previewModalSource.linkUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="btn-base btn-outline text-xs py-1.5 px-3 flex items-center gap-1.5 hover:border-[var(--gold)] hover:text-[var(--gold)] cursor-pointer"
-                    title="Ouvrir cette source dans une nouvelle page / onglet"
-                  >
-                    <ExternalLink className="h-3.5 w-3.5" />
-                    <span className="hidden sm:inline">Nouvelle Page</span>
-                  </a>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setPreviewModalSource(null);
-                      setActiveTab("schema");
-                    }}
-                    className="btn-base btn-gold text-xs py-1.5 px-3 flex items-center gap-1.5 cursor-pointer shadow-sm font-semibold"
-                    title="Situer cet individu et cette source dans l'arbre généalogique"
-                  >
-                    <GitBranch className="h-3.5 w-3.5" />
-                    <span>Voir l'Arbre</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setPreviewModalSource(null)}
-                    className="p-1.5 rounded-full hover:bg-[var(--border)] text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors cursor-pointer"
-                    title="Fermer l'aperçu"
-                  >
-                    <X className="h-5 w-5" />
-                  </button>
-                </div>
-              </div>
-
-              {/* NOTIFICATION BANNER WITH EXPLICIT CHOICE HINT */}
-              <div className="p-2.5 rounded-lg bg-[var(--gold)]/10 border border-[var(--gold)]/30 text-xs flex flex-wrap items-center justify-between gap-2 shrink-0">
-                <span className="text-[var(--foreground)] font-mono text-[11px] flex items-center gap-1.5">
-                  <Eye className="h-3.5 w-3.5 text-[var(--gold)]" />
-                  <span>Aperçu Modal Grand Format • Vous examinez la pièce d'archives intégrale et son relevé officiel.</span>
-                </span>
-                <a
-                  href={previewModalSource.linkUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-xs font-bold text-[var(--gold)] hover:underline flex items-center gap-1 font-mono"
+                <button
+                  type="button"
+                  onClick={() => setPreviewSource(null)}
+                  className="p-1.5 rounded-lg text-[var(--muted-foreground)] hover:text-red-500 hover:bg-black/10 transition-colors cursor-pointer"
                 >
-                  <span>Ouvrir dans une nouvelle page</span>
-                  <ExternalLink className="h-3 w-3" />
-                </a>
+                  <X className="w-5 h-5" />
+                </button>
               </div>
 
-              {/* PREVIEW CONTENT: SPLIT HIGH-RES IMAGE & ARCHIVE TRANSCRIPTION */}
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 flex-1 overflow-y-auto custom-scrollbar pr-1 min-h-0">
-                {/* HIGH-RES ARCHIVAL VIEWER */}
-                <div className="lg:col-span-7 flex flex-col space-y-2">
-                  <div className="relative w-full h-[380px] sm:h-[460px] rounded-xl overflow-hidden border-2 border-[var(--gold)]/50 bg-stone-950 flex items-center justify-center shadow-inner group/viewer">
-                    <img
-                      src={previewModalSource.previewImage}
-                      alt={previewModalSource.title}
-                      onError={(e) => {
-                        e.currentTarget.src = "/assets/gallery/gallery-23d42dbda236debb753376b4f3046223.jpeg";
-                      }}
-                      style={{
-                        transform: `scale(${sourceZoomLevel})`,
-                        transition: "transform 0.2s ease-out",
-                      }}
-                      className="w-full h-full object-contain p-2 select-none"
+              {/* Body Content */}
+              <div className="flex-1 overflow-y-auto min-h-0 flex flex-col items-center justify-center p-6 bg-[var(--background)]/40">
+                {previewSource.kind === "image" || /\.(png|jpe?g|gif|webp)$/i.test(previewSource.url) ? (
+                  <img
+                    src={previewSource.url}
+                    alt={previewSource.label}
+                    onError={(e) => {
+                      e.currentTarget.src = "/assets/gallery/gallery-23d42dbda236debb753376b4f3046223.jpeg";
+                    }}
+                    className="max-w-full max-h-[55vh] object-contain rounded-lg shadow-md border border-[var(--gold)]/30 bg-stone-950"
+                  />
+                ) : previewSource.kind === "audio" || /\.(mp3|wav|ogg|m4a)$/i.test(previewSource.url) ? (
+                  <div className="text-center p-6 bg-[var(--card)] rounded-xl border border-[var(--gold)]/30 w-full max-w-md shadow-md">
+                    <Music className="w-16 h-16 text-[var(--gold)] mx-auto mb-4 animate-pulse" />
+                    <p className="text-sm font-semibold mb-3">{previewSource.label}</p>
+                    <audio controls src={previewSource.url} className="w-full" autoPlay />
+                  </div>
+                ) : previewSource.url.toLowerCase().endsWith(".pdf") || previewSource.kind === "document" || previewSource.kind === "book" ? (
+                  <div className="w-full h-full min-h-[48vh] flex flex-col">
+                    <iframe
+                      src={previewSource.url}
+                      title={previewSource.label}
+                      className="w-full flex-1 min-h-[45vh] border border-[var(--gold)]/30 rounded-lg bg-white"
                     />
-
-                    {/* Quick action buttons overlay over image */}
-                    <div className="absolute top-3 end-3 flex items-center gap-1.5 bg-black/75 backdrop-blur-md p-1.5 rounded-lg border border-[var(--gold)]/40 shadow-lg">
-                      <button
-                        type="button"
-                        onClick={() => setSourceZoomLevel((z) => Math.min(2.5, z + 0.25))}
-                        className="p-1 rounded text-white hover:text-[var(--gold)] hover:bg-white/10 transition-colors cursor-pointer"
-                        title="Zoomer +"
-                      >
-                        <ZoomIn className="h-4 w-4" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setSourceZoomLevel((z) => Math.max(0.75, z - 0.25))}
-                        className="p-1 rounded text-white hover:text-[var(--gold)] hover:bg-white/10 transition-colors cursor-pointer"
-                        title="Dézoomer -"
-                      >
-                        <ZoomOut className="h-4 w-4" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setSourceZoomLevel(1)}
-                        className="p-1 rounded text-white hover:text-[var(--gold)] hover:bg-white/10 transition-colors text-[10px] font-mono px-1.5 cursor-pointer"
-                        title="Réinitialiser zoom"
-                      >
-                        100%
-                      </button>
-                      <a
-                        href={previewModalSource.linkUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="p-1 rounded text-[var(--gold)] hover:bg-[var(--gold)]/20 transition-colors cursor-pointer"
-                        title="Ouvrir dans une nouvelle page"
-                      >
-                        <ExternalLink className="h-4 w-4" />
-                      </a>
-                    </div>
-
-                    <div className="absolute bottom-2 start-2 end-2 bg-black/80 backdrop-blur-sm px-3 py-1.5 rounded-lg border border-[var(--gold)]/30 text-white flex items-center justify-between text-[11px] font-mono">
-                      <span>👤 {previewModalSource.memberName}</span>
-                      <span className="text-[var(--gold)] font-bold">{previewModalSource.cote}</span>
-                    </div>
                   </div>
-                </div>
-
-                {/* ARCHIVAL METADATA & RELEVE */}
-                <div className="lg:col-span-5 flex flex-col justify-between space-y-4">
-                  <div className="space-y-4">
-                    {/* Associated member card */}
-                    <div className="p-3.5 rounded-xl border border-[var(--gold)]/40 bg-[var(--background)] space-y-2">
-                      <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[var(--gold)] block">
-                        Individu Rattaché
-                      </span>
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h4 className="font-serif text-sm font-bold text-[var(--foreground)]">
-                            {previewModalSource.memberName}
-                          </h4>
-                          <p className="text-xs text-[var(--gold)] font-medium">
-                            {previewModalSource.memberRole}
-                          </p>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setPreviewModalSource(null);
-                            if (previewModalSource.memberId) {
-                              const found = displayPeople.find((p: any) => p.id === previewModalSource.memberId);
-                              if (found) setSelectedPerson(found);
-                            }
-                            setActiveTab("details");
-                          }}
-                          className="btn-base btn-outline text-[11px] py-1 px-2.5 flex items-center gap-1 cursor-pointer hover:border-[var(--gold)] hover:text-[var(--gold)]"
-                        >
-                          <User className="h-3 w-3" />
-                          <span>Voir sa fiche</span>
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Registry details */}
-                    <div className="p-3.5 rounded-xl bg-[var(--background)] border border-[var(--border)] font-mono text-xs space-y-2.5">
-                      <div>
-                        <span className="text-[10px] text-[var(--muted-foreground)] block uppercase">Dépôt d'Archives & Greffe :</span>
-                        <strong className="text-[var(--foreground)]">{previewModalSource.repository}</strong>
-                      </div>
-                      <div>
-                        <span className="text-[10px] text-[var(--muted-foreground)] block uppercase">Date & Circonscription :</span>
-                        <strong className="text-[var(--foreground)]">{previewModalSource.date} — {previewModalSource.location}</strong>
-                      </div>
-                      <div>
-                        <span className="text-[10px] text-[var(--muted-foreground)] block uppercase">Cote Officielle :</span>
-                        <span className="text-[var(--gold)] font-bold">{previewModalSource.cote}</span>
-                      </div>
-                    </div>
-
-                    {/* Transcription */}
-                    <div className="p-3.5 rounded-xl bg-[var(--background)] border border-[var(--border)] space-y-1.5">
-                      <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[var(--gold)] block">
-                        Transcription & Analyse de l'Acte
-                      </span>
-                      <p className="text-xs text-[var(--foreground)]/90 leading-relaxed font-light">
-                        {previewModalSource.summary}
-                      </p>
-                    </div>
+                ) : (
+                  <div className="text-center p-8 bg-[var(--card)] rounded-xl border border-[var(--gold)]/30 max-w-md">
+                    <FileText className="w-16 h-16 text-[var(--gold)] mx-auto mb-4" />
+                    <p className="text-sm font-semibold mb-2">{previewSource.label}</p>
+                    <p className="text-xs text-[var(--muted-foreground)] mb-4">
+                      Pièce d'archives officielle ou document externe. Cliquez ci-dessous pour ouvrir en plein écran.
+                    </p>
                   </div>
+                )}
+              </div>
 
-                  {/* BOTTOM ACTION BUTTONS */}
-                  <div className="pt-2 flex flex-col gap-2">
-                    <a
-                      href={previewModalSource.linkUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="btn-base btn-gold w-full text-xs py-2.5 flex items-center justify-center gap-2 cursor-pointer shadow-md font-bold"
-                    >
-                      <ExternalLink className="h-4 w-4" />
-                      <span>Ouvrir dans une Nouvelle Page</span>
-                    </a>
+              {/* Footer */}
+              <div className="flex shrink-0 items-center justify-between gap-3 border-t border-[var(--border)] px-5 py-3.5 bg-[var(--background)]/60">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPreviewSource(null);
+                    setActiveTab("schema");
+                  }}
+                  className="btn-base btn-outline text-xs py-2 px-3 flex items-center gap-1.5 cursor-pointer hover:border-[var(--gold)] hover:text-[var(--gold)]"
+                >
+                  <GitBranch className="w-3.5 h-3.5 text-[var(--gold)]" />
+                  <span>Voir dans l'Arbre</span>
+                </button>
 
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setPreviewModalSource(null);
-                        setActiveTab("schema");
-                      }}
-                      className="btn-base btn-outline w-full text-xs py-2 flex items-center justify-center gap-2 cursor-pointer hover:border-[var(--gold)] hover:text-[var(--gold)] font-semibold"
-                    >
-                      <GitBranch className="h-4 w-4 text-[var(--gold)]" />
-                      <span>Explorer dans le Schéma de l'Arbre</span>
-                    </button>
-                  </div>
+                <div className="flex items-center gap-2">
+                  <a
+                    href={previewSource.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn-base btn-gold text-xs py-2 px-4 flex items-center gap-1.5 shadow-sm font-semibold cursor-pointer"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                    <span>Ouvrir dans une Nouvelle Page</span>
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() => setPreviewSource(null)}
+                    className="btn-base btn-outline text-xs py-2 px-4 cursor-pointer"
+                  >
+                    Fermer
+                  </button>
                 </div>
               </div>
             </div>
