@@ -14,13 +14,16 @@ const SOURCE_HOST_LABELS: Array<[string, string]> = [
 export function isDomainOrHostString(str: string): boolean {
   if (!str) return true;
   const s = String(str).trim().toLowerCase();
+  // Real page titles often contain spaces — never treat those as bare hosts.
+  if (/\s/.test(s)) return false;
   if (
     s.includes("api.roots") ||
     s.includes("RootsTunisia") ||
     s === "localhost" ||
     s.startsWith("localhost:") ||
     s.startsWith("http://") ||
-    s.startsWith("https://")
+    s.startsWith("https://") ||
+    s.startsWith("www.")
   ) {
     return true;
   }
@@ -31,6 +34,49 @@ export function isDomainOrHostString(str: string): boolean {
     return true;
   }
   return false;
+}
+
+/** Split `Title | url`, markdown links, or `{title,url}` objects into parts. */
+export function parseTitledSourceValue(raw: unknown): { title: string; target: string } | null {
+  if (raw && typeof raw === "object" && !Array.isArray(raw)) {
+    const obj = raw as Record<string, unknown>;
+    const target = String(obj.url || obj.href || obj.link || obj.target || "").trim();
+    const title = String(obj.title || obj.label || obj.name || obj.pageName || "").trim();
+    if (target) return { title, target };
+    return null;
+  }
+  const text = String(raw || "").trim();
+  if (!text) return null;
+
+  const mdMatch = text.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
+  if (mdMatch) {
+    return { title: mdMatch[1].trim(), target: mdMatch[2].trim() };
+  }
+
+  const titledUrl = text.match(
+    /^(.+?)\s*\|\s*(https?:\/\/\S+|www\.\S+|\/?(?:private_)?uploads\/\S+)$/i,
+  );
+  if (titledUrl) {
+    return { title: titledUrl[1].trim(), target: titledUrl[2].trim() };
+  }
+
+  if (text.includes("|")) {
+    const idx = text.indexOf("|");
+    const title = text.slice(0, idx).trim();
+    const target = text.slice(idx + 1).trim();
+    if (
+      title &&
+      target &&
+      (/^https?:\/\//i.test(target) ||
+        /^www\./i.test(target) ||
+        /^\.?\/?(?:private_)?uploads\//i.test(target) ||
+        target.startsWith("/"))
+    ) {
+      return { title, target };
+    }
+  }
+
+  return null;
 }
 
 export function sanitizeLinkLabel(
@@ -384,20 +430,13 @@ export function extractPersonLinks(person) {
   const addExternal = (urlStr, titleStr = "") => {
     let url = String(urlStr || "").trim().replace(/[).,;]+$/, "");
     if (!url) return;
-
+    if (/^www\./i.test(url)) url = `https://${url}`;
     if (!/^https?:\/\//i.test(url)) {
       const pathname = url.startsWith("/") ? url : `/${url}`;
       url = `${apiBase}${pathname}`;
     }
 
     const key = url.toLowerCase();
-    const popName = url.split("/").pop() || "";
-    const label = titleStr.trim() || (!isDomainOrHostString(popName) ? popName : "Link");
-    // Seen key combines URL and label to support linking with as many resources as the user wants, even with the same base URL.
-    const seenKey = `${key}::${label.toLowerCase()}`;
-    if (seen.has(seenKey)) return;
-    seen.add(seenKey);
-
     let kind = "external";
     const lower = url.toLowerCase();
     if (/\.(pdf|docx?|txt)(?:[?#].*)?$/i.test(lower) || lower.includes("/uploads/documents/")) {
@@ -407,41 +446,40 @@ export function extractPersonLinks(person) {
     } else if (/\.(png|jpe?g|gif|webp)(?:[?#].*)?$/i.test(lower) || lower.includes("/uploads/gallery/")) {
       kind = "image";
     }
-
     const path = lower.replace(apiBase.toLowerCase(), "");
-    if (/^\/(?:private_)?uploads\//i.test(path)) {
-      kind = "local";
-    }
+    if (/^\/(?:private_)?uploads\//i.test(path)) kind = "local";
 
     const finalLabel = sanitizeLinkLabel(titleStr, url, kind);
+    const seenKey = `${key}::${String(finalLabel).toLowerCase()}`;
+    if (seen.has(seenKey)) return;
+    seen.add(seenKey);
 
     links.push({
       url,
       label: finalLabel,
       kind,
-      raw: titleStr ? `${titleStr} | ${urlStr}` : urlStr,
+      raw: titleStr ? `${titleStr} | ${urlStr}` : String(urlStr || ""),
     });
   };
 
   const processField = (rawText) => {
+    if (rawText && typeof rawText === "object" && !Array.isArray(rawText)) {
+      const parsedObj = parseTitledSourceValue(rawText);
+      if (parsedObj) {
+        addExternal(parsedObj.target, parsedObj.title);
+        return;
+      }
+    }
+
     const text = String(rawText || "").trim();
-    if (!text) return;
+    if (!text || text === "[object Object]") return;
 
-    if (text.includes(" | ")) {
-      const parts = text.split(" | ");
-      const title = parts[0].trim();
-      const target = parts.slice(1).join(" | ").trim();
-      addExternal(target, title);
+    const titled = parseTitledSourceValue(text);
+    if (titled) {
+      addExternal(titled.target, titled.title);
       return;
     }
 
-    const mdMatch = text.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
-    if (mdMatch) {
-      addExternal(mdMatch[2].trim(), mdMatch[1].trim());
-      return;
-    }
-
-    // Extract all HTTP URLs
     const urls = text.match(URL_IN_TEXT_RE);
     let foundAny = false;
     if (urls && urls.length) {
@@ -451,7 +489,6 @@ export function extractPersonLinks(person) {
       }
     }
 
-    // Extract all local paths like /uploads/...
     const localMatches = [...text.matchAll(LOCAL_DOC_IN_TEXT_RE)];
     if (localMatches.length) {
       for (const m of localMatches) {
@@ -462,25 +499,27 @@ export function extractPersonLinks(person) {
       }
     }
 
-    if (!foundAny && (text.startsWith("/") || text.startsWith("uploads/") || text.startsWith("private_uploads/") || /^https?:\/\//i.test(text))) {
+    if (
+      !foundAny &&
+      (text.startsWith("/") ||
+        text.startsWith("uploads/") ||
+        text.startsWith("private_uploads/") ||
+        /^https?:\/\//i.test(text) ||
+        /^www\./i.test(text))
+    ) {
       addExternal(text);
     }
   };
 
   const fields = [];
-  if (Array.isArray(person.sourceLinks)) {
-    fields.push(...person.sourceLinks);
-  }
+  if (Array.isArray(person.sourceLinks)) fields.push(...person.sourceLinks);
   if (!person.sourceLinksManaged) {
     for (const f of [person.archiveSource, person.documentCode, person.details]) {
       if (f && !fields.includes(f)) fields.push(f);
     }
   }
 
-  for (const f of fields) {
-    processField(f);
-  }
-
+  for (const f of fields) processField(f);
   return links;
 }
 
@@ -548,6 +587,23 @@ export const DEFAULT_FALLBACK_MEDIA: Record<string, any[]> = {
   image: [],
   audio: [],
 };
+
+/** Resolve a stored source target to an absolute URL that window.open can use. */
+export function resolveOpenableUrl(urlOrPath: string | undefined, apiRoot = getApiRoot()): string {
+  let target = String(urlOrPath || "").trim().replace(/[).,;]+$/, "");
+  if (!target) return "";
+  if (/^https?:\/\//i.test(target)) return target;
+  if (/^www\./i.test(target)) return `https://${target}`;
+  const apiBase = String(apiRoot || "").replace(/\/+$/, "").replace(/\/api$/, "");
+  const pathname = target.startsWith("/") ? target : `/${target}`;
+  return `${apiBase}${pathname}`;
+}
+
+export function openPersonSourceLink(urlOrPath: string | undefined) {
+  const href = resolveOpenableUrl(urlOrPath);
+  if (!href) return;
+  window.open(href, "_blank", "noopener,noreferrer");
+}
 
 export function getMediaSourceLink(item, mediaType = "document", apiRoot = getApiRoot()) {
   const config = MEDIA_LINK_TYPES[mediaType] || MEDIA_LINK_TYPES.document;
@@ -4936,9 +4992,9 @@ export default function TreesBuilder({
                                   type="button"
                                   onClick={() => {
                                     if (l.kind === "external" || (/^https?:\/\//i.test(l.url) && !/\.(png|jpe?g|gif|webp|pdf|mp3|wav)$/i.test(l.url))) {
-                                      window.open(l.url, "_blank", "noopener,noreferrer");
+                                      openPersonSourceLink(l.url);
                                     } else {
-                                      setPreviewSource({ url: l.url, label: l.label, kind: l.kind });
+                                      setPreviewSource({ url: l.url, label: l.label || l.url, kind: l.kind });
                                     }
                                   }}
                                   className="inline-flex items-center gap-1 rounded-lg bg-[#0d9488]/15 px-2.5 py-1 text-xs font-semibold text-[#0d9488] dark:text-[#5eead4] hover:bg-[#0d9488]/25 transition"
@@ -4968,8 +5024,8 @@ export default function TreesBuilder({
                               ) : (
                                 <Link2 className="h-4 w-4 shrink-0 text-[#0d9488]" />
                               )}
-                              <span className="font-semibold truncate text-[#162238] dark:text-white" title={l.label}>
-                                {l.label}
+                              <span className="font-semibold break-words text-[#162238] dark:text-white" title={l.label || l.url}>
+                                {l.label || l.url}
                               </span>
                             </div>
 

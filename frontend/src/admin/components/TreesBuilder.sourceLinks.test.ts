@@ -8,6 +8,8 @@ const {
   persistedValueFromExtractedLink,
   buildMediaTitleLookup,
   applyMediaTitlesToLinks,
+  parseTitledSourceValue,
+  resolveOpenableUrl,
 } = await import("./TreesBuilder");
 
 describe("Person source links", () => {
@@ -23,6 +25,8 @@ describe("Person source links", () => {
         "Marriage Deed | /uploads/documents/doc-abc.pdf",
         "Oral History | /uploads/audios/audio-xyz.mp3",
         "ANT Register | https://archives.nat.tn/entry/123",
+        "Wikipedia|https://en.wikipedia.org/wiki/Genealogy",
+        { title: "Archive.org Record", url: "https://archive.org/details/smoke-test" },
       ],
       sourceLinksManaged: true,
     });
@@ -31,7 +35,20 @@ describe("Person source links", () => {
       "Marriage Deed",
       "Oral History",
       "ANT Register",
+      "Wikipedia",
+      "Archive.org Record",
     ]);
+    expect(links[4].url).toBe("https://en.wikipedia.org/wiki/Genealogy");
+    expect(links[5].url).toBe("https://archive.org/details/smoke-test");
+  });
+
+  it("parses titled values and resolves openable urls", () => {
+    expect(parseTitledSourceValue("Page Name | https://example.com/a")).toEqual({
+      title: "Page Name",
+      target: "https://example.com/a",
+    });
+    expect(resolveOpenableUrl("https://example.com/x")).toBe("https://example.com/x");
+    expect(resolveOpenableUrl("www.example.com/x")).toBe("https://www.example.com/x");
   });
 
   it("formatPersistedSourceLink keeps title with path", () => {

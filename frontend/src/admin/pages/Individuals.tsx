@@ -14,13 +14,15 @@ const SOURCE_HOST_LABELS: Array<[string, string]> = [
 export function isDomainOrHostString(str: string): boolean {
   if (!str) return true;
   const s = String(str).trim().toLowerCase();
+  if (/\s/.test(s)) return false;
   if (
     s.includes("api.roots") ||
     s.includes("RootsTunisia") ||
     s === "localhost" ||
     s.startsWith("localhost:") ||
     s.startsWith("http://") ||
-    s.startsWith("https://")
+    s.startsWith("https://") ||
+    s.startsWith("www.")
   ) {
     return true;
   }
@@ -112,71 +114,24 @@ import {
   formatPersistedSourceLink,
   mediaPathKey,
   meaningfulMediaTitle,
+  extractPersonLinks,
+  openPersonSourceLink,
+  parseTitledSourceValue,
+  resolveOpenableUrl,
 } from "../components/TreesBuilder";
 
 export function parseIndividualPersonLinks(person: any) {
   if (!person || typeof person !== "object") return [];
-  const links: Array<{ url: string; label: string; kind: string; raw: string }> = [];
-  const seen = new Set<string>();
-
-  const fields: string[] = [];
-  if (Array.isArray(person.sourceLinks)) fields.push(...person.sourceLinks);
-  else if (typeof person.sourceLinks === "string") {
+  let sourceLinks = person.sourceLinks;
+  if (typeof sourceLinks === "string") {
     try {
-      const parsed = JSON.parse(person.sourceLinks);
-      if (Array.isArray(parsed)) fields.push(...parsed);
-      else if (person.sourceLinks.trim()) fields.push(person.sourceLinks.trim());
+      const parsed = JSON.parse(sourceLinks);
+      sourceLinks = Array.isArray(parsed) ? parsed : [sourceLinks];
     } catch {
-      if (person.sourceLinks.trim()) fields.push(person.sourceLinks.trim());
+      sourceLinks = [sourceLinks];
     }
   }
-
-  if (!person.sourceLinksManaged) {
-    for (const f of [person.archiveSource, person.documentCode, person.details]) {
-      if (f && typeof f === "string" && !fields.includes(f)) fields.push(f);
-    }
-  }
-
-  const apiBase = String(getApiRoot() || "").replace(/\/+$/, "").replace(/\/api$/, "");
-
-  for (const field of fields) {
-    const text = String(field || "").trim();
-    if (!text) continue;
-
-    let title = "";
-    let target = text;
-    if (text.includes(" | ")) {
-      const parts = text.split(" | ");
-      title = parts[0].trim();
-      target = parts.slice(1).join(" | ").trim();
-    }
-    target = target.replace(/[).,;]+$/, "");
-    if (!target) continue;
-
-    let fullUrl = target;
-    if (!/^https?:\/\//i.test(target)) {
-      const pathname = target.startsWith("/") ? target : `/${target}`;
-      fullUrl = `${apiBase}${pathname}`;
-    }
-
-    const lower = fullUrl.toLowerCase();
-    if (seen.has(lower)) continue;
-    seen.add(lower);
-
-    let kind = "external";
-    if (/\.(pdf|docx?|txt)(?:[?#].*)?$/i.test(lower) || lower.includes("/uploads/documents/")) kind = "document";
-    else if (/\.(mp3|wav|ogg|m4a)(?:[?#].*)?$/i.test(lower) || lower.includes("/uploads/audios/")) kind = "audio";
-    else if (/\.(png|jpe?g|gif|webp)(?:[?#].*)?$/i.test(lower) || lower.includes("/uploads/gallery/")) kind = "image";
-
-    let rawLabel = title || target.split("/").pop() || target;
-    if (!title && isDomainOrHostString(rawLabel)) {
-      rawLabel = kind === "image" ? "Photo" : kind === "audio" ? "Audio" : kind === "document" ? "Document" : "Link";
-    }
-    const label = rawLabel;
-    links.push({ url: fullUrl, label, kind, raw: text });
-  }
-
-  return links;
+  return extractPersonLinks({ ...person, sourceLinks });
 }
 
 const parseArrayField = (field: any) => {
@@ -198,7 +153,13 @@ const normalizeIndividualRecord = (item: any) => {
     (f: any) => f && typeof f === "object"
   );
   const sourceLinks = parseArrayField(item.sourceLinks)
-    .map((s: any) => String(s || "").trim())
+    .map((s: any) => {
+      if (s && typeof s === "object") {
+        const parsed = parseTitledSourceValue(s);
+        if (parsed) return formatPersistedSourceLink(parsed.target, parsed.title);
+      }
+      return String(s || "").trim();
+    })
     .filter(Boolean);
   return {
     ...item,
@@ -689,24 +650,19 @@ export default function Individuals() {
   const openSourceLink = (url: string, label: string = "", kind: string = "") => {
     const target = String(url || "").trim();
     if (!target) return;
-    let fullUrl = target;
-    if (!/^https?:\/\//i.test(target)) {
-      const apiBase = getApiRoot().replace(/\/+$/, "").replace(/\/api$/, "");
-      const pathname = target.startsWith("/") ? target : `/${target}`;
-      fullUrl = `${apiBase}${pathname}`;
-    }
     let detectedKind = kind;
     if (!detectedKind) {
-      const lower = fullUrl.toLowerCase();
+      const lower = target.toLowerCase();
       if (/\.(pdf|docx?|txt)(?:[?#].*)?$/i.test(lower) || lower.includes("/uploads/documents/") || lower.includes("/uploads/books/")) detectedKind = "document";
       else if (/\.(mp3|wav|ogg|m4a)(?:[?#].*)?$/i.test(lower) || lower.includes("/uploads/audios/")) detectedKind = "audio";
       else if (/\.(png|jpe?g|gif|webp)$/i.test(lower) || lower.includes("/uploads/gallery/")) detectedKind = "image";
       else detectedKind = "external";
     }
     if (detectedKind === "external") {
-      window.open(fullUrl, "_blank", "noopener,noreferrer");
+      openPersonSourceLink(target);
       return;
     }
+    const fullUrl = resolveOpenableUrl(target);
     setPreviewSource({
       url: fullUrl,
       label: label || fullUrl.split("/").pop() || "Source",
@@ -1473,8 +1429,8 @@ export default function Individuals() {
                         <div className="flex items-start gap-2 min-w-0">
                           <Link2 className="w-4 h-4 text-[#0d9488] shrink-0 mt-0.5" />
                           <span className="min-w-0 text-start">
-                            <span className="block font-semibold text-[#0c4a6e] dark:text-[#0d9488] group-hover:underline truncate">
-                              {link.label}
+                            <span className="block font-semibold text-[#0c4a6e] dark:text-[#0d9488] group-hover:underline break-words">
+                              {link.label || link.url}
                             </span>
                             {link.url && !isDomainOrHostString(link.url) ? (
       <span className="block text-[10px] font-normal text-stone-500 dark:text-stone-400 truncate">
