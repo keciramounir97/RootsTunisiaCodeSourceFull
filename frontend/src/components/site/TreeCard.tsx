@@ -74,19 +74,13 @@ export function TreeCard({ tree }: { tree: TreeRecord }) {
       ? `${t("family_tree")} #${tree.id}`
       : rawTitle;
 
+  // Only ever show the real author of the tree. Never invent an institution
+  // ("laboratory") when the owner is missing or a generic account label.
   const rawOwner = (typeof tree.owner === "string" ? tree.owner : tree.owner?.full_name || "").trim();
-  const ownerStr = tree.isLocalized
-    ? rawOwner
-    : !rawOwner || /^(admin|super\s*admin|user|researcher|roots\s+tunisia)/i.test(rawOwner) || (isRtl && !/[\u0600-\u06FF]/.test(rawOwner))
-      ? t("heritage_research")
-      : rawOwner;
+  const ownerStr = /^(admin|super\s*admin|user|researcher|roots\s+tunisia)$/i.test(rawOwner) ? "" : rawOwner;
 
   const rawSummary = (tree.description || tree.notes || tree.provenance || tree.summary || "").trim();
-  const summaryStr = tree.isLocalized
-    ? rawSummary
-    : !rawSummary || (isRtl && !/[\u0600-\u06FF]/.test(rawSummary))
-      ? t("tree_default_summary")
-      : rawSummary;
+  const summaryStr = rawSummary;
 
   const rawLocation = (tree.governorate || tree.region || "").trim();
   const govKey = GOV_KEY_LOOKUP[rawLocation.toLowerCase()];
@@ -121,9 +115,11 @@ export function TreeCard({ tree }: { tree: TreeRecord }) {
         >
           {titleStr}
         </button>
-        <p className="mt-1 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--muted-foreground)]">
-          {t("by_author")} {ownerStr}
-        </p>
+        {ownerStr ? (
+          <p className="mt-1 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--muted-foreground)]">
+            {t("by_author")} {ownerStr}
+          </p>
+        ) : null}
         <p className="mt-3 flex-1 text-xs leading-relaxed text-[var(--foreground)]/80 line-clamp-3">{summaryStr}</p>
         
         <div className="mt-4 grid grid-cols-2 gap-2 border-t border-[var(--border)] pt-4 text-xs font-mono">

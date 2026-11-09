@@ -208,43 +208,8 @@ export default function Home() {
     })();
   }, []);
 
-  const fallbackTrees: TreeRecord[] = [
-    {
-      id: "tunis-ben-achour",
-      name: `${t("family_tree")} — ${t("fam_ben_achour")}`,
-      owner: t("heritage_research"),
-      description: t("gov_notes_tunis"),
-      governorate: t("gov_name_tunis"),
-      generations: 7,
-      membersCount: 84,
-      isLocalized: true,
-    },
-    {
-      id: "sfax-fourati",
-      name: `${t("family_tree")} — ${t("fam_fourati")}`,
-      owner: t("heritage_research"),
-      description: t("gov_notes_sfax"),
-      governorate: t("gov_name_sfax"),
-      generations: 6,
-      membersCount: 62,
-      isLocalized: true,
-    },
-    {
-      id: "kairouan-chabbi",
-      name: `${t("family_tree")} — ${t("fam_chabbi")}`,
-      owner: t("heritage_research"),
-      description: t("gov_notes_kairouan"),
-      governorate: t("gov_name_kairouan"),
-      generations: 8,
-      membersCount: 96,
-      isLocalized: true,
-    },
-  ];
-
-  const displayedTrees =
-    dbTrees.length >= 3
-      ? dbTrees.slice(0, dbTrees.length >= 6 ? 6 : 3)
-      : [...dbTrees, ...fallbackTrees].slice(0, 3);
+  // Only trees that really exist are shown (no invented placeholder cards).
+  const displayedTrees = dbTrees.slice(0, dbTrees.length >= 6 ? 6 : 3);
 
   return (
     <div dir={isRtl ? "rtl" : "ltr"} className="text-[var(--foreground)] min-h-screen">
@@ -678,11 +643,13 @@ export default function Home() {
           title={t("featured_trees_title")}
           intro={t("featured_trees_intro")}
         />
-        <div className="mt-10 sm:mt-12 grid gap-6 md:grid-cols-3 items-stretch">
-          {displayedTrees.map((tree) => (
-            <TreeCard key={tree.id} tree={tree} />
-          ))}
-        </div>
+        {displayedTrees.length > 0 ? (
+          <div className="mt-10 sm:mt-12 grid gap-6 md:grid-cols-3 items-stretch">
+            {displayedTrees.map((tree) => (
+              <TreeCard key={tree.id} tree={tree} />
+            ))}
+          </div>
+        ) : null}
         <div className="mt-10 text-center">
           <Link to="/gallery/trees" className="btn-base btn-gold w-full sm:w-auto">
             {t("browse_all_family_trees")}

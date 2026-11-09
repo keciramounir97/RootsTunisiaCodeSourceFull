@@ -126,6 +126,111 @@ const countCustomised = (fields: ContentField[]) => fields.filter(isCustomised).
 
 const MULTILINE_KEY = /(subtitle|description|intro|body|caption)/i;
 
+const BUILTIN_SITE_DEFAULTS: Record<string, string> = {
+  eyebrow: "Patrimoine & Généalogie de Tunisie",
+  title: "Explorez Vos Origines & Arbres Généalogiques Tunisiens",
+  subtitle: "Découvrez l'histoire de vos ancêtres à travers les archives nationales, tribunaux charaïques et registres de Tunisie.",
+  intro: "Fonds d'archives officiels, registres civils, tribunaux charaïques et institutions patrimoniales de Tunisie.",
+  cta: "Explorer les collections",
+  buttonText: "Consulter les archives",
+  body: "Notre mission est de rassembler, préserver et rendre accessible le patrimoine généalogique tunisien à travers des sources documentaires authentifiées.",
+  description: "Dossiers généalogiques, actes notariés et transcriptions historiques certifiées par nos historiens.",
+};
+
+function MiniatureSectionPreview({
+  page,
+  section,
+  lang,
+}: {
+  page: ContentPage;
+  section: ContentSection;
+  lang: string;
+}) {
+  const getFieldVal = (key: string): string => {
+    const f = section.fields.find((field) => field.key === key);
+    if (!f) return "";
+    const v = readValue(f, lang);
+    if (!isEmpty(v)) return String(v);
+    return BUILTIN_SITE_DEFAULTS[key] || "";
+  };
+
+  const getListVal = (key: string): string[] => {
+    const f = section.fields.find((field) => field.key === key);
+    if (!f) return [];
+    const v = readValue(f, lang);
+    if (Array.isArray(v) && v.length > 0) return v;
+    return [];
+  };
+
+  const eyebrow = getFieldVal("eyebrow") || page.label;
+  const title = getFieldVal("title") || section.label;
+  const subtitle = getFieldVal("subtitle") || getFieldVal("description") || getFieldVal("intro") || section.description || "";
+  const imageUrl = getFieldVal("image") || getFieldVal("backgroundImage");
+  const cta = getFieldVal("cta") || getFieldVal("buttonText");
+  const listItems = getListVal("items") || getListVal("features");
+
+  return (
+    <div className="rounded-2xl border-2 border-[var(--gold)]/45 bg-[var(--card)] overflow-hidden shadow-xl mb-4">
+      <div className="flex items-center justify-between px-3.5 py-2 bg-[var(--background)]/90 border-b border-[var(--border)] text-xs">
+        <div className="flex items-center gap-1.5">
+          <span className="w-2.5 h-2.5 rounded-full bg-red-500/80 inline-block" />
+          <span className="w-2.5 h-2.5 rounded-full bg-amber-500/80 inline-block" />
+          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500/80 inline-block" />
+          <span className="font-mono text-[11px] font-bold text-[var(--gold)] ms-2">
+            Aperçu Miniature en Direct : {page.label} › {section.label}
+          </span>
+        </div>
+        <span className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-[var(--gold)]/20 text-[var(--gold)] border border-[var(--gold)]/40 animate-pulse">
+          Mise à jour instantanée
+        </span>
+      </div>
+
+      <div className="relative p-5 sm:p-6 bg-gradient-to-br from-[#121c29] via-[#0d1722] to-[#080d14] text-white overflow-hidden min-h-[140px] flex flex-col justify-center">
+        {imageUrl && (
+          <div
+            className="absolute inset-0 bg-cover bg-center opacity-25 pointer-events-none"
+            style={{ backgroundImage: `url(${imageUrl})` }}
+          />
+        )}
+        <div className="relative z-10 space-y-2 max-w-xl text-start">
+          {eyebrow && (
+            <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase tracking-widest text-amber-300 bg-amber-400/10 border border-amber-300/30">
+              {eyebrow}
+            </span>
+          )}
+          <h3 className="font-serif font-bold text-lg sm:text-xl text-amber-100 tracking-wide leading-snug">
+            {title}
+          </h3>
+          {subtitle && (
+            <p className="text-xs text-slate-300 leading-relaxed font-light line-clamp-2">
+              {subtitle}
+            </p>
+          )}
+          {cta && (
+            <div className="pt-2">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-[11px] font-bold bg-[var(--gold)] text-black shadow-sm">
+                <span>{cta}</span>
+              </span>
+            </div>
+          )}
+          {listItems.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 pt-2">
+              {listItems.map((item, i) => (
+                <span
+                  key={i}
+                  className="px-2 py-0.5 rounded text-[10px] bg-white/10 text-slate-200 border border-white/15"
+                >
+                  ✓ {item}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ------------------------------------------------------------------ */
 /* Field editors (module-level so inputs never remount while typing)   */
 /* ------------------------------------------------------------------ */
@@ -806,6 +911,9 @@ export default function ContentManager() {
                   </p>
                 )}
               </div>
+
+              {/* Miniature live preview of the section reflecting current inputs */}
+              <MiniatureSectionPreview page={activePage} section={activeSection} lang={lang} />
 
               <div className="space-y-3">
                 {activeSection.fields.map((field) => (

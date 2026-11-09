@@ -44,7 +44,7 @@ export function Navbar() {
   };
 
   const navClass =
-    "inline-flex items-center justify-center text-xs font-semibold uppercase tracking-[0.14em] text-[var(--muted-foreground)] transition-colors hover:text-[var(--gold)] h-8 leading-none select-none";
+    "inline-flex items-center justify-center text-xs font-semibold uppercase tracking-[0.14em] text-[var(--muted-foreground)] transition-colors hover:text-[var(--gold)] h-8 leading-none select-none py-0 m-0 border-0 bg-transparent";
 
   const exploreLinks = [
     {
@@ -70,11 +70,6 @@ export function Navbar() {
   ];
 
   const galleryLinks = [
-    {
-      to: "/gallery",
-      label: getTunisiaDropdownText(locale, "nav_gallery_hub"),
-      hint: getTunisiaDropdownText(locale, "nav_gallery_hub_hint"),
-    },
     {
       to: "/gallery/images",
       label: getTunisiaDropdownText(locale, "nav_photo_archives"),
@@ -130,17 +125,19 @@ export function Navbar() {
         <Logo />
 
         {/* Desktop Nav */}
-        <nav className="hidden items-center gap-7 lg:gap-9 ms-2 lg:ms-4 md:flex">
+        <nav className="hidden items-center gap-7 lg:gap-9 ms-2 lg:ms-4 md:flex h-8">
           {/* Home */}
-          <NavLink
-            to="/"
-            end
-            className={({ isActive }) =>
-              `${navClass} ${isActive ? "!text-[var(--gold)]" : ""}`
-            }
-          >
-            <span>{t("nav_home")}</span>
-          </NavLink>
+          <div className="flex items-center h-8">
+            <NavLink
+              to="/"
+              end
+              className={({ isActive }) =>
+                `${navClass} ${isActive ? "!text-[var(--gold)]" : ""}`
+              }
+            >
+              <span>{t("nav_home")}</span>
+            </NavLink>
+          </div>
 
           {/* Explore Dropdown */}
           <div
@@ -149,6 +146,7 @@ export function Navbar() {
             onMouseLeave={() => setExploreOpen(false)}
           >
             <button
+              type="button"
               className={`${navClass} gap-1.5 cursor-pointer ${
                 isExploreActive ? "!text-[var(--gold)]" : ""
               }`}
@@ -181,6 +179,7 @@ export function Navbar() {
             onMouseLeave={() => setGalleryOpen(false)}
           >
             <button
+              type="button"
               className={`${navClass} gap-1.5 cursor-pointer ${
                 isGalleryActive ? "!text-[var(--gold)]" : ""
               }`}
@@ -213,14 +212,17 @@ export function Navbar() {
             )}
           </div>
 
-          <NavLink
-            to="/about"
-            className={({ isActive }) =>
-              `${navClass} ${isActive ? "!text-[var(--gold)]" : ""}`
-            }
-          >
-            <span>{t("nav_about")}</span>
-          </NavLink>
+          {/* About */}
+          <div className="flex items-center h-8">
+            <NavLink
+              to="/about"
+              className={({ isActive }) =>
+                `${navClass} ${isActive ? "!text-[var(--gold)]" : ""}`
+              }
+            >
+              <span>{t("nav_about")}</span>
+            </NavLink>
+          </div>
         </nav>
 
         <div className="ms-auto flex items-center gap-1 sm:gap-2">

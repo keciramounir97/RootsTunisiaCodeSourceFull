@@ -144,45 +144,12 @@ export default function GalleryTrees() {
     { key: "Bizerte", labelKey: "gov_bizerte" },
   ];
 
-  const fallbackTrees: TreeItem[] = useMemo(
-    () => [
-      {
-        id: "tunis-ben-achour",
-        name: `${t("nav_trees")} — ${t("fam_ben_achour")}`,
-        creator: t("heritage_research"),
-        description: t("gov_notes_tunis"),
-        governorate: "Tunis",
-        generations: 7,
-        membersCount: 84,
-      },
-      {
-        id: "sfax-fourati",
-        name: `${t("nav_trees")} — ${t("fam_fourati")}`,
-        creator: t("heritage_research"),
-        description: t("gov_notes_sfax"),
-        governorate: "Sfax",
-        generations: 6,
-        membersCount: 62,
-      },
-      {
-        id: "kairouan-chabbi",
-        name: `${t("nav_trees")} — ${t("fam_chabbi")}`,
-        creator: t("heritage_research"),
-        description: t("gov_notes_kairouan"),
-        governorate: "Kairouan",
-        generations: 8,
-        membersCount: 96,
-      },
-    ],
-    [t]
-  );
-
-  const sourceTrees = trees.length > 0 ? trees : fallbackTrees;
+  const sourceTrees = trees;
 
   const filteredTrees = useMemo(() => {
     return sourceTrees.filter((item) => {
       const titleStr = item.name || item.title || `Family Tree #${item.id}`;
-      const creatorStr = item.owner?.full_name || item.creator || t("heritage_research");
+      const creatorStr = item.owner?.full_name || item.creator || "";
       const descStr = item.description || item.notes || item.provenance || "";
       const govStr = item.governorate || item.region || "Tunisia";
 
@@ -272,7 +239,7 @@ export default function GalleryTrees() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch">
             {filteredTrees.map((tree) => {
               const titleStr = tree.name || tree.title || `Family Tree #${tree.id}`;
-              const creatorStr = tree.owner?.full_name || tree.creator || t("heritage_research");
+              const creatorStr = tree.owner?.full_name || tree.creator || "";
               const descStr = tree.description || tree.notes || tree.provenance || "";
               const govStr = tree.governorate || tree.region || "Tunisia";
               const { individuals: memberCount, generations: genCount } = getTreeMetrics(tree);
@@ -323,7 +290,7 @@ export default function GalleryTrees() {
                     </div>
 
                     <div className="flex items-center justify-between text-[0.65rem] text-[var(--muted-foreground)]">
-                      <span>{t("by_author")} {creatorStr}</span>
+                      <span>{creatorStr ? `${t("by_author")} ${creatorStr}` : ""}</span>
                       <span>{tree.updated_at ? new Date(tree.updated_at).toLocaleDateString() : t("recently_updated")}</span>
                     </div>
 

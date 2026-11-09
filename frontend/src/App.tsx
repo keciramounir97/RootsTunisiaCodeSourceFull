@@ -101,6 +101,8 @@ const Backups = lazy(() => import("./admin/pages/Backups"));
 const AdminSuggestions = lazy(() => import("./admin/pages/Suggestions"));
 const LegalContent = lazy(() => import("./admin/pages/LegalContent"));
 const ContentManager = lazy(() => import("./admin/pages/ContentManager"));
+const AdminArchivesContent = lazy(() => import("./admin/pages/AdminArchivesContent"));
+const AdminSourcesContent = lazy(() => import("./admin/pages/AdminSourcesContent"));
 const SiteImagePlaceholders = lazy(() => import("./admin/pages/SiteImagePlaceholders"));
 const Diaporama = lazy(() => import("./admin/pages/Diaporama"));
 const EmailTemplates = lazy(() => import("./admin/pages/EmailTemplates"));
@@ -686,6 +688,26 @@ function AppRoutes() {
             <Suspense fallback={<AdminLoadingFallback />}>
               <ProtectedRoute roles={[3]}>
                 <ContentManager />
+              </ProtectedRoute>
+            </Suspense>
+          }
+        />
+        <Route
+          path="archives-content"
+          element={
+            <Suspense fallback={<AdminLoadingFallback />}>
+              <ProtectedRoute roles={[3]}>
+                <AdminArchivesContent />
+              </ProtectedRoute>
+            </Suspense>
+          }
+        />
+        <Route
+          path="sources-content"
+          element={
+            <Suspense fallback={<AdminLoadingFallback />}>
+              <ProtectedRoute roles={[3]}>
+                <AdminSourcesContent />
               </ProtectedRoute>
             </Suspense>
           }

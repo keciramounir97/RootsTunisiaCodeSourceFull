@@ -8,6 +8,7 @@ import { SOURCE_FALLBACK_TRANSLATIONS } from "./sourceFallbackTranslations";
 import { AUTO_TRANSLATIONS } from "./generatedTranslations";
 import { englishGeneratedTranslations } from "./englishGeneratedTranslations";
 import { FEATURE_TRANSLATIONS } from "./featureTranslations";
+import { ADDITION_TRANSLATIONS } from "./siteAdditionTranslations";
 
 export const SUPPORTED_LOCALES = ["en", "fr", "ar", "es", "it", "mt"] as const;
 export type SupportedLocale = (typeof SUPPORTED_LOCALES)[number];
@@ -189,42 +190,48 @@ const AR_FALLBACK_PHRASES: Record<string, string> = {
 };
 
 // Merged dictionaries with precedence:
-// Custom JSON locales > FEATURE_TRANSLATIONS > AUTO_TRANSLATIONS > SOURCE_FALLBACK_TRANSLATIONS > Generated EN
+// Custom JSON locales > FEATURE_TRANSLATIONS > ADDITION_TRANSLATIONS > AUTO_TRANSLATIONS > SOURCE_FALLBACK_TRANSLATIONS > Generated EN
 const dictionaries: Record<SupportedLocale, Record<string, string>> = {
   en: {
     ...englishGeneratedTranslations,
     ...(SOURCE_FALLBACK_TRANSLATIONS.en || {}),
     ...(AUTO_TRANSLATIONS.en || {}),
+    ...(ADDITION_TRANSLATIONS.en || {}),
     ...(FEATURE_TRANSLATIONS.en || {}),
     ...(en as Record<string, string>),
   },
   fr: {
     ...(SOURCE_FALLBACK_TRANSLATIONS.fr || {}),
     ...(AUTO_TRANSLATIONS.fr || {}),
+    ...(ADDITION_TRANSLATIONS.fr || {}),
     ...(FEATURE_TRANSLATIONS.fr || {}),
     ...(fr as Record<string, string>),
   },
   ar: {
     ...filterArabic(SOURCE_FALLBACK_TRANSLATIONS.ar),
     ...filterArabic(AUTO_TRANSLATIONS.ar),
+    ...filterArabic(ADDITION_TRANSLATIONS.ar),
     ...filterArabic(FEATURE_TRANSLATIONS.ar),
     ...(ar as Record<string, string>),
   },
   es: {
     ...(SOURCE_FALLBACK_TRANSLATIONS.es || {}),
     ...(AUTO_TRANSLATIONS.es || {}),
+    ...(ADDITION_TRANSLATIONS.es || {}),
     ...(FEATURE_TRANSLATIONS.es || {}),
     ...(es as Record<string, string>),
   },
   it: {
     ...(SOURCE_FALLBACK_TRANSLATIONS.it || {}),
     ...(AUTO_TRANSLATIONS.it || {}),
+    ...(ADDITION_TRANSLATIONS.it || {}),
     ...(FEATURE_TRANSLATIONS.it || {}),
     ...(it as Record<string, string>),
   },
   mt: {
     ...(SOURCE_FALLBACK_TRANSLATIONS.mt || {}),
     ...(AUTO_TRANSLATIONS.mt || {}),
+    ...(ADDITION_TRANSLATIONS.mt || {}),
     ...(FEATURE_TRANSLATIONS.mt || {}),
     ...(mt as Record<string, string>),
   },

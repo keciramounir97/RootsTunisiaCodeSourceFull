@@ -27,6 +27,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
 import { IndividualsModule } from './modules/individuals/individuals.module';
 import { SourcesModule } from './modules/sources/sources.module';
 import { SiteContentModule } from './modules/site-content/site-content.module';
+import { PublicCardsModule } from './modules/public-cards/public-cards.module';
 
 @Module({
     imports: [
@@ -63,6 +64,7 @@ import { SiteContentModule } from './modules/site-content/site-content.module';
         IndividualsModule,
         SourcesModule,
         SiteContentModule,
+        PublicCardsModule,
     ],
     controllers: [],
     providers: [],

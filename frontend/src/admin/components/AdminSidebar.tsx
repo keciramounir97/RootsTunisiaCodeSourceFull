@@ -5,7 +5,6 @@ import { useAuth } from "./AuthContext";
 import { Logo } from "../../components/site/Logo";
 import {
   LayoutDashboard,
-  SlidersHorizontal,
   Layout,
   Network,
   Image,
@@ -36,40 +35,88 @@ import {
   MapPinned,
 } from "lucide-react";
 
-const links = [
-  { to: "/admin", end: true, labelKey: "dashboard", Icon: LayoutDashboard },
-  { to: "/admin/usage", labelKey: "usage_quotas", Icon: Gauge },
-  { to: "/admin/trees", labelKey: "trees", Icon: Network },
-  { to: "/admin/individuals", labelKey: "individuals", Icon: UserRound, permissionKey: "trees" },
-  { to: "/admin/sources-archives", labelKey: "my_sources", Icon: Archive },
-  { to: "/admin/tasks", labelKey: "tasks", Icon: ListChecks },
-  { to: "/admin/notes", labelKey: "notes", Icon: StickyNote },
-  { to: "/admin/gallery", labelKey: "gallery", Icon: Image },
-  { to: "/admin/audios", labelKey: "audios", Icon: Music },
-  { to: "/admin/documents", labelKey: "documents", Icon: FileText },
-  { to: "/admin/books", labelKey: "books", Icon: BookOpen },
-  { to: "/admin/articles", labelKey: "articles", Icon: Newspaper },
-  { to: "/admin/users", labelKey: "users", Icon: Users },
-  { to: "/admin/admins-roles", labelKey: "admins_roles", Icon: Shield },
-  { to: "/admin/contact-messages", labelKey: "contact_messages", Icon: MessageSquare },
-  { to: "/admin/newsletter", labelKey: "newsletter", Icon: Mail },
-  { to: "/admin/subscriptions", labelKey: "subscriptions", Icon: Crown },
-  { to: "/admin/subscription-payments", labelKey: "subscription_payments", Icon: Wallet },
-  { to: "/admin/flagged-payments", labelKey: "flagged_payments", Icon: Flag },
-  { to: "/admin/payment-settings", labelKey: "payment_settings", Icon: Wallet },
-  { to: "/admin/currencies", labelKey: "currencies_exchange", Icon: Coins },
-  { to: "/admin/legal-content", labelKey: "legal_content", Icon: Scale },
-  { to: "/admin/content", labelKey: "public_content_manager", Icon: Layout },
+interface SidebarLink {
+  to: string;
+  end?: boolean;
+  labelKey: string;
+  Icon: any;
+  permissionKey?: string;
+  roles?: number[];
+}
+
+interface SidebarCategory {
+  id: string;
+  titleKey: string;
+  links: SidebarLink[];
+}
+
+const CATEGORIES: SidebarCategory[] = [
   {
-    to: "/admin/site-image-placeholders",
-    labelKey: "site_image_placeholders",
-    Icon: MapPinned,
-    roles: [3],
+    id: "overview",
+    titleKey: "admin_cat_overview",
+    links: [
+      { to: "/admin", end: true, labelKey: "dashboard", Icon: LayoutDashboard },
+      { to: "/admin/usage", labelKey: "usage_quotas", Icon: Gauge },
+      { to: "/admin/activity", labelKey: "activity", Icon: Activity },
+      { to: "/admin/backups", labelKey: "backups", Icon: ArchiveRestore, roles: [3] },
+    ],
   },
-  { to: "/admin/settings", labelKey: "settings", Icon: Settings },
-  { to: "/admin/activity", labelKey: "activity", Icon: Activity },
-  { to: "/admin/footer-settings", labelKey: "footer_settings", Icon: Globe },
-  { to: "/admin/backups", labelKey: "backups", Icon: ArchiveRestore },
+  {
+    id: "genealogy",
+    titleKey: "admin_cat_genealogy",
+    links: [
+      { to: "/admin/trees", labelKey: "trees", Icon: Network },
+      { to: "/admin/individuals", labelKey: "individuals", Icon: UserRound, permissionKey: "trees" },
+      { to: "/admin/sources-archives", labelKey: "my_sources", Icon: Archive },
+      { to: "/admin/tasks", labelKey: "tasks", Icon: ListChecks },
+      { to: "/admin/notes", labelKey: "notes", Icon: StickyNote },
+    ],
+  },
+  {
+    id: "media",
+    titleKey: "admin_cat_media",
+    links: [
+      { to: "/admin/gallery", labelKey: "gallery", Icon: Image },
+      { to: "/admin/audios", labelKey: "audios", Icon: Music },
+      { to: "/admin/documents", labelKey: "documents", Icon: FileText },
+      { to: "/admin/books", labelKey: "books", Icon: BookOpen },
+      { to: "/admin/articles", labelKey: "articles", Icon: Newspaper },
+    ],
+  },
+  {
+    id: "content",
+    titleKey: "admin_cat_content",
+    links: [
+      { to: "/admin/archives-content", labelKey: "archives_public_content", Icon: Archive, roles: [3] },
+      { to: "/admin/sources-content", labelKey: "sources_public_content", Icon: FileText, roles: [3] },
+      { to: "/admin/content", labelKey: "public_content_manager", Icon: Layout, roles: [3] },
+      { to: "/admin/site-image-placeholders", labelKey: "site_image_placeholders", Icon: MapPinned, roles: [3] },
+      { to: "/admin/legal-content", labelKey: "legal_content", Icon: Scale, roles: [3] },
+      { to: "/admin/footer-settings", labelKey: "footer_settings", Icon: Globe },
+    ],
+  },
+  {
+    id: "users",
+    titleKey: "admin_cat_users",
+    links: [
+      { to: "/admin/users", labelKey: "users", Icon: Users },
+      { to: "/admin/admins-roles", labelKey: "admins_roles", Icon: Shield, roles: [3] },
+      { to: "/admin/contact-messages", labelKey: "contact_messages", Icon: MessageSquare },
+      { to: "/admin/newsletter", labelKey: "newsletter", Icon: Mail },
+    ],
+  },
+  {
+    id: "finance",
+    titleKey: "admin_cat_finance",
+    links: [
+      { to: "/admin/subscriptions", labelKey: "subscriptions", Icon: Crown, roles: [3] },
+      { to: "/admin/subscription-payments", labelKey: "subscription_payments", Icon: Wallet, roles: [3] },
+      { to: "/admin/flagged-payments", labelKey: "flagged_payments", Icon: Flag, roles: [3] },
+      { to: "/admin/payment-settings", labelKey: "payment_settings", Icon: Wallet, roles: [3] },
+      { to: "/admin/currencies", labelKey: "currencies_exchange", Icon: Coins, roles: [3] },
+      { to: "/admin/settings", labelKey: "settings", Icon: Settings, roles: [3] },
+    ],
+  },
 ];
 
 /** Routes guarded by roles={[3]} — hidden from non-super-admins. */
@@ -85,6 +132,8 @@ const superAdminOnlyRoutes = [
   "/admin/currencies",
   "/admin/legal-content",
   "/admin/content",
+  "/admin/archives-content",
+  "/admin/sources-content",
   "/admin/site-image-placeholders",
   "/admin/settings",
   "/admin/backups",
@@ -122,10 +171,12 @@ const labelFallbacks: Record<string, string> = {
   currencies_exchange: "Devises & Taux de Change",
   legal_content: "Contenu Juridique",
   public_content_manager: "Gestion du Contenu Public",
+  archives_public_content: "Archives Public Content",
+  sources_public_content: "Sources Public Content",
   settings: "Paramètres",
-  role_distribution: "Role Distribution",
-  activity: "Activity Log",
-  footer_settings: "Footer Settings",
+  role_distribution: "Distribution des Rôles",
+  activity: "Journal d'Activité",
+  footer_settings: "Paramètres du Pied de Page",
   backups: "Sauvegardes & Snapshots",
 };
 
@@ -161,7 +212,7 @@ export default function AdminSidebar({
     "/admin/user-settings",
   ];
 
-  const visibleLinks = links.filter((link) => {
+  const filterLink = (link: SidebarLink) => {
     if (isSuperAdmin) return true;
     if (normalizedRole === 2) {
       return userAllowedRoutes.includes(link.to);
@@ -172,7 +223,7 @@ export default function AdminSidebar({
     const key = (link as { permissionKey?: string }).permissionKey || link.to.replace("/admin/", "");
     if (key === "admins-roles") return granted.includes("admins") || granted.includes("admins-roles");
     return granted.includes(key);
-  });
+  };
 
   return (
     <>
@@ -203,7 +254,7 @@ export default function AdminSidebar({
 
         <div className="px-5 py-4 border-b border-[var(--gold)]/15 bg-[var(--secondary)]/40">
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--primary)] text-xs font-bold text-white uppercase">
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--primary)] text-xs font-bold text-white uppercase shadow-sm">
               {user?.name ? user.name.charAt(0) : "A"}
             </div>
             <div className="flex-1 min-w-0">
@@ -215,37 +266,46 @@ export default function AdminSidebar({
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
-          <p className="px-3 text-[0.65rem] font-bold uppercase tracking-[0.2em] text-[var(--gold)] mb-2">
-            {t("navigation", "Navigation")}
-          </p>
-          {visibleLinks.map(({ to, end, labelKey, Icon }) => (
-            <NavLink
-              key={to}
-              to={to}
-              end={end}
-              onClick={() => {
-                if (window.innerWidth < 1024) onClose();
-              }}
-              className={({ isActive }) =>
-                `flex items-center gap-3 rounded-md px-3 py-2.5 text-xs font-semibold tracking-wide transition-all ${
-                  isActive
-                    ? `bg-[var(--gold)]/15 text-[var(--gold)] ${isRtl ? "border-l-2" : "border-r-2"} border-[var(--gold)] font-bold`
-                    : "text-[var(--muted-foreground)] hover:bg-[var(--gold)]/10 hover:text-[var(--foreground)]"
-                }`
-              }
-            >
-              <Icon className="h-4 w-4 shrink-0" />
-              <span className="truncate">{t(labelKey, labelFallbacks[labelKey] || labelKey)}</span>
-            </NavLink>
-          ))}
+        <div className="flex-1 overflow-y-auto px-3 py-3 space-y-3 custom-scrollbar">
+          {CATEGORIES.map((category) => {
+            const visible = category.links.filter(filterLink);
+            if (visible.length === 0) return null;
+
+            return (
+              <div key={category.id} className="space-y-1">
+                <div className="px-3 pt-2 pb-1 text-[0.62rem] font-bold uppercase tracking-[0.18em] text-[var(--gold)] flex items-center justify-between">
+                  <span>{t(category.titleKey, category.id)}</span>
+                </div>
+                {visible.map(({ to, end, labelKey, Icon }) => (
+                  <NavLink
+                    key={to}
+                    to={to}
+                    end={end}
+                    onClick={() => {
+                      if (window.innerWidth < 1024) onClose();
+                    }}
+                    className={({ isActive }) =>
+                      `flex items-center gap-3 rounded-lg px-3 py-2 text-xs font-semibold tracking-wide transition-all ${
+                        isActive
+                          ? `bg-[var(--gold)]/15 text-[var(--gold)] ${isRtl ? "border-l-2" : "border-r-2"} border-[var(--gold)] font-bold shadow-sm`
+                          : "text-[var(--muted-foreground)] hover:bg-[var(--gold)]/10 hover:text-[var(--foreground)]"
+                      }`
+                    }
+                  >
+                    <Icon className="h-4 w-4 shrink-0" />
+                    <span className="truncate">{t(labelKey, labelFallbacks[labelKey] || labelKey)}</span>
+                  </NavLink>
+                ))}
+              </div>
+            );
+          })}
         </div>
 
         <div className="p-3 border-t border-[var(--gold)]/20 bg-[var(--secondary)]/40 flex items-center justify-between gap-2">
           <ThemeToggle />
           <button
             onClick={() => logout()}
-            className="flex items-center gap-1.5 rounded px-3 py-1.5 text-xs font-semibold text-red-500 hover:bg-red-500/10 transition-colors"
+            className="flex items-center gap-1.5 rounded px-3 py-1.5 text-xs font-semibold text-red-500 hover:bg-red-500/10 transition-colors cursor-pointer"
           >
             <LogOut className="h-3.5 w-3.5" />
             <span>{t("nav_signout", "Sign Out")}</span>

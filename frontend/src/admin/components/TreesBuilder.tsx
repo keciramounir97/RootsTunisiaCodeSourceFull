@@ -2658,15 +2658,33 @@ export default function TreesBuilder({
           const tipWidth = tipEl ? Math.max(240, tipEl.offsetWidth || 280) : 280;
           const tipHeight = tipEl ? Math.max(100, tipEl.offsetHeight || 160) : 160;
 
-          // Always stay strictly within viewport coordinates, anchored close (6-8px) to the pointer and card
           let left = clientX + 8;
-          if (left + tipWidth > window.innerWidth - 10) {
-            left = Math.max(10, clientX - tipWidth - 8);
-          }
-
           let top = clientY + 8;
-          if (top + tipHeight > window.innerHeight - 10) {
-            top = Math.max(10, clientY - tipHeight - 8);
+
+          // If hovered element has a bounding rect (person card in SVG / DOM), anchor directly adjacent to the card
+          if (targetEl && typeof (targetEl as any).getBoundingClientRect === "function") {
+            const rect = (targetEl as any).getBoundingClientRect();
+            if (rect && rect.width > 0 && rect.height > 0) {
+              // Position directly under the card, slightly indented from the card's left edge
+              left = rect.left + 14;
+              top = rect.bottom + 4;
+
+              // If overflowing bottom of viewport, position immediately above the card
+              if (top + tipHeight > window.innerHeight - 10) {
+                top = Math.max(10, rect.top - tipHeight - 4);
+              }
+              // If overflowing right edge of viewport, align to right side
+              if (left + tipWidth > window.innerWidth - 10) {
+                left = Math.max(10, window.innerWidth - tipWidth - 12);
+              }
+            }
+          } else {
+            if (left + tipWidth > window.innerWidth - 10) {
+              left = Math.max(10, clientX - tipWidth - 8);
+            }
+            if (top + tipHeight > window.innerHeight - 10) {
+              top = Math.max(10, clientY - tipHeight - 8);
+            }
           }
 
           tooltip

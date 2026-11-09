@@ -23,7 +23,6 @@ import {
 import { useThemeStore } from "../../store/theme";
 
 import { api } from "../../api/client";
-import { recordAdminUpload } from "../../utils/gallerySocial";
 import {
   getApiErrorMessage,
   getGedcomLoadErrorMessage,
@@ -537,15 +536,8 @@ export default function Trees() {
 
     const payload = res?.data;
     const newId = payload?.data?.id ?? payload?.id ?? (res as any)?.id;
-    recordAdminUpload("trees", {
-      id: newId || `tree-upload-${Date.now()}`,
-      name: fd.get("name") || "New Family Tree",
-      title: fd.get("name") || "New Family Tree",
-      description: fd.get("description") || "Genealogical tree uploaded via admin",
-      governorate: fd.get("governorate") || "Tunisia",
-      membersCount: 12,
-      generations: 4,
-    });
+    // NOTE: no local "phantom" card is recorded here anymore. Public tree cards
+    // are rendered strictly from what the API returns for trees that were created.
     return newId;
   };
 

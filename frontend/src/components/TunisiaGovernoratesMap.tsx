@@ -214,6 +214,129 @@ function MapCenterController({ coords, zoom }: { coords: [number, number]; zoom:
   return null;
 }
 
+const GOV_ARCHIVAL_ENRICHMENT: Record<string, { tribes: string; jurisdiction: string; census: string }> = {
+  tunis: {
+    tribes: "Familles Baldiya de la Médina, Oulad Sidi Ali Azouz, fractions de l'Ariana et La Goulette",
+    jurisdiction: "Tribunaux Charaïques de Tunis (Hanafite & Malikite), Séries Notariées Diwan al-Insha",
+    census: "Recensements municipaux de Tunis 1891, 1921, 1926, 1931 et 1936",
+  },
+  ariana: {
+    tribes: "Oulad Sidi Abid, notables maraîchers de La Soukra, lignées hispano-mauresques andalouses",
+    jurisdiction: "Justice de Paix de Tunis-Nord et Qadi Malikite de l'Ariana, Séries Habous des Vergers",
+    census: "Cahiers de la Majba du Caïdat de Tunis Banlieue 1860-1881",
+  },
+  ben_arous: {
+    tribes: "Habitants de Radès, Hammam-Lif, Mohamedia et Oulad Boumhel",
+    jurisdiction: "Juridiction du Caïdat de la Banlieue Sud, Fonds du Palais Beylical de Ksar Saïd",
+    census: "Dénombrements ruraux et séries d'immatriculation foncière 1892-1940",
+  },
+  manouba: {
+    tribes: "Fractions de Oued Ellil, Den-Den, lignées de Sidi Amor Boukhtiwa",
+    jurisdiction: "Tribunal de Première Instance de Tunis-Ouest, Séries des Habous Familiaux",
+    census: "Registres de population et état civil de la Manouba 1908-1956",
+  },
+  bizerte: {
+    tribes: "Confédérations des Mogods, Mateur, Ouchtata et Menzel Bourguiba",
+    jurisdiction: "Tribunal Mixte et Qadi de Bizerte, Archives de l'Amirauté et de la Marine",
+    census: "Recensements des Européens et Tunisiens du Nord 1911, 1926, 1936",
+  },
+  beja: {
+    tribes: "Tribus des Amdoun, Bejaoua, Nefza et fractions de Teboursouk",
+    jurisdiction: "Tribunal Charaïque de Béja, Séries des Terres Céréalières et Habous de Sidi Bou Arba",
+    census: "Registres fiscaux de la Majba 1860-1881 et rôle de conscription militaire",
+  },
+  jendouba: {
+    tribes: "Confédérations des Khemir (Kroumirie), Ouled Bou Ghanem et Oulad Yahia",
+    jurisdiction: "Mahkama Charaïya de Souk El Arba et Aïn Draham, Séries Forestières",
+    census: "Registres nominatifs de la Kroumirie 1886-1936",
+  },
+  le_kef: {
+    tribes: "Grandes tribus des Dreid, Oulad Bou Ghanem, Oulad Sidi Khiar et Charne",
+    jurisdiction: "Tribunal de la Casbah du Kef, Registres Notariés de la Frontière Algéro-Tunisienne",
+    census: "Série Caïdale du Haut-Tell et recensements quinquennaux 1921-1936",
+  },
+  siliana: {
+    tribes: "Fractions des Oulad Aoun, Siliana et Oulad Ayar de Makthar",
+    jurisdiction: "Juridiction de Makthar et Gaâfour, Actes Notariés des Habous de Sidi Bou Rouis",
+    census: "Cahiers des impositions pastorales et recensements 1911-1946",
+  },
+  nabeul: {
+    tribes: "Communautés du Cap-Bon, descendants andalous de Testour, Soliman et Nabeul",
+    jurisdiction: "Tribunaux Charaïques de Nabeul et Kelibia, Séries des Vergers et Habous Maritimes",
+    census: "Registres de l'État Civil municipal de Nabeul et Hammamet 1888-1956",
+  },
+  zaghouan: {
+    tribes: "Lignées hispano-andalouses de Zaghouan, Zriba et Saouaf",
+    jurisdiction: "Qadi de Zaghouan et conservation foncière des aqueducs historiques",
+    census: "Dénombrements des familles morisques et séries fiscales du Caïdat de Zaghouan",
+  },
+  sousse: {
+    tribes: "Populations maritimes du Sahel, fractions de Kalaa Kebira, Msaken et Akouda",
+    jurisdiction: "Tribunal Charaïque de Sousse, Séries Notariées des oliveraies et commerce maritime",
+    census: "Recensements de Sousse 1901, 1911, 1921, 1931 et 1936",
+  },
+  monastir: {
+    tribes: "Lignées du Ribat de Monastir, Ksar Hellal, Moknine et Téboulba",
+    jurisdiction: "Mahkama Charaïya de Monastir, Waqfs du Mausolée de Sidi El Mazeri",
+    census: "Registres des corporations d'artisans tisserands et recensements du Sahel",
+  },
+  mahdia: {
+    tribes: "Lignées maritimes mahdoises, fractions de Chebba, El Jem et Ksour Essef",
+    jurisdiction: "Tribunal Charaïque de Mahdia, Séries des pêcheries et concessions oléicoles",
+    census: "Recensements de la population côtière et état civil municipal 1895-1956",
+  },
+  sfax: {
+    tribes: "Familles citadines de la Médina de Sfax, fractions de Sakiet, Agareb et Kerkennah",
+    jurisdiction: "Tribunal Charaïque de Sfax (Mahkama Charaïya), Séries Notariées des Oliveraies Sfaxiennes",
+    census: "Recensements quinquennaux de Sfax 1911, 1921, 1926, 1931 et 1936",
+  },
+  kairouan: {
+    tribes: "Confédérations des Jlass (Beni Zid, Oulad Iddir), Ouled Khalifa et Chbika",
+    jurisdiction: "Cour Magistrale Charaïque de Kairouan, Actes Notariés de la Grande Mosquée Okba",
+    census: "Séries Majba du Caïdat des Jlass 1856-1881 et registres des nomades",
+  },
+  kasserine: {
+    tribes: "Confédérations des Majer, Frachiche et Oulad Sidi Tlil de Fériana",
+    jurisdiction: "Caïdat des Frachiche, Juridiction de Sbeïtla et justice coutumière tribale",
+    census: "Recensements des tribus des steppes occidentales 1892-1946",
+  },
+  sidi_bouzid: {
+    tribes: "Confédérations des Hammama, Oulad Aziz et fractions pastorales",
+    jurisdiction: "Mahkama de Sidi Bouzid et Gafsa, Séries des parcours pastoraux et puits artésiens",
+    census: "Cahiers de la Majba des Hammama et recensements nominatifs 1921-1936",
+  },
+  gafsa: {
+    tribes: "Lignées de l'oasis de Gafsa, Oulad Sidi Boubaker et mineurs de Métlaoui",
+    jurisdiction: "Tribunal Charaïque de Gafsa, Séries Notariées de l'Oasis et bassins romains",
+    census: "Recensements des ouvriers miniers et familles oasiennes 1906-1946",
+  },
+  tozeur: {
+    tribes: "Familles savantes du Jérid, lignées d'Ibn Chabbat, Nefta et Degache",
+    jurisdiction: "Tribunal Charaïque du Jérid à Tozeur, Séries Notariées des Droits d'Eau de l'Oasis",
+    census: "Registres de répartition des eaux et état civil oasien 1890-1956",
+  },
+  kebili: {
+    tribes: "Confédérations des Merazig (Douz), Nefzaoua et Oulad Yacoub",
+    jurisdiction: "Caïdat des Nefzaoua, Séries des caravanes sahariennes et droits coutumiers",
+    census: "Dénombrements des nomades et sédentaires du Nefzaoua 1911-1936",
+  },
+  gabes: {
+    tribes: "Lignées de l'oasis maritime de Gabès, Oulad Sidi Boulbaba et fractions de Chenini",
+    jurisdiction: "Tribunal Charaïque de Gabès, Séries des Habous Oasiens et douanes maritimes",
+    census: "Recensements de Gabès 1911, 1926, 1936 et séries militaires du Sud",
+  },
+  medenine: {
+    tribes: "Confédération des Ouerghemma, communautés de l'Île de Djerba (Houmt Souk, Midoun)",
+    jurisdiction: "Tribunaux Charaïques et Rabbiniques de Djerba, Caïdat de Médenine",
+    census: "Registres des Ksours de Médenine et recensements de Djerba 1898-1956",
+  },
+  tataouine: {
+    tribes: "Tribus berbères des Ksours (Chenini, Douiret, Guermessa) et nomades Oudaïa",
+    jurisdiction: "Poste Militaire des Affaires Indigènes et Caïdat de Tataouine",
+    census: "Dénombrement des populations des Ksours et caravanes du Sahara 1902-1946",
+  },
+};
+
 export default function TunisiaGovernoratesMap({
   variant = "full",
 }: {
@@ -655,6 +778,41 @@ export default function TunisiaGovernoratesMap({
                     {t(`gov_landmarks_${selectedGov.id}`)}
                   </p>
                 </div>
+
+                {/* Rich Archival & Tribal Lineages Enrichment */}
+                {GOV_ARCHIVAL_ENRICHMENT[selectedGov.id] && (
+                  <div className="p-3.5 rounded-lg bg-[var(--background)]/80 border border-[var(--gold)]/30 space-y-2.5">
+                    <div>
+                      <p className="text-[0.68rem] font-bold uppercase tracking-wider text-[var(--gold)] flex items-center gap-1.5">
+                        <GitBranch className="h-3.5 w-3.5" />
+                        <span>Fractions Tribales & Notables Locaux</span>
+                      </p>
+                      <p className="text-xs text-[var(--foreground)] mt-0.5 leading-relaxed">
+                        {GOV_ARCHIVAL_ENRICHMENT[selectedGov.id].tribes}
+                      </p>
+                    </div>
+
+                    <div className="pt-2 border-t border-[var(--gold)]/15">
+                      <p className="text-[0.68rem] font-bold uppercase tracking-wider text-[var(--gold)] flex items-center gap-1.5">
+                        <Archive className="h-3.5 w-3.5" />
+                        <span>Juridiction Charaïque & Séries d'Archives</span>
+                      </p>
+                      <p className="text-xs text-[var(--foreground)] mt-0.5 leading-relaxed">
+                        {GOV_ARCHIVAL_ENRICHMENT[selectedGov.id].jurisdiction}
+                      </p>
+                    </div>
+
+                    <div className="pt-2 border-t border-[var(--gold)]/15">
+                      <p className="text-[0.68rem] font-bold uppercase tracking-wider text-[var(--gold)] flex items-center gap-1.5">
+                        <Compass className="h-3.5 w-3.5" />
+                        <span>Recensements Historiques & Séries Fiscale (Majba)</span>
+                      </p>
+                      <p className="text-xs text-[var(--foreground)] mt-0.5 leading-relaxed">
+                        {GOV_ARCHIVAL_ENRICHMENT[selectedGov.id].census}
+                      </p>
+                    </div>
+                  </div>
+                )}
 
                 <div>
                   <p className="eyebrow text-[0.65rem] text-[var(--gold)] mb-2">

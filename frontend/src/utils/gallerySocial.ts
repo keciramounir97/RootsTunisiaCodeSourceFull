@@ -145,6 +145,9 @@ export function recordAdminUpload(
   item: any
 ) {
   if (typeof window === "undefined" || !item) return;
+  // Trees are always served by the API: never keep a browser-local copy that
+  // could surface a card for something that was not really created.
+  if (kind === "trees") return;
   try {
     const raw = localStorage.getItem(UPLOADS_STORAGE_KEY);
     const store = raw ? JSON.parse(raw) : {};
@@ -165,6 +168,25 @@ export function recordAdminUpload(
 
 export function getTrackedUploads(kind: "images" | "books" | "audios" | "documents" | "trees" | "articles"): any[] {
   if (typeof window === "undefined") return [];
+  if (kind === "trees") {
+    // Purge phantom tree cards that older versions stored in this browser.
+    try {
+      for (const k of [UPLOADS_STORAGE_KEY, "roots_admin_uploads", "roots_custom_uploads", "roots_uploads", "roots_gallery_uploads"]) {
+        const raw = localStorage.getItem(k);
+        if (!raw) continue;
+        const parsed = JSON.parse(raw);
+        if (parsed && typeof parsed === "object" && !Array.isArray(parsed) && "trees" in parsed) {
+          delete parsed.trees;
+          localStorage.setItem(k, JSON.stringify(parsed));
+        }
+      }
+      localStorage.removeItem("roots_uploaded_trees");
+      localStorage.removeItem("roots_trees_uploads");
+    } catch {
+      // ignore
+    }
+    return [];
+  }
   const results: any[] = [];
   const seenIds = new Set<string>();
 
