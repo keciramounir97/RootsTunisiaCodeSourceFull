@@ -2637,23 +2637,41 @@ export default function TreesBuilder({
           .style("visibility", "hidden")
           .style("pointer-events", "none")
           .style("z-index", "9999999")
-          .style("background", isDark ? "rgba(13, 27, 42, 0.96)" : "rgba(248, 245, 239, 0.97)")
+          .style("background", isDark ? "rgba(13, 27, 42, 0.98)" : "#ffffff")
           .style("color", isDark ? "#f8f5ef" : "#0d1b2a")
-          .style("border", isDark ? "1px solid rgba(212, 169, 86, 0.5)" : "1px solid rgba(212, 169, 86, 0.6)")
+          .style("border", isDark ? "1px solid rgba(212, 169, 86, 0.55)" : "1px solid rgba(212, 169, 86, 0.65)")
           .style("padding", "10px 14px")
           .style("border-radius", "8px")
           .style("font-size", "12px")
-          .style("box-shadow", "0 10px 25px -5px rgba(0, 0, 0, 0.3)")
+          .style("box-shadow", "0 12px 30px -4px rgba(0, 0, 0, 0.25), 0 4px 12px rgba(0, 0, 0, 0.1)")
           .style("backdrop-filter", "blur(8px)")
-          .style("max-width", "320px")
-          .style("line-height", "1.4");
+          .style("width", "max-content")
+          .style("min-width", "250px")
+          .style("max-width", "340px")
+          .style("line-height", "1.45");
 
-        const updateTooltipPos = (e: any) => {
-          const clientX = e.clientX ?? (e.sourceEvent ? e.sourceEvent.clientX : 0);
-          const clientY = e.clientY ?? (e.sourceEvent ? e.sourceEvent.clientY : 0);
-          const left = Math.min(window.innerWidth - 320, Math.max(12, clientX + 16));
-          const top = Math.min(window.innerHeight - 150, Math.max(12, clientY + 16));
-          tooltip.style("left", `${left}px`).style("top", `${top}px`);
+        const updateTooltipPos = (e: any, targetEl?: Element | null) => {
+          const clientX = Number(e?.clientX ?? (e?.sourceEvent ? e.sourceEvent.clientX : 0));
+          const clientY = Number(e?.clientY ?? (e?.sourceEvent ? e.sourceEvent.clientY : 0));
+
+          const tipEl = tooltip.node();
+          const tipWidth = tipEl ? Math.max(240, tipEl.offsetWidth || 280) : 280;
+          const tipHeight = tipEl ? Math.max(100, tipEl.offsetHeight || 160) : 160;
+
+          // Always stay strictly within viewport coordinates, anchored close (6-8px) to the pointer and card
+          let left = clientX + 8;
+          if (left + tipWidth > window.innerWidth - 10) {
+            left = Math.max(10, clientX - tipWidth - 8);
+          }
+
+          let top = clientY + 8;
+          if (top + tipHeight > window.innerHeight - 10) {
+            top = Math.max(10, clientY - tipHeight - 8);
+          }
+
+          tooltip
+            .style("left", `${Math.round(left)}px`)
+            .style("top", `${Math.round(top)}px`);
         };
 
         svg.attr("width", width).attr("height", height);
@@ -2841,7 +2859,109 @@ export default function TreesBuilder({
               .strength((d) => (d.type === "couple" ? 0.6 : 0.85))
           );
 
+        const hidePersonTooltip = () => {
+          tooltip.style("visibility", "hidden");
+        };
+
+        const showPersonTooltip = (e: any, d: any, targetEl?: Element | null) => {
+          if (!d) return;
+          const esc = (v: any) =>
+            String(v ?? "")
+              .replace(/&/g, "&amp;")
+              .replace(/</g, "&lt;")
+              .replace(/>/g, "&gt;")
+              .replace(/"/g, "&quot;");
+          const name = esc(nameOf(d));
+          const gender = esc(displayGender(d.gender));
+          const birthDate = normalizeSpaces(d.birthYear || d.birthDate || d.birth_date || d.birth_year || "");
+          const birthPlace = normalizeSpaces(d.birthPlace || d.birth_place || "");
+          const deathDate = normalizeSpaces(d.deathDate || d.deathYear || d.death_date || d.death_year || "");
+          const deathPlace = normalizeSpaces(d.deathPlace || d.death_place || "");
+          const details = String(d.details || d.notes || "").trim();
+          const profession = normalizeSpaces(d.profession || d.occupation || d.job || "");
+          const archiveSource = Array.isArray(d.archiveSource)
+            ? d.archiveSource.filter(Boolean).join(", ")
+            : normalizeSpaces(d.archiveSource || d.archive_source || d.source || "");
+          const documentCode = Array.isArray(d.documentCode)
+            ? d.documentCode.filter(Boolean).join(", ")
+            : normalizeSpaces(d.documentCode || d.document_code || "");
+          const reliability = normalizeSpaces(d.reliability || "");
+
+          const getP = (id: any) => {
+            if (!id) return "";
+            const found = people.find((x) => String(x.id) === String(id));
+            return found ? nameOf(found) : String(id).startsWith("@") ? "" : String(id);
+          };
+          const fatherName = d.father ? getP(d.father) : (d.fatherName || "");
+          const motherName = d.mother ? getP(d.mother) : (d.motherName || "");
+          const spouseName = d.spouse ? getP(d.spouse) : (d.spouseName || "");
+
+          const rowHtml = (label: string, value: string) =>
+            `<div style="display:flex; justify-content:space-between; align-items:flex-start; gap:16px; padding:2px 0;"><span style="opacity:0.75; font-size:11px; white-space:nowrap;">${esc(label)}:</span><span style="font-weight:600; font-size:11.5px; text-align:right; word-break:break-word;">${esc(value)}</span></div>`;
+          const rows: string[] = [];
+          const addRow = (label: string, value: string) => {
+            if (!value) return;
+            rows.push(rowHtml(label, value));
+          };
+
+          addRow(t("legacy.gender", "Genre"), displayGender(d.gender));
+          addRow(t("legacy.birth_year", "Birth Year"), birthDate);
+          addRow(t("legacy.birth_place", "Birth place"), birthPlace);
+          addRow(t("legacy.death_date", "Died"), deathDate);
+          addRow(t("legacy.death_place", "Death place"), deathPlace);
+          addRow(t("legacy.profession", "Profession"), profession);
+          addRow(t("legacy.spouse", "Conjoint(e)"), spouseName);
+          addRow(t("legacy.father", "Père"), fatherName);
+          addRow(t("legacy.mother", "Mère"), motherName);
+
+          const divider = `<div style="border-top:1px solid ${isDark ? "rgba(212,169,86,0.25)" : "rgba(212,169,86,0.35)"}; margin:6px 0;"></div>`;
+
+          const detailsHtml = details
+            ? `<div style="margin-top:6px; font-size:10.5px; opacity:0.85; border-top:1px solid ${isDark ? "rgba(212,169,86,0.25)" : "rgba(212,169,86,0.35)"}; padding-top:4px; white-space:pre-line;">${esc(details)}</div>`
+            : "";
+
+          const sourceRows: string[] = [];
+          if (archiveSource) {
+            sourceRows.push(rowHtml(t("legacy.archive_source", "Archive Source"), archiveSource));
+          }
+          if (documentCode) {
+            sourceRows.push(rowHtml(t("legacy.document_code", "Document Code"), documentCode));
+          }
+          if (reliability) {
+            sourceRows.push(rowHtml(t("legacy.reliability", "Reliability"), reliability));
+          }
+
+          const sourcesHtml = sourceRows.length
+            ? divider + sourceRows.join("")
+            : "";
+          const infoHtml = rows.join("");
+          const emptyHtml =
+            !infoHtml && !detailsHtml && !sourcesHtml
+              ? `<div style="opacity:0.6; font-size:11px;">${esc(t("legacy.no_details", "No details"))}</div>`
+              : "";
+
+          const tooltipHtml = `
+            <div style="font-weight:700; font-size:13px; font-family:'Cinzel', 'Cormorant Garamond', serif; padding-bottom:4px; margin-bottom:6px; border-bottom:1px solid ${isDark ? "rgba(212,169,86,0.3)" : "rgba(212,169,86,0.4)"}; display:flex; justify-content:space-between; align-items:center; gap:8px;">
+              <span>${name}</span>
+              <span style="font-size:11px; opacity:0.75; font-family:sans-serif; font-weight:600;">(${gender})</span>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:2px; font-size:11.5px;">
+              ${infoHtml}
+              ${emptyHtml}
+              ${detailsHtml}
+              ${sourcesHtml}
+            </div>
+          `;
+
+          tooltip
+            .style("visibility", "visible")
+            .html(tooltipHtml);
+
+          updateTooltipPos(e, targetEl);
+        };
+
         const openPersonDetails = (event, d) => {
+          hidePersonTooltip();
           event?.stopPropagation?.();
           const targetData = d?.person || d;
           const found = people.find((p) => String(p.id) === String(targetData?.id)) || targetData;
@@ -2892,6 +3012,7 @@ export default function TreesBuilder({
               .drag()
 
               .on("start", (event, d) => {
+                hidePersonTooltip();
                 if (!event.active) sim.alphaTarget(0.3).restart();
 
                 d.fx = d.x;
@@ -2900,6 +3021,7 @@ export default function TreesBuilder({
               })
 
               .on("drag", (event, d) => {
+                hidePersonTooltip();
                 d.fx = event.x;
 
                 d.fy = event.y;
@@ -2917,102 +3039,14 @@ export default function TreesBuilder({
           .on("pointerdown.detail", rememberDetailPointer)
           .on("pointerup.detail", openDetailFromPointer)
           .on("click.detail", openPersonDetails)
-          .on("mouseenter.tooltip", (e, d) => {
-            const esc = (v) =>
-              String(v ?? "")
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;")
-                .replace(/"/g, "&quot;");
-            const name = esc(nameOf(d));
-            const gender = esc(displayGender(d.gender));
-            const birthDate = normalizeSpaces(d.birthYear || d.birthDate || "");
-            const birthPlace = normalizeSpaces(d.birthPlace || "");
-            const deathDate = normalizeSpaces(d.deathDate || d.deathYear || "");
-            const deathPlace = normalizeSpaces(d.deathPlace || "");
-            const details = String(d.details || "").trim();
-            const profession = normalizeSpaces(d.profession || "");
-            const archiveSource = Array.isArray(d.archiveSource)
-              ? d.archiveSource.filter(Boolean).join(", ")
-              : normalizeSpaces(d.archiveSource || "");
-            const documentCode = Array.isArray(d.documentCode)
-              ? d.documentCode.filter(Boolean).join(", ")
-              : normalizeSpaces(d.documentCode || "");
-            const reliability = normalizeSpaces(d.reliability || "");
-
-            const getP = (id) => {
-              const found = people.find((x) => String(x.id) === String(id));
-              return found ? nameOf(found) : "";
-            };
-            const fatherName = d.father ? getP(d.father) : "";
-            const motherName = d.mother ? getP(d.mother) : "";
-            const spouseName = d.spouse ? getP(d.spouse) : "";
-
-            const rowHtml = (label, value) =>
-              `<div class="flex justify-between gap-4"><span class="opacity-70">${esc(label)}:</span><span>${esc(value)}</span></div>`;
-            const rows = [];
-            const addRow = (label, value) => {
-              if (!value) return;
-              rows.push(rowHtml(label, value));
-            };
-
-            addRow(t("legacy.gender", "Gender"), displayGender(d.gender));
-            addRow(t("legacy.birth_year", "Born"), birthDate);
-            addRow(t("legacy.birth_place", "Birth place"), birthPlace);
-            addRow(t("legacy.death_date", "Died"), deathDate);
-            addRow(t("legacy.death_place", "Death place"), deathPlace);
-            addRow(t("legacy.profession", "Profession"), profession);
-            addRow(t("legacy.spouse", "Spouse"), spouseName);
-            addRow(t("legacy.father", "Father"), fatherName);
-            addRow(t("legacy.mother", "Mother"), motherName);
-
-            const detailsHtml = details
-              ? `<div class="mt-2 text-[10px] opacity-80 border-t pt-1 whitespace-pre-line">${esc(details)}</div>`
-              : "";
-
-            const sourceRows = [];
-            if (archiveSource) {
-              sourceRows.push(rowHtml(t("legacy.archive_source", "Archive Source"), archiveSource));
-            }
-            if (documentCode) {
-              sourceRows.push(rowHtml(t("legacy.document_code", "Document Code"), documentCode));
-            }
-            if (reliability) {
-              sourceRows.push(rowHtml(t("legacy.reliability", "Reliability"), reliability));
-            }
-
-            const sourcesHtml = sourceRows.length
-              ? `<div class="mt-2 pt-2 border-t text-[10px] space-y-1">${sourceRows.join("")}</div>`
-              : "";
-            const infoHtml = rows.join("");
-            const emptyHtml =
-              !infoHtml && !detailsHtml && !sourcesHtml
-                ? `<div class="opacity-60">${esc(t("legacy.no_details", "No details"))}</div>`
-                : "";
-
-            const tooltipHtml = `
-            <div class="text-sm font-bold border-b pb-1 mb-1">${name} <span class="opacity-70 text-xs">(${gender})</span></div>
-            <div class="space-y-1 text-xs">
-              ${infoHtml}
-              ${emptyHtml}
-              ${detailsHtml}
-              ${sourcesHtml}
-            </div>
-          `;
-
-            tooltip
-              .style("visibility", "visible")
-              .html(tooltipHtml)
-              .style("top", `${e.pageY + 15}px`)
-              .style("left", `${e.pageX + 15}px`);
+          .on("mouseenter.tooltip", function (e, d) {
+            showPersonTooltip(e, d, this);
           })
-          .on("mousemove.tooltip", (e) => {
-            tooltip
-              .style("top", `${e.pageY + 15}px`)
-              .style("left", `${e.pageX + 15}px`);
+          .on("mousemove.tooltip", function (e) {
+            updateTooltipPos(e, this);
           })
           .on("mouseleave.tooltip", () => {
-            tooltip.style("visibility", "hidden");
+            hidePersonTooltip();
           });
 
         zoomRect.on("click", () => {
@@ -3130,6 +3164,15 @@ export default function TreesBuilder({
           .on("pointerdown.detail", rememberDetailPointer)
           .on("pointerup.detail", openDetailFromPointer)
           .on("click.detail", openPersonDetails)
+          .on("mouseenter.tooltip", function (e, d) {
+            showPersonTooltip(e, d, this);
+          })
+          .on("mousemove.tooltip", function (e) {
+            updateTooltipPos(e, this);
+          })
+          .on("mouseleave.tooltip", () => {
+            hidePersonTooltip();
+          })
           .on("mouseover.highlight", function () {
             d3.select(this.parentNode)
               .select("rect.node-card")
@@ -3156,7 +3199,16 @@ export default function TreesBuilder({
           .style("cursor", "pointer")
           .on("pointerdown.detail", rememberDetailPointer)
           .on("pointerup.detail", openDetailFromPointer)
-          .on("click.detail", openPersonDetails);
+          .on("click.detail", openPersonDetails)
+          .on("mouseenter.tooltip", function (e, d) {
+            showPersonTooltip(e, d, this);
+          })
+          .on("mousemove.tooltip", function (e) {
+            updateTooltipPos(e, this);
+          })
+          .on("mouseleave.tooltip", () => {
+            hidePersonTooltip();
+          });
 
         detailButton
           .append("rect")
