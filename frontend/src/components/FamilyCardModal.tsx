@@ -535,32 +535,32 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
   }, [selectedPerson, displayPeople, archivalDocuments, locale]);
 
   return (
-    <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/80 backdrop-blur-md p-2 sm:p-4 overflow-y-auto">
-      <div className="relative w-full max-w-6xl rounded-2xl bg-[var(--card)] border border-[var(--gold)]/50 shadow-2xl p-4 sm:p-6 my-auto text-[var(--foreground)] animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[92vh]">
+    <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/80 backdrop-blur-md p-1.5 sm:p-4 overflow-y-auto">
+      <div className="relative w-full max-w-6xl rounded-2xl bg-[var(--card)] border border-[var(--gold)]/50 shadow-2xl p-3 sm:p-6 my-auto text-[var(--foreground)] animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[96vh] sm:max-h-[92vh] overflow-hidden">
         
         {/* MODAL HEADER */}
-        <div className="flex items-start sm:items-center justify-between gap-4 border-b border-[var(--border)] pb-3.5 shrink-0">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <span className="px-2.5 py-0.5 rounded-full text-[0.65rem] font-bold uppercase tracking-wider bg-[var(--gold)]/15 text-[var(--gold)] border border-[var(--gold)]/30 flex items-center gap-1">
-                <MapPin className="h-3 w-3 text-[var(--gold)]" />
-                <span>{governorate}</span>
+        <div className="flex items-start sm:items-center justify-between gap-2 sm:gap-4 border-b border-[var(--border)] pb-2.5 sm:pb-3.5 shrink-0">
+          <div className="space-y-1 min-w-0 flex-1">
+            <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+              <span className="px-2 py-0.5 rounded-full text-[0.6rem] sm:text-[0.65rem] font-bold uppercase tracking-wider bg-[var(--gold)]/15 text-[var(--gold)] border border-[var(--gold)]/30 flex items-center gap-1">
+                <MapPin className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-[var(--gold)] shrink-0" />
+                <span className="truncate">{governorate}</span>
               </span>
-              <span className="px-2.5 py-0.5 rounded-full text-[0.65rem] font-mono font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
-                <ShieldCheck className="h-3 w-3" />
+              <span className="px-2 py-0.5 rounded-full text-[0.6rem] sm:text-[0.65rem] font-mono font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
+                <ShieldCheck className="h-2.5 w-2.5 sm:h-3 sm:w-3 shrink-0" />
                 <span>{t("verified_patrimony", "Patrimoine Vérifié")}</span>
               </span>
             </div>
             <button
               type="button"
               onClick={() => setActiveTab("schema")}
-              className="text-start group cursor-pointer block"
+              className="text-start group cursor-pointer block max-w-full"
               title="Cliquer pour afficher le schéma interactif de l'arbre"
             >
-              <h2 className="text-xl sm:text-2xl font-serif font-bold text-[var(--foreground)] tracking-wide group-hover:text-[var(--gold)] transition-colors flex items-center gap-2.5 flex-wrap">
+              <h2 className="text-base sm:text-xl md:text-2xl font-serif font-bold text-[var(--foreground)] tracking-wide group-hover:text-[var(--gold)] transition-colors flex items-center gap-2 flex-wrap line-clamp-2 sm:line-clamp-none">
                 <span>{title}</span>
-                <span className="inline-flex items-center gap-1 text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-[var(--gold)]/15 text-[var(--gold)] border border-[var(--gold)]/35 group-hover:bg-[var(--gold)] group-hover:text-black transition-colors">
-                  <GitBranch className="h-3 w-3" />
+                <span className="inline-flex items-center gap-1 text-[9px] sm:text-[10px] font-mono font-bold px-1.5 sm:px-2 py-0.5 rounded-full bg-[var(--gold)]/15 text-[var(--gold)] border border-[var(--gold)]/35 group-hover:bg-[var(--gold)] group-hover:text-black transition-colors shrink-0">
+                  <GitBranch className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
                   <span>Voir l'Arbre</span>
                 </span>
               </h2>
@@ -569,7 +569,7 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
 
           <button
             onClick={onClose}
-            className="p-2 rounded-full hover:bg-[var(--border)] text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors cursor-pointer shrink-0"
+            className="p-1.5 sm:p-2 rounded-full hover:bg-[var(--border)] text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors cursor-pointer shrink-0"
             title={t("close", "Fermer")}
           >
             <X className="h-5 w-5" />
@@ -663,17 +663,24 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
           /* ========================================================================= */
           /* CASE 2: TREE MODAL WITH SYMMETRICAL VERTICAL 3-VOLET NAVIGATION           */
           /* ========================================================================= */
-          <div className="flex flex-col md:flex-row gap-5 pt-3 flex-1 overflow-y-auto md:overflow-hidden min-h-0">
+          <div className="flex flex-col md:flex-row gap-3 sm:gap-5 pt-2.5 sm:pt-3 flex-1 overflow-y-auto md:overflow-hidden min-h-0">
             
-            {/* 3-VOLET NAVIGATION: ONE UNDER ONE, VERTICALEMENT ALIGNÉ & SYMÉTRIQUE */}
+            {/* 3-VOLET NAVIGATION: ONE UNDER ONE, VERTICALEMENT ALIGNÉ & SYMÉTRIQUE ON DESKTOP, COMPACT RESPONSIVE ON MOBILE */}
             <div className="w-full md:w-64 shrink-0 flex flex-col justify-start relative z-20 pointer-events-auto">
-              <div className="p-2.5 rounded-2xl bg-[var(--background)]/90 border border-[var(--gold)]/40 shadow-md space-y-2.5">
-                <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-[var(--gold)] px-2 block text-center md:text-start">
-                  Navigation des 3 Volets
-                </span>
+              <div className="p-2 sm:p-2.5 rounded-xl sm:rounded-2xl bg-[var(--background)]/90 border border-[var(--gold)]/40 shadow-md space-y-2">
+                <div className="flex items-center justify-between px-1">
+                  <span className="text-[9px] sm:text-[10px] font-mono font-bold uppercase tracking-wider sm:tracking-widest text-[var(--gold)] block text-start">
+                    Navigation des 3 Volets
+                  </span>
+                  <div className="flex items-center gap-2 text-[10px] font-mono md:hidden text-[var(--muted-foreground)]">
+                    <span>Gén: <strong className="text-[var(--gold)]">{generations}</strong></span>
+                    <span>•</span>
+                    <span>Ind: <strong className="text-[var(--gold)]">{membersCount}</strong></span>
+                  </div>
+                </div>
 
-                {/* 3 VERTICAL SYMMETRICAL BUTTONS */}
-                <div className="flex flex-col gap-2">
+                {/* 3 BUTTONS */}
+                <div className="grid grid-cols-3 md:flex md:flex-col gap-1.5 sm:gap-2">
                   {/* VOLET 1 */}
                   <button
                     type="button"
@@ -682,22 +689,22 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                       e.stopPropagation();
                       setActiveTab("schema");
                     }}
-                    className={`w-full py-3 px-3 rounded-xl text-xs font-semibold flex items-center gap-3 transition-all cursor-pointer border select-none ${
+                    className={`w-full py-2 px-1.5 sm:py-3 sm:px-3 rounded-lg sm:rounded-xl text-xs font-semibold flex flex-col sm:flex-row items-center sm:gap-3 transition-all cursor-pointer border select-none ${
                       activeTab === "schema"
                         ? "bg-[var(--gold)] text-black border-[var(--gold)] shadow-md font-bold ring-2 ring-[var(--gold)]/40"
                         : "bg-[var(--card)]/60 text-[var(--foreground)] border-[var(--border)] hover:border-[var(--gold)]/60 hover:bg-[var(--gold)]/10"
                     }`}
                   >
                     <div
-                      className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+                      className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center shrink-0 mb-1 sm:mb-0 ${
                         activeTab === "schema" ? "bg-black/20 text-black" : "bg-[var(--gold)]/15 text-[var(--gold)]"
                       }`}
                     >
-                      <GitBranch className="h-4 w-4" />
+                      <GitBranch className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                     </div>
-                    <div className="text-start min-w-0 flex-1">
-                      <div className="font-bold text-xs leading-snug truncate">Schéma Graphique</div>
-                      <div className={`text-[10px] truncate ${activeTab === "schema" ? "text-black/80 font-medium" : "text-[var(--muted-foreground)]"}`}>
+                    <div className="text-center sm:text-start min-w-0 flex-1">
+                      <div className="font-bold text-[10px] sm:text-xs leading-tight sm:leading-snug truncate">Schéma Graphique</div>
+                      <div className={`hidden md:block text-[10px] truncate ${activeTab === "schema" ? "text-black/80 font-medium" : "text-[var(--muted-foreground)]"}`}>
                         Arbre interactif & liens
                       </div>
                     </div>
@@ -714,22 +721,22 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                         setSelectedPerson(displayPeople[0]);
                       }
                     }}
-                    className={`w-full py-3 px-3 rounded-xl text-xs font-semibold flex items-center gap-3 transition-all cursor-pointer border select-none ${
+                    className={`w-full py-2 px-1.5 sm:py-3 sm:px-3 rounded-lg sm:rounded-xl text-xs font-semibold flex flex-col sm:flex-row items-center sm:gap-3 transition-all cursor-pointer border select-none ${
                       activeTab === "details"
                         ? "bg-[var(--gold)] text-black border-[var(--gold)] shadow-md font-bold ring-2 ring-[var(--gold)]/40"
                         : "bg-[var(--card)]/60 text-[var(--foreground)] border-[var(--border)] hover:border-[var(--gold)]/60 hover:bg-[var(--gold)]/10"
                     }`}
                   >
                     <div
-                      className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+                      className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center shrink-0 mb-1 sm:mb-0 ${
                         activeTab === "details" ? "bg-black/20 text-black" : "bg-[var(--gold)]/15 text-[var(--gold)]"
                       }`}
                     >
-                      <Users className="h-4 w-4" />
+                      <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                     </div>
-                    <div className="text-start min-w-0 flex-1">
-                      <div className="font-bold text-xs leading-snug truncate">Fiche & GEDCOM</div>
-                      <div className={`text-[10px] truncate ${activeTab === "details" ? "text-black/80 font-medium" : "text-[var(--muted-foreground)]"}`}>
+                    <div className="text-center sm:text-start min-w-0 flex-1">
+                      <div className="font-bold text-[10px] sm:text-xs leading-tight sm:leading-snug truncate">Fiche & GEDCOM</div>
+                      <div className={`hidden md:block text-[10px] truncate ${activeTab === "details" ? "text-black/80 font-medium" : "text-[var(--muted-foreground)]"}`}>
                         Personnes & Détails
                       </div>
                     </div>
@@ -743,30 +750,30 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                       e.stopPropagation();
                       setActiveTab("sources");
                     }}
-                    className={`w-full py-3 px-3 rounded-xl text-xs font-semibold flex items-center gap-3 transition-all cursor-pointer border select-none ${
+                    className={`w-full py-2 px-1.5 sm:py-3 sm:px-3 rounded-lg sm:rounded-xl text-xs font-semibold flex flex-col sm:flex-row items-center sm:gap-3 transition-all cursor-pointer border select-none ${
                       activeTab === "sources"
                         ? "bg-[var(--gold)] text-black border-[var(--gold)] shadow-md font-bold ring-2 ring-[var(--gold)]/40"
                         : "bg-[var(--card)]/60 text-[var(--foreground)] border-[var(--border)] hover:border-[var(--gold)]/60 hover:bg-[var(--gold)]/10"
                     }`}
                   >
                     <div
-                      className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+                      className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center shrink-0 mb-1 sm:mb-0 ${
                         activeTab === "sources" ? "bg-black/20 text-black" : "bg-[var(--gold)]/15 text-[var(--gold)]"
                       }`}
                     >
-                      <FileText className="h-4 w-4" />
+                      <FileText className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                     </div>
-                    <div className="text-start min-w-0 flex-1">
-                      <div className="font-bold text-xs leading-snug truncate">Aperçu des Sources</div>
-                      <div className={`text-[10px] truncate ${activeTab === "sources" ? "text-black/80 font-medium" : "text-[var(--muted-foreground)]"}`}>
+                    <div className="text-center sm:text-start min-w-0 flex-1">
+                      <div className="font-bold text-[10px] sm:text-xs leading-tight sm:leading-snug truncate">Aperçu Sources</div>
+                      <div className={`hidden md:block text-[10px] truncate ${activeTab === "sources" ? "text-black/80 font-medium" : "text-[var(--muted-foreground)]"}`}>
                         Documents & Liens réels
                       </div>
                     </div>
                   </button>
                 </div>
 
-                {/* Symmetrical Tree Metrics Footer */}
-                <div className="pt-2.5 border-t border-[var(--border)] grid grid-cols-2 gap-1.5 text-center font-mono text-[11px]">
+                {/* Symmetrical Tree Metrics Footer (desktop) */}
+                <div className="hidden md:grid pt-2.5 border-t border-[var(--border)] grid-cols-2 gap-1.5 text-center font-mono text-[11px]">
                   <div className="p-2 rounded-lg bg-[var(--card)] border border-[var(--border)]">
                     <span className="text-[10px] text-[var(--muted-foreground)] block">Générations</span>
                     <strong className="text-[var(--gold)] font-bold">{generations}</strong>
@@ -788,23 +795,23 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
               {activeTab === "schema" && (
                 <div className="space-y-3 animate-in fade-in duration-200">
                   <div className="flex items-center justify-between text-xs text-[var(--muted-foreground)] font-mono px-1">
-                    <span className="flex items-center gap-1.5">
-                      <GitBranch className="h-4 w-4 text-[var(--gold)]" />
-                      <span>{t("interactive_tree_schema_hint", "Survolez les unions et filiations • Glissez pour naviguer • Zoomez")}</span>
+                    <span className="flex items-center gap-1.5 truncate">
+                      <GitBranch className="h-4 w-4 text-[var(--gold)] shrink-0" />
+                      <span className="truncate">{t("interactive_tree_schema_hint", "Survolez les unions et filiations • Glissez pour naviguer • Zoomez")}</span>
                     </span>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 shrink-0">
                       {loadingGedcom && (
                         <span className="text-[0.68rem] text-[var(--gold)] animate-pulse flex items-center gap-1">
-                          <RefreshCcw className="h-3 w-3 animate-spin" /> {t("loading_gedcom", "Chargement du schéma...")}
+                          <RefreshCcw className="h-3 w-3 animate-spin" /> {t("loading_gedcom", "Chargement...")}
                         </span>
                       )}
-                      <span className="bg-[var(--gold)]/15 text-[var(--gold)] border border-[var(--gold)]/30 px-2.5 py-0.5 rounded-full font-bold">
+                      <span className="bg-[var(--gold)]/15 text-[var(--gold)] border border-[var(--gold)]/30 px-2 py-0.5 rounded-full font-bold text-[10px] sm:text-xs">
                         {displayPeople.length} {t("linked_cards", "cartes liées")}
                       </span>
                     </div>
                   </div>
 
-                  <div className="h-[520px] sm:h-[580px] w-full rounded-xl overflow-hidden border-2 border-[var(--gold)]/60 relative bg-[#0b1726] shadow-2xl flex flex-col">
+                  <div className="h-[360px] sm:h-[480px] lg:h-[580px] w-full rounded-xl overflow-hidden border-2 border-[var(--gold)]/60 relative bg-[#0b1726] shadow-2xl flex flex-col">
                     <TreesBuilder
                       key={tree?.id ? `tree-builder-${tree.id}-${displayPeople.length}` : "tree-builder"}
                       people={displayPeople}
@@ -893,7 +900,7 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
                       
                       {/* PERSONS ROSTER COLUMN */}
-                      <div className="lg:col-span-5 space-y-2 max-h-[460px] overflow-y-auto custom-scrollbar pr-1">
+                      <div className="lg:col-span-5 space-y-1.5 sm:space-y-2 max-h-[220px] sm:max-h-[320px] lg:max-h-[460px] overflow-y-auto custom-scrollbar pr-1">
                         {displayPeople.map((p: any, idx: number) => {
                           const pName = p.names?.fr || p.names?.en || `${p.given || ""} ${p.surname || ""}`.trim() || `Individu #${idx + 1}`;
                           const isFem = (p.gender || "").toUpperCase().startsWith("F");
@@ -1486,10 +1493,10 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
         )}
 
         {/* MODAL BOTTOM BAR */}
-        <div className="flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-[var(--border)] shrink-0">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 pt-2.5 sm:pt-3 border-t border-[var(--border)] shrink-0">
           <button
             onClick={handleDownloadGedcom}
-            className="btn-base btn-gold text-xs py-2 px-4 flex items-center gap-2 cursor-pointer shadow-sm"
+            className="btn-base btn-gold text-xs py-2 px-4 flex items-center justify-center gap-2 cursor-pointer shadow-sm w-full sm:w-auto"
           >
             <Download className="h-4 w-4" />
             <span>{isIndividualModal ? t("download_profile_extract", "Télécharger l'extrait") : t("download_gedcom", "Télécharger GEDCOM 5.5.1")}</span>
@@ -1497,7 +1504,7 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
 
           <button
             onClick={onClose}
-            className="btn-base btn-outline-ink text-xs py-2 px-5 cursor-pointer"
+            className="btn-base btn-outline-ink text-xs py-2 px-5 cursor-pointer w-full sm:w-auto text-center"
           >
             {t("close_card", "Fermer")}
           </button>

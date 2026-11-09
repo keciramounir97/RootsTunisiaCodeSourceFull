@@ -39,7 +39,7 @@ export default function LanguageMenu({ className = "" }: { className?: string })
         onClick={() => setOpen(!open)}
         aria-label={t("select_language")}
         title={t("change_language")}
-        className="h-[34px] flex items-center gap-1.5 rounded-sm border border-[var(--border)] px-2.5 text-[var(--foreground)] hover:bg-[var(--gold)]/15 transition-colors text-xs font-bold uppercase tracking-wider cursor-pointer"
+        className="h-8 sm:h-[34px] flex items-center gap-1 sm:gap-1.5 rounded-sm border border-[var(--border)] px-1.5 sm:px-2.5 text-[var(--foreground)] hover:bg-[var(--gold)]/15 transition-colors text-xs font-bold uppercase tracking-wider cursor-pointer"
       >
         <span className="font-mono text-[0.65rem] font-bold text-[var(--gold)]">
           {current.code === "ar" ? "عربي" : current.badge}

@@ -124,9 +124,9 @@ export function Navbar() {
   return (
     <header
       dir={isRtl ? "rtl" : "ltr"}
-      className="sticky top-0 z-40 px-4 pt-3.5 sm:px-6 lg:px-8"
+      className="sticky top-0 z-40 px-2 pt-2 sm:px-6 sm:pt-3.5 lg:px-8"
     >
-      <div className="mx-auto flex w-full max-w-[var(--content-max)] items-center gap-3 sm:gap-6 lg:gap-8 rounded-lg border border-[var(--gold)]/35 bg-[var(--card)]/95 px-3.5 py-3 sm:px-7 shadow-xl backdrop-blur-md">
+      <div className="mx-auto flex w-full max-w-[var(--content-max)] items-center gap-1.5 sm:gap-4 md:gap-6 lg:gap-8 rounded-lg border border-[var(--gold)]/35 bg-[var(--card)]/95 px-2.5 py-2 sm:px-6 sm:py-3 shadow-xl backdrop-blur-md">
         <Logo />
 
         {/* Desktop Nav */}
@@ -223,7 +223,7 @@ export function Navbar() {
           </NavLink>
         </nav>
 
-        <div className="ms-auto flex items-center gap-1.5 sm:gap-2.5">
+        <div className="ms-auto flex items-center gap-1 sm:gap-2">
           {/* Search bar */}
           <form
             onSubmit={handleSearchSubmit}
@@ -244,7 +244,7 @@ export function Navbar() {
             aria-label={t("nav_contact")}
             title={t("nav_contact")}
             className={({ isActive }) =>
-              `h-[34px] w-[34px] rounded-sm border flex items-center justify-center transition-colors cursor-pointer ${
+              `h-8 w-8 sm:h-[34px] sm:w-[34px] rounded-sm border flex items-center justify-center transition-colors cursor-pointer ${
                 isActive
                   ? "border-[var(--gold)] bg-[var(--gold)]/20 text-[var(--gold)]"
                   : "border-[var(--border)] text-[var(--foreground)] hover:border-[var(--gold)] hover:bg-[var(--gold)]/15 hover:text-[var(--gold)]"
@@ -262,7 +262,7 @@ export function Navbar() {
             onClick={toggleTheme}
             aria-label={t("toggle_theme")}
             title={t("toggle_theme")}
-            className="h-[34px] w-[34px] rounded-sm border border-[var(--border)] flex items-center justify-center text-[var(--foreground)] hover:bg-[var(--gold)]/15 transition-colors cursor-pointer"
+            className="h-8 w-8 sm:h-[34px] sm:w-[34px] rounded-sm border border-[var(--border)] flex items-center justify-center text-[var(--foreground)] hover:bg-[var(--gold)]/15 transition-colors cursor-pointer"
           >
             {theme === "dark" ? (
               <Sun className="h-4 w-4 text-[var(--gold)]" />
@@ -276,7 +276,7 @@ export function Navbar() {
             <div className="relative">
               <button
                 onClick={() => setUserMenuOpen(!userMenuOpen)}
-                className="h-[34px] flex items-center gap-1.5 rounded-sm bg-[#b81428] !text-white px-2.5 sm:px-3.5 text-[0.65rem] font-bold uppercase tracking-[0.14em] hover:opacity-90 transition-opacity cursor-pointer shadow-sm"
+                className="h-8 sm:h-[34px] flex items-center gap-1 sm:gap-1.5 rounded-sm bg-[#b81428] !text-white px-2 sm:px-3.5 text-[0.62rem] sm:text-[0.65rem] font-bold uppercase tracking-wider sm:tracking-[0.14em] hover:opacity-90 transition-opacity cursor-pointer shadow-sm shrink-0"
               >
                 <User className="h-3.5 w-3.5 shrink-0" />
                 <span className="hidden sm:inline max-w-[90px] truncate">{user.fullName || t("nav_account")}</span>
@@ -316,7 +316,7 @@ export function Navbar() {
               to="/login"
               aria-label={t("nav_login")}
               title={t("nav_login")}
-              className="h-[34px] flex items-center gap-1.5 rounded-sm bg-[#b81428] !text-white px-2.5 sm:px-3.5 text-[0.65rem] font-bold uppercase tracking-[0.14em] hover:opacity-90 transition-opacity shadow-sm"
+              className="h-8 sm:h-[34px] flex items-center gap-1 sm:gap-1.5 rounded-sm bg-[#b81428] !text-white px-2 sm:px-3.5 text-[0.62rem] sm:text-[0.65rem] font-bold uppercase tracking-wider sm:tracking-[0.14em] hover:opacity-90 transition-opacity shadow-sm shrink-0"
             >
               <User className="h-3.5 w-3.5 shrink-0" />
               <span className="hidden sm:inline">{t("nav_login")}</span>

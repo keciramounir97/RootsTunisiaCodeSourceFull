@@ -10,9 +10,10 @@ export default function AdminLayout() {
   const { dir } = useTranslation();
   const [open, setOpen] = useState(() => {
     if (typeof window === "undefined") return true;
+    if (window.innerWidth < 1024) return false;
     const saved = localStorage.getItem("admin_sidebar_open");
     if (saved !== null) return saved === "true";
-    return window.innerWidth >= 1024;
+    return true;
   });
   const { backgroundImage } = useSiteImages();
 
@@ -39,7 +40,7 @@ export default function AdminLayout() {
         <AdminHeader sidebarOpen={open} onToggleSidebar={() => setOpen((v) => !v)} />
         <AdminSidebar open={open} onClose={() => setOpen(false)} onToggle={() => setOpen((v) => !v)} />
         <main
-          className={`transition-all duration-300 pt-20 pb-12 px-4 sm:px-8 ${
+          className={`transition-all duration-300 pt-16 sm:pt-20 pb-12 px-2.5 sm:px-6 lg:px-8 overflow-x-hidden ${
             open
               ? isRtl
                 ? "lg:pr-72 lg:pl-0"
@@ -49,7 +50,7 @@ export default function AdminLayout() {
         >
           <div className={`mx-auto space-y-6 transition-all duration-300 ${open ? "max-w-7xl" : "max-w-[98%] w-full"}`}>
             <Breadcrumb />
-            <div dir={isRtl ? "rtl" : "ltr"} className="surface-card p-4 sm:p-8 shadow-xl border border-[var(--gold)]/30 backdrop-blur-md w-full">
+            <div dir={isRtl ? "rtl" : "ltr"} className="surface-card p-3 sm:p-6 lg:p-8 shadow-xl border border-[var(--gold)]/30 backdrop-blur-md w-full overflow-x-auto">
               <Outlet context={{ sidebarOpen: open }} />
             </div>
           </div>

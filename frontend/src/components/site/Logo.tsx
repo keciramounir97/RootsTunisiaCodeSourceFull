@@ -27,7 +27,7 @@ export function Logo({ light = false, className = "" }: LogoProps) {
       <img
         src={src}
         alt="Roots Tunisia"
-        className="block h-8 w-auto max-w-[min(52vw,11.5rem)] object-contain object-left sm:h-9 sm:max-w-[13rem] md:h-10 md:max-w-[14.5rem]"
+        className="block h-7 sm:h-9 md:h-10 w-auto max-w-[105px] sm:max-w-[140px] md:max-w-[170px] object-contain object-left shrink-0 transition-[height,max-width] duration-200"
         width={290}
         height={148}
         decoding="async"
