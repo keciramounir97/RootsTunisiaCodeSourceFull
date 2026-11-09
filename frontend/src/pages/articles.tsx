@@ -24,6 +24,7 @@ import {
   formatTimeAgo,
   normalizeArticle,
   type NormalizedArticle,
+  SCIENTIFIC_GEDCOM_ARTICLES,
 } from "../utils/articleNormalize";
 import {
   recordAdminUpload,
@@ -100,7 +101,7 @@ export default function ArticlesPage() {
         };
       });
 
-      const combined = [...tracked, ...normalizedApi].sort(
+      const combined = [...tracked, ...normalizedApi, ...SCIENTIFIC_GEDCOM_ARTICLES].sort(
         (a: NormalizedArticle, b: NormalizedArticle) =>
           new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       );
@@ -114,7 +115,7 @@ export default function ArticlesPage() {
 
       setArticles(deduped);
     } catch (err) {
-      setArticles([]);
+      setArticles(SCIENTIFIC_GEDCOM_ARTICLES);
       setError(getApiErrorMessage(err, t("articles_load_failed", "Could not load articles.")));
     } finally {
       setLoading(false);

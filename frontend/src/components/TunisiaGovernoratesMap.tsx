@@ -225,6 +225,7 @@ export default function TunisiaGovernoratesMap({
   const [activeRegion, setActiveRegion] = useState<RegionId>("all_tunisia");
   const [tileStyle, setTileStyle] = useState<TileLayerKey>("osm");
   const [viewportReady, setViewportReady] = useState(variant !== "embed");
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     if (variant !== "embed" || typeof window === "undefined") {
@@ -248,9 +249,17 @@ export default function TunisiaGovernoratesMap({
   }, [selectedId]);
 
   const filteredGovernorates = useMemo(() => {
-    if (activeRegion === "all_tunisia") return governorates;
-    return governorates.filter((g) => g.region === activeRegion);
-  }, [activeRegion]);
+    let list = activeRegion === "all_tunisia" ? governorates : governorates.filter((g) => g.region === activeRegion);
+    if (searchQuery.trim()) {
+      const q = searchQuery.trim().toLowerCase();
+      list = list.filter(
+        (g) =>
+          g.id.toLowerCase().includes(q) ||
+          g.notableFamilies.some((f) => f.toLowerCase().includes(q)),
+      );
+    }
+    return list;
+  }, [activeRegion, searchQuery]);
 
   const mapView = useMemo<{ coords: [number, number]; zoom: number }>(() => {
     const fallback: [number, number] = [34.4, 9.6];
@@ -451,7 +460,7 @@ export default function TunisiaGovernoratesMap({
       <div className="grid gap-6 lg:grid-cols-12 lg:items-stretch">
         {/* Left: OpenStreetMap Interactive Container */}
         <div className="lg:col-span-7 surface-card overflow-hidden p-3 border-2 border-[var(--gold)]/45 shadow-2xl rounded-xl flex flex-col h-[420px] sm:h-[560px] lg:h-[680px] bg-[var(--card)]">
-          {/* Top Map Toolbar: Open-Source Layer Switcher + Status */}
+          {/* Top Map Toolbar: Open-Source Layer Switcher + Status + Search */}
           <div className="mb-2.5 flex flex-wrap items-center justify-between gap-2 px-1">
             <div className="flex items-center gap-1.5 text-xs font-bold text-[var(--foreground)]">
               <MapPin className="h-4 w-4 text-[var(--primary)]" />
@@ -462,25 +471,47 @@ export default function TunisiaGovernoratesMap({
               </span>
             </div>
 
-            <div className="flex items-center gap-1 rounded-md border border-[var(--gold)]/35 bg-[var(--background)] p-1">
-              <Layers className="h-3.5 w-3.5 text-[var(--gold)] mx-1.5" />
-              {(Object.keys(OPEN_SOURCE_TILE_LAYERS) as TileLayerKey[]).map((key) => {
-                const layer = OPEN_SOURCE_TILE_LAYERS[key];
-                return (
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="relative min-w-[140px] sm:min-w-[190px]">
+                <Search className="absolute start-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[var(--muted-foreground)]" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder={t("map_search_placeholder", "Rechercher région, famille…")}
+                  className="w-full rounded border border-[var(--gold)]/35 bg-[var(--background)] ps-7 pe-5 py-1 text-xs text-[var(--foreground)] outline-none focus:border-[var(--gold)] transition-colors"
+                />
+                {searchQuery ? (
                   <button
-                    key={key}
                     type="button"
-                    onClick={() => setTileStyle(key)}
-                    className={`rounded px-2.5 py-1 text-[0.65rem] font-bold uppercase tracking-wider transition-colors cursor-pointer ${
-                      tileStyle === key
-                        ? "bg-[#d9a441] !text-[#1f160f] shadow-sm"
-                        : "text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
-                    }`}
+                    onClick={() => setSearchQuery("")}
+                    className="absolute end-1.5 top-1/2 -translate-y-1/2 text-xs text-[var(--muted-foreground)] hover:text-[var(--foreground)] cursor-pointer"
                   >
-                    {t(layer.labelKey)}
+                    ×
                   </button>
-                );
-              })}
+                ) : null}
+              </div>
+
+              <div className="flex items-center gap-1 rounded-md border border-[var(--gold)]/35 bg-[var(--background)] p-1">
+                <Layers className="h-3.5 w-3.5 text-[var(--gold)] mx-1.5" />
+                {(Object.keys(OPEN_SOURCE_TILE_LAYERS) as TileLayerKey[]).map((key) => {
+                  const layer = OPEN_SOURCE_TILE_LAYERS[key];
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => setTileStyle(key)}
+                      className={`rounded px-2.5 py-1 text-[0.65rem] font-bold uppercase tracking-wider transition-colors cursor-pointer ${
+                        tileStyle === key
+                          ? "bg-[#d9a441] !text-[#1f160f] shadow-sm"
+                          : "text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
+                      }`}
+                    >
+                      {t(layer.labelKey)}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
 

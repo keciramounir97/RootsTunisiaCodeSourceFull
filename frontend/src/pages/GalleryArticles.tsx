@@ -24,6 +24,7 @@ import {
   formatTimeAgo,
   normalizeArticle,
   type NormalizedArticle,
+  SCIENTIFIC_GEDCOM_ARTICLES,
 } from "../utils/articleNormalize";
 import {
   recordAdminUpload,
@@ -99,7 +100,7 @@ export default function GalleryArticles() {
         };
       });
 
-      const combined = [...tracked, ...normalizedApi].sort(
+      const combined = [...tracked, ...normalizedApi, ...SCIENTIFIC_GEDCOM_ARTICLES].sort(
         (a: NormalizedArticle, b: NormalizedArticle) =>
           new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       );
@@ -114,7 +115,7 @@ export default function GalleryArticles() {
 
       setPosts(deduped);
     } catch {
-      setPosts([]);
+      setPosts(SCIENTIFIC_GEDCOM_ARTICLES);
     } finally {
       setLoading(false);
     }
