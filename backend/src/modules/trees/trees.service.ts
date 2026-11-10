@@ -481,12 +481,10 @@ export class TreesService implements OnModuleInit {
         await Tree.query(this.knex).patch(updateData).where('id', id);
         this.clearCache();
 
-        if (file || (gedcomPath && tree.is_public !== isPublic)) {
-            if (file && gedcomPath) {
-                this.rebuildPeople(id, gedcomPath).catch((e: any) =>
-                    console.warn(`rebuildPeople async note for tree #${id}:`, e?.message || e)
-                );
-            }
+        if (gedcomPath && (file || updateData.gedcom_text || tree.is_public !== isPublic)) {
+            this.rebuildPeople(id, gedcomPath).catch((e: any) =>
+                console.warn(`rebuildPeople async note for tree #${id}:`, e?.message || e)
+            );
         }
 
         this.activityService.log(userId, 'trees', `Updated tree: ${tree.title}`).catch(() => {});
