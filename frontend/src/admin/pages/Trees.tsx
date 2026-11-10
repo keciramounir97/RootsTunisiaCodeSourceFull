@@ -765,13 +765,6 @@ export default function Trees() {
         setTreeForm((prev) => ({ ...prev, saveToDb: true }));
       }
 
-      if (!hasPeople && !isUpdateMode) {
-        const confirmed = window.confirm(
-          t("legacy.save_empty_tree_confirm", "Save this tree without any people yet?")
-        );
-        if (!confirmed) return;
-      }
-
       const description = String(treeForm.description || "");
       const isPublic = !!treeForm.isPublic;
       const includeFile = hasPeople || isUpdateMode;
