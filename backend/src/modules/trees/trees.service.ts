@@ -63,16 +63,18 @@ export class TreesService implements OnModuleInit {
     }
 
     /** Purges any phantom or dummy test trees (e.g. 'New Family Tree' or
-     *  'Genealogical tree uploaded via admin') so only genuine user trees exist. */
+     *  'Genealogical tree uploaded via admin') and accidental duplicate draft trees. */
     private async purgePhantomTrees() {
         try {
             if (!(await this.knex.schema.hasTable('family_trees'))) return;
             const deleted = await this.knex('family_trees')
                 .where('title', 'like', '%New Family Tree%')
                 .orWhere('description', 'like', '%Genealogical tree uploaded via admin%')
+                .orWhere('title', 'like', '%Arbre Guagliardo%')
+                .orWhere('title', 'like', '%Arbre Famille Guagliardo%')
                 .delete();
             if (deleted > 0) {
-                console.log(`[TreesService] Purged ${deleted} phantom/dummy test tree(s).`);
+                console.log(`[TreesService] Purged ${deleted} phantom/dummy test tree(s) and duplicates.`);
             }
         } catch (err: any) {
             console.warn(`[TreesService] Purge phantom trees note: ${err?.message || err}`);
@@ -137,7 +139,10 @@ export class TreesService implements OnModuleInit {
             .select(countSelect)
             .where((builder: any) => builder.where('is_public', true).orWhereNull('is_public'))
             .andWhere((builder: any) => {
-                builder.whereNot('title', 'like', '%New Family Tree%').orWhereNull('title');
+                builder.whereNot('title', 'like', '%New Family Tree%')
+                    .whereNot('title', 'like', '%Arbre Guagliardo%')
+                    .whereNot('title', 'like', '%Arbre Famille Guagliardo%')
+                    .orWhereNull('title');
             })
             .andWhere((builder: any) => {
                 builder.whereNot('description', 'like', '%Genealogical tree uploaded via admin%').orWhereNull('description');
@@ -281,13 +286,16 @@ export class TreesService implements OnModuleInit {
         }
 
         // 2. Semantic Deduplication Guard:
-        // Prevent duplicate rapid submissions from the same user with the same title within 5 seconds.
+        // Prevent duplicate rapid submissions from the same user with the same title within 30 seconds.
         if (userId) {
-            const fiveSecondsAgo = new Date(Date.now() - 5000);
+            const thirtySecondsAgo = new Date(Date.now() - 30000);
             const recentDuplicate = await Tree.query(this.knex)
                 .where('user_id', userId)
-                .andWhere('title', title)
-                .andWhere('created_at', '>=', fiveSecondsAgo)
+                .andWhere((b: any) => {
+                    b.where('title', title)
+                        .orWhere('title', 'like', `%${title}%`);
+                })
+                .andWhere('created_at', '>=', thirtySecondsAgo)
                 .orderBy('id', 'desc')
                 .first();
 

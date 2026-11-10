@@ -1368,10 +1368,15 @@ export default function Trees() {
                             setPeople(parsed);
                             if (isX && saveFormat === "gedcom") setSaveFormat("gedcomx_json");
                             const meta = extractGedcomMetadata(gedcomCodeDraft);
-                            if (meta.title) setTreeForm((s) => ({ ...s, title: meta.title }));
-                            if (meta.source) setTreeForm((s) => ({ ...s, archiveSource: meta.source }));
-                            if (meta.description) setTreeForm((s) => ({ ...s, description: meta.description }));
-                            void saveCurrentAsTree();
+                            // Preserve user's custom title if already entered
+                            if (!treeForm.title && meta.title) setTreeForm((s) => ({ ...s, title: meta.title }));
+                            if (!treeForm.archiveSource && meta.source) setTreeForm((s) => ({ ...s, archiveSource: meta.source }));
+                            if (!treeForm.description && meta.description) setTreeForm((s) => ({ ...s, description: meta.description }));
+                            
+                            // Only auto-save if an existing database tree is being edited; NEVER auto-create a phantom tree
+                            if (activeTreeIdRef.current || (canUpdateSelected && selectedTree?.id)) {
+                              void saveCurrentAsTree();
+                            }
                             setSaveSuccess(t("legacy.gedcom_synced", "GEDCOM / GEDCOM X code parsed and synchronized with canvas!"));
                           } else {
                             setSaveError(t("no_valid_gedcom_records", "No valid individual records found in the provided GEDCOM text."));

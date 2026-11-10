@@ -70,7 +70,11 @@ export function TreeCard({ tree }: { tree: TreeRecord }) {
   const rawSummary = (tree.description || tree.notes || tree.provenance || tree.summary || "").trim();
 
   // Completely exclude phantom or dummy test trees
-  if (/^new\s+family\s+tree$/i.test(rawTitle) || /genealogical\s+tree\s+uploaded\s+via\s+admin/i.test(rawSummary)) {
+  if (
+    /^new\s+family\s+tree$/i.test(rawTitle) ||
+    /^arbre\s+(famille\s+)?guagliardo$/i.test(rawTitle) ||
+    /genealogical\s+tree\s+uploaded\s+via\s+admin/i.test(rawSummary)
+  ) {
     return null;
   }
 

@@ -151,8 +151,9 @@ export default function GalleryTrees() {
   const filteredTrees = useMemo(() => {
     return sourceTrees.filter((item) => {
       const titleStr = item.name || item.title || `Family Tree #${item.id}`;
-      // Purge phantom/dummy test cards like "New Family Tree"
+      // Purge phantom/dummy test cards like "New Family Tree" or duplicate "Arbre Guagliardo"
       if (/^new\s+family\s+tree$/i.test(titleStr.trim())) return false;
+      if (/^arbre\s+(famille\s+)?guagliardo$/i.test(titleStr.trim())) return false;
 
       const descStr = item.description || item.notes || item.provenance || "";
       // Purge placeholder description
