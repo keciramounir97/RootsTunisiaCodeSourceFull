@@ -101,6 +101,14 @@ const Backups = lazy(() => import("./admin/pages/Backups"));
 const AdminSuggestions = lazy(() => import("./admin/pages/Suggestions"));
 const LegalContent = lazy(() => import("./admin/pages/LegalContent"));
 const ContentManager = lazy(() => import("./admin/pages/ContentManager"));
+const AdminHomeContent = lazy(() => import("./admin/pages/AdminHomeContent"));
+const AdminAboutContent = lazy(() => import("./admin/pages/AdminAboutContent"));
+const AdminGalleryContent = lazy(() => import("./admin/pages/AdminGalleryContent"));
+const AdminLibraryContent = lazy(() => import("./admin/pages/AdminLibraryContent"));
+const AdminAudioContent = lazy(() => import("./admin/pages/AdminAudioContent"));
+const AdminDocumentsContent = lazy(() => import("./admin/pages/AdminDocumentsContent"));
+const AdminContactContent = lazy(() => import("./admin/pages/AdminContactContent"));
+const AdminPeriodsContent = lazy(() => import("./admin/pages/AdminPeriodsContent"));
 const AdminArchivesContent = lazy(() => import("./admin/pages/AdminArchivesContent"));
 const AdminSourcesContent = lazy(() => import("./admin/pages/AdminSourcesContent"));
 const SiteImagePlaceholders = lazy(() => import("./admin/pages/SiteImagePlaceholders"));
@@ -688,6 +696,86 @@ function AppRoutes() {
             <Suspense fallback={<AdminLoadingFallback />}>
               <ProtectedRoute roles={[3]}>
                 <ContentManager />
+              </ProtectedRoute>
+            </Suspense>
+          }
+        />
+        <Route
+          path="home-content"
+          element={
+            <Suspense fallback={<AdminLoadingFallback />}>
+              <ProtectedRoute roles={[3]}>
+                <AdminHomeContent />
+              </ProtectedRoute>
+            </Suspense>
+          }
+        />
+        <Route
+          path="about-content"
+          element={
+            <Suspense fallback={<AdminLoadingFallback />}>
+              <ProtectedRoute roles={[3]}>
+                <AdminAboutContent />
+              </ProtectedRoute>
+            </Suspense>
+          }
+        />
+        <Route
+          path="gallery-content"
+          element={
+            <Suspense fallback={<AdminLoadingFallback />}>
+              <ProtectedRoute roles={[3]}>
+                <AdminGalleryContent />
+              </ProtectedRoute>
+            </Suspense>
+          }
+        />
+        <Route
+          path="library-content"
+          element={
+            <Suspense fallback={<AdminLoadingFallback />}>
+              <ProtectedRoute roles={[3]}>
+                <AdminLibraryContent />
+              </ProtectedRoute>
+            </Suspense>
+          }
+        />
+        <Route
+          path="audio-content"
+          element={
+            <Suspense fallback={<AdminLoadingFallback />}>
+              <ProtectedRoute roles={[3]}>
+                <AdminAudioContent />
+              </ProtectedRoute>
+            </Suspense>
+          }
+        />
+        <Route
+          path="documents-content"
+          element={
+            <Suspense fallback={<AdminLoadingFallback />}>
+              <ProtectedRoute roles={[3]}>
+                <AdminDocumentsContent />
+              </ProtectedRoute>
+            </Suspense>
+          }
+        />
+        <Route
+          path="periods-content"
+          element={
+            <Suspense fallback={<AdminLoadingFallback />}>
+              <ProtectedRoute roles={[3]}>
+                <AdminPeriodsContent />
+              </ProtectedRoute>
+            </Suspense>
+          }
+        />
+        <Route
+          path="contact-content"
+          element={
+            <Suspense fallback={<AdminLoadingFallback />}>
+              <ProtectedRoute roles={[3]}>
+                <AdminContactContent />
               </ProtectedRoute>
             </Suspense>
           }

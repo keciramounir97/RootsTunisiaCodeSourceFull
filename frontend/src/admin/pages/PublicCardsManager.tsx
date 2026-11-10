@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import {
   Archive,
   FileText,
@@ -15,7 +15,6 @@ import {
   Globe,
   Loader2,
   Compass,
-  AlertCircle,
   Link2,
 } from "lucide-react";
 import { useTranslation } from "../../context/TranslationContext";
@@ -24,7 +23,9 @@ import { getApiErrorMessage } from "../../api/helpers";
 import {
   usePublicCards,
   refreshPublicCards,
+  resolveCardText,
   type PublicCardRecord,
+  type PublicCardTranslation,
 } from "../../hooks/usePublicCards";
 import Toast from "../../components/Toast";
 
@@ -33,52 +34,50 @@ interface PublicCardsManagerProps {
 }
 
 interface FormState {
-  id?: string;
+  id?: number | string;
   kind: "archive" | "source";
   title: string;
   description: string;
-  linkUrl: string;
-  category: string;
+  link: string;
   sortOrder: number;
-  isActive: boolean;
-  titleTranslations: Record<string, string>;
-  descriptionTranslations: Record<string, string>;
+  isPublished: boolean;
+  translations: Record<string, PublicCardTranslation>;
 }
 
 const EMPTY_FORM: FormState = {
   kind: "archive",
   title: "",
   description: "",
-  linkUrl: "",
-  category: "",
+  link: "",
   sortOrder: 0,
-  isActive: true,
-  titleTranslations: {},
-  descriptionTranslations: {},
+  isPublished: true,
+  translations: {},
 };
 
 const LOCALES = [
-  { code: "fr", label: "Français (Défaut)", flag: "FR" },
-  { code: "en", label: "English", flag: "EN" },
+  { code: "fr", label: "Français (Défaut)", flag: "FR", dir: "ltr" },
+  { code: "en", label: "English", flag: "EN", dir: "ltr" },
   { code: "ar", label: "العربية", flag: "AR", dir: "rtl" },
-  { code: "es", label: "Español", flag: "ES" },
-  { code: "it", label: "Italiano", flag: "IT" },
-  { code: "mt", label: "Malti", flag: "MT" },
+  { code: "es", label: "Español", flag: "ES", dir: "ltr" },
+  { code: "it", label: "Italiano", flag: "IT", dir: "ltr" },
+  { code: "mt", label: "Malti", flag: "MT", dir: "ltr" },
 ];
 
 export default function PublicCardsManager({ kind }: PublicCardsManagerProps) {
-  const { t, isRtl } = useTranslation();
-  const { cards, loading, error, reload } = usePublicCards(kind);
+  const { locale, t, isRtl } = useTranslation();
+  const { cards = [], loading, reload } = usePublicCards(kind);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [form, setForm] = useState<FormState>({ ...EMPTY_FORM, kind });
   const [activeLangTab, setActiveLangTab] = useState<string>("fr");
   const [saving, setSaving] = useState(false);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<number | string | null>(null);
   const [toast, setToast] = useState<{ message: string; tone: "success" | "error" | "info" }>({
     message: "",
     tone: "info",
   });
+
+  const cardsList = useMemo(() => cards || [], [cards]);
 
   const pageTitle =
     kind === "archive" ? t("pc_title_archive") : t("pc_title_source");
@@ -89,7 +88,7 @@ export default function PublicCardsManager({ kind }: PublicCardsManagerProps) {
     setForm({
       ...EMPTY_FORM,
       kind,
-      sortOrder: cards.length,
+      sortOrder: cardsList.length,
     });
     setActiveLangTab("fr");
     setModalOpen(true);
@@ -101,12 +100,10 @@ export default function PublicCardsManager({ kind }: PublicCardsManagerProps) {
       kind: card.kind,
       title: card.title || "",
       description: card.description || "",
-      linkUrl: card.linkUrl || "",
-      category: card.category || "",
+      link: card.link || card.linkUrl || "",
       sortOrder: card.sortOrder || 0,
-      isActive: card.isActive !== false,
-      titleTranslations: { ...(card.titleTranslations || {}) },
-      descriptionTranslations: { ...(card.descriptionTranslations || {}) },
+      isPublished: card.isPublished !== false && card.isActive !== false,
+      translations: { ...(card.translations || {}) },
     });
     setActiveLangTab("fr");
     setModalOpen(true);
@@ -118,23 +115,34 @@ export default function PublicCardsManager({ kind }: PublicCardsManagerProps) {
       setToast({ message: "Le titre est obligatoire.", tone: "error" });
       return;
     }
-    if (!form.linkUrl.trim()) {
+    if (!form.link.trim()) {
       setToast({ message: "Le lien est obligatoire.", tone: "error" });
       return;
     }
 
+    const payload = {
+      kind,
+      title: form.title.trim(),
+      description: form.description.trim(),
+      link: form.link.trim(),
+      sortOrder: form.sortOrder,
+      isPublished: form.isPublished,
+      translations: form.translations,
+    };
+
     try {
       setSaving(true);
-      if (form.id) {
-        await api.put(`/admin/public-cards/${form.id}`, form);
-        setToast({ message: t("pc_saved"), tone: "success" });
+      if (form.id && typeof form.id === "number") {
+        await api.put(`/admin/public-cards/${form.id}`, payload);
+      } else if (form.id) {
+        await api.put(`/admin/public-cards/${form.id}`, payload);
       } else {
-        await api.post("/admin/public-cards", form);
-        setToast({ message: t("pc_saved"), tone: "success" });
+        await api.post("/admin/public-cards", payload);
       }
+      setToast({ message: t("pc_saved"), tone: "success" });
       setModalOpen(false);
-      refreshPublicCards(kind);
-      await reload();
+      await refreshPublicCards(kind);
+      if (reload) await reload();
     } catch (err) {
       setToast({ message: getApiErrorMessage(err, t("pc_error")), tone: "error" });
     } finally {
@@ -142,14 +150,14 @@ export default function PublicCardsManager({ kind }: PublicCardsManagerProps) {
     }
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (id: number | string) => {
     if (!window.confirm(t("pc_confirm_delete"))) return;
     try {
       setDeletingId(id);
       await api.delete(`/admin/public-cards/${id}`);
       setToast({ message: t("pc_deleted"), tone: "success" });
-      refreshPublicCards(kind);
-      await reload();
+      await refreshPublicCards(kind);
+      if (reload) await reload();
     } catch (err) {
       setToast({ message: getApiErrorMessage(err, t("pc_error")), tone: "error" });
     } finally {
@@ -159,33 +167,49 @@ export default function PublicCardsManager({ kind }: PublicCardsManagerProps) {
 
   const handleMove = async (index: number, direction: "up" | "down") => {
     const targetIndex = direction === "up" ? index - 1 : index + 1;
-    if (targetIndex < 0 || targetIndex >= cards.length) return;
+    if (targetIndex < 0 || targetIndex >= cardsList.length) return;
 
-    const newCards = [...cards];
+    const newCards = [...cardsList];
     const [moved] = newCards.splice(index, 1);
     newCards.splice(targetIndex, 0, moved);
 
     const orderedIds = newCards.map((c) => c.id);
     try {
       await api.post("/admin/public-cards/reorder", { ids: orderedIds });
-      refreshPublicCards(kind);
-      await reload();
+      await refreshPublicCards(kind);
+      if (reload) await reload();
     } catch (err) {
       setToast({ message: getApiErrorMessage(err, t("pc_error")), tone: "error" });
     }
   };
 
   const handleToggleActive = async (card: PublicCardRecord) => {
+    const nextState = !card.isPublished;
     try {
       await api.put(`/admin/public-cards/${card.id}`, {
-        isActive: !card.isActive,
+        isPublished: nextState,
       });
-      refreshPublicCards(kind);
-      await reload();
+      await refreshPublicCards(kind);
+      if (reload) await reload();
     } catch (err) {
       setToast({ message: getApiErrorMessage(err, t("pc_error")), tone: "error" });
     }
   };
+
+  // Preview title and description based on selected language tab
+  const previewData = useMemo(() => {
+    if (activeLangTab === "fr") {
+      return {
+        title: form.title || "Titre de la fiche",
+        description: form.description || "Description de la source ou archive affichée sur la page publique...",
+      };
+    }
+    const tr = form.translations[activeLangTab];
+    return {
+      title: tr?.title || form.title || "Titre de la fiche",
+      description: tr?.description || form.description || "Description de la source ou archive...",
+    };
+  }, [activeLangTab, form]);
 
   return (
     <div dir={isRtl ? "rtl" : "ltr"} className="space-y-6 text-start pb-20">
@@ -205,7 +229,7 @@ export default function PublicCardsManager({ kind }: PublicCardsManagerProps) {
 
         <div className="flex items-center gap-2 flex-wrap">
           <span className="px-3 py-1 rounded-full text-xs font-bold bg-[var(--gold)]/15 text-[var(--gold)] border border-[var(--gold)]/30">
-            {cards.length} {t("pc_count")}
+            {cardsList.length} {t("pc_count")}
           </span>
           <button
             type="button"
@@ -219,11 +243,11 @@ export default function PublicCardsManager({ kind }: PublicCardsManagerProps) {
       </div>
 
       {/* Main Content Area */}
-      {loading ? (
+      {loading && cardsList.length === 0 ? (
         <div className="flex items-center justify-center p-16">
           <Loader2 className="h-8 w-8 text-[var(--gold)] animate-spin" />
         </div>
-      ) : cards.length === 0 ? (
+      ) : cardsList.length === 0 ? (
         <div className="text-center p-12 rounded-xl border border-[var(--gold)]/30 bg-[var(--card)]/60 text-sm text-[var(--muted-foreground)] space-y-3">
           <Compass className="h-10 w-10 text-[var(--gold)] mx-auto opacity-70" />
           <p className="font-semibold text-[var(--foreground)]">{t("pc_empty")}</p>
@@ -237,104 +261,110 @@ export default function PublicCardsManager({ kind }: PublicCardsManagerProps) {
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {cards.map((card, idx) => (
-            <article
-              key={card.id}
-              className={`surface-card group flex flex-col justify-between p-5 rounded-xl border transition-all duration-200 ${
-                card.isActive
-                  ? "border-[var(--gold)]/35 bg-[var(--card)]/90 hover:border-[var(--gold)] shadow-sm hover:shadow-md"
-                  : "border-dashed border-[var(--border)] bg-[var(--card)]/40 opacity-70"
-              }`}
-            >
-              <div className="space-y-3">
-                {/* Card Top: Order and status */}
-                <div className="flex items-center justify-between text-xs border-b border-[var(--gold)]/15 pb-2.5">
-                  <span className="font-mono text-[11px] font-bold text-[var(--gold)]">
-                    #{idx + 1}
-                  </span>
-                  <div className="flex items-center gap-1.5">
-                    <button
-                      type="button"
-                      onClick={() => handleToggleActive(card)}
-                      title={card.isActive ? t("pc_published") : t("pc_hidden")}
-                      className={`px-2 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1 cursor-pointer transition-colors ${
-                        card.isActive
-                          ? "bg-emerald-500/15 text-emerald-500 border border-emerald-500/30"
-                          : "bg-stone-500/20 text-stone-400 border border-stone-500/30"
-                      }`}
-                    >
-                      {card.isActive ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
-                      <span>{card.isActive ? t("pc_published") : t("pc_hidden")}</span>
-                    </button>
+          {cardsList.map((card, idx) => {
+            const { title, description } = resolveCardText(card, locale);
+            const cardLink = card.link || card.linkUrl || "#";
+            const isCardActive = card.isPublished !== false && card.isActive !== false;
+
+            return (
+              <article
+                key={card.id}
+                className={`surface-card group flex flex-col justify-between p-5 rounded-xl border transition-all duration-200 ${
+                  isCardActive
+                    ? "border-[var(--gold)]/35 bg-[var(--card)]/90 hover:border-[var(--gold)] shadow-sm hover:shadow-md"
+                    : "border-dashed border-[var(--border)] bg-[var(--card)]/40 opacity-70"
+                }`}
+              >
+                <div className="space-y-3">
+                  {/* Card Top: Order and status */}
+                  <div className="flex items-center justify-between text-xs border-b border-[var(--gold)]/15 pb-2.5">
+                    <span className="font-mono text-[11px] font-bold text-[var(--gold)]">
+                      #{idx + 1}
+                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => handleToggleActive(card)}
+                        title={isCardActive ? t("pc_published") : t("pc_hidden")}
+                        className={`px-2 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1 cursor-pointer transition-colors ${
+                          isCardActive
+                            ? "bg-emerald-500/15 text-emerald-500 border border-emerald-500/30"
+                            : "bg-stone-500/20 text-stone-400 border border-stone-500/30"
+                        }`}
+                      >
+                        {isCardActive ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
+                        <span>{isCardActive ? t("pc_published") : t("pc_hidden")}</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Card Title & Description */}
+                  <div>
+                    <h3 className="font-serif font-bold text-base text-[var(--foreground)] group-hover:text-[var(--gold)] transition-colors leading-snug">
+                      {title || card.title}
+                    </h3>
+                    <p className="mt-2 text-xs text-[var(--muted-foreground)] leading-relaxed line-clamp-3">
+                      {description || card.description}
+                    </p>
+                  </div>
+
+                  {/* Link Preview */}
+                  <div className="pt-2 text-[11px] text-[var(--gold)] flex items-center gap-1 font-mono truncate">
+                    <Link2 className="h-3 w-3 shrink-0" />
+                    <span className="truncate">{cardLink}</span>
                   </div>
                 </div>
 
-                {/* Card Title & Description */}
-                <div>
-                  <h3 className="font-serif font-bold text-base text-[var(--foreground)] group-hover:text-[var(--gold)] transition-colors leading-snug">
-                    {card.title}
-                  </h3>
-                  <p className="mt-2 text-xs text-[var(--muted-foreground)] leading-relaxed line-clamp-3">
-                    {card.description}
-                  </p>
-                </div>
+                {/* Card Footer: Actions */}
+                <div className="mt-4 pt-3 border-t border-[var(--gold)]/15 flex items-center justify-between gap-1">
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      disabled={idx === 0}
+                      onClick={() => handleMove(idx, "up")}
+                      className="p-1.5 rounded-lg border border-[var(--border)] text-[var(--muted-foreground)] hover:text-[var(--gold)] hover:border-[var(--gold)] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                      title={t("pc_move_up")}
+                    >
+                      <ArrowUp className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      disabled={idx === cardsList.length - 1}
+                      onClick={() => handleMove(idx, "down")}
+                      className="p-1.5 rounded-lg border border-[var(--border)] text-[var(--muted-foreground)] hover:text-[var(--gold)] hover:border-[var(--gold)] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                      title={t("pc_move_down")}
+                    >
+                      <ArrowDown className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
 
-                {/* Link Preview */}
-                <div className="pt-2 text-[11px] text-[var(--gold)] flex items-center gap-1 font-mono truncate">
-                  <Link2 className="h-3 w-3 shrink-0" />
-                  <span className="truncate">{card.linkUrl}</span>
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => openEditModal(card)}
+                      className="p-1.5 rounded-lg border border-[var(--gold)]/40 bg-[var(--gold)]/10 text-[var(--gold)] hover:bg-[var(--gold)]/20 transition-colors cursor-pointer"
+                      title={t("pc_edit")}
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      disabled={deletingId === card.id}
+                      onClick={() => handleDelete(card.id)}
+                      className="p-1.5 rounded-lg border border-red-500/40 bg-red-500/10 text-red-500 hover:bg-red-500/20 transition-colors cursor-pointer disabled:opacity-50"
+                      title={t("pc_delete")}
+                    >
+                      {deletingId === card.id ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <Trash2 className="h-3.5 w-3.5" />
+                      )}
+                    </button>
+                  </div>
                 </div>
-              </div>
-
-              {/* Card Footer: Actions */}
-              <div className="mt-4 pt-3 border-t border-[var(--gold)]/15 flex items-center justify-between gap-1">
-                <div className="flex items-center gap-1">
-                  <button
-                    type="button"
-                    disabled={idx === 0}
-                    onClick={() => handleMove(idx, "up")}
-                    className="p-1.5 rounded-lg border border-[var(--border)] text-[var(--muted-foreground)] hover:text-[var(--gold)] hover:border-[var(--gold)] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                    title={t("pc_move_up")}
-                  >
-                    <ArrowUp className="h-3.5 w-3.5" />
-                  </button>
-                  <button
-                    type="button"
-                    disabled={idx === cards.length - 1}
-                    onClick={() => handleMove(idx, "down")}
-                    className="p-1.5 rounded-lg border border-[var(--border)] text-[var(--muted-foreground)] hover:text-[var(--gold)] hover:border-[var(--gold)] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                    title={t("pc_move_down")}
-                  >
-                    <ArrowDown className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-
-                <div className="flex items-center gap-1">
-                  <button
-                    type="button"
-                    onClick={() => openEditModal(card)}
-                    className="p-1.5 rounded-lg border border-[var(--gold)]/40 bg-[var(--gold)]/10 text-[var(--gold)] hover:bg-[var(--gold)]/20 transition-colors cursor-pointer"
-                    title={t("pc_edit")}
-                  >
-                    <Pencil className="h-3.5 w-3.5" />
-                  </button>
-                  <button
-                    type="button"
-                    disabled={deletingId === card.id}
-                    onClick={() => handleDelete(card.id)}
-                    className="p-1.5 rounded-lg border border-red-500/40 bg-red-500/10 text-red-500 hover:bg-red-500/20 transition-colors cursor-pointer disabled:opacity-50"
-                    title={t("pc_delete")}
-                  >
-                    {deletingId === card.id ? (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    ) : (
-                      <Trash2 className="h-3.5 w-3.5" />
-                    )}
-                  </button>
-                </div>
-              </div>
-            </article>
-          ))}
+              </article>
+            );
+          })}
         </div>
       )}
 
@@ -396,7 +426,6 @@ export default function PublicCardsManager({ kind }: PublicCardsManagerProps) {
 
             {/* Modal Form */}
             <form onSubmit={handleSave} className="mt-5 space-y-4">
-              {/* French (Default) or Selected Locale Input */}
               {activeLangTab === "fr" ? (
                 <>
                   <div>
@@ -421,7 +450,7 @@ export default function PublicCardsManager({ kind }: PublicCardsManagerProps) {
                       rows={3}
                       value={form.description}
                       onChange={(e) => setForm({ ...form, description: e.target.value })}
-                      placeholder="Ex: Consultation des séries historiques..."
+                      placeholder="Ex: Consultation des séries historiques, état civil..."
                       className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-3.5 py-2.5 text-xs text-[var(--foreground)] outline-none focus:border-[var(--gold)] focus:ring-2 focus:ring-[var(--gold)]/30 leading-relaxed"
                     />
                   </div>
@@ -442,13 +471,16 @@ export default function PublicCardsManager({ kind }: PublicCardsManagerProps) {
                     <input
                       type="text"
                       dir={activeLangTab === "ar" ? "rtl" : "ltr"}
-                      value={form.titleTranslations[activeLangTab] || ""}
+                      value={form.translations[activeLangTab]?.title || ""}
                       onChange={(e) =>
                         setForm({
                           ...form,
-                          titleTranslations: {
-                            ...form.titleTranslations,
-                            [activeLangTab]: e.target.value,
+                          translations: {
+                            ...form.translations,
+                            [activeLangTab]: {
+                              ...form.translations[activeLangTab],
+                              title: e.target.value,
+                            },
                           },
                         })
                       }
@@ -464,13 +496,16 @@ export default function PublicCardsManager({ kind }: PublicCardsManagerProps) {
                     <textarea
                       rows={3}
                       dir={activeLangTab === "ar" ? "rtl" : "ltr"}
-                      value={form.descriptionTranslations[activeLangTab] || ""}
+                      value={form.translations[activeLangTab]?.description || ""}
                       onChange={(e) =>
                         setForm({
                           ...form,
-                          descriptionTranslations: {
-                            ...form.descriptionTranslations,
-                            [activeLangTab]: e.target.value,
+                          translations: {
+                            ...form.translations,
+                            [activeLangTab]: {
+                              ...form.translations[activeLangTab],
+                              description: e.target.value,
+                            },
                           },
                         })
                       }
@@ -490,14 +525,14 @@ export default function PublicCardsManager({ kind }: PublicCardsManagerProps) {
                   <input
                     type="text"
                     required
-                    value={form.linkUrl}
-                    onChange={(e) => setForm({ ...form, linkUrl: e.target.value })}
+                    value={form.link}
+                    onChange={(e) => setForm({ ...form, link: e.target.value })}
                     placeholder="https://www.archives.nat.tn ou /gallery/trees"
                     className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-3.5 py-2.5 text-xs text-[var(--foreground)] outline-none focus:border-[var(--gold)] focus:ring-2 focus:ring-[var(--gold)]/30 pe-20 font-mono"
                   />
-                  {form.linkUrl && (
+                  {form.link && (
                     <a
-                      href={form.linkUrl}
+                      href={form.link}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="absolute end-2 top-1/2 -translate-y-1/2 px-2 py-1 rounded bg-[var(--gold)]/15 text-[var(--gold)] hover:bg-[var(--gold)]/25 text-[10px] font-bold flex items-center gap-1"
@@ -516,12 +551,12 @@ export default function PublicCardsManager({ kind }: PublicCardsManagerProps) {
               <div className="flex items-center gap-2 pt-2">
                 <input
                   type="checkbox"
-                  id="isActiveToggle"
-                  checked={form.isActive}
-                  onChange={(e) => setForm({ ...form, isActive: e.target.checked })}
+                  id="isPublishedToggle"
+                  checked={form.isPublished}
+                  onChange={(e) => setForm({ ...form, isPublished: e.target.checked })}
                   className="rounded border-[var(--border)] accent-[var(--gold)] h-4 w-4"
                 />
-                <label htmlFor="isActiveToggle" className="text-xs font-semibold text-[var(--foreground)] cursor-pointer">
+                <label htmlFor="isPublishedToggle" className="text-xs font-semibold text-[var(--foreground)] cursor-pointer">
                   {t("pc_published")}
                 </label>
               </div>
@@ -533,13 +568,16 @@ export default function PublicCardsManager({ kind }: PublicCardsManagerProps) {
                   <span>{t("pc_preview")}</span>
                 </span>
 
-                <div className="surface-card frame-gold p-5 rounded-xl bg-[var(--card)] border border-[var(--gold)]/40 shadow-sm flex flex-col justify-between gap-3 text-start">
+                <div
+                  dir={activeLangTab === "ar" ? "rtl" : "ltr"}
+                  className="surface-card frame-gold p-5 rounded-xl bg-[var(--card)] border border-[var(--gold)]/40 shadow-sm flex flex-col justify-between gap-3 text-start"
+                >
                   <div>
                     <h4 className="font-serif font-bold text-base text-[var(--foreground)]">
-                      {form.title || "Titre de la fiche"}
+                      {previewData.title}
                     </h4>
                     <p className="mt-1.5 text-xs text-[var(--muted-foreground)] leading-relaxed">
-                      {form.description || "Description de la source ou archive affichée sur la page publique..."}
+                      {previewData.description}
                     </p>
                   </div>
                   <div className="pt-2 border-t border-[var(--gold)]/15">

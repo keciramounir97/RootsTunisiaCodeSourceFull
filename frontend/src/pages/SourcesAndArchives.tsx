@@ -16,18 +16,22 @@ import kairouan from "../assets/slider-kairouan.jpg";
 import SEO from "../components/SEO";
 import { useTranslation } from "../context/TranslationContext";
 import { useSiteContent } from "../hooks/useSiteContent";
-import { usePublicCards, type PublicCardRecord } from "../hooks/usePublicCards";
+import {
+  usePublicCards,
+  resolveCardText,
+  type PublicCardRecord,
+} from "../hooks/usePublicCards";
 
 export default function SourcesAndArchives() {
-  const { t, isRtl } = useTranslation();
+  const { locale, t, isRtl } = useTranslation();
   const { getText, getImage } = useSiteContent();
   const location = useLocation();
 
   const [activeTab, setActiveTab] = useState<"all" | "sources" | "archives">("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
 
-  const { cards: sourceCards, loading: sourcesLoading } = usePublicCards("source");
-  const { cards: archiveCards, loading: archivesLoading } = usePublicCards("archive");
+  const { cards: sourceCards = [], loading: sourcesLoading } = usePublicCards("source");
+  const { cards: archiveCards = [], loading: archivesLoading } = usePublicCards("archive");
 
   useEffect(() => {
     if (location.pathname.includes("/archives") || location.hash === "#archives") {
@@ -40,24 +44,30 @@ export default function SourcesAndArchives() {
   const query = searchQuery.trim().toLowerCase();
 
   const filteredSources = useMemo(() => {
-    const list = sourceCards.filter((c) => c.isActive !== false);
+    const list = (sourceCards || []).filter((c) => c.isPublished !== false && c.isActive !== false);
     if (!query) return list;
     return list.filter((s) => {
-      const title = (s.title || "").toLowerCase();
-      const desc = (s.description || "").toLowerCase();
-      return title.includes(query) || desc.includes(query);
+      const { title, description } = resolveCardText(s, locale);
+      return (
+        title.toLowerCase().includes(query) ||
+        description.toLowerCase().includes(query) ||
+        (s.title || "").toLowerCase().includes(query)
+      );
     });
-  }, [sourceCards, query]);
+  }, [sourceCards, query, locale]);
 
   const filteredArchives = useMemo(() => {
-    const list = archiveCards.filter((c) => c.isActive !== false);
+    const list = (archiveCards || []).filter((c) => c.isPublished !== false && c.isActive !== false);
     if (!query) return list;
     return list.filter((a) => {
-      const title = (a.title || "").toLowerCase();
-      const desc = (a.description || "").toLowerCase();
-      return title.includes(query) || desc.includes(query);
+      const { title, description } = resolveCardText(a, locale);
+      return (
+        title.toLowerCase().includes(query) ||
+        description.toLowerCase().includes(query) ||
+        (a.title || "").toLowerCase().includes(query)
+      );
     });
-  }, [archiveCards, query]);
+  }, [archiveCards, query, locale]);
 
   const showSources = activeTab === "all" || activeTab === "sources";
   const showArchives = activeTab === "all" || activeTab === "archives";
@@ -93,7 +103,9 @@ export default function SourcesAndArchives() {
   ];
 
   const renderCard = (card: PublicCardRecord, isArchive: boolean) => {
-    const isInternal = card.linkUrl?.startsWith("/") && !card.linkUrl.startsWith("//");
+    const { title, description } = resolveCardText(card, locale);
+    const linkDestination = card.link || card.linkUrl || "#";
+    const isInternal = linkDestination.startsWith("/") && !linkDestination.startsWith("//");
     const Icon = isArchive ? Archive : FileText;
 
     return (
@@ -108,13 +120,13 @@ export default function SourcesAndArchives() {
               <Icon className="h-5 w-5" />
             </div>
             <h3 className="font-display text-lg sm:text-xl font-bold text-[var(--foreground)] group-hover:text-[var(--gold)] transition-colors leading-snug">
-              {card.title}
+              {title || card.title}
             </h3>
           </div>
 
           {/* Description */}
           <p className="text-xs sm:text-sm text-[var(--muted-foreground)] leading-relaxed">
-            {card.description}
+            {description || card.description}
           </p>
         </div>
 
@@ -122,7 +134,7 @@ export default function SourcesAndArchives() {
         <div className="mt-6 pt-4 border-t border-[var(--gold)]/15 flex items-center justify-between">
           {isInternal ? (
             <Link
-              to={card.linkUrl}
+              to={linkDestination}
               className="btn-base btn-gold text-xs py-2 px-4 inline-flex items-center gap-1.5 shadow-sm hover:scale-[1.02] transition-transform"
             >
               <span>{t("card_open_link", "Ouvrir le lien")}</span>
@@ -130,7 +142,7 @@ export default function SourcesAndArchives() {
             </Link>
           ) : (
             <a
-              href={card.linkUrl}
+              href={linkDestination}
               target="_blank"
               rel="noopener noreferrer"
               className="btn-base btn-gold text-xs py-2 px-4 inline-flex items-center gap-1.5 shadow-sm hover:scale-[1.02] transition-transform"
@@ -140,7 +152,7 @@ export default function SourcesAndArchives() {
             </a>
           )}
           <span className="text-[10px] font-mono uppercase tracking-wider text-[var(--muted-foreground)] opacity-70">
-            {isArchive ? "Archive Officielle" : "Fonds Documentaire"}
+            {isArchive ? t("official_archive_badge", "Archive Officielle") : t("document_collection_badge", "Fonds Documentaire")}
           </span>
         </div>
       </article>
@@ -253,7 +265,7 @@ export default function SourcesAndArchives() {
             )}
           />
 
-          {sourcesLoading ? (
+          {sourcesLoading && filteredSources.length === 0 ? (
             <div className="flex items-center justify-center p-12">
               <Loader2 className="h-8 w-8 text-[var(--gold)] animate-spin" />
             </div>
@@ -282,7 +294,7 @@ export default function SourcesAndArchives() {
             )}
           />
 
-          {archivesLoading ? (
+          {archivesLoading && filteredArchives.length === 0 ? (
             <div className="flex items-center justify-center p-12">
               <Loader2 className="h-8 w-8 text-[var(--gold)] animate-spin" />
             </div>
