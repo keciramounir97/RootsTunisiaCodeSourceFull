@@ -1,21 +1,32 @@
-import { useState, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import {
   Archive,
-  FileText,
-  Plus,
-  Pencil,
-  Trash2,
-  ArrowUp,
   ArrowDown,
+  ArrowUp,
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  Compass,
+  Edit3,
   ExternalLink,
   Eye,
   EyeOff,
-  Check,
-  X,
+  FileText,
   Globe,
-  Loader2,
-  Compass,
   Link2,
+  Loader2,
+  Monitor,
+  Pencil,
+  Plus,
+  RotateCcw,
+  Save,
+  Search,
+  SlidersHorizontal,
+  Smartphone,
+  Sparkles,
+  Tablet,
+  Trash2,
+  X,
 } from "lucide-react";
 import { useTranslation } from "../../context/TranslationContext";
 import { api } from "../../api/client";
@@ -55,21 +66,25 @@ const EMPTY_FORM: FormState = {
 };
 
 const LOCALES = [
-  { code: "fr", label: "Français (Défaut)", flag: "FR", dir: "ltr" },
-  { code: "en", label: "English", flag: "EN", dir: "ltr" },
-  { code: "ar", label: "العربية", flag: "AR", dir: "rtl" },
-  { code: "es", label: "Español", flag: "ES", dir: "ltr" },
-  { code: "it", label: "Italiano", flag: "IT", dir: "ltr" },
-  { code: "mt", label: "Malti", flag: "MT", dir: "ltr" },
+  { code: "fr", label: "Français (Défaut)", flag: "🇫🇷", short: "FR", dir: "ltr" as const },
+  { code: "en", label: "English", flag: "🇬🇧", short: "EN", dir: "ltr" as const },
+  { code: "ar", label: "العربية", flag: "🇹🇳", short: "AR", dir: "rtl" as const },
+  { code: "es", label: "Español", flag: "🇪🇸", short: "ES", dir: "ltr" as const },
+  { code: "it", label: "Italiano", flag: "🇮🇹", short: "IT", dir: "ltr" as const },
+  { code: "mt", label: "Malti", flag: "🇲🇹", short: "MT", dir: "ltr" as const },
 ];
 
 export default function PublicCardsManager({ kind }: PublicCardsManagerProps) {
-  const { locale, t, isRtl } = useTranslation();
+  const { locale, t } = useTranslation();
   const { cards = [], loading, reload } = usePublicCards(kind);
 
-  const [modalOpen, setModalOpen] = useState(false);
-  const [form, setForm] = useState<FormState>({ ...EMPTY_FORM, kind });
+  const [deviceMode, setDeviceMode] = useState<"desktop" | "tablet" | "mobile">("desktop");
   const [activeLangTab, setActiveLangTab] = useState<string>("fr");
+  const [sidebarTab, setSidebarTab] = useState<"list" | "inspector">("list");
+  const [selectedCardId, setSelectedCardId] = useState<number | string | null>(null);
+
+  const [form, setForm] = useState<FormState>({ ...EMPTY_FORM, kind });
+  const [searchQuery, setSearchQuery] = useState("");
   const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<number | string | null>(null);
   const [toast, setToast] = useState<{ message: string; tone: "success" | "error" | "info" }>({
@@ -78,23 +93,40 @@ export default function PublicCardsManager({ kind }: PublicCardsManagerProps) {
   });
 
   const cardsList = useMemo(() => cards || [], [cards]);
+  const activeLangObj = LOCALES.find((l) => l.code === activeLangTab) || LOCALES[0];
+  const isCanvasRtl = activeLangObj.dir === "rtl";
 
   const pageTitle =
-    kind === "archive" ? t("pc_title_archive") : t("pc_title_source");
+    kind === "archive" ? "Archives Nationales & Régionales" : "Sources Documentaires & Notariales";
   const pageSubtitle =
-    kind === "archive" ? t("pc_subtitle_archive") : t("pc_subtitle_source");
+    kind === "archive"
+      ? "Gérez les fiches et liens officiels des institutions d'archives de Tunisie."
+      : "Gérez les registres civils, tribunaux charaïques et fonds documentaires patrimoniaux.";
 
-  const openAddModal = () => {
-    setForm({
+  const filteredCards = useMemo(() => {
+    if (!searchQuery.trim()) return cardsList;
+    const q = searchQuery.toLowerCase();
+    return cardsList.filter((c) => {
+      const matchTitle = (c.title || "").toLowerCase().includes(q);
+      const matchDesc = (c.description || "").toLowerCase().includes(q);
+      const matchLink = (c.link || c.linkUrl || "").toLowerCase().includes(q);
+      return matchTitle || matchDesc || matchLink;
+    });
+  }, [cardsList, searchQuery]);
+
+  const openAddCard = () => {
+    const newForm: FormState = {
       ...EMPTY_FORM,
       kind,
       sortOrder: cardsList.length,
-    });
-    setActiveLangTab("fr");
-    setModalOpen(true);
+    };
+    setForm(newForm);
+    setSelectedCardId("new");
+    setSidebarTab("inspector");
   };
 
-  const openEditModal = (card: PublicCardRecord) => {
+  const openEditCard = (card: PublicCardRecord) => {
+    setSelectedCardId(card.id);
     setForm({
       id: card.id,
       kind: card.kind,
@@ -105,18 +137,17 @@ export default function PublicCardsManager({ kind }: PublicCardsManagerProps) {
       isPublished: card.isPublished !== false && card.isActive !== false,
       translations: { ...(card.translations || {}) },
     });
-    setActiveLangTab("fr");
-    setModalOpen(true);
+    setSidebarTab("inspector");
   };
 
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSave = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     if (!form.title.trim()) {
       setToast({ message: "Le titre est obligatoire.", tone: "error" });
       return;
     }
     if (!form.link.trim()) {
-      setToast({ message: "Le lien est obligatoire.", tone: "error" });
+      setToast({ message: "Le lien web officiel est obligatoire.", tone: "error" });
       return;
     }
 
@@ -132,17 +163,16 @@ export default function PublicCardsManager({ kind }: PublicCardsManagerProps) {
 
     try {
       setSaving(true);
-      if (form.id && typeof form.id === "number") {
-        await api.put(`/admin/public-cards/${form.id}`, payload);
-      } else if (form.id) {
+      if (form.id && form.id !== "new") {
         await api.put(`/admin/public-cards/${form.id}`, payload);
       } else {
         await api.post("/admin/public-cards", payload);
       }
-      setToast({ message: t("pc_saved"), tone: "success" });
-      setModalOpen(false);
+      setToast({ message: t("pc_saved", "Fiche enregistrée et publiée en direct !"), tone: "success" });
       await refreshPublicCards(kind);
       if (reload) await reload();
+      setSidebarTab("list");
+      setSelectedCardId(null);
     } catch (err) {
       setToast({ message: getApiErrorMessage(err, t("pc_error")), tone: "error" });
     } finally {
@@ -151,13 +181,17 @@ export default function PublicCardsManager({ kind }: PublicCardsManagerProps) {
   };
 
   const handleDelete = async (id: number | string) => {
-    if (!window.confirm(t("pc_confirm_delete"))) return;
+    if (!window.confirm(t("pc_confirm_delete", "Voulez-vous vraiment supprimer cette fiche ?"))) return;
     try {
       setDeletingId(id);
       await api.delete(`/admin/public-cards/${id}`);
-      setToast({ message: t("pc_deleted"), tone: "success" });
+      setToast({ message: t("pc_deleted", "Fiche supprimée."), tone: "success" });
       await refreshPublicCards(kind);
       if (reload) await reload();
+      if (selectedCardId === id) {
+        setSelectedCardId(null);
+        setSidebarTab("list");
+      }
     } catch (err) {
       setToast({ message: getApiErrorMessage(err, t("pc_error")), tone: "error" });
     } finally {
@@ -191,430 +225,491 @@ export default function PublicCardsManager({ kind }: PublicCardsManagerProps) {
       });
       await refreshPublicCards(kind);
       if (reload) await reload();
+      setToast({
+        message: nextState ? "Fiche publiée en ligne" : "Fiche masquée du site",
+        tone: "info",
+      });
     } catch (err) {
       setToast({ message: getApiErrorMessage(err, t("pc_error")), tone: "error" });
     }
   };
 
-  // Preview title and description based on selected language tab
-  const previewData = useMemo(() => {
-    if (activeLangTab === "fr") {
-      return {
-        title: form.title || "Titre de la fiche",
-        description: form.description || "Description de la source ou archive affichée sur la page publique...",
-      };
-    }
-    const tr = form.translations[activeLangTab];
-    return {
-      title: tr?.title || form.title || "Titre de la fiche",
-      description: tr?.description || form.description || "Description de la source ou archive...",
-    };
-  }, [activeLangTab, form]);
+  // Live updated cards list reflecting uncommitted changes in the inspector
+  const livePreviewCards = useMemo(() => {
+    return cardsList.map((c) => {
+      if (selectedCardId === c.id) {
+        return {
+          ...c,
+          title: form.title || c.title,
+          description: form.description || c.description,
+          link: form.link || c.link,
+          isPublished: form.isPublished,
+          translations: form.translations,
+        };
+      }
+      return c;
+    });
+  }, [cardsList, selectedCardId, form]);
 
   return (
-    <div dir={isRtl ? "rtl" : "ltr"} className="space-y-6 text-start pb-20">
+    <div className="flex flex-col h-[calc(100vh-80px)] -m-3 sm:-m-6 lg:-m-8 bg-[#0b131e] text-slate-100 overflow-hidden font-sans">
       {toast.message && <Toast message={toast.message} tone={toast.tone} />}
 
-      {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[var(--gold)]/20">
-        <div className="flex items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--gold)]/15 text-[var(--gold)] ring-1 ring-[var(--gold)]/35 shrink-0">
-            {kind === "archive" ? <Archive className="h-6 w-6" /> : <FileText className="h-6 w-6" />}
-          </div>
-          <div>
-            <h1 className="font-display text-2xl font-bold text-[var(--foreground)]">{pageTitle}</h1>
-            <p className="text-xs text-[var(--muted-foreground)] mt-0.5">{pageSubtitle}</p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="px-3 py-1 rounded-full text-xs font-bold bg-[var(--gold)]/15 text-[var(--gold)] border border-[var(--gold)]/30">
-            {cardsList.length} {t("pc_count")}
+      {/* ========================================================================= */}
+      {/* 1. TOP STUDIO BAR                                                         */}
+      {/* ========================================================================= */}
+      <header className="h-16 border-b border-slate-700/80 bg-[#0f172a]/95 backdrop-blur-md px-4 flex items-center justify-between gap-3 shrink-0 z-40 select-none shadow-md">
+        <div className="flex items-center gap-3 min-w-0">
+          <span className="px-2 py-0.5 rounded-md text-[10px] font-extrabold uppercase tracking-widest bg-gradient-to-r from-amber-500/20 to-yellow-500/10 text-[var(--gold)] border border-[var(--gold)]/40 flex items-center gap-1.5 shadow-sm">
+            <Sparkles className="w-3 h-3 text-[var(--gold)] animate-pulse" />
+            <span>Studio Shopify Fiches</span>
           </span>
-          <button
-            type="button"
-            onClick={openAddModal}
-            className="btn-base btn-gold text-xs py-2 px-4 flex items-center gap-2 cursor-pointer shadow-md hover:scale-[1.02] transition-transform"
-          >
-            <Plus className="h-4 w-4" />
-            <span>{t("pc_add")}</span>
-          </button>
-        </div>
-      </div>
 
-      {/* Main Content Area */}
-      {loading && cardsList.length === 0 ? (
-        <div className="flex items-center justify-center p-16">
-          <Loader2 className="h-8 w-8 text-[var(--gold)] animate-spin" />
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="p-1.5 rounded-lg bg-[var(--gold)]/15 text-[var(--gold)] shrink-0">
+              {kind === "archive" ? <Archive className="w-4 h-4" /> : <FileText className="w-4 h-4" />}
+            </div>
+            <div className="truncate text-start">
+              <span className="font-bold text-sm text-white truncate block">{pageTitle}</span>
+              <span className="font-mono text-[10px] text-slate-400 block truncate">
+                {cardsList.length} fiches répertoriées
+              </span>
+            </div>
+          </div>
         </div>
-      ) : cardsList.length === 0 ? (
-        <div className="text-center p-12 rounded-xl border border-[var(--gold)]/30 bg-[var(--card)]/60 text-sm text-[var(--muted-foreground)] space-y-3">
-          <Compass className="h-10 w-10 text-[var(--gold)] mx-auto opacity-70" />
-          <p className="font-semibold text-[var(--foreground)]">{t("pc_empty")}</p>
-          <button
-            type="button"
-            onClick={openAddModal}
-            className="btn-base btn-outline text-xs py-2 px-4 cursor-pointer"
-          >
-            {t("pc_add")}
-          </button>
-        </div>
-      ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {cardsList.map((card, idx) => {
-            const { title, description } = resolveCardText(card, locale);
-            const cardLink = card.link || card.linkUrl || "#";
-            const isCardActive = card.isPublished !== false && card.isActive !== false;
 
-            return (
-              <article
-                key={card.id}
-                className={`surface-card group flex flex-col justify-between p-5 rounded-xl border transition-all duration-200 ${
-                  isCardActive
-                    ? "border-[var(--gold)]/35 bg-[var(--card)]/90 hover:border-[var(--gold)] shadow-sm hover:shadow-md"
-                    : "border-dashed border-[var(--border)] bg-[var(--card)]/40 opacity-70"
+        {/* Center: Device Switcher + Language Selector */}
+        <div className="hidden md:flex items-center gap-3">
+          <div className="flex items-center p-1 rounded-xl bg-slate-900/90 border border-slate-700/80 shadow-inner">
+            <button
+              type="button"
+              onClick={() => setDeviceMode("desktop")}
+              className={`p-1.5 rounded-lg transition-all flex items-center gap-1.5 text-xs font-semibold ${
+                deviceMode === "desktop"
+                  ? "bg-[var(--gold)] text-black shadow-sm font-bold"
+                  : "text-slate-400 hover:text-white"
+              }`}
+            >
+              <Monitor className="w-4 h-4" />
+              <span className="hidden lg:inline">Bureau</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setDeviceMode("tablet")}
+              className={`p-1.5 rounded-lg transition-all flex items-center gap-1.5 text-xs font-semibold ${
+                deviceMode === "tablet"
+                  ? "bg-[var(--gold)] text-black shadow-sm font-bold"
+                  : "text-slate-400 hover:text-white"
+              }`}
+            >
+              <Tablet className="w-4 h-4" />
+              <span className="hidden lg:inline">Tablette</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setDeviceMode("mobile")}
+              className={`p-1.5 rounded-lg transition-all flex items-center gap-1.5 text-xs font-semibold ${
+                deviceMode === "mobile"
+                  ? "bg-[var(--gold)] text-black shadow-sm font-bold"
+                  : "text-slate-400 hover:text-white"
+              }`}
+            >
+              <Smartphone className="w-4 h-4" />
+              <span className="hidden lg:inline">Mobile</span>
+            </button>
+          </div>
+
+          <div className="flex items-center gap-1 p-1 rounded-xl bg-slate-900/90 border border-slate-700/80 shadow-inner">
+            {LOCALES.map((l) => (
+              <button
+                key={l.code}
+                type="button"
+                onClick={() => setActiveLangTab(l.code)}
+                title={l.label}
+                className={`px-2 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1 ${
+                  activeLangTab === l.code
+                    ? "bg-[var(--gold)] text-black shadow-sm"
+                    : "text-slate-400 hover:text-white hover:bg-slate-800"
                 }`}
               >
-                <div className="space-y-3">
-                  {/* Card Top: Order and status */}
-                  <div className="flex items-center justify-between text-xs border-b border-[var(--gold)]/15 pb-2.5">
-                    <span className="font-mono text-[11px] font-bold text-[var(--gold)]">
-                      #{idx + 1}
-                    </span>
-                    <div className="flex items-center gap-1.5">
-                      <button
-                        type="button"
-                        onClick={() => handleToggleActive(card)}
-                        title={isCardActive ? t("pc_published") : t("pc_hidden")}
-                        className={`px-2 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1 cursor-pointer transition-colors ${
-                          isCardActive
-                            ? "bg-emerald-500/15 text-emerald-500 border border-emerald-500/30"
-                            : "bg-stone-500/20 text-stone-400 border border-stone-500/30"
-                        }`}
-                      >
-                        {isCardActive ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
-                        <span>{isCardActive ? t("pc_published") : t("pc_hidden")}</span>
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Card Title & Description */}
-                  <div>
-                    <h3 className="font-serif font-bold text-base text-[var(--foreground)] group-hover:text-[var(--gold)] transition-colors leading-snug">
-                      {title || card.title}
-                    </h3>
-                    <p className="mt-2 text-xs text-[var(--muted-foreground)] leading-relaxed line-clamp-3">
-                      {description || card.description}
-                    </p>
-                  </div>
-
-                  {/* Link Preview */}
-                  <div className="pt-2 text-[11px] text-[var(--gold)] flex items-center gap-1 font-mono truncate">
-                    <Link2 className="h-3 w-3 shrink-0" />
-                    <span className="truncate">{cardLink}</span>
-                  </div>
-                </div>
-
-                {/* Card Footer: Actions */}
-                <div className="mt-4 pt-3 border-t border-[var(--gold)]/15 flex items-center justify-between gap-1">
-                  <div className="flex items-center gap-1">
-                    <button
-                      type="button"
-                      disabled={idx === 0}
-                      onClick={() => handleMove(idx, "up")}
-                      className="p-1.5 rounded-lg border border-[var(--border)] text-[var(--muted-foreground)] hover:text-[var(--gold)] hover:border-[var(--gold)] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                      title={t("pc_move_up")}
-                    >
-                      <ArrowUp className="h-3.5 w-3.5" />
-                    </button>
-                    <button
-                      type="button"
-                      disabled={idx === cardsList.length - 1}
-                      onClick={() => handleMove(idx, "down")}
-                      className="p-1.5 rounded-lg border border-[var(--border)] text-[var(--muted-foreground)] hover:text-[var(--gold)] hover:border-[var(--gold)] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                      title={t("pc_move_down")}
-                    >
-                      <ArrowDown className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
-
-                  <div className="flex items-center gap-1">
-                    <button
-                      type="button"
-                      onClick={() => openEditModal(card)}
-                      className="p-1.5 rounded-lg border border-[var(--gold)]/40 bg-[var(--gold)]/10 text-[var(--gold)] hover:bg-[var(--gold)]/20 transition-colors cursor-pointer"
-                      title={t("pc_edit")}
-                    >
-                      <Pencil className="h-3.5 w-3.5" />
-                    </button>
-                    <button
-                      type="button"
-                      disabled={deletingId === card.id}
-                      onClick={() => handleDelete(card.id)}
-                      className="p-1.5 rounded-lg border border-red-500/40 bg-red-500/10 text-red-500 hover:bg-red-500/20 transition-colors cursor-pointer disabled:opacity-50"
-                      title={t("pc_delete")}
-                    >
-                      {deletingId === card.id ? (
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      ) : (
-                        <Trash2 className="h-3.5 w-3.5" />
-                      )}
-                    </button>
-                  </div>
-                </div>
-              </article>
-            );
-          })}
-        </div>
-      )}
-
-      {/* Modal for Add / Edit */}
-      {modalOpen && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 overflow-y-auto animate-fade-in"
-          onClick={() => setModalOpen(false)}
-        >
-          <div
-            className="surface-card frame-gold relative w-full max-w-2xl max-h-[92vh] overflow-y-auto p-6 sm:p-8 rounded-2xl bg-[var(--card)] shadow-2xl text-start"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Modal Header */}
-            <div className="flex items-center justify-between border-b border-[var(--gold)]/25 pb-4">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--gold)]/15 text-[var(--gold)] ring-1 ring-[var(--gold)]/40">
-                  {form.id ? <Pencil className="h-5 w-5" /> : <Plus className="h-5 w-5" />}
-                </div>
-                <div>
-                  <h3 className="font-display text-lg sm:text-xl font-bold text-[var(--foreground)]">
-                    {form.id ? t("pc_edit") : t("pc_add")}
-                  </h3>
-                  <p className="text-[11px] text-[var(--muted-foreground)]">
-                    {kind === "archive" ? "Fiche d'archives publiques" : "Fiche de source publique"}
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setModalOpen(false)}
-                className="p-1.5 rounded-full hover:bg-[var(--gold)]/15 text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition cursor-pointer"
-              >
-                <X className="h-5 w-5" />
+                <span>{l.flag}</span>
+                <span className="font-mono text-[11px]">{l.short}</span>
               </button>
-            </div>
-
-            {/* Language Selector Tabs */}
-            <div className="mt-4 pt-1 border-b border-[var(--border)] flex items-center gap-1.5 overflow-x-auto pb-2">
-              <span className="text-[11px] font-bold text-[var(--muted-foreground)] me-1 uppercase tracking-wider flex items-center gap-1 shrink-0">
-                <Globe className="h-3.5 w-3.5 text-[var(--gold)]" />
-                <span>{t("pc_translations")}:</span>
-              </span>
-              {LOCALES.map((l) => (
-                <button
-                  key={l.code}
-                  type="button"
-                  onClick={() => setActiveLangTab(l.code)}
-                  className={`px-3 py-1 rounded-lg text-xs font-bold transition-colors cursor-pointer shrink-0 ${
-                    activeLangTab === l.code
-                      ? "bg-[var(--gold)] text-black font-extrabold shadow-sm"
-                      : "border border-[var(--border)] text-[var(--foreground)] hover:border-[var(--gold)]/50"
-                  }`}
-                >
-                  {l.flag} · {l.label}
-                </button>
-              ))}
-            </div>
-
-            {/* Modal Form */}
-            <form onSubmit={handleSave} className="mt-5 space-y-4">
-              {activeLangTab === "fr" ? (
-                <>
-                  <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-[var(--foreground)] mb-1">
-                      {t("pc_name")} <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={form.title}
-                      onChange={(e) => setForm({ ...form, title: e.target.value })}
-                      placeholder="Ex: Archives Nationales de Tunisie"
-                      className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-3.5 py-2.5 text-xs text-[var(--foreground)] outline-none focus:border-[var(--gold)] focus:ring-2 focus:ring-[var(--gold)]/30"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-[var(--foreground)] mb-1">
-                      {t("pc_description")}
-                    </label>
-                    <textarea
-                      rows={3}
-                      value={form.description}
-                      onChange={(e) => setForm({ ...form, description: e.target.value })}
-                      placeholder="Ex: Consultation des séries historiques, état civil..."
-                      className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-3.5 py-2.5 text-xs text-[var(--foreground)] outline-none focus:border-[var(--gold)] focus:ring-2 focus:ring-[var(--gold)]/30 leading-relaxed"
-                    />
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className="p-3 rounded-lg bg-[var(--gold)]/10 border border-[var(--gold)]/25 text-[11px] text-[var(--foreground)]">
-                    <p className="font-semibold">{t("pc_translations_hint")}</p>
-                    <p className="opacity-80 mt-1">
-                      Par défaut (FR): <strong>{form.title || "(aucun titre)"}</strong>
-                    </p>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-[var(--foreground)] mb-1">
-                      {t("pc_name")} ({activeLangTab.toUpperCase()})
-                    </label>
-                    <input
-                      type="text"
-                      dir={activeLangTab === "ar" ? "rtl" : "ltr"}
-                      value={form.translations[activeLangTab]?.title || ""}
-                      onChange={(e) =>
-                        setForm({
-                          ...form,
-                          translations: {
-                            ...form.translations,
-                            [activeLangTab]: {
-                              ...form.translations[activeLangTab],
-                              title: e.target.value,
-                            },
-                          },
-                        })
-                      }
-                      placeholder={form.title || "Titre traduit..."}
-                      className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-3.5 py-2.5 text-xs text-[var(--foreground)] outline-none focus:border-[var(--gold)] focus:ring-2 focus:ring-[var(--gold)]/30"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-[var(--foreground)] mb-1">
-                      {t("pc_description")} ({activeLangTab.toUpperCase()})
-                    </label>
-                    <textarea
-                      rows={3}
-                      dir={activeLangTab === "ar" ? "rtl" : "ltr"}
-                      value={form.translations[activeLangTab]?.description || ""}
-                      onChange={(e) =>
-                        setForm({
-                          ...form,
-                          translations: {
-                            ...form.translations,
-                            [activeLangTab]: {
-                              ...form.translations[activeLangTab],
-                              description: e.target.value,
-                            },
-                          },
-                        })
-                      }
-                      placeholder={form.description || "Description traduite..."}
-                      className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-3.5 py-2.5 text-xs text-[var(--foreground)] outline-none focus:border-[var(--gold)] focus:ring-2 focus:ring-[var(--gold)]/30 leading-relaxed"
-                    />
-                  </div>
-                </>
-              )}
-
-              {/* Link Input */}
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-[var(--foreground)] mb-1">
-                  {t("pc_link")} <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    required
-                    value={form.link}
-                    onChange={(e) => setForm({ ...form, link: e.target.value })}
-                    placeholder="https://www.archives.nat.tn ou /gallery/trees"
-                    className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-3.5 py-2.5 text-xs text-[var(--foreground)] outline-none focus:border-[var(--gold)] focus:ring-2 focus:ring-[var(--gold)]/30 pe-20 font-mono"
-                  />
-                  {form.link && (
-                    <a
-                      href={form.link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="absolute end-2 top-1/2 -translate-y-1/2 px-2 py-1 rounded bg-[var(--gold)]/15 text-[var(--gold)] hover:bg-[var(--gold)]/25 text-[10px] font-bold flex items-center gap-1"
-                    >
-                      <ExternalLink className="h-3 w-3" />
-                      <span>Tester</span>
-                    </a>
-                  )}
-                </div>
-                <p className="mt-1 text-[10.5px] text-[var(--muted-foreground)]">
-                  {t("pc_link_hint")}
-                </p>
-              </div>
-
-              {/* Published Toggle */}
-              <div className="flex items-center gap-2 pt-2">
-                <input
-                  type="checkbox"
-                  id="isPublishedToggle"
-                  checked={form.isPublished}
-                  onChange={(e) => setForm({ ...form, isPublished: e.target.checked })}
-                  className="rounded border-[var(--border)] accent-[var(--gold)] h-4 w-4"
-                />
-                <label htmlFor="isPublishedToggle" className="text-xs font-semibold text-[var(--foreground)] cursor-pointer">
-                  {t("pc_published")}
-                </label>
-              </div>
-
-              {/* Live Preview of the Simplified Public Card */}
-              <div className="mt-5 pt-4 border-t border-[var(--gold)]/20 space-y-2">
-                <span className="text-[10.5px] font-bold uppercase tracking-wider text-[var(--gold)] flex items-center gap-1">
-                  <Eye className="h-3.5 w-3.5" />
-                  <span>{t("pc_preview")}</span>
-                </span>
-
-                <div
-                  dir={activeLangTab === "ar" ? "rtl" : "ltr"}
-                  className="surface-card frame-gold p-5 rounded-xl bg-[var(--card)] border border-[var(--gold)]/40 shadow-sm flex flex-col justify-between gap-3 text-start"
-                >
-                  <div>
-                    <h4 className="font-serif font-bold text-base text-[var(--foreground)]">
-                      {previewData.title}
-                    </h4>
-                    <p className="mt-1.5 text-xs text-[var(--muted-foreground)] leading-relaxed">
-                      {previewData.description}
-                    </p>
-                  </div>
-                  <div className="pt-2 border-t border-[var(--gold)]/15">
-                    <span className="btn-base btn-gold text-[11px] py-1.5 px-3 inline-flex items-center gap-1.5 shadow-sm pointer-events-none">
-                      <ExternalLink className="h-3 w-3" />
-                      <span>{t("card_open_link")}</span>
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Actions Footer */}
-              <div className="mt-6 pt-4 border-t border-[var(--gold)]/25 flex items-center justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => setModalOpen(false)}
-                  className="btn-base btn-outline text-xs py-2 px-4 cursor-pointer"
-                >
-                  {t("pc_cancel")}
-                </button>
-                <button
-                  type="submit"
-                  disabled={saving}
-                  className="btn-base btn-gold text-xs py-2 px-5 flex items-center gap-2 cursor-pointer disabled:opacity-50"
-                >
-                  {saving ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Check className="h-4 w-4" />
-                  )}
-                  <span>{t("pc_save")}</span>
-                </button>
-              </div>
-            </form>
+            ))}
           </div>
         </div>
-      )}
+
+        {/* Right Action: Add Card Button */}
+        <div className="flex items-center gap-2">
+          <a
+            href={kind === "archive" ? "/archives" : "/sources"}
+            target="_blank"
+            rel="noopener noreferrer"
+            title="Ouvrir la page publique réelle"
+            className="p-2 rounded-xl border border-slate-700 bg-slate-800/80 text-slate-300 hover:text-white hover:border-[var(--gold)] transition-colors"
+          >
+            <ExternalLink className="w-4 h-4" />
+          </a>
+
+          <button
+            type="button"
+            onClick={openAddCard}
+            className="btn-base btn-gold text-xs py-2 px-4 flex items-center gap-1.5 cursor-pointer shadow-lg font-bold"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Nouvelle Fiche</span>
+          </button>
+        </div>
+      </header>
+
+      {/* ========================================================================= */}
+      {/* 2. SPLIT WORKSPACE: LEFT INSPECTOR + RIGHT LIVE CARDS GRID                */}
+      {/* ========================================================================= */}
+      <div className="flex-1 flex overflow-hidden relative">
+        {/* LEFT PANEL: CARDS LIST & INSPECTOR */}
+        <aside className="w-full lg:w-[410px] border-r border-slate-800 bg-[#0f172a] flex flex-col shrink-0 z-30 shadow-xl overflow-hidden">
+          <div className="p-3 border-b border-slate-800 bg-slate-900/60 flex items-center justify-between gap-2 shrink-0">
+            <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-800/90 border border-slate-700 w-full">
+              <button
+                type="button"
+                onClick={() => setSidebarTab("list")}
+                className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                  sidebarTab === "list"
+                    ? "bg-[var(--gold)] text-black shadow-sm font-extrabold"
+                    : "text-slate-400 hover:text-white"
+                }`}
+              >
+                <span>Toutes les fiches ({cardsList.length})</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setSidebarTab("inspector")}
+                className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                  sidebarTab === "inspector"
+                    ? "bg-[var(--gold)] text-black shadow-sm font-extrabold"
+                    : "text-slate-400 hover:text-white"
+                }`}
+              >
+                <SlidersHorizontal className="w-3.5 h-3.5" />
+                <span>Éditeur de fiche</span>
+              </button>
+            </div>
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin">
+            {sidebarTab === "list" ? (
+              <div className="space-y-3">
+                {/* Search Bar */}
+                <div className="relative">
+                  <Search className="w-4 h-4 text-slate-500 absolute start-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Filtrer les fiches..."
+                    className="w-full ps-9 pe-3 py-2 text-xs rounded-xl border border-slate-800 bg-slate-900 text-slate-200 outline-none focus:border-[var(--gold)]"
+                  />
+                </div>
+
+                {filteredCards.map((card, idx) => {
+                  const { title } = resolveCardText(card, activeLangTab);
+                  const isSel = selectedCardId === card.id;
+                  const isPub = card.isPublished !== false && card.isActive !== false;
+
+                  return (
+                    <div
+                      key={card.id}
+                      onClick={() => openEditCard(card)}
+                      className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-3 group text-start ${
+                        isSel
+                          ? "bg-slate-800/90 border-[var(--gold)] ring-1 ring-[var(--gold)]/40 shadow-md"
+                          : "bg-slate-900/60 border-slate-800 hover:border-slate-700 hover:bg-slate-850"
+                      }`}
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <span className="font-mono text-xs font-bold text-[var(--gold)] shrink-0">
+                          #{idx + 1}
+                        </span>
+                        <div className="min-w-0">
+                          <h4 className="font-bold text-xs text-white group-hover:text-[var(--gold)] transition-colors truncate">
+                            {title || card.title}
+                          </h4>
+                          <span className="font-mono text-[10px] text-slate-400 truncate block mt-0.5">
+                            {card.link || card.linkUrl}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
+                        <button
+                          type="button"
+                          disabled={idx === 0}
+                          onClick={() => handleMove(idx, "up")}
+                          className="p-1 rounded text-slate-500 hover:text-[var(--gold)] disabled:opacity-20"
+                        >
+                          <ArrowUp className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          disabled={idx === cardsList.length - 1}
+                          onClick={() => handleMove(idx, "down")}
+                          className="p-1 rounded text-slate-500 hover:text-[var(--gold)] disabled:opacity-20"
+                        >
+                          <ArrowDown className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleToggleActive(card)}
+                          className={`p-1 rounded ${isPub ? "text-emerald-400" : "text-slate-600"}`}
+                        >
+                          {isPub ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              /* CARD INSPECTOR FORM */
+              <div className="space-y-4 text-start">
+                <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+                  <button
+                    type="button"
+                    onClick={() => setSidebarTab("list")}
+                    className="text-xs font-semibold text-slate-400 hover:text-[var(--gold)] flex items-center gap-1"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                    <span>Retour à la liste</span>
+                  </button>
+                  <span className="text-[10px] font-mono text-[var(--gold)] font-bold">
+                    {selectedCardId === "new" ? "Nouvelle Fiche" : `Édition #${form.id}`}
+                  </span>
+                </div>
+
+                {/* Title Input */}
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-300">Titre de la fiche</label>
+                  <input
+                    type="text"
+                    dir={activeLangObj.dir}
+                    value={
+                      activeLangTab === "fr"
+                        ? form.title
+                        : form.translations[activeLangTab]?.title ?? ""
+                    }
+                    placeholder="ex. Archives Nationales de Tunisie (ANT)"
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (activeLangTab === "fr") {
+                        setForm((prev) => ({ ...prev, title: val }));
+                      } else {
+                        setForm((prev) => ({
+                          ...prev,
+                          translations: {
+                            ...prev.translations,
+                            [activeLangTab]: {
+                              ...(prev.translations[activeLangTab] || {}),
+                              title: val,
+                            },
+                          },
+                        }));
+                      }
+                    }}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-700 bg-slate-900 text-sm text-white outline-none focus:border-[var(--gold)]"
+                  />
+                </div>
+
+                {/* Description Input */}
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-300">Description détaillée</label>
+                  <textarea
+                    rows={4}
+                    dir={activeLangObj.dir}
+                    value={
+                      activeLangTab === "fr"
+                        ? form.description
+                        : form.translations[activeLangTab]?.description ?? ""
+                    }
+                    placeholder="Description du fonds patrimonial, consultations sur place..."
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (activeLangTab === "fr") {
+                        setForm((prev) => ({ ...prev, description: val }));
+                      } else {
+                        setForm((prev) => ({
+                          ...prev,
+                          translations: {
+                            ...prev.translations,
+                            [activeLangTab]: {
+                              ...(prev.translations[activeLangTab] || {}),
+                              description: val,
+                            },
+                          },
+                        }));
+                      }
+                    }}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-700 bg-slate-900 text-xs text-white outline-none focus:border-[var(--gold)] leading-relaxed"
+                  />
+                </div>
+
+                {/* Link Input */}
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-300">Lien web officiel</label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="url"
+                      dir="ltr"
+                      value={form.link}
+                      placeholder="https://archives.nat.tn..."
+                      onChange={(e) => setForm((prev) => ({ ...prev, link: e.target.value }))}
+                      className="w-full px-3 py-2 rounded-xl border border-slate-700 bg-slate-900 text-xs font-mono text-[var(--gold)] outline-none focus:border-[var(--gold)]"
+                    />
+                    {form.link && (
+                      <a
+                        href={form.link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-2 rounded-xl bg-slate-800 text-slate-300 hover:text-[var(--gold)]"
+                      >
+                        <ExternalLink className="w-4 h-4" />
+                      </a>
+                    )}
+                  </div>
+                </div>
+
+                {/* Publication switch */}
+                <div className="flex items-center justify-between p-3 rounded-xl border border-slate-800 bg-slate-900">
+                  <span className="text-xs font-bold text-slate-200">Statut de publication</span>
+                  <button
+                    type="button"
+                    onClick={() => setForm((prev) => ({ ...prev, isPublished: !prev.isPublished }))}
+                    className={`px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1.5 transition-colors ${
+                      form.isPublished
+                        ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/40"
+                        : "bg-slate-800 text-slate-400 border border-slate-700"
+                    }`}
+                  >
+                    {form.isPublished ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+                    <span>{form.isPublished ? "En Ligne" : "Masquée"}</span>
+                  </button>
+                </div>
+
+                {/* Action buttons */}
+                <div className="pt-2 flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleSave}
+                    disabled={saving}
+                    className="flex-1 btn-base btn-gold text-xs py-2.5 font-bold shadow-lg flex items-center justify-center gap-1.5"
+                  >
+                    {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                    <span>Enregistrer la Fiche</span>
+                  </button>
+
+                  {form.id && form.id !== "new" && (
+                    <button
+                      type="button"
+                      onClick={() => form.id && handleDelete(form.id)}
+                      className="p-2.5 rounded-xl border border-red-500/30 text-red-400 hover:bg-red-500/20 transition-colors"
+                      title="Supprimer cette fiche"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        </aside>
+
+        {/* RIGHT PANEL: LIVE RESPONSIVE CANVAS */}
+        <main className="flex-1 bg-[#070b12] overflow-y-auto flex flex-col items-center p-4 sm:p-8 relative scrollbar-thin">
+          <div
+            className={`transition-all duration-300 w-full flex flex-col relative z-10 ${
+              deviceMode === "mobile"
+                ? "max-w-[390px] rounded-[44px] border-[10px] border-slate-800 shadow-2xl overflow-hidden my-4 bg-slate-950"
+                : deviceMode === "tablet"
+                ? "max-w-[768px] rounded-[30px] border-[8px] border-slate-800 shadow-2xl overflow-hidden my-4 bg-slate-950"
+                : "w-full max-w-6xl rounded-2xl border border-slate-800 shadow-2xl overflow-hidden bg-slate-950"
+            }`}
+          >
+            {/* Device header */}
+            <div className="bg-slate-900 px-4 py-2.5 border-b border-slate-800 flex items-center justify-between text-xs select-none">
+              <div className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-red-500/80 inline-block" />
+                <span className="w-2.5 h-2.5 rounded-full bg-amber-500/80 inline-block" />
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500/80 inline-block" />
+              </div>
+              <span className="text-[11px] font-mono text-slate-400">
+                Aperçu en direct · {kind === "archive" ? "/archives" : "/sources"}
+              </span>
+              <span className="font-mono text-[10px] text-[var(--gold)] font-bold">
+                {activeLangObj.short}
+              </span>
+            </div>
+
+            {/* LIVE CARDS GRID BODY */}
+            <div dir={isCanvasRtl ? "rtl" : "ltr"} className="p-6 sm:p-10 bg-[#0b1420] min-h-[500px]">
+              <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                {livePreviewCards.map((card, idx) => {
+                  const { title, description } = resolveCardText(card, activeLangTab);
+                  const isSel = selectedCardId === card.id;
+
+                  return (
+                    <div
+                      key={card.id}
+                      onClick={() => openEditCard(card)}
+                      className={`group/card relative rounded-2xl p-5 border text-start transition-all cursor-pointer flex flex-col justify-between ${
+                        isSel
+                          ? "border-[var(--gold)] ring-2 ring-[var(--gold)]/50 bg-slate-850 shadow-2xl scale-[1.01]"
+                          : "border-slate-800 bg-slate-900/90 hover:border-[var(--gold)]/70 hover:scale-[1.01] shadow-md"
+                      }`}
+                    >
+                      {/* Floating edit badge on hover */}
+                      <div className="absolute top-2 end-2 opacity-0 group-hover/card:opacity-100 transition-opacity">
+                        <span className="px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wider bg-[var(--gold)] text-black shadow-md flex items-center gap-1">
+                          <Edit3 className="w-2.5 h-2.5" />
+                          <span>Modifier</span>
+                        </span>
+                      </div>
+
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between text-xs border-b border-slate-800 pb-2">
+                          <span className="font-mono text-[10px] text-[var(--gold)] font-bold">
+                            #{idx + 1}
+                          </span>
+                          <span className="text-[9px] uppercase font-bold text-slate-400">
+                            {kind === "archive" ? "ARCHIVE OFFICIELLE" : "SOURCE DOCUMENTAIRE"}
+                          </span>
+                        </div>
+
+                        <h3 className="font-serif font-bold text-base text-white group-hover/card:text-[var(--gold)] transition-colors leading-snug">
+                          {title || card.title}
+                        </h3>
+
+                        <p className="text-xs text-slate-300 leading-relaxed font-light line-clamp-3">
+                          {description || card.description}
+                        </p>
+                      </div>
+
+                      <div className="pt-4 mt-4 border-t border-slate-800 flex items-center justify-between">
+                        <span className="inline-flex items-center gap-1.5 text-xs font-bold text-[var(--gold)]">
+                          <span>Accéder au portail</span>
+                          <ExternalLink className="w-3 h-3" />
+                        </span>
+                        <span className="text-[10px] font-mono text-slate-500 truncate max-w-[120px]">
+                          {card.link}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
     </div>
   );
 }
