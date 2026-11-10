@@ -2199,6 +2199,7 @@ export default function TreesBuilder({
   const detailPointerRef = useRef({ x: 0, y: 0, active: false });
 
   const importGedcomRef = useRef(null);
+  const isPersonSubmittingRef = useRef(false);
   const importGedcomFormatRef = useRef("5.5.1"); // "5.5.1" | "7.0" for dropdown choice
   const importGedcomXRef = useRef(null);
   const gedcomXImportFormatRef = useRef("xml");
@@ -3573,6 +3574,12 @@ export default function TreesBuilder({
 
   const addPerson = (e) => {
     e.preventDefault();
+
+    if (isPersonSubmittingRef.current) return;
+    isPersonSubmittingRef.current = true;
+    setTimeout(() => {
+      isPersonSubmittingRef.current = false;
+    }, 400);
 
     const name = addForm.name.trim();
 

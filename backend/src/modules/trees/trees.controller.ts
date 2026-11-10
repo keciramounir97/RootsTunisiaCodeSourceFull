@@ -82,7 +82,8 @@ export class TreesController {
         @Request() req,
         @UploadedFile() file?: Express.Multer.File
     ) {
-        return this.treesService.create(body, req.user.id, file);
+        const idempotencyKey = (req.headers?.['x-idempotency-key'] || req.headers?.['idempotency-key']) as string | undefined;
+        return this.treesService.create(body, req.user.id, file, idempotencyKey);
     }
 
     @Put('my/trees/:id')
@@ -161,7 +162,8 @@ export class TreesController {
         @Request() req,
         @UploadedFile() file?: Express.Multer.File
     ) {
-        return this.treesService.create(body, req.user.id, file);
+        const idempotencyKey = (req.headers?.['x-idempotency-key'] || req.headers?.['idempotency-key']) as string | undefined;
+        return this.treesService.create(body, req.user.id, file, idempotencyKey);
     }
 
     @Post('admin/trees/:id/save')

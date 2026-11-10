@@ -312,3 +312,4 @@ export const PUBLIC_CARDS_SEED_FALLBACK: PublicCardDto[] = [
     },
   },
 ];
+

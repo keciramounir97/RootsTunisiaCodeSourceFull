@@ -81,6 +81,16 @@ export class TreesService implements OnModuleInit {
 
     private treeCache = new Map<string, { data: any; expiry: number }>();
     private gedcomCache = new Map<number, { text: string; expiry: number }>();
+    private idempotencyCache = new Map<string, { promise?: Promise<any>; response?: any; expiry: number }>();
+
+    private purgeIdempotencyCache() {
+        const now = Date.now();
+        for (const [key, entry] of this.idempotencyCache.entries()) {
+            if (entry.expiry <= now) {
+                this.idempotencyCache.delete(key);
+            }
+        }
+    }
 
     private getCached(key: string) {
         const item = this.treeCache.get(key);
@@ -95,6 +105,7 @@ export class TreesService implements OnModuleInit {
     public clearCache() {
         this.treeCache.clear();
         this.gedcomCache.clear();
+        this.idempotencyCache.clear();
     }
 
     async listPublic() {
@@ -223,9 +234,21 @@ export class TreesService implements OnModuleInit {
         return `${title || 'tree'}.ged`;
     }
 
-    async create(data: any, userId: number, file?: Express.Multer.File) {
-        if (userId) {
-            await this.subscriptionsService.checkUserQuota(userId, 'trees');
+    async create(data: any, userId: number, file?: Express.Multer.File, idempotencyKey?: string) {
+        this.purgeIdempotencyCache();
+
+        // 1. Idempotency Key check: if client provided an idempotency key and we have a cached response or in-flight promise
+        if (idempotencyKey) {
+            const cacheKey = `${userId || 0}:${idempotencyKey}`;
+            const cached = this.idempotencyCache.get(cacheKey);
+            if (cached) {
+                if (cached.response) {
+                    return cached.response;
+                }
+                if (cached.promise) {
+                    return await cached.promise;
+                }
+            }
         }
 
         const title = data.title ?? data.name;
@@ -233,64 +256,113 @@ export class TreesService implements OnModuleInit {
             throw new BadRequestException('Title is required');
         }
 
-        const isPublic = data.isPublic === 'true' || data.isPublic === true;
-        let gedcomPath = file ? `/uploads/trees/${file.filename}` : null;
+        // 2. Semantic Deduplication Guard:
+        // Prevent duplicate rapid submissions from the same user with the same title within 5 seconds.
+        if (userId) {
+            const fiveSecondsAgo = new Date(Date.now() - 5000);
+            const recentDuplicate = await Tree.query(this.knex)
+                .where('user_id', userId)
+                .andWhere('title', title)
+                .andWhere('created_at', '>=', fiveSecondsAgo)
+                .orderBy('id', 'desc')
+                .first();
 
-        let dataFormat: 'gedcom' | 'gedcomx' | 'gedcom7' = 'gedcom';
-        let gedcomText: string | null = data.gedcom_text ?? data.gedcomText ?? null;
-        if (file) {
-            gedcomText = fs.readFileSync(file.path, 'utf8');
-            const explicit = data.data_format ?? data.dataFormat;
-            if (explicit === 'gedcom7' || explicit === 'gedcomx' || explicit === 'gedcom') dataFormat = explicit;
-            else {
-                dataFormat = this.inferDataFormat(file.originalname, gedcomText.slice(0, 4000));
+            if (recentDuplicate) {
+                console.warn(
+                    `[TreesService] Duplicate tree creation suppressed for user #${userId}: "${title}" (returned existing tree #${recentDuplicate.id})`,
+                );
+                return this.stripGedcomText(recentDuplicate);
             }
-        } else if (gedcomText && typeof gedcomText === 'string' && gedcomText.trim().length > 0) {
-            const explicit = data.data_format ?? data.dataFormat;
-            if (explicit === 'gedcom7' || explicit === 'gedcomx' || explicit === 'gedcom') dataFormat = explicit;
-            else {
-                dataFormat = this.inferDataFormat('tree.ged', gedcomText.slice(0, 4000));
+        }
+
+        const executionPromise = (async () => {
+            if (userId) {
+                await this.subscriptionsService.checkUserQuota(userId, 'trees');
             }
-            // Auto-write to disk in background
-            const filename = `tree_${Date.now()}_${Math.random().toString(36).slice(2, 8)}.ged`;
-            const destDir = isPublic ? TREE_UPLOADS_DIR : PRIVATE_TREE_UPLOADS_DIR;
-            if (!fs.existsSync(destDir)) fs.mkdirSync(destDir, { recursive: true });
-            const dest = path.join(destDir, filename);
-            fs.writeFileSync(dest, gedcomText, 'utf8');
-            gedcomPath = isPublic ? `/uploads/trees/${filename}` : `private/trees/${filename}`;
+
+            const isPublic = data.isPublic === 'true' || data.isPublic === true;
+            let gedcomPath = file ? `/uploads/trees/${file.filename}` : null;
+
+            let dataFormat: 'gedcom' | 'gedcomx' | 'gedcom7' = 'gedcom';
+            let gedcomText: string | null = data.gedcom_text ?? data.gedcomText ?? null;
+            if (file) {
+                gedcomText = fs.readFileSync(file.path, 'utf8');
+                const explicit = data.data_format ?? data.dataFormat;
+                if (explicit === 'gedcom7' || explicit === 'gedcomx' || explicit === 'gedcom') dataFormat = explicit;
+                else {
+                    dataFormat = this.inferDataFormat(file.originalname, gedcomText.slice(0, 4000));
+                }
+            } else if (gedcomText && typeof gedcomText === 'string' && gedcomText.trim().length > 0) {
+                const explicit = data.data_format ?? data.dataFormat;
+                if (explicit === 'gedcom7' || explicit === 'gedcomx' || explicit === 'gedcom') dataFormat = explicit;
+                else {
+                    dataFormat = this.inferDataFormat('tree.ged', gedcomText.slice(0, 4000));
+                }
+                // Auto-write to disk in background
+                const filename = `tree_${Date.now()}_${Math.random().toString(36).slice(2, 8)}.ged`;
+                const destDir = isPublic ? TREE_UPLOADS_DIR : PRIVATE_TREE_UPLOADS_DIR;
+                if (!fs.existsSync(destDir)) fs.mkdirSync(destDir, { recursive: true });
+                const dest = path.join(destDir, filename);
+                fs.writeFileSync(dest, gedcomText, 'utf8');
+                gedcomPath = isPublic ? `/uploads/trees/${filename}` : `private/trees/${filename}`;
+            }
+
+            if (file && !isPublic) {
+                const src = file.path;
+                const dest = path.join(PRIVATE_TREE_UPLOADS_DIR, file.filename);
+                safeMoveFile(src, dest);
+                gedcomPath = `private/trees/${file.filename}`;
+            }
+
+            // Atomic insert inside Knex transaction
+            const newTree = await this.knex.transaction(async (trx: any) => {
+                return await Tree.query(trx).insertAndFetch({
+                    title,
+                    description: data.description,
+                    archive_source: data.archiveSource,
+                    document_code: data.documentCode,
+                    gedcom_path: gedcomPath,
+                    gedcom_text: gedcomText,
+                    data_format: dataFormat,
+                    user_id: userId,
+                    is_public: isPublic,
+                });
+            });
+
+            this.clearCache();
+            if (gedcomText) {
+                this.gedcomCache.set(Number(newTree.id), { text: gedcomText, expiry: Date.now() + 60000 });
+            }
+
+            if (gedcomPath) {
+                this.rebuildPeople(newTree.id, gedcomPath).catch((e: any) =>
+                    console.warn(`rebuildPeople async note for tree #${newTree.id}:`, e?.message || e),
+                );
+            }
+
+            this.activityService.log(userId, 'trees', `Created tree: ${title}`).catch(() => {});
+            return this.stripGedcomText(newTree);
+        })();
+
+        if (idempotencyKey) {
+            const cacheKey = `${userId || 0}:${idempotencyKey}`;
+            this.idempotencyCache.set(cacheKey, { promise: executionPromise, expiry: Date.now() + 60000 });
         }
 
-        if (file && !isPublic) {
-            const src = file.path;
-            const dest = path.join(PRIVATE_TREE_UPLOADS_DIR, file.filename);
-            safeMoveFile(src, dest);
-            gedcomPath = `private/trees/${file.filename}`;
+        try {
+            const result = await executionPromise;
+            if (idempotencyKey) {
+                const cacheKey = `${userId || 0}:${idempotencyKey}`;
+                this.idempotencyCache.set(cacheKey, { response: result, expiry: Date.now() + 60000 });
+            }
+            return result;
+        } catch (err) {
+            if (idempotencyKey) {
+                const cacheKey = `${userId || 0}:${idempotencyKey}`;
+                this.idempotencyCache.delete(cacheKey);
+            }
+            throw err;
         }
-        const newTree = await Tree.query(this.knex).insertAndFetch({
-            title,
-            description: data.description,
-            archive_source: data.archiveSource,
-            document_code: data.documentCode,
-            gedcom_path: gedcomPath,
-            gedcom_text: gedcomText,
-            data_format: dataFormat,
-            user_id: userId,
-            is_public: isPublic,
-        });
-
-        this.clearCache();
-        if (gedcomText) {
-            this.gedcomCache.set(Number(newTree.id), { text: gedcomText, expiry: Date.now() + 60000 });
-        }
-
-        if (gedcomPath) {
-            this.rebuildPeople(newTree.id, gedcomPath).catch((e: any) =>
-                console.warn(`rebuildPeople async note for tree #${newTree.id}:`, e?.message || e)
-            );
-        }
-
-        this.activityService.log(userId, 'trees', `Created tree: ${title}`).catch(() => {});
-        return newTree;
     }
 
     async update(id: number, data: any, userId: number, userRole: number, file?: Express.Multer.File) {

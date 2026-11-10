@@ -109,6 +109,12 @@ export default function Trees() {
   const autoSavePeopleRef = useRef<any[] | null>(null);
   const autoSaveInFlightRef = useRef(false);
   const peopleDirtyRef = useRef(false);
+  const activeTreeIdRef = useRef<number | string | null>(null);
+  const saveInProgressRef = useRef(false);
+
+  useEffect(() => {
+    activeTreeIdRef.current = selectedTree?.id ?? null;
+  }, [selectedTree?.id]);
 
   const refreshLists = useCallback(async ({ notify = false } = {}) => {
     setLoadingTrees(true);
@@ -522,22 +528,31 @@ export default function Trees() {
       else if (saveFormat.startsWith("gedcomx")) fd.append("dataFormat", "gedcomx");
     }
 
-    if (treeId) {
+    const targetId = treeId || activeTreeIdRef.current;
+    if (targetId && !String(targetId).startsWith("mock-")) {
       const res = isAdmin
-        ? await api.put(`/admin/trees/${treeId}`, fd)
-        : await api.put(`/my/trees/${treeId}`, fd);
+        ? await api.put(`/admin/trees/${targetId}`, fd)
+        : await api.put(`/my/trees/${targetId}`, fd);
       const payload = res?.data;
-      return payload?.data?.id ?? payload?.id ?? treeId;
+      return payload?.data?.id ?? payload?.id ?? targetId;
     }
 
+    const idempotencyKey = `tree_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+    const reqConfig = {
+      headers: {
+        "X-Idempotency-Key": idempotencyKey,
+      },
+    };
+
     const res = isAdmin
-      ? await api.post("/admin/trees", fd)
-      : await api.post("/my/trees", fd);
+      ? await api.post("/admin/trees", fd, reqConfig)
+      : await api.post("/my/trees", fd, reqConfig);
 
     const payload = res?.data;
     const newId = payload?.data?.id ?? payload?.id ?? (res as any)?.id;
-    // NOTE: no local "phantom" card is recorded here anymore. Public tree cards
-    // are rendered strictly from what the API returns for trees that were created.
+    if (newId) {
+      activeTreeIdRef.current = newId;
+    }
     return newId;
   };
 
@@ -607,18 +622,21 @@ export default function Trees() {
   };
 
   const runAutoSave = async () => {
+    if (saveInProgressRef.current || saving || autoSaveInFlightRef.current) return;
+
+    // STRICT GUARD: Auto-save ONLY applies to an already-existing, saved tree.
+    // It must NEVER silently create a new database tree behind the user's back on an unsaved draft canvas!
+    const targetTreeId = activeTreeIdRef.current || (canUpdateSelected ? selectedTree?.id : null);
+    if (!targetTreeId || String(targetTreeId).startsWith("mock-")) {
+      return;
+    }
+
     const pending = autoSavePeopleRef.current || people;
     if (!Array.isArray(pending) || pending.length === 0) return;
-    if (autoSaveInFlightRef.current || saving) return;
 
     let targetTitle = String(treeForm.title || selectedTree?.title || "").trim();
     if (!targetTitle) {
-      const firstPerson = pending[0];
-      const pName = firstPerson
-        ? (firstPerson.names?.fr || firstPerson.names?.en || firstPerson.name || `${firstPerson.given || ""} ${firstPerson.surname || ""}`.trim())
-        : "";
-      targetTitle = pName ? `Arbre ${pName}` : `Arbre Généalogique ${new Date().toLocaleDateString()}`;
-      setTreeForm((s) => ({ ...s, title: targetTitle }));
+      targetTitle = selectedTree?.title || "Arbre Généalogique";
     }
 
     const nextDescription =
@@ -644,7 +662,7 @@ export default function Trees() {
           : "gedcomx";
 
       const treeId = await submitTree({
-        treeId: selectedTree?.id || null,
+        treeId: targetTreeId,
         title: targetTitle,
         description: nextDescription,
         category: treeForm.category || "",
@@ -656,6 +674,7 @@ export default function Trees() {
       });
 
       if (treeId) {
+        activeTreeIdRef.current = treeId;
         const updatedTreeObj = {
           id: treeId,
           title: targetTitle,
@@ -668,17 +687,10 @@ export default function Trees() {
           data_format: nextDataFormat,
         };
 
-        if (!selectedTree) {
-          setSelectedTree(updatedTreeObj);
-          setSelectedScope("my");
-        } else {
-          applyTreeUpdate(updatedTreeObj);
-        }
-
+        applyTreeUpdate(updatedTreeObj);
         setAutoSaveNotice(t("legacy.auto_saved", "Auto-sauvegardé."));
         peopleDirtyRef.current = false;
         autoSavePeopleRef.current = null;
-        refreshLists();
       }
     } catch (err) {
       console.warn("Auto-save note:", err);
@@ -689,6 +701,11 @@ export default function Trees() {
   };
 
   const scheduleAutoSave = (nextPeople: any[]) => {
+    // Only schedule auto-save if editing an existing tree in the database
+    const targetTreeId = activeTreeIdRef.current || selectedTree?.id;
+    if (!targetTreeId || String(targetTreeId).startsWith("mock-")) {
+      return;
+    }
     peopleDirtyRef.current = true;
     autoSavePeopleRef.current = nextPeople;
     if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
@@ -698,6 +715,13 @@ export default function Trees() {
   };
 
   const clearCanvas = () => {
+    if (autoSaveTimerRef.current) {
+      clearTimeout(autoSaveTimerRef.current);
+      autoSaveTimerRef.current = null;
+    }
+    activeTreeIdRef.current = null;
+    saveInProgressRef.current = false;
+    autoSaveInFlightRef.current = false;
     setSelectedTree(null);
     setSelectedScope(null);
     setPeople([]);
@@ -713,42 +737,48 @@ export default function Trees() {
   };
 
   const saveCurrentAsTree = async () => {
-    if (selectedTree && !canUpdateSelected) {
-      setSaveError(t("legacy.cannot_edit_others_tree", "You cannot edit a tree that is not yours."));
+    if (saveInProgressRef.current || saving) {
+      console.warn("Save already in flight, ignoring duplicate click.");
       return;
     }
 
+    if (autoSaveTimerRef.current) {
+      clearTimeout(autoSaveTimerRef.current);
+      autoSaveTimerRef.current = null;
+    }
+
+    saveInProgressRef.current = true;
+    setSaving(true);
     setSaveError("");
     setSaveSuccess("");
-    const isUpdateMode = Boolean(canUpdateSelected && selectedTree?.id);
-    const hasPeople = people.length > 0;
-
-    let title = String(treeForm.title || "").trim();
-    if (!title && selectedTree?.title) title = String(selectedTree.title).trim();
-    if (!title) title = t("default_tree_name", "شجرة العائلة والنسب");
-
-    if (!treeForm.saveToDb) {
-      setTreeForm((prev) => ({ ...prev, saveToDb: true }));
-    }
-
-    if (!hasPeople && !isUpdateMode) {
-      const confirmed = window.confirm(
-        t("legacy.save_empty_tree_confirm", "Save this tree without any people yet?")
-      );
-      if (!confirmed) return;
-    }
-
-    const description = String(treeForm.description || "");
-    const isPublic = !!treeForm.isPublic;
-
-    setSaving(true);
 
     try {
+      const currentTargetId = activeTreeIdRef.current || (canUpdateSelected ? selectedTree?.id : null);
+      const isUpdateMode = Boolean(currentTargetId && !String(currentTargetId).startsWith("mock-"));
+      const hasPeople = people.length > 0;
+
+      let title = String(treeForm.title || "").trim();
+      if (!title && selectedTree?.title) title = String(selectedTree.title).trim();
+      if (!title) title = t("default_tree_name", "شجرة العائلة والنسب");
+
+      if (!treeForm.saveToDb) {
+        setTreeForm((prev) => ({ ...prev, saveToDb: true }));
+      }
+
+      if (!hasPeople && !isUpdateMode) {
+        const confirmed = window.confirm(
+          t("legacy.save_empty_tree_confirm", "Save this tree without any people yet?")
+        );
+        if (!confirmed) return;
+      }
+
+      const description = String(treeForm.description || "");
+      const isPublic = !!treeForm.isPublic;
       const includeFile = hasPeople || isUpdateMode;
       const nextHasGedcom = hasPeople;
 
       const treeId = await submitTree({
-        treeId: canUpdateSelected ? selectedTree?.id : null,
+        treeId: currentTargetId,
         title,
         description,
         category: treeForm.category || "",
@@ -760,10 +790,12 @@ export default function Trees() {
       });
 
       if (treeId) {
+        activeTreeIdRef.current = treeId;
         const nextDataFormat = includeFile
           ? (saveFormat === "gedcom" ? "gedcom" : saveFormat === "gedcom7" ? "gedcom7" : "gedcomx")
           : selectedTree?.data_format;
-        applyTreeUpdate({
+
+        const updatedTreeData = {
           id: treeId,
           title,
           description,
@@ -773,7 +805,9 @@ export default function Trees() {
           isPublic,
           hasGedcom: nextHasGedcom,
           data_format: nextDataFormat,
-        });
+        };
+
+        applyTreeUpdate(updatedTreeData);
 
         setTab("my");
         setSaveSuccess(
@@ -783,23 +817,8 @@ export default function Trees() {
           )
         );
 
-        if (!canUpdateSelected) {
-          const nextDataFormat = includeFile
-            ? (saveFormat === "gedcom" ? "gedcom" : saveFormat === "gedcom7" ? "gedcom7" : "gedcomx")
-            : undefined;
-          setSelectedTree({
-            id: treeId,
-            title,
-            description,
-            category: treeForm.category || "",
-            archiveSource: treeForm.archiveSource || "",
-            documentCode: treeForm.documentCode || "",
-            isPublic,
-            hasGedcom: nextHasGedcom,
-            data_format: nextDataFormat,
-          });
-          setSelectedScope("my");
-        }
+        setSelectedTree(updatedTreeData);
+        setSelectedScope("my");
         peopleDirtyRef.current = false;
         setTreeFormDrawerOpen(false);
       }
@@ -807,6 +826,7 @@ export default function Trees() {
     } catch (err) {
       setSaveError(getApiErrorMessage(err, "Save failed"));
     } finally {
+      saveInProgressRef.current = false;
       setSaving(false);
     }
   };
@@ -1490,7 +1510,7 @@ export default function Trees() {
                     <button
                       type="button"
                       onClick={() => void saveCurrentAsTree()}
-                      disabled={saving || loadingGedcom || deletingTree || !treeForm.saveToDb}
+                      disabled={saving || saveInProgressRef.current || loadingGedcom || deletingTree || !treeForm.saveToDb}
                       className="interactive-btn btn-neu btn-neu--primary px-5 py-2.5 text-xs font-bold flex-1 inline-flex items-center justify-center gap-2 shadow-md"
                     >
                       <Save className="w-4 h-4" />
