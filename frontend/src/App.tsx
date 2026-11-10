@@ -82,6 +82,7 @@ const UserUpgrade = lazy(() => import("./admin/pages/UserUpgrade"));
 const UserSettings = lazy(() => import("./admin/pages/UserSettings"));
 const AdminTasks = lazy(() => import("./admin/pages/AdminTasks"));
 const AdminNotes = lazy(() => import("./admin/pages/AdminNotes"));
+const SocialComments = lazy(() => import("./admin/pages/SocialComments"));
 
 // ===== NEW FEATURE PAGES (redesign parity) =====
 const GalleryDocuments = lazy(() => import("./pages/GalleryDocuments"));
@@ -617,6 +618,16 @@ function AppRoutes() {
             <Suspense fallback={<AdminLoadingFallback />}>
               <ProtectedRoute privileges={["articles"]}>
                 <AdminArticles />
+              </ProtectedRoute>
+            </Suspense>
+          }
+        />
+        <Route
+          path="social-comments"
+          element={
+            <Suspense fallback={<AdminLoadingFallback />}>
+              <ProtectedRoute privileges={["articles", "gallery", "trees"]}>
+                <SocialComments />
               </ProtectedRoute>
             </Suspense>
           }

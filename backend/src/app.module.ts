@@ -28,6 +28,7 @@ import { IndividualsModule } from './modules/individuals/individuals.module';
 import { SourcesModule } from './modules/sources/sources.module';
 import { SiteContentModule } from './modules/site-content/site-content.module';
 import { PublicCardsModule } from './modules/public-cards/public-cards.module';
+import { SocialModule } from './modules/social/social.module';
 
 @Module({
     imports: [
@@ -65,6 +66,7 @@ import { PublicCardsModule } from './modules/public-cards/public-cards.module';
         SourcesModule,
         SiteContentModule,
         PublicCardsModule,
+        SocialModule,
     ],
     controllers: [],
     providers: [],

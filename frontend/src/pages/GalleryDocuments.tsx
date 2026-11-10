@@ -24,6 +24,7 @@ import { useTheme } from "../context/ThemeContext";
 import { useSiteContent } from "../hooks/useSiteContent";
 import RootsPageShell from "../components/RootsPageShell";
 import GalleryCommentsModal from "../components/GalleryCommentsModal";
+import { useAuth } from "../admin/components/AuthContext";
 import {
   getSocialLikes,
   toggleSocialLike,
@@ -54,6 +55,7 @@ export default function GalleryDocuments() {
   const { theme } = useTheme();
   const { t, isRtl } = useTranslation();
   const { getText, getImage } = useSiteContent();
+  const { user } = useAuth();
 
   const [documents, setDocuments] = useState<DocumentItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -80,7 +82,7 @@ export default function GalleryDocuments() {
 
       const formatted = items.map((d: any) => {
         const key = `gallery_doc_${d.id}`;
-        const social = getSocialLikes(key, 15);
+        const social = getSocialLikes(key, 0);
         return {
           id: d.id,
           title: d.title || "Archival Document",
@@ -97,7 +99,7 @@ export default function GalleryDocuments() {
 
       const tracked = getTrackedUploads("documents").map((d: any) => {
         const key = `gallery_doc_${d.id}`;
-        const social = getSocialLikes(key, 1);
+        const social = getSocialLikes(key, 0);
         return {
           id: d.id,
           title: d.title || "Uploaded Document",
@@ -134,9 +136,13 @@ export default function GalleryDocuments() {
   }, []);
 
   const toggleDocLike = async (id: number | string) => {
+    if (!user) {
+      alert(t("legacy.login_to_like", "Vous devez être connecté avec un compte pour aimer un document d'archives."));
+      return;
+    }
     const key = `gallery_doc_${id}`;
     const target = documents.find((d) => d.id === id);
-    const result = await toggleSocialLike(key, target?.likes || 0);
+    const result = await toggleSocialLike(key, target?.likes || 0, undefined, "document", Number(id) || undefined);
     setDocuments((prev) =>
       prev.map((d) => (d.id === id ? { ...d, isLiked: result.isLiked, likes: result.count } : d))
     );

@@ -29,6 +29,7 @@ import { useTheme } from "../context/ThemeContext";
 import { useSiteContent } from "../hooks/useSiteContent";
 import RootsPageShell from "../components/RootsPageShell";
 import GalleryCommentsModal from "../components/GalleryCommentsModal";
+import { useAuth } from "../admin/components/AuthContext";
 import {
   getSocialLikes,
   toggleSocialLike,
@@ -63,6 +64,7 @@ export default function GalleryAudios() {
   const { theme } = useTheme();
   const { t, isRtl } = useTranslation();
   const { getText, getImage } = useSiteContent();
+  const { user } = useAuth();
   const audioRef = useRef<HTMLAudioElement>(null);
 
   const [audios, setAudios] = useState<AudioItem[]>([]);
@@ -96,7 +98,7 @@ export default function GalleryAudios() {
 
       const formatted = items.map((a: any) => {
         const key = `gallery_audio_${a.id}`;
-        const social = getSocialLikes(key, a.likes || 14);
+        const social = getSocialLikes(key, 0);
         return {
           id: a.id,
           title: a.title || "Archival Audio",
@@ -114,7 +116,7 @@ export default function GalleryAudios() {
 
       const tracked = getTrackedUploads("audios").map((a: any) => {
         const key = `gallery_audio_${a.id}`;
-        const social = getSocialLikes(key, 1);
+        const social = getSocialLikes(key, 0);
         return {
           id: a.id,
           title: a.title || "Uploaded Audio",
@@ -152,9 +154,13 @@ export default function GalleryAudios() {
   }, []);
 
   const toggleAudioLike = async (id: number | string) => {
+    if (!user) {
+      alert(t("legacy.login_to_like", "Vous devez être connecté avec un compte pour aimer un enregistrement audio."));
+      return;
+    }
     const key = `gallery_audio_${id}`;
     const target = audios.find((a) => a.id === id);
-    const result = await toggleSocialLike(key, target?.likes || 0);
+    const result = await toggleSocialLike(key, target?.likes || 0, undefined, "audio", Number(id) || undefined);
     setAudios((prev) =>
       prev.map((a) => (a.id === id ? { ...a, isLiked: result.isLiked, likes: result.count } : a))
     );

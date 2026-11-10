@@ -717,6 +717,37 @@ async function ensureCriticalSchema(knex: Knex) {
             }
         }
 
+        // 27) social_likes table
+        if (!(await knex.schema.hasTable('social_likes'))) {
+            await knex.schema.createTable('social_likes', (t) => {
+                t.increments('id');
+                t.string('media_key', 200).notNullable().index();
+                t.string('entity_type', 50).notNullable().defaultTo('tree');
+                t.integer('entity_id').nullable();
+                t.integer('user_id').unsigned().notNullable().references('id').inTable('users').onDelete('CASCADE');
+                t.timestamp('created_at').defaultTo(knex.fn.now());
+                t.unique(['media_key', 'user_id']);
+            });
+            console.log('🟡 Schema patch: created social_likes table');
+        }
+
+        // 28) social_comments table
+        if (!(await knex.schema.hasTable('social_comments'))) {
+            await knex.schema.createTable('social_comments', (t) => {
+                t.increments('id');
+                t.string('media_key', 200).notNullable().index();
+                t.string('entity_type', 50).notNullable().defaultTo('tree');
+                t.integer('entity_id').nullable();
+                t.integer('user_id').unsigned().notNullable().references('id').inTable('users').onDelete('CASCADE');
+                t.string('user_name', 255).notNullable();
+                t.text('content').notNullable();
+                t.boolean('is_approved').defaultTo(true);
+                t.timestamp('created_at').defaultTo(knex.fn.now());
+                t.timestamp('updated_at').defaultTo(knex.fn.now());
+            });
+            console.log('🟡 Schema patch: created social_comments table');
+        }
+
         console.log('🟢 Schema verification complete');
         await ensurePerformanceIndexes(knex);
     } catch (err: any) {

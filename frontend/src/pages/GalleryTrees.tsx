@@ -15,17 +15,20 @@ import {
   Sparkles,
   Heart,
   MessageSquare,
+  LogIn,
 } from "lucide-react";
 import { api } from "../api/client";
 import { useTranslation } from "../context/TranslationContext";
 import { useSiteContent } from "../hooks/useSiteContent";
 import RootsPageShell from "../components/RootsPageShell";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import FamilyCardModal from "../components/FamilyCardModal";
 import GalleryCommentsModal from "../components/GalleryCommentsModal";
+import { useAuth } from "../admin/components/AuthContext";
 import {
   getSocialLikes,
   toggleSocialLike,
+  fetchBatchSocialCounts,
   getTrackedUploads,
 } from "../utils/gallerySocial";
 
@@ -48,23 +51,28 @@ interface TreeItem {
   people?: any[];
   likes?: number;
   isLiked?: boolean;
+  commentsCount?: number;
 }
 
 export default function GalleryTrees() {
   const { t, isRtl } = useTranslation();
   const { getText, getImage } = useSiteContent();
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user } = useAuth();
 
   const [trees, setTrees] = useState<TreeItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState(() => new URLSearchParams(location.search).get("q") || "");
   const [selectedGov, setSelectedGov] = useState("All");
   const [activeTree, setActiveTree] = useState<TreeItem | null>(null);
+  const [authNotice, setAuthNotice] = useState<string>("");
   const [commentTarget, setCommentTarget] = useState<{
     mediaKey: string;
     title: string;
     subtitle?: string;
     likes: number;
+    entityId?: number;
   } | null>(null);
 
   const loadAllTrees = async () => {
@@ -78,9 +86,10 @@ export default function GalleryTrees() {
         // fallback
       }
 
+      // Real like counts start strictly from 0 (never 24)
       const formatted = items.map((tr: any) => {
         const key = `gallery_tree_${tr.id}`;
-        const social = getSocialLikes(key, 24);
+        const social = getSocialLikes(key, 0);
         return {
           ...tr,
           likes: social.count,
@@ -90,7 +99,7 @@ export default function GalleryTrees() {
 
       const tracked = getTrackedUploads("trees").map((tr: any) => {
         const key = `gallery_tree_${tr.id}`;
-        const social = getSocialLikes(key, 1);
+        const social = getSocialLikes(key, 0);
         return {
           ...tr,
           likes: social.count,
@@ -98,7 +107,29 @@ export default function GalleryTrees() {
         };
       });
 
-      setTrees([...tracked, ...formatted]);
+      const combined = [...tracked, ...formatted];
+      setTrees(combined);
+
+      // Asynchronously fetch live real counts from MySQL database
+      const allKeys = combined.map((tr: any) => `gallery_tree_${tr.id}`);
+      fetchBatchSocialCounts(allKeys).then((batch) => {
+        if (batch && Object.keys(batch).length > 0) {
+          setTrees((prev) =>
+            prev.map((tr) => {
+              const k = `gallery_tree_${tr.id}`;
+              if (batch[k]) {
+                return {
+                  ...tr,
+                  likes: batch[k].likes,
+                  isLiked: batch[k].isLiked,
+                  commentsCount: batch[k].comments,
+                };
+              }
+              return tr;
+            })
+          );
+        }
+      });
     } catch {
       setTrees([]);
     } finally {
@@ -127,9 +158,21 @@ export default function GalleryTrees() {
   }, []);
 
   const toggleTreeLike = async (id: number | string) => {
+    // ENFORCE AUTHENTICATION: must be logged in to like
+    if (!user) {
+      setAuthNotice(t("legacy.login_to_like", "Vous devez être connecté avec un compte pour aimer un arbre généalogique."));
+      return;
+    }
+    setAuthNotice("");
     const key = `gallery_tree_${id}`;
     const target = trees.find((t) => t.id === id);
-    const result = await toggleSocialLike(key, target?.likes || 0);
+    const result = await toggleSocialLike(
+      key,
+      target?.likes || 0,
+      undefined,
+      "tree",
+      Number(id) || undefined
+    );
     setTrees((prev) =>
       prev.map((t) => (t.id === id ? { ...t, isLiked: result.isLiked, likes: result.count } : t))
     );
@@ -175,25 +218,13 @@ export default function GalleryTrees() {
       const matchGov = selectedGov === "All" || govStr === selectedGov;
       return matchQuery && matchGov;
     });
-  }, [sourceTrees, query, selectedGov, t]);
+  }, [sourceTrees, query, selectedGov]);
 
   return (
     <RootsPageShell
-      heroBackgroundUrl={getImage("gallery_trees", "hero", "image") ?? getImage("gallery", "hero", "image")}
-      hero={
-        <div className="space-y-4 text-center">
-          <p className="eyebrow text-[var(--gold)] text-shadow-gold tracking-widest font-bold">
-            {getText("gallery_trees", "hero", "eyebrow") ?? getText("gallery", "hero", "eyebrow") ?? t("nav_trees")}
-          </p>
-          <h1 className="display-xl text-white font-bold hero-title-shadow text-shadow-glow tracking-wide">
-            {getText("gallery_trees", "hero", "title") ?? getText("gallery", "hero", "title") ?? t("family_trees_title")}
-          </h1>
-          <div className="gold-rule mt-4 w-28 mx-auto shadow-lg" />
-          <p className="max-w-3xl mx-auto text-base text-slate-100/95 font-medium drop-shadow-md">
-            {getText("gallery_trees", "hero", "subtitle") ?? getText("gallery", "hero", "subtitle") ?? t("family_trees_desc")}
-          </p>
-        </div>
-      }
+      title={getText("gallery_trees", "hero_title", t("gallery_trees_title"))}
+      subtitle={getText("gallery_trees", "hero_subtitle", t("gallery_trees_subtitle"))}
+      breadcrumbCurrent={t("nav_family_trees")}
     >
       <div className="w-full space-y-8">
         {/* Search & Filters */}
@@ -202,11 +233,20 @@ export default function GalleryTrees() {
             <Search className="w-4 h-4 text-[var(--muted-foreground)] absolute start-3 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
               type="text"
-              placeholder={t("search_trees_placeholder")}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              className="w-full ps-9 pe-3 py-2 text-xs rounded-md border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] outline-none focus:border-[var(--gold)]"
+              placeholder={t("search_trees_placeholder")}
+              className="w-full ps-9 pe-4 py-2 text-xs rounded-md bg-[var(--background)] border border-[var(--border)] focus:border-[var(--gold)] focus:ring-1 focus:ring-[var(--gold)] outline-none text-[var(--foreground)]"
             />
+            {query && (
+              <button
+                type="button"
+                onClick={() => setQuery("")}
+                className="absolute end-3 top-1/2 -translate-y-1/2 text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
           </div>
 
           <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto pb-1 scrollbar-thin">
@@ -216,10 +256,10 @@ export default function GalleryTrees() {
                 key={govOpt.key}
                 type="button"
                 onClick={() => setSelectedGov(govOpt.key)}
-                className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap cursor-pointer transition-all ${
+                className={`px-3 py-1.5 rounded-full text-xs font-serif whitespace-nowrap transition-all cursor-pointer ${
                   selectedGov === govOpt.key
-                    ? "bg-[var(--gold)] text-[#1f160f] shadow-sm font-bold"
-                    : "bg-[var(--card)] text-[var(--foreground)] border border-[var(--border)] hover:border-[var(--gold)]"
+                    ? "bg-[var(--gold)] text-[#1f160f] font-bold shadow-sm"
+                    : "bg-[var(--background)] text-[var(--foreground)]/80 hover:bg-[var(--gold)]/15 border border-[var(--border)]"
                 }`}
               >
                 {t(govOpt.labelKey)}
@@ -227,6 +267,29 @@ export default function GalleryTrees() {
             ))}
           </div>
         </div>
+
+        {/* Auth Notice Banner */}
+        {authNotice && (
+          <div className="p-4 rounded-lg border border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-300 text-xs flex items-center justify-between gap-3 animate-in fade-in shadow-sm">
+            <span className="font-semibold">{authNotice}</span>
+            <div className="flex items-center gap-2 shrink-0">
+              <Link
+                to="/login"
+                className="px-3 py-1.5 rounded bg-[#d9a441] text-black font-bold text-xs hover:opacity-90 inline-flex items-center gap-1.5 shadow-sm"
+              >
+                <LogIn className="w-3.5 h-3.5" />
+                <span>{t("login", "Se connecter")}</span>
+              </Link>
+              <button
+                type="button"
+                onClick={() => setAuthNotice("")}
+                className="p-1 text-stone-400 hover:text-stone-600"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Trees Grid */}
         {loading ? (
@@ -322,11 +385,13 @@ export default function GalleryTrees() {
                       <button
                         type="button"
                         onClick={() => toggleTreeLike(tree.id)}
-                        className="btn-base btn-outline text-xs py-2 px-2.5 flex items-center justify-center gap-1 cursor-pointer"
-                        title={t("like", "Like")}
+                        className={`btn-base btn-outline text-xs py-2 px-2.5 flex items-center justify-center gap-1 cursor-pointer transition-all ${
+                          tree.isLiked ? "border-rose-500/50 bg-rose-500/10" : ""
+                        }`}
+                        title={user ? t("like", "Like") : t("login_to_like", "Connectez-vous pour aimer")}
                       >
                         <Heart className={`w-3.5 h-3.5 ${tree.isLiked ? "fill-rose-500 text-rose-500" : "text-[var(--gold)]"}`} />
-                        <span className="text-[0.65rem]">{tree.likes || 0}</span>
+                        <span className={`text-[0.65rem] font-bold ${tree.isLiked ? "text-rose-500" : ""}`}>{tree.likes || 0}</span>
                       </button>
                       <button
                         type="button"
@@ -336,12 +401,16 @@ export default function GalleryTrees() {
                             title: titleStr,
                             subtitle: `${govStr} • ${genCount} ${t("generations_label")}`,
                             likes: tree.likes || 0,
+                            entityId: Number(tree.id) || undefined,
                           })
                         }
-                        className="btn-base btn-outline text-xs py-2 px-2.5 flex items-center justify-center cursor-pointer"
+                        className="btn-base btn-outline text-xs py-2 px-2.5 flex items-center justify-center gap-1 cursor-pointer"
                         title={t("comments", "Comments")}
                       >
                         <MessageSquare className="w-3.5 h-3.5 text-[var(--gold)]" />
+                        {typeof tree.commentsCount === "number" && tree.commentsCount > 0 && (
+                          <span className="text-[0.65rem] font-bold text-[var(--gold)]">{tree.commentsCount}</span>
+                        )}
                       </button>
                     </div>
                   </div>
@@ -368,6 +437,8 @@ export default function GalleryTrees() {
           itemTitle={commentTarget.title}
           itemSubtitle={commentTarget.subtitle}
           defaultLikes={commentTarget.likes}
+          entityType="tree"
+          entityId={commentTarget.entityId}
         />
       )}
     </RootsPageShell>

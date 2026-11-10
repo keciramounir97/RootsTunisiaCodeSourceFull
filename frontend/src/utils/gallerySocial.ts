@@ -11,6 +11,34 @@ export interface SocialComment {
 const STORAGE_PREFIX = "roots_social_";
 const UPLOADS_STORAGE_KEY = "roots_custom_uploads_v2";
 
+// One-time client cleanup of legacy hardcoded fake likes (e.g. 24, 18, 25, etc.)
+if (typeof window !== "undefined") {
+  try {
+    const keysToRemove: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith(`${STORAGE_PREFIX}likes_`)) {
+        const val = localStorage.getItem(k);
+        if (
+          val &&
+          (val.includes('"count":24') ||
+            val.includes('"count":18') ||
+            val.includes('"count":25') ||
+            val.includes('"count":15') ||
+            val.includes('"count":14') ||
+            val.includes('"count":12') ||
+            val.includes('"count":10'))
+        ) {
+          keysToRemove.push(k);
+        }
+      }
+    }
+    keysToRemove.forEach((k) => localStorage.removeItem(k));
+  } catch {
+    // ignore
+  }
+}
+
 export function resolveAnyMediaUrl(
   url: string | undefined | null,
   apiRoot?: string,
@@ -34,28 +62,75 @@ export function resolveAnyMediaUrl(
   return `${root}/uploads/${clean}`;
 }
 
+/** Get cached or default social likes (defaults strictly to 0) */
 export function getSocialLikes(mediaKey: string, defaultLikes: number = 0): { count: number; isLiked: boolean } {
-  if (typeof window === "undefined") return { count: defaultLikes, isLiked: false };
+  if (typeof window === "undefined") return { count: Math.max(0, defaultLikes), isLiked: false };
   try {
     const raw = localStorage.getItem(`${STORAGE_PREFIX}likes_${mediaKey}`);
     if (raw) {
       const parsed = JSON.parse(raw);
       return {
-        count: typeof parsed.count === "number" ? parsed.count : defaultLikes,
+        count: typeof parsed.count === "number" ? Math.max(0, parsed.count) : Math.max(0, defaultLikes),
         isLiked: Boolean(parsed.isLiked),
       };
     }
   } catch {
     // fallback
   }
-  return { count: defaultLikes, isLiked: false };
+  return { count: Math.max(0, defaultLikes), isLiked: false };
 }
 
+/** Batch fetch live counts from the MySQL database */
+export async function fetchBatchSocialCounts(
+  mediaKeys: string[]
+): Promise<Record<string, { likes: number; comments: number; isLiked: boolean }>> {
+  if (!Array.isArray(mediaKeys) || mediaKeys.length === 0) return {};
+  try {
+    const filtered = mediaKeys.filter(Boolean);
+    const { data } = await api.get(`/social/counts?keys=${encodeURIComponent(filtered.join(","))}`);
+    if (data && typeof data === "object") {
+      // Store in local storage for instant render next visit
+      if (typeof window !== "undefined") {
+        for (const [key, val] of Object.entries(data as Record<string, any>)) {
+          try {
+            localStorage.setItem(
+              `${STORAGE_PREFIX}likes_${key}`,
+              JSON.stringify({ count: val.likes, isLiked: val.isLiked })
+            );
+          } catch {
+            // ignore
+          }
+        }
+      }
+      return data;
+    }
+  } catch {
+    // backend unavailable, fallback gracefully
+  }
+  return {};
+}
+
+/** Toggle social like: sends request to server if online, and records in database */
 export async function toggleSocialLike(
   mediaKey: string,
-  currentLikes: number,
-  apiPath?: string
+  currentLikes: number = 0,
+  apiPath?: string,
+  entityType = "tree",
+  entityId?: number
 ): Promise<{ count: number; isLiked: boolean }> {
+  try {
+    const res = await api.post("/social/likes", { mediaKey, entityType, entityId });
+    if (res?.data && typeof res.data.likesCount === "number") {
+      const result = { count: Math.max(0, res.data.likesCount), isLiked: Boolean(res.data.liked) };
+      if (typeof window !== "undefined") {
+        localStorage.setItem(`${STORAGE_PREFIX}likes_${mediaKey}`, JSON.stringify(result));
+      }
+      return result;
+    }
+  } catch {
+    // fallback to local toggle if offline or custom path provided
+  }
+
   const current = getSocialLikes(mediaKey, currentLikes);
   const nextIsLiked = !current.isLiked;
   const nextCount = nextIsLiked ? current.count + 1 : Math.max(0, current.count - 1);
@@ -82,6 +157,7 @@ export async function toggleSocialLike(
   return { count: nextCount, isLiked: nextIsLiked };
 }
 
+/** Get cached or default comments */
 export function getSocialComments(mediaKey: string, defaultComments: SocialComment[] = []): SocialComment[] {
   if (typeof window === "undefined") return defaultComments;
   try {
@@ -98,16 +174,67 @@ export function getSocialComments(mediaKey: string, defaultComments: SocialComme
   return defaultComments;
 }
 
+/** Fetch live comments from database */
+export async function fetchSocialComments(mediaKey: string): Promise<SocialComment[]> {
+  if (!mediaKey) return [];
+  try {
+    const { data } = await api.get(`/social/interactions?mediaKey=${encodeURIComponent(mediaKey)}`);
+    if (data?.comments && Array.isArray(data.comments)) {
+      const mapped = data.comments.map((c: any) => ({
+        id: c.id,
+        userName: c.userName || "Member",
+        text: c.content,
+        createdAt: c.createdAt || new Date().toISOString(),
+      }));
+      if (typeof window !== "undefined") {
+        localStorage.setItem(`${STORAGE_PREFIX}comments_${mediaKey}`, JSON.stringify(mapped));
+      }
+      return mapped;
+    }
+  } catch {
+    // fallback to cached
+  }
+  return getSocialComments(mediaKey);
+}
+
+/** Add comment to database with authenticated user account */
 export async function addSocialComment(
   mediaKey: string,
   text: string,
   userName: string = "Member",
-  apiPath?: string
+  apiPath?: string,
+  entityType = "tree",
+  entityId?: number
 ): Promise<SocialComment[]> {
   const trimmed = text.trim();
   if (!trimmed) return getSocialComments(mediaKey);
 
-  const newComment: SocialComment = {
+  try {
+    const res = await api.post("/social/comments", {
+      mediaKey,
+      content: trimmed,
+      entityType,
+      entityId,
+    });
+    if (res?.data?.comment) {
+      const newComment: SocialComment = {
+        id: res.data.comment.id,
+        userName: res.data.comment.userName || userName,
+        text: res.data.comment.content,
+        createdAt: res.data.comment.createdAt || new Date().toISOString(),
+      };
+      const existing = getSocialComments(mediaKey);
+      const updated = [newComment, ...existing.filter((x) => String(x.id) !== String(newComment.id))];
+      if (typeof window !== "undefined") {
+        localStorage.setItem(`${STORAGE_PREFIX}comments_${mediaKey}`, JSON.stringify(updated));
+      }
+      return updated;
+    }
+  } catch {
+    // fallback
+  }
+
+  const fallbackComment: SocialComment = {
     id: `c_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
     userName: userName || "Member",
     text: trimmed,
@@ -122,7 +249,7 @@ export async function addSocialComment(
         const parsed = JSON.parse(raw);
         if (Array.isArray(parsed)) stored = parsed;
       }
-      stored.unshift(newComment);
+      stored.unshift(fallbackComment);
       localStorage.setItem(`${STORAGE_PREFIX}comments_${mediaKey}`, JSON.stringify(stored));
     } catch {
       // storage unavailable
@@ -145,8 +272,6 @@ export function recordAdminUpload(
   item: any
 ) {
   if (typeof window === "undefined" || !item) return;
-  // Trees are always served by the API: never keep a browser-local copy that
-  // could surface a card for something that was not really created.
   if (kind === "trees") return;
   try {
     const raw = localStorage.getItem(UPLOADS_STORAGE_KEY);
@@ -169,7 +294,6 @@ export function recordAdminUpload(
 export function getTrackedUploads(kind: "images" | "books" | "audios" | "documents" | "trees" | "articles"): any[] {
   if (typeof window === "undefined") return [];
   if (kind === "trees") {
-    // Purge phantom tree cards that older versions stored in this browser.
     try {
       for (const k of [UPLOADS_STORAGE_KEY, "roots_admin_uploads", "roots_custom_uploads", "roots_uploads", "roots_gallery_uploads"]) {
         const raw = localStorage.getItem(k);

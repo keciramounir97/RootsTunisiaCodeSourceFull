@@ -2877,5 +2877,16 @@
   "reset_password": "Reset password",
   "login": "Login",
   "signup": "Sign up",
-  "logout": "Logout"
+  "logout": "Logout",
+  "social_comments_moderation": "Community Comments & Interactions",
+  "social_comments_desc": "Real-time moderation and supervision of community interactions, likes, and comments.",
+  "total_comments": "Total Comments",
+  "comments_fetch_failed": "Failed to load community comments.",
+  "confirm_delete_comment": "Are you sure you want to delete this comment?",
+  "comment_deleted_success": "Comment successfully deleted.",
+  "comment_delete_failed": "Failed to delete comment.",
+  "search_comments_placeholder": "Search by author, content, or resource...",
+  "no_comments_yet": "No comments found.",
+  "delete_comment": "Delete comment permanently",
+  "verified_users_only": "Signed-in Members Only"
 }

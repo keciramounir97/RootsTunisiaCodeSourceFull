@@ -25,6 +25,7 @@ import { useTheme } from "../context/ThemeContext";
 import { useSiteContent } from "../hooks/useSiteContent";
 import RootsPageShell from "../components/RootsPageShell";
 import GalleryCommentsModal from "../components/GalleryCommentsModal";
+import { useAuth } from "../admin/components/AuthContext";
 import {
   getSocialLikes,
   toggleSocialLike,
@@ -139,6 +140,7 @@ export default function GalleryBooks() {
   const { theme } = useTheme();
   const { t, isRtl } = useTranslation();
   const { getText, getImage } = useSiteContent();
+  const { user } = useAuth();
 
   const [books, setBooks] = useState<BookItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -167,7 +169,7 @@ export default function GalleryBooks() {
 
       const formatted = items.map((b: any) => {
         const key = `gallery_book_${b.id}`;
-        const social = getSocialLikes(key, 18);
+        const social = getSocialLikes(key, 0);
         return {
           id: b.id,
           title: b.title || "Archival Manuscript",
@@ -185,7 +187,7 @@ export default function GalleryBooks() {
 
       const tracked = getTrackedUploads("books").map((b: any) => {
         const key = `gallery_book_${b.id}`;
-        const social = getSocialLikes(key, 1);
+        const social = getSocialLikes(key, 0);
         return {
           id: b.id,
           title: b.title || "Uploaded Manuscript",
@@ -203,7 +205,7 @@ export default function GalleryBooks() {
 
       const curated = fallbackTunisiaBooks.map((b) => {
         const key = `gallery_book_${b.id}`;
-        const social = getSocialLikes(key, 25);
+        const social = getSocialLikes(key, 0);
         return {
           ...b,
           likes: social.count,
@@ -233,9 +235,13 @@ export default function GalleryBooks() {
   }, []);
 
   const toggleBookLike = async (id: number | string) => {
+    if (!user) {
+      alert(t("legacy.login_to_like", "Vous devez être connecté avec un compte pour aimer un manuscrit."));
+      return;
+    }
     const key = `gallery_book_${id}`;
     const target = books.find((b) => b.id === id);
-    const result = await toggleSocialLike(key, target?.likes || 0);
+    const result = await toggleSocialLike(key, target?.likes || 0, undefined, "book", Number(id) || undefined);
     setBooks((prev) =>
       prev.map((b) => (b.id === id ? { ...b, isLiked: result.isLiked, likes: result.count } : b))
     );

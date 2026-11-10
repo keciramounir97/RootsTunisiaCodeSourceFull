@@ -19,6 +19,7 @@ import { api } from "../api/client";
 import { useTranslation } from "../context/TranslationContext";
 import { useTheme } from "../context/ThemeContext";
 import { useSiteContent } from "../hooks/useSiteContent";
+import { useAuth } from "../admin/components/AuthContext";
 import RootsPageShell from "../components/RootsPageShell";
 import GalleryCommentsModal from "../components/GalleryCommentsModal";
 import {
@@ -26,6 +27,7 @@ import {
   toggleSocialLike,
   getTrackedUploads,
   resolveAnyMediaUrl,
+  fetchBatchSocialCounts,
 } from "../utils/gallerySocial";
 
 import carthage from "../assets/slider-carthage.jpg";
@@ -60,7 +62,7 @@ const baseCuratedImages: ImageItem[] = [
     yearStr: "c. 1910",
     imageUrl: medina,
     description: "Traditional arched souk alleyways in the historic Medina of Tunis, a UNESCO World Heritage site and home to centuries of family residences.",
-    likes: 88,
+    likes: 0,
   },
   {
     id: "img-tn-2",
@@ -71,7 +73,7 @@ const baseCuratedImages: ImageItem[] = [
     yearStr: "c. 1925",
     imageUrl: sidiBouSaid,
     description: "Famous cliffside village overlooking the Gulf of Tunis, renowned for its blue lattice windows (mashrabiya) and whitewashed walls.",
-    likes: 95,
+    likes: 0,
   },
   {
     id: "img-tn-3",
@@ -82,7 +84,7 @@ const baseCuratedImages: ImageItem[] = [
     yearStr: "c. 1900",
     imageUrl: kairouan,
     description: "The premier spiritual and scholarship sanctuary of North Africa, founded in 670 AD, keeping family lineage registers and waqf charters.",
-    likes: 112,
+    likes: 0,
   },
   {
     id: "img-tn-4",
@@ -93,7 +95,7 @@ const baseCuratedImages: ImageItem[] = [
     yearStr: "Historical Monument",
     imageUrl: eljem,
     description: "The majestic Roman amphitheatre of Thysdrus (El Jem), illustrating the deep antiquity and epigraphic legacy of central Tunisia.",
-    likes: 74,
+    likes: 0,
   },
   {
     id: "img-tn-5",
@@ -104,7 +106,7 @@ const baseCuratedImages: ImageItem[] = [
     yearStr: "c. 1930",
     imageUrl: djerba,
     description: "Distinctive whitewashed domed houses (menzels) in Djerba, reflecting centuries of island community settlement and family heritage.",
-    likes: 67,
+    likes: 0,
   },
   {
     id: "img-tn-6",
@@ -115,7 +117,7 @@ const baseCuratedImages: ImageItem[] = [
     yearStr: "c. 1915",
     imageUrl: medina,
     description: "Ornate studded wooden door with wrought-iron grille in the Medina of Tunis, reflecting patrician architectural heritage.",
-    likes: 104,
+    likes: 0,
   },
 ];
 
@@ -123,6 +125,7 @@ export default function GalleryImages() {
   const { theme } = useTheme();
   const { t, isRtl } = useTranslation();
   const { getText, getImage } = useSiteContent();
+  const { user } = useAuth();
 
   const [images, setImages] = useState<ImageItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -134,6 +137,8 @@ export default function GalleryImages() {
     title: string;
     subtitle?: string;
     likes: number;
+    entityType?: string;
+    entityId?: number;
   } | null>(null);
 
   const loadAllImages = async () => {
@@ -149,7 +154,7 @@ export default function GalleryImages() {
 
       const formatted = items.map((it: any) => {
         const key = `gallery_img_${it.id}`;
-        const social = getSocialLikes(key, it.likes || 12);
+        const social = getSocialLikes(key, 0);
         return {
           id: it.id,
           title: it.title || "Archival Image",
@@ -165,7 +170,7 @@ export default function GalleryImages() {
 
       const tracked = getTrackedUploads("images").map((it: any) => {
         const key = `gallery_img_${it.id}`;
-        const social = getSocialLikes(key, it.likes || 1);
+        const social = getSocialLikes(key, 0);
         return {
           id: it.id,
           title: it.title || "Uploaded Image",
@@ -182,7 +187,7 @@ export default function GalleryImages() {
 
       const curated = baseCuratedImages.map((it) => {
         const key = `gallery_img_${it.id}`;
-        const social = getSocialLikes(key, it.likes || 25);
+        const social = getSocialLikes(key, 0);
         return {
           ...it,
           likes: social.count,
@@ -190,7 +195,30 @@ export default function GalleryImages() {
         };
       });
 
-      setImages([...tracked, ...formatted, ...curated]);
+      const combined = [...tracked, ...formatted, ...curated];
+      setImages(combined);
+
+      // Asynchronously fetch live database counts
+      const allKeys = combined.map((x) => `gallery_img_${x.id}`);
+      fetchBatchSocialCounts(allKeys)
+        .then((batch) => {
+          if (batch && Object.keys(batch).length > 0) {
+            setImages((prev) =>
+              prev.map((item) => {
+                const k = `gallery_img_${item.id}`;
+                if (batch[k]) {
+                  return {
+                    ...item,
+                    likes: batch[k].count,
+                    isLiked: batch[k].isLiked ?? item.isLiked,
+                  };
+                }
+                return item;
+              })
+            );
+          }
+        })
+        .catch(() => {});
     } catch {
       setImages(baseCuratedImages);
     } finally {
@@ -233,9 +261,24 @@ export default function GalleryImages() {
   }, [images, query, categoryFilter]);
 
   const toggleLike = async (id: number | string) => {
+    if (!user) {
+      alert(
+        t(
+          "legacy.login_to_like",
+          "Vous devez être connecté avec un compte pour aimer une photo. / Please sign in to like this photo."
+        )
+      );
+      return;
+    }
     const key = `gallery_img_${id}`;
     const target = images.find((i) => i.id === id);
-    const result = await toggleSocialLike(key, target?.likes || 0);
+    const result = await toggleSocialLike(
+      key,
+      target?.likes || 0,
+      undefined,
+      "image",
+      Number(id) || undefined
+    );
     setImages((prev) =>
       prev.map((img) => {
         if (img.id === id) {
@@ -386,6 +429,8 @@ export default function GalleryImages() {
                           title: img.title,
                           subtitle: img.governorate || img.category,
                           likes: img.likes || 0,
+                          entityType: "image",
+                          entityId: Number(img.id) || undefined,
                         })
                       }
                       className="flex items-center gap-1 text-[var(--muted-foreground)] hover:text-[var(--gold)] transition-colors cursor-pointer text-xs"
@@ -463,6 +508,8 @@ export default function GalleryImages() {
                       title: activeImage.title,
                       subtitle: activeImage.governorate || activeImage.category,
                       likes: activeImage.likes || 0,
+                      entityType: "image",
+                      entityId: Number(activeImage.id) || undefined,
                     })
                   }
                   className="btn-base btn-gold text-xs py-2 px-3 flex items-center gap-1.5"
@@ -491,6 +538,8 @@ export default function GalleryImages() {
           itemTitle={commentTarget.title}
           itemSubtitle={commentTarget.subtitle}
           defaultLikes={commentTarget.likes}
+          entityType={commentTarget.entityType}
+          entityId={commentTarget.entityId}
         />
       )}
     </RootsPageShell>

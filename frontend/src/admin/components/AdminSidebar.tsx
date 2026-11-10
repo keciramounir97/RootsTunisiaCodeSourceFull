@@ -84,6 +84,7 @@ const CATEGORIES: SidebarCategory[] = [
       { to: "/admin/documents", labelKey: "documents", Icon: FileText },
       { to: "/admin/books", labelKey: "books", Icon: BookOpen },
       { to: "/admin/articles", labelKey: "articles", Icon: Newspaper },
+      { to: "/admin/social-comments", labelKey: "social_comments_moderation", Icon: MessageSquare },
     ],
   },
   {
@@ -175,6 +176,7 @@ const labelFallbacks: Record<string, string> = {
   documents: "Documents Numérisés",
   books: "Livres & Manuscrits",
   articles: "Articles & Chroniques",
+  social_comments_moderation: "Commentaires & Modération",
   users: "Utilisateurs",
   admins_roles: "Administrateurs & Rôles",
   admins: "Administrateurs & Accès aux Pages",

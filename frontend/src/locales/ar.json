@@ -4151,5 +4151,16 @@
   "admins_roles_eyebrow": "التحكم في الوصول",
   "admins_roles_tab_page_admins": "مشرفو الصفحات والصلاحيات",
   "admins_roles_tab_super_admins": "المشرفون العامون",
-  "admins_roles_tab_role_distribution": "توزيع الأدوار"
+  "admins_roles_tab_role_distribution": "توزيع الأدوار",
+  "social_comments_moderation": "إدارة وتعليقات المجتمع",
+  "social_comments_desc": "إشراف ومراقبة فورية للتفاعلات والتعليقات العامة من المشرف العام.",
+  "total_comments": "إجمالي التعليقات",
+  "comments_fetch_failed": "فشل تحميل تعليقات المجتمع.",
+  "confirm_delete_comment": "هل أنت متأكد من حذف هذا التعليق نهائياً؟",
+  "comment_deleted_success": "تم حذف التعليق بنجاح.",
+  "comment_delete_failed": "فشل حذف التعليق.",
+  "search_comments_placeholder": "بحث بالكاتب أو النص أو المصدر...",
+  "no_comments_yet": "لا توجد تعليقات مسجلة حالياً.",
+  "delete_comment": "حذف نهائي",
+  "verified_users_only": "الأعضاء المسجلون فقط"
 }

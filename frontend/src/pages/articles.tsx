@@ -69,7 +69,7 @@ export default function ArticlesPage() {
 
       const normalizedApi = apiItems.map((item) => {
         const norm = normalizeArticle(item, apiRoot, t("member", "Member"), manuscript);
-        const social = getSocialLikes(`gallery_article_${norm.id}`, norm.likes || 12);
+        const social = getSocialLikes(`gallery_article_${norm.id}`, norm.likes || 0);
         const storedComments = getSocialComments(`gallery_article_${norm.id}`);
         return {
           ...norm,
@@ -87,7 +87,7 @@ export default function ArticlesPage() {
 
       const tracked = getTrackedUploads("articles").map((item: any) => {
         const norm = normalizeArticle(item, apiRoot, item.authorName || user?.fullName || t("you", "You"), manuscript);
-        const social = getSocialLikes(`gallery_article_${norm.id}`, norm.likes || 1);
+        const social = getSocialLikes(`gallery_article_${norm.id}`, norm.likes || 0);
         const storedComments = getSocialComments(`gallery_article_${norm.id}`);
         return {
           ...norm,
@@ -206,9 +206,13 @@ export default function ArticlesPage() {
   };
 
   const toggleLike = async (id: number | string) => {
+    if (!user) {
+      alert(t("legacy.login_to_like", "Vous devez être connecté avec un compte pour aimer un article."));
+      return;
+    }
     const key = `gallery_article_${id}`;
     const target = articles.find((a) => a.id === id);
-    const result = await toggleSocialLike(key, target?.likes || 0);
+    const result = await toggleSocialLike(key, target?.likes || 0, undefined, "article", Number(id) || undefined);
 
     setArticles((prev) =>
       prev.map((article) =>

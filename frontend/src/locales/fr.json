@@ -2877,5 +2877,16 @@
   "reset_password": "Réinitialiser le mot de passe",
   "login": "Connexion",
   "signup": "Inscription",
-  "logout": "Déconnexion"
+  "logout": "Déconnexion",
+  "social_comments_moderation": "Commentaires & Modération",
+  "social_comments_desc": "Supervision et contrôle en temps réel des interactions et commentaires de la communauté.",
+  "total_comments": "Total Commentaires",
+  "comments_fetch_failed": "Échec du chargement des commentaires.",
+  "confirm_delete_comment": "Voulez-vous vraiment supprimer ce commentaire ?",
+  "comment_deleted_success": "Commentaire supprimé avec succès.",
+  "comment_delete_failed": "Échec de la suppression du commentaire.",
+  "search_comments_placeholder": "Rechercher par auteur, contenu ou ressource...",
+  "no_comments_yet": "Aucun commentaire trouvé.",
+  "delete_comment": "Supprimer définitivement",
+  "verified_users_only": "Membres Connectés Uniquement"
 }
