@@ -82,7 +82,13 @@ export class TreesController {
         @Request() req,
         @UploadedFile() file?: Express.Multer.File
     ) {
-        const idempotencyKey = (req.headers?.['x-idempotency-key'] || req.headers?.['idempotency-key']) as string | undefined;
+        const idempotencyKey = (
+            req.headers?.['x-idempotency-key'] ||
+            req.headers?.['idempotency-key'] ||
+            req.query?.idempotencyKey ||
+            (body as any)?.idempotencyKey ||
+            (body as any)?.idempotency_key
+        ) as string | undefined;
         return this.treesService.create(body, req.user.id, file, idempotencyKey);
     }
 
@@ -162,7 +168,13 @@ export class TreesController {
         @Request() req,
         @UploadedFile() file?: Express.Multer.File
     ) {
-        const idempotencyKey = (req.headers?.['x-idempotency-key'] || req.headers?.['idempotency-key']) as string | undefined;
+        const idempotencyKey = (
+            req.headers?.['x-idempotency-key'] ||
+            req.headers?.['idempotency-key'] ||
+            req.query?.idempotencyKey ||
+            (body as any)?.idempotencyKey ||
+            (body as any)?.idempotency_key
+        ) as string | undefined;
         return this.treesService.create(body, req.user.id, file, idempotencyKey);
     }
 

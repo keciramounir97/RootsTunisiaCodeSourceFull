@@ -1,6 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   AlertCircle,
+  Archive,
+  ArrowDown,
+  ArrowUp,
   Bold,
   BookOpen,
   Check,
@@ -10,11 +13,13 @@ import {
   ChevronRight,
   Clock,
   Compass,
+  Copy,
   CornerDownLeft,
   Edit3,
   ExternalLink,
   Eye,
   EyeOff,
+  FileCheck,
   FileText,
   Filter,
   Globe,
@@ -32,11 +37,15 @@ import {
   MapPin,
   Maximize2,
   Mic,
+  Minimize2,
   Monitor,
   Music,
   Newspaper,
+  PanelLeftClose,
+  PanelLeftOpen,
   Phone,
   Plus,
+  Redo2,
   RefreshCw,
   RotateCcw,
   Save,
@@ -47,9 +56,11 @@ import {
   Sparkles,
   Tablet,
   Trash2,
-  Undo,
+  Undo2,
   Upload,
   X,
+  ZoomIn,
+  ZoomOut,
 } from "lucide-react";
 import { useTranslation } from "../../context/TranslationContext";
 import { api } from "../../api/client";
@@ -58,7 +69,7 @@ import { resolveSiteImageUrl } from "../../hooks/useSiteImages";
 import { refreshSiteContent } from "../../hooks/useSiteContent";
 import Toast from "../../components/Toast";
 
-// Assets for authentic live preview
+// Authentic heritage assets for live preview
 import carthage from "../../assets/slider-carthage.jpg";
 import kairouan from "../../assets/slider-kairouan.jpg";
 import sidiBouSaid from "../../assets/slider-sidibousaid.jpg";
@@ -111,6 +122,23 @@ const LANGUAGES = [
   { code: "es", label: "Español", short: "ES", flag: "🇪🇸", dir: "ltr" as const },
   { code: "it", label: "Italiano", short: "IT", flag: "🇮🇹", dir: "ltr" as const },
   { code: "mt", label: "Malti", short: "MT", flag: "🇲🇹", dir: "ltr" as const },
+];
+
+const CMS_NAV_ITEMS = [
+  { id: "home", label: "Page d'Accueil", path: "/admin/home-content", route: "/", icon: HomeIcon, category: "Pages Publiques" },
+  { id: "about", label: "À Propos & Mission", path: "/admin/about-content", route: "/about", icon: Info, category: "Pages Publiques" },
+  { id: "gallery", label: "Galerie & Collections", path: "/admin/gallery-content", route: "/gallery", icon: ImageIcon, category: "Collections" },
+  { id: "library", label: "Bibliothèque Numérique", path: "/admin/library-content", route: "/library", icon: BookOpen, category: "Collections" },
+  { id: "audio", label: "Audio & Récits Oraux", path: "/admin/audio-content", route: "/audio", icon: Mic, category: "Collections" },
+  { id: "documents", label: "Documents Numérisés", path: "/admin/documents-content", route: "/documents", icon: FileText, category: "Collections" },
+  { id: "periods", label: "Périodes Historiques", path: "/admin/periods-content", route: "/periods", icon: Clock, category: "Histoire" },
+  { id: "contact", label: "Contact & Coordonnées", path: "/admin/contact-content", route: "/contact", icon: Mail, category: "Pages Publiques" },
+  { id: "articles", label: "Articles & Chroniques", path: "/admin/gallery-articles-content", route: "/articles", icon: Newspaper, category: "Recherche" },
+  { id: "archives", label: "Archives Nationales", path: "/admin/archives-content", route: "/archives", icon: Archive, category: "Fiches & Références" },
+  { id: "sources", label: "Sources Documentaires", path: "/admin/sources-content", route: "/sources", icon: Compass, category: "Fiches & Références" },
+  { id: "placeholders", label: "Emplacements d'Images", path: "/admin/site-image-placeholders", route: "/gallery", icon: ImageIcon, category: "Médias" },
+  { id: "legal", label: "Mentions Légales", path: "/admin/legal-content", route: "/legal", icon: FileCheck, category: "Légal" },
+  { id: "footer", label: "Pied de Page (Footer)", path: "/admin/footer-settings", route: "/", icon: Sliders, category: "Structure" },
 ];
 
 const PAGE_META: Record<
@@ -207,7 +235,7 @@ const PAGE_META: Record<
 };
 
 const inputClass =
-  "w-full px-3.5 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--background)] text-sm text-[var(--foreground)] outline-none transition focus:border-[var(--gold)] focus:ring-2 focus:ring-[var(--gold)]/25 placeholder:text-[var(--muted-foreground)]/60 shadow-inner";
+  "w-full px-3.5 py-2.5 rounded-xl border border-slate-700/80 bg-slate-900/90 text-sm text-slate-100 outline-none transition focus:border-[var(--gold)] focus:ring-2 focus:ring-[var(--gold)]/25 placeholder:text-slate-500 shadow-inner";
 
 const isEmpty = (value: FieldValue | undefined) =>
   value === undefined ||
@@ -243,15 +271,31 @@ export default function SinglePageContentManager({ pageId }: { pageId: string })
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [dirty, setDirty] = useState(false);
+  const [changeCount, setChangeCount] = useState(0);
 
-  // Studio Mode State
+  // Undo / Redo History Stack
+  const historyStackRef = useRef<SiteContentDocument[]>([]);
+  const historyIndexRef = useRef<number>(-1);
+  const [canUndo, setCanUndo] = useState(false);
+  const [canRedo, setCanRedo] = useState(false);
+
+  // Pro Studio Layout Controls
   const [deviceMode, setDeviceMode] = useState<"desktop" | "tablet" | "mobile">("desktop");
+  const [zoomLevel, setZoomLevel] = useState<number>(100);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [pageDropdownOpen, setPageDropdownOpen] = useState(false);
+
+  // Editor Interaction State
   const [lang, setLang] = useState<string>(DEFAULT_LANG);
   const [sidebarTab, setSidebarTab] = useState<"sections" | "inspector">("sections");
   const [sectionId, setSectionId] = useState<string>("hero");
   const [activeFieldKey, setActiveFieldKey] = useState<string | null>(null);
   const [uploadingKey, setUploadingKey] = useState<string | null>(null);
-  const [hoveredBlock, setHoveredBlock] = useState<{ sectionId: string; fieldKey: string } | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [hoveredFieldId, setHoveredFieldId] = useState<string | null>(null);
+
+  // Floating Inline Quick Edit Bar
   const [inlineQuickEdit, setInlineQuickEdit] = useState<{
     sectionId: string;
     fieldKey: string;
@@ -264,7 +308,7 @@ export default function SinglePageContentManager({ pageId }: { pageId: string })
     tone: "info",
   });
 
-  const inspectorInputRef = useRef<HTMLInputElement | HTMLTextAreaElement | null>(null);
+  const pageDropdownRef = useRef<HTMLDivElement | null>(null);
 
   const meta = PAGE_META[pageId] || {
     icon: Layout,
@@ -278,6 +322,52 @@ export default function SinglePageContentManager({ pageId }: { pageId: string })
 
   const activeLangObj = LANGUAGES.find((l) => l.code === lang) || LANGUAGES[0];
   const isCanvasRtl = activeLangObj.dir === "rtl";
+
+  // Push Document to Undo History
+  const pushToHistory = useCallback((newDoc: SiteContentDocument) => {
+    const nextHistory = historyStackRef.current.slice(0, historyIndexRef.current + 1);
+    nextHistory.push(JSON.parse(JSON.stringify(newDoc)));
+    if (nextHistory.length > 30) nextHistory.shift();
+    historyStackRef.current = nextHistory;
+    historyIndexRef.current = nextHistory.length - 1;
+    setCanUndo(historyIndexRef.current > 0);
+    setCanRedo(false);
+  }, []);
+
+  const handleUndo = useCallback(() => {
+    if (historyIndexRef.current > 0) {
+      historyIndexRef.current -= 1;
+      const targetDoc = historyStackRef.current[historyIndexRef.current];
+      setDoc(JSON.parse(JSON.stringify(targetDoc)));
+      setDirty(true);
+      setCanUndo(historyIndexRef.current > 0);
+      setCanRedo(true);
+      setToast({ message: "Action annulée (Undo)", tone: "info" });
+    }
+  }, []);
+
+  const handleRedo = useCallback(() => {
+    if (historyIndexRef.current < historyStackRef.current.length - 1) {
+      historyIndexRef.current += 1;
+      const targetDoc = historyStackRef.current[historyIndexRef.current];
+      setDoc(JSON.parse(JSON.stringify(targetDoc)));
+      setDirty(true);
+      setCanUndo(true);
+      setCanRedo(historyIndexRef.current < historyStackRef.current.length - 1);
+      setToast({ message: "Action rétablie (Redo)", tone: "info" });
+    }
+  }, []);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handleOutside = (e: MouseEvent) => {
+      if (pageDropdownRef.current && !pageDropdownRef.current.contains(e.target as Node)) {
+        setPageDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleOutside);
+    return () => document.removeEventListener("mousedown", handleOutside);
+  }, []);
 
   // Load Content
   const loadContent = useCallback(async () => {
@@ -330,6 +420,12 @@ export default function SinglePageContentManager({ pageId }: { pageId: string })
 
       setDoc(d);
       setDirty(false);
+      setChangeCount(0);
+      historyStackRef.current = [JSON.parse(JSON.stringify(d))];
+      historyIndexRef.current = 0;
+      setCanUndo(false);
+      setCanRedo(false);
+
       if (p?.sections?.length) {
         setSectionId(p.sections[0].id);
       }
@@ -359,7 +455,7 @@ export default function SinglePageContentManager({ pageId }: { pageId: string })
       if (!doc) return;
       setDoc((prevDoc) => {
         if (!prevDoc) return prevDoc;
-        return {
+        const nextDoc: SiteContentDocument = {
           ...prevDoc,
           pages: prevDoc.pages.map((p) => {
             if (p.id !== pageId) return p;
@@ -375,10 +471,13 @@ export default function SinglePageContentManager({ pageId }: { pageId: string })
             };
           }),
         };
+        pushToHistory(nextDoc);
+        return nextDoc;
       });
       setDirty(true);
+      setChangeCount((c) => c + 1);
     },
-    [doc, pageId]
+    [doc, pageId, pushToHistory]
   );
 
   const handleFieldValueChange = useCallback(
@@ -395,6 +494,26 @@ export default function SinglePageContentManager({ pageId }: { pageId: string })
     [lang, updateField]
   );
 
+  // Pre-fill from Global Default
+  const handleCopyFromDefault = useCallback(
+    (targetSectionId: string, fieldKey: string) => {
+      if (!activePage) return;
+      const sec = activePage.sections.find((s) => s.id === targetSectionId);
+      const f = sec?.fields.find((field) => field.key === fieldKey);
+      if (f && !isEmpty(f.value)) {
+        handleFieldValueChange(targetSectionId, fieldKey, f.value);
+        setToast({ message: "Copié depuis la valeur par défaut !", tone: "info" });
+      } else {
+        const fallback = BUILTIN_SITE_DEFAULTS[fieldKey] || "";
+        if (fallback) {
+          handleFieldValueChange(targetSectionId, fieldKey, fallback);
+          setToast({ message: "Modèle inséré avec succès !", tone: "info" });
+        }
+      }
+    },
+    [activePage, handleFieldValueChange]
+  );
+
   // Save changes
   const handleSave = async () => {
     if (!doc) return;
@@ -407,8 +526,9 @@ export default function SinglePageContentManager({ pageId }: { pageId: string })
       }
       await refreshSiteContent();
       setDirty(false);
+      setChangeCount(0);
       setToast({
-        message: t("cms_saved_toast", "Modifications enregistrées et publiées en direct !"),
+        message: t("cms_saved_toast", "✨ Modifications enregistrées et publiées en direct avec succès !"),
         tone: "success",
       });
     } catch (err) {
@@ -418,19 +538,30 @@ export default function SinglePageContentManager({ pageId }: { pageId: string })
     }
   };
 
-  // Keyboard shortcut Ctrl+S
+  // Keyboard Shortcuts: Ctrl+S, Ctrl+Z, Ctrl+Y, Escape
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+      const isMac = navigator.platform.toUpperCase().indexOf("MAC") >= 0;
+      const mod = isMac ? e.metaKey : e.ctrlKey;
+
+      if (mod && e.key.toLowerCase() === "s") {
         e.preventDefault();
-        if (dirty && !saving) {
-          void handleSave();
-        }
+        if (dirty && !saving) void handleSave();
+      } else if (mod && !e.shiftKey && e.key.toLowerCase() === "z") {
+        e.preventDefault();
+        handleUndo();
+      } else if ((mod && e.shiftKey && e.key.toLowerCase() === "z") || (mod && e.key.toLowerCase() === "y")) {
+        e.preventDefault();
+        handleRedo();
+      } else if (e.key === "Escape") {
+        if (isFullscreen) setIsFullscreen(false);
+        if (inlineQuickEdit) setInlineQuickEdit(null);
+        if (pageDropdownOpen) setPageDropdownOpen(false);
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [dirty, saving, doc]);
+  }, [dirty, saving, doc, isFullscreen, inlineQuickEdit, pageDropdownOpen, handleUndo, handleRedo]);
 
   // Upload Image
   const handleUploadImage = async (file: File, key: string, targetSectionId: string): Promise<string | null> => {
@@ -495,8 +626,8 @@ export default function SinglePageContentManager({ pageId }: { pageId: string })
     setSectionId(targetSectionId);
     setActiveFieldKey(fieldKey);
     setSidebarTab("inspector");
+    if (!isSidebarOpen) setIsSidebarOpen(true);
 
-    // Open inline quick-edit popover
     const currentVal = getSectionFieldRaw(targetSectionId, fieldKey);
     setInlineQuickEdit({
       sectionId: targetSectionId,
@@ -505,7 +636,6 @@ export default function SinglePageContentManager({ pageId }: { pageId: string })
       value: currentVal,
     });
 
-    // Auto-scroll inspector input into view
     setTimeout(() => {
       const el = document.getElementById(`field-input-${targetSectionId}-${fieldKey}`);
       if (el) {
@@ -515,11 +645,28 @@ export default function SinglePageContentManager({ pageId }: { pageId: string })
     }, 150);
   };
 
+  // Filter sections by search query
+  const filteredSections = useMemo(() => {
+    if (!activePage) return [];
+    if (!searchQuery.trim()) return activePage.sections;
+    const q = searchQuery.toLowerCase();
+    return activePage.sections.filter((s) => {
+      const matchSec = s.label.toLowerCase().includes(q) || (s.description || "").toLowerCase().includes(q);
+      const matchFields = s.fields.some(
+        (f) =>
+          f.label.toLowerCase().includes(q) ||
+          f.key.toLowerCase().includes(q) ||
+          String(f.value || "").toLowerCase().includes(q)
+      );
+      return matchSec || matchFields;
+    });
+  }, [activePage, searchQuery]);
+
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[500px] space-y-4">
         <Loader2 className="w-10 h-10 text-[var(--gold)] animate-spin" />
-        <p className="font-mono text-sm text-[var(--muted-foreground)]">Chargement de l'éditeur visuel Shopify CMS...</p>
+        <p className="font-mono text-sm text-[var(--muted-foreground)]">Chargement du Studio CMS Professionnel...</p>
       </div>
     );
   }
@@ -534,85 +681,175 @@ export default function SinglePageContentManager({ pageId }: { pageId: string })
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-80px)] -m-3 sm:-m-6 lg:-m-8 bg-[#0b131e] text-slate-100 overflow-hidden font-sans">
+    <div
+      className={`flex flex-col bg-[#070d17] text-slate-100 overflow-hidden font-sans transition-all duration-200 ${
+        isFullscreen
+          ? "fixed inset-0 z-[100] h-screen w-screen m-0"
+          : "h-[calc(100vh-80px)] -m-3 sm:-m-6 lg:-m-8 rounded-none sm:rounded-2xl border border-slate-800/80 shadow-2xl"
+      }`}
+    >
       {toast.message && <Toast message={toast.message} tone={toast.tone} />}
 
       {/* ========================================================================= */}
-      {/* 1. SHOPIFY-STYLE TOP STUDIO BAR                                            */}
+      {/* 1. TOP STUDIO PRO BAR: BREADCRUMB, HISTORY, VIEWPORT, ZOOM, SAVE          */}
       {/* ========================================================================= */}
-      <header className="h-16 border-b border-slate-700/80 bg-[#0f172a]/95 backdrop-blur-md px-4 flex items-center justify-between gap-3 shrink-0 z-40 select-none shadow-md">
-        {/* Left: Brand + Page Title + Path */}
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="flex items-center gap-2">
-            <span className="px-2 py-0.5 rounded-md text-[10px] font-extrabold uppercase tracking-widest bg-gradient-to-r from-amber-500/20 to-yellow-500/10 text-[var(--gold)] border border-[var(--gold)]/40 flex items-center gap-1.5 shadow-sm">
-              <Sparkles className="w-3 h-3 text-[var(--gold)] animate-pulse" />
-              <span>Studio CMS Shopify</span>
-            </span>
-            <span className="text-slate-500 text-sm hidden sm:inline">/</span>
-          </div>
+      <header className="h-16 border-b border-slate-800 bg-[#0c1524]/95 backdrop-blur-md px-3 sm:px-5 flex items-center justify-between gap-3 shrink-0 z-40 select-none shadow-md">
+        {/* Left: Quick Page Switcher Dropdown */}
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0" ref={pageDropdownRef}>
+          <button
+            type="button"
+            onClick={() => setIsSidebarOpen((v) => !v)}
+            title={isSidebarOpen ? "Masquer le panneau inspecteur" : "Afficher le panneau inspecteur"}
+            className="p-2 rounded-xl border border-slate-700/80 bg-slate-800/80 text-slate-300 hover:text-[var(--gold)] hover:border-[var(--gold)]/50 transition-colors cursor-pointer shrink-0"
+          >
+            {isSidebarOpen ? <PanelLeftClose className="w-4 h-4" /> : <PanelLeftOpen className="w-4 h-4" />}
+          </button>
 
-          <div className="flex items-center gap-2 min-w-0">
-            <div className="p-1.5 rounded-lg bg-[var(--gold)]/15 text-[var(--gold)] shrink-0">
-              <PageIcon className="w-4 h-4" />
-            </div>
-            <div className="truncate">
-              <span className="font-bold text-sm text-white truncate block">
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setPageDropdownOpen((v) => !v)}
+              className="px-3 py-1.5 rounded-xl border border-slate-700/90 bg-slate-800/90 hover:bg-slate-750 hover:border-[var(--gold)]/60 text-slate-200 text-xs font-bold transition-all flex items-center gap-2 shadow-sm cursor-pointer"
+            >
+              <div className="p-1 rounded-md bg-[var(--gold)]/15 text-[var(--gold)] shrink-0">
+                <PageIcon className="w-3.5 h-3.5" />
+              </div>
+              <span className="truncate max-w-[140px] sm:max-w-[200px] text-white">
                 {meta.defaultTitle}
               </span>
-              <span className="font-mono text-[10px] text-slate-400 block truncate">
-                {meta.publicPath}
+              <span className="font-mono text-[10px] text-slate-400 hidden md:inline">
+                ({meta.publicPath})
               </span>
-            </div>
+              <ChevronDown
+                className={`w-3.5 h-3.5 text-slate-400 transition-transform ${
+                  pageDropdownOpen ? "rotate-180 text-[var(--gold)]" : ""
+                }`}
+              />
+            </button>
+
+            {/* Dropdown Menu of all Pages */}
+            {pageDropdownOpen && (
+              <div className="absolute top-full start-0 mt-2 w-72 sm:w-80 rounded-2xl border border-slate-700 bg-[#0f1a2d] shadow-2xl p-2 z-50 animate-in fade-in zoom-in-95 duration-150">
+                <div className="px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-[var(--gold)] border-b border-slate-800 flex items-center justify-between">
+                  <span>Navigation Rapide Studio</span>
+                  <span className="font-mono text-slate-500">14 Pages</span>
+                </div>
+                <div className="max-h-80 overflow-y-auto py-1 space-y-0.5 scrollbar-thin">
+                  {CMS_NAV_ITEMS.map((item) => {
+                    const ItemIcon = item.icon;
+                    const isCur = item.id === pageId;
+                    return (
+                      <a
+                        key={item.id}
+                        href={item.path}
+                        className={`w-full px-3 py-2 rounded-xl text-xs font-medium flex items-center justify-between transition-colors ${
+                          isCur
+                            ? "bg-[var(--gold)] text-black font-bold shadow-sm"
+                            : "text-slate-300 hover:bg-slate-800/90 hover:text-white"
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5 truncate">
+                          <ItemIcon className="w-3.5 h-3.5 shrink-0 opacity-80" />
+                          <span className="truncate">{item.label}</span>
+                        </div>
+                        <span
+                          className={`text-[9px] font-mono px-1.5 py-0.5 rounded ${
+                            isCur ? "bg-black/20 text-black" : "bg-slate-800 text-slate-400"
+                          }`}
+                        >
+                          {item.route}
+                        </span>
+                      </a>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Undo & Redo Controls */}
+          <div className="hidden sm:flex items-center p-0.5 rounded-xl bg-slate-900/90 border border-slate-800">
+            <button
+              type="button"
+              onClick={handleUndo}
+              disabled={!canUndo}
+              title="Annuler (Ctrl+Z)"
+              className="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+            >
+              <Undo2 className="w-4 h-4" />
+            </button>
+            <button
+              type="button"
+              onClick={handleRedo}
+              disabled={!canRedo}
+              title="Rétablir (Ctrl+Y)"
+              className="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+            >
+              <Redo2 className="w-4 h-4" />
+            </button>
           </div>
         </div>
 
-        {/* Center: Device Switcher + Language Selector */}
-        <div className="hidden md:flex items-center gap-3">
-          {/* Viewport Device Switcher */}
+        {/* Center: Device Switcher + Zoom + Language */}
+        <div className="hidden lg:flex items-center gap-3">
+          {/* Device Switcher */}
           <div className="flex items-center p-1 rounded-xl bg-slate-900/90 border border-slate-700/80 shadow-inner">
             <button
               type="button"
               onClick={() => setDeviceMode("desktop")}
-              title="Aperçu Bureau (Plein écran)"
-              className={`p-1.5 rounded-lg transition-all flex items-center gap-1.5 text-xs font-semibold ${
+              title="Aperçu Bureau (Plein écran / 1280px)"
+              className={`px-2.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 text-xs font-semibold ${
                 deviceMode === "desktop"
                   ? "bg-[var(--gold)] text-black shadow-sm font-bold"
                   : "text-slate-400 hover:text-white"
               }`}
             >
-              <Monitor className="w-4 h-4" />
-              <span className="hidden lg:inline">Bureau</span>
+              <Monitor className="w-3.5 h-3.5" />
+              <span>Bureau</span>
             </button>
             <button
               type="button"
               onClick={() => setDeviceMode("tablet")}
-              title="Aperçu Tablette (768px)"
-              className={`p-1.5 rounded-lg transition-all flex items-center gap-1.5 text-xs font-semibold ${
+              title="Aperçu Tablette (768px × 1024px)"
+              className={`px-2.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 text-xs font-semibold ${
                 deviceMode === "tablet"
                   ? "bg-[var(--gold)] text-black shadow-sm font-bold"
                   : "text-slate-400 hover:text-white"
               }`}
             >
-              <Tablet className="w-4 h-4" />
-              <span className="hidden lg:inline">Tablette</span>
+              <Tablet className="w-3.5 h-3.5" />
+              <span>Tablette</span>
             </button>
             <button
               type="button"
               onClick={() => setDeviceMode("mobile")}
-              title="Aperçu Mobile (385px)"
-              className={`p-1.5 rounded-lg transition-all flex items-center gap-1.5 text-xs font-semibold ${
+              title="Aperçu Mobile (390px × 844px)"
+              className={`px-2.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 text-xs font-semibold ${
                 deviceMode === "mobile"
                   ? "bg-[var(--gold)] text-black shadow-sm font-bold"
                   : "text-slate-400 hover:text-white"
               }`}
             >
-              <Smartphone className="w-4 h-4" />
-              <span className="hidden lg:inline">Mobile</span>
+              <Smartphone className="w-3.5 h-3.5" />
+              <span>Mobile</span>
+            </button>
+          </div>
+
+          {/* Zoom Level Switcher */}
+          <div className="flex items-center p-1 rounded-xl bg-slate-900/90 border border-slate-700/80 shadow-inner text-xs">
+            <button
+              type="button"
+              onClick={() => setZoomLevel((z) => (z === 100 ? 85 : z === 85 ? 75 : 100))}
+              title="Changer le niveau de zoom"
+              className="px-2 py-1 rounded-lg text-slate-400 hover:text-white font-mono font-bold flex items-center gap-1"
+            >
+              <ZoomIn className="w-3.5 h-3.5 text-[var(--gold)]" />
+              <span>{zoomLevel}%</span>
             </button>
           </div>
 
           {/* Language Selector */}
-          <div className="flex items-center gap-1 p-1 rounded-xl bg-slate-900/90 border border-slate-700/80 shadow-inner overflow-x-auto max-w-[260px] lg:max-w-none">
+          <div className="flex items-center gap-1 p-1 rounded-xl bg-slate-900/90 border border-slate-700/80 shadow-inner">
             {LANGUAGES.map((l) => (
               <button
                 key={l.code}
@@ -632,52 +869,65 @@ export default function SinglePageContentManager({ pageId }: { pageId: string })
           </div>
         </div>
 
-        {/* Right: Status + Public Link + Discard + Save Button */}
+        {/* Right: Dirty Pill + Fullscreen + Link + Discard + Save */}
         <div className="flex items-center gap-2 shrink-0">
           {dirty ? (
-            <span className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30 animate-pulse">
+            <span className="hidden md:inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30 animate-pulse">
               <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-              <span>Modifié en direct</span>
+              <span>{changeCount} modif.</span>
             </span>
           ) : (
-            <span className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-medium text-emerald-400 bg-emerald-500/10 border border-emerald-500/20">
+            <span className="hidden md:inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-medium text-emerald-400 bg-emerald-500/10 border border-emerald-500/20">
               <Check className="w-3 h-3" />
-              <span>À jour</span>
+              <span>Publié</span>
             </span>
           )}
 
+          {/* Fullscreen Toggle */}
+          <button
+            type="button"
+            onClick={() => setIsFullscreen((v) => !v)}
+            title={isFullscreen ? "Quitter le plein écran (Échap)" : "Plein écran Studio"}
+            className="p-2 rounded-xl border border-slate-700/80 bg-slate-800/80 text-slate-300 hover:text-white hover:border-[var(--gold)] transition-colors cursor-pointer"
+          >
+            {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+          </button>
+
+          {/* Public Page Link */}
           {activePage.path && (
             <a
               href={activePage.path}
               target="_blank"
               rel="noopener noreferrer"
               title="Ouvrir la page publique réelle dans un nouvel onglet"
-              className="p-2 rounded-xl border border-slate-700 bg-slate-800/80 text-slate-300 hover:text-white hover:border-[var(--gold)] transition-colors"
+              className="p-2 rounded-xl border border-slate-700/80 bg-slate-800/80 text-slate-300 hover:text-white hover:border-[var(--gold)] transition-colors"
             >
               <ExternalLink className="w-4 h-4" />
             </a>
           )}
 
+          {/* Revert / Discard */}
           <button
             type="button"
             onClick={loadContent}
             disabled={!dirty || saving}
-            title="Annuler les modifications non enregistrées"
-            className="p-2 rounded-xl border border-slate-700 bg-slate-800/80 text-slate-300 hover:text-red-400 hover:border-red-500/50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            title="Annuler toutes les modifications non enregistrées"
+            className="p-2 rounded-xl border border-slate-700/80 bg-slate-800/80 text-slate-300 hover:text-red-400 hover:border-red-500/50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
           >
             <RotateCcw className="w-4 h-4" />
           </button>
 
+          {/* Save Button */}
           <button
             type="button"
             onClick={handleSave}
             disabled={!dirty || saving}
-            className="btn-base btn-gold text-xs py-2 px-4.5 flex items-center gap-2 cursor-pointer shadow-lg hover:scale-[1.02] transition-transform disabled:opacity-40 disabled:cursor-not-allowed font-bold"
+            className="btn-base btn-gold text-xs py-2 px-4 flex items-center gap-2 cursor-pointer shadow-lg hover:scale-[1.02] transition-transform disabled:opacity-40 disabled:cursor-not-allowed font-bold"
           >
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
             <span className="hidden sm:inline">{t("cms_save", "Enregistrer & Publier")}</span>
             <span className="sm:hidden">Publier</span>
-            <kbd className="hidden lg:inline text-[9px] px-1 py-0.5 rounded bg-black/20 text-black font-mono">
+            <kbd className="hidden xl:inline text-[9px] px-1 py-0.5 rounded bg-black/20 text-black font-mono">
               Ctrl+S
             </kbd>
           </button>
@@ -685,306 +935,365 @@ export default function SinglePageContentManager({ pageId }: { pageId: string })
       </header>
 
       {/* ========================================================================= */}
-      {/* 2. SPLIT STUDIO WORKSPACE: LEFT INSPECTOR + RIGHT LIVE CANVAS              */}
+      {/* 2. SPLIT WORKSPACE: COLLAPSIBLE INSPECTOR + RIGHT LIVE PREVIEW CANVAS      */}
       {/* ========================================================================= */}
       <div className="flex-1 flex overflow-hidden relative">
         {/* ----------------------------------------------------------------------- */}
-        {/* LEFT PANEL: SHOPIFY-STYLE SECTIONS TREE & INSPECTOR                     */}
+        {/* LEFT PANEL: SHOPIFY-STYLE SECTIONS TREE & DETAILED INSPECTOR            */}
         {/* ----------------------------------------------------------------------- */}
-        <aside className="w-full lg:w-[410px] border-r border-slate-800 bg-[#0f172a] flex flex-col shrink-0 z-30 shadow-xl overflow-hidden">
-          {/* Sidebar Tab Header */}
-          <div className="p-3 border-b border-slate-800 bg-slate-900/60 flex items-center justify-between gap-2 shrink-0">
-            <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-800/90 border border-slate-700 w-full">
-              <button
-                type="button"
-                onClick={() => setSidebarTab("sections")}
-                className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
-                  sidebarTab === "sections"
-                    ? "bg-[var(--gold)] text-black shadow-sm font-extrabold"
-                    : "text-slate-400 hover:text-white"
-                }`}
-              >
-                <Layers className="w-3.5 h-3.5" />
-                <span>Sections ({activePage.sections.length})</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setSidebarTab("inspector")}
-                className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
-                  sidebarTab === "inspector"
-                    ? "bg-[var(--gold)] text-black shadow-sm font-extrabold"
-                    : "text-slate-400 hover:text-white"
-                }`}
-              >
-                <SlidersHorizontal className="w-3.5 h-3.5" />
-                <span>Inspecteur</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Sidebar Content Area */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin">
-            {sidebarTab === "sections" ? (
-              /* TAB 1: SECTIONS LIST */
-              <div className="space-y-3">
-                <div className="flex items-center justify-between text-xs text-slate-400 pb-1">
-                  <span className="font-semibold uppercase tracking-wider text-[11px] text-[var(--gold)]">
-                    Structure de la page
-                  </span>
-                  <span>Cliquez pour personnaliser</span>
-                </div>
-
-                {activePage.sections.map((section, idx) => {
-                  const isSel = section.id === activeSection?.id;
-                  const customCount = countCustomised(section.fields);
-                  return (
-                    <div
-                      key={section.id}
-                      onClick={() => {
-                        setSectionId(section.id);
-                        setSidebarTab("inspector");
-                      }}
-                      className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-3 group ${
-                        isSel
-                          ? "bg-slate-800/90 border-[var(--gold)] shadow-md ring-1 ring-[var(--gold)]/40"
-                          : "bg-slate-900/60 border-slate-800 hover:border-slate-700 hover:bg-slate-850"
-                      }`}
-                    >
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div
-                          className={`w-7 h-7 rounded-lg flex items-center justify-center font-mono text-xs font-bold shrink-0 ${
-                            isSel ? "bg-[var(--gold)] text-black" : "bg-slate-800 text-slate-400"
-                          }`}
-                        >
-                          #{idx + 1}
-                        </div>
-                        <div className="min-w-0 text-start">
-                          <h4 className="font-bold text-sm text-slate-100 group-hover:text-[var(--gold)] transition-colors truncate">
-                            {section.label}
-                          </h4>
-                          {section.description && (
-                            <p className="text-[11px] text-slate-400 truncate mt-0.5 font-light">
-                              {section.description}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-2 shrink-0">
-                        {customCount > 0 && (
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-[var(--gold)]/15 text-[var(--gold)] border border-[var(--gold)]/30">
-                            {customCount} modif.
-                          </span>
-                        )}
-                        <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-[var(--gold)] group-hover:translate-x-0.5 transition-all" />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              /* TAB 2: SECTION SETTINGS / INSPECTOR */
-              <div className="space-y-4">
-                {/* Back to sections header */}
-                <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+        {isSidebarOpen && (
+          <aside className="w-full lg:w-[420px] border-r border-slate-800/90 bg-[#0e1726] flex flex-col shrink-0 z-30 shadow-2xl overflow-hidden animate-in slide-in-from-left duration-200">
+            {/* Search Filter Header */}
+            <div className="p-3 border-b border-slate-800 bg-[#0a1220] space-y-2.5 shrink-0">
+              <div className="relative">
+                <Search className="w-3.5 h-3.5 text-slate-400 absolute start-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Filtrer les sections ou champs..."
+                  className="w-full ps-9 pe-8 py-2 text-xs rounded-xl border border-slate-700/80 bg-slate-900 text-slate-100 placeholder:text-slate-500 outline-none focus:border-[var(--gold)] focus:ring-1 focus:ring-[var(--gold)]/40 transition shadow-inner"
+                />
+                {searchQuery && (
                   <button
                     type="button"
-                    onClick={() => setSidebarTab("sections")}
-                    className="text-xs font-semibold text-slate-400 hover:text-[var(--gold)] flex items-center gap-1 transition-colors cursor-pointer"
+                    onClick={() => setSearchQuery("")}
+                    className="absolute end-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
                   >
-                    <ChevronLeft className="w-4 h-4" />
-                    <span>Toutes les sections</span>
+                    <X className="w-3.5 h-3.5" />
                   </button>
-                  <span className="px-2 py-0.5 rounded-md text-[10px] font-mono uppercase bg-slate-800 text-slate-300">
-                    {activeSection?.id}
-                  </span>
-                </div>
+                )}
+              </div>
 
-                <div className="text-start">
-                  <h3 className="font-bold text-base text-white flex items-center gap-2">
-                    <span>{activeSection?.label}</span>
-                  </h3>
-                  {activeSection?.description && (
-                    <p className="text-xs text-slate-400 mt-1">{activeSection.description}</p>
-                  )}
-                </div>
+              {/* Tabs Switcher: Sections vs Inspecteur */}
+              <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-800/90 border border-slate-700/80">
+                <button
+                  type="button"
+                  onClick={() => setSidebarTab("sections")}
+                  className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                    sidebarTab === "sections"
+                      ? "bg-[var(--gold)] text-black shadow-sm font-extrabold"
+                      : "text-slate-400 hover:text-white"
+                  }`}
+                >
+                  <Layers className="w-3.5 h-3.5" />
+                  <span>Sections ({activePage.sections.length})</span>
+                </button>
 
-                {/* Fields List of Active Section */}
-                <div className="space-y-4 pt-2">
-                  {activeSection?.fields.map((field) => {
-                    const isFieldHighlighted = activeFieldKey === field.key;
-                    const custom = isCustomised(field);
-                    const currentVal = readValue(field, lang);
-                    const isValEmpty = isEmpty(currentVal);
+                <button
+                  type="button"
+                  onClick={() => setSidebarTab("inspector")}
+                  className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                    sidebarTab === "inspector"
+                      ? "bg-[var(--gold)] text-black shadow-sm font-extrabold"
+                      : "text-slate-400 hover:text-white"
+                  }`}
+                >
+                  <SlidersHorizontal className="w-3.5 h-3.5" />
+                  <span>Inspecteur</span>
+                </button>
+              </div>
+            </div>
 
+            {/* Sidebar Body */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin">
+              {sidebarTab === "sections" ? (
+                /* TAB 1: SECTIONS LIST */
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between text-xs text-slate-400 pb-1">
+                    <span className="font-semibold uppercase tracking-wider text-[11px] text-[var(--gold)]">
+                      Structure de la page
+                    </span>
+                    <span className="text-[11px] text-slate-500">Cliquez pour modifier</span>
+                  </div>
+
+                  {filteredSections.map((section, idx) => {
+                    const isSel = section.id === activeSection?.id;
+                    const customCount = countCustomised(section.fields);
                     return (
                       <div
-                        key={field.key}
-                        id={`field-box-${activeSection.id}-${field.key}`}
-                        className={`p-4 rounded-2xl border transition-all text-start space-y-3 ${
-                          isFieldHighlighted
-                            ? "bg-slate-850 border-[var(--gold)] ring-2 ring-[var(--gold)]/40 shadow-lg"
-                            : "bg-slate-900/80 border-slate-800 hover:border-slate-700"
+                        key={section.id}
+                        onClick={() => {
+                          setSectionId(section.id);
+                          setSidebarTab("inspector");
+                        }}
+                        className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-3 group ${
+                          isSel
+                            ? "bg-slate-800/95 border-[var(--gold)] shadow-md ring-1 ring-[var(--gold)]/40"
+                            : "bg-slate-900/60 border-slate-800 hover:border-slate-700 hover:bg-slate-850"
                         }`}
                       >
-                        <div className="flex items-center justify-between gap-2">
-                          <label className="text-xs font-bold text-slate-200 flex items-center gap-2">
-                            <span>{field.label}</span>
-                            <span className="px-1.5 py-0.2 rounded text-[9px] font-mono uppercase bg-slate-800 text-slate-400">
-                              {field.type}
-                            </span>
-                          </label>
-
-                          <div className="flex items-center gap-1.5">
-                            {custom && (
-                              <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-[var(--gold)]/15 text-[var(--gold)] border border-[var(--gold)]/30">
-                                Personnalisé
-                              </span>
-                            )}
-                            {!isValEmpty && (
-                              <button
-                                type="button"
-                                onClick={() => handleFieldValueChange(activeSection.id, field.key, "")}
-                                title="Réinitialiser à la valeur par défaut"
-                                className="p-1 rounded text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition cursor-pointer"
-                              >
-                                <RotateCcw className="w-3 h-3" />
-                              </button>
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div
+                            className={`w-7 h-7 rounded-lg flex items-center justify-center font-mono text-xs font-bold shrink-0 ${
+                              isSel ? "bg-[var(--gold)] text-black shadow-sm" : "bg-slate-800 text-slate-400"
+                            }`}
+                          >
+                            #{idx + 1}
+                          </div>
+                          <div className="min-w-0 text-start">
+                            <h4 className="font-bold text-sm text-slate-100 group-hover:text-[var(--gold)] transition-colors truncate">
+                              {section.label}
+                            </h4>
+                            {section.description && (
+                              <p className="text-[11px] text-slate-400 truncate mt-0.5 font-light">
+                                {section.description}
+                              </p>
                             )}
                           </div>
                         </div>
 
-                        {field.hint && (
-                          <p className="text-[11px] text-slate-400 font-light">{field.hint}</p>
-                        )}
-
-                        {/* Field Control by Type */}
-                        {field.type === "image" ? (
-                          <div className="space-y-2">
-                            <div className="flex items-center gap-2">
-                              <input
-                                id={`field-input-${activeSection.id}-${field.key}`}
-                                type="text"
-                                dir="ltr"
-                                value={String(currentVal ?? "")}
-                                placeholder="/assets/image.jpg ou https://..."
-                                onChange={(e) =>
-                                  handleFieldValueChange(activeSection.id, field.key, e.target.value)
-                                }
-                                className={`${inputClass} flex-1 font-mono text-xs`}
-                              />
-                              <label
-                                className="btn-base btn-gold text-xs py-2 px-3 flex items-center gap-1.5 cursor-pointer shrink-0 font-bold"
-                                title="Importer un fichier image depuis votre ordinateur"
-                              >
-                                {uploadingKey === field.key ? (
-                                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                ) : (
-                                  <Upload className="w-3.5 h-3.5" />
-                                )}
-                                <span>Importer</span>
-                                <input
-                                  type="file"
-                                  accept="image/*"
-                                  className="hidden"
-                                  onChange={async (e) => {
-                                    const file = e.target.files?.[0];
-                                    if (file) {
-                                      await handleUploadImage(file, field.key, activeSection.id);
-                                    }
-                                  }}
-                                />
-                              </label>
-                            </div>
-
-                            {/* Live Thumbnail */}
-                            {Boolean(currentVal) && (
-                              <div className="relative w-full h-32 rounded-xl overflow-hidden border border-[var(--gold)]/40 bg-black/40 group">
-                                <img
-                                  src={resolveSiteImageUrl(String(currentVal))}
-                                  alt={field.label}
-                                  className="w-full h-full object-cover"
-                                />
-                                <button
-                                  type="button"
-                                  onClick={() => handleFieldValueChange(activeSection.id, field.key, "")}
-                                  className="absolute top-2 end-2 p-1.5 rounded-full bg-black/70 text-white hover:bg-red-600 transition opacity-0 group-hover:opacity-100 cursor-pointer"
-                                  title="Supprimer cette image"
-                                >
-                                  <Trash2 className="w-3.5 h-3.5" />
-                                </button>
-                              </div>
-                            )}
-                          </div>
-                        ) : field.type === "html" || MULTILINE_KEY.test(field.key) ? (
-                          <textarea
-                            id={`field-input-${activeSection.id}-${field.key}`}
-                            rows={3}
-                            dir={activeLangObj.dir}
-                            value={String(currentVal ?? "")}
-                            placeholder={BUILTIN_SITE_DEFAULTS[field.key] || "Texte par défaut du site..."}
-                            onChange={(e) =>
-                              handleFieldValueChange(activeSection.id, field.key, e.target.value)
-                            }
-                            className={`${inputClass} leading-relaxed resize-y`}
-                          />
-                        ) : (
-                          <input
-                            id={`field-input-${activeSection.id}-${field.key}`}
-                            type="text"
-                            dir={activeLangObj.dir}
-                            value={String(currentVal ?? "")}
-                            placeholder={BUILTIN_SITE_DEFAULTS[field.key] || "Texte par défaut du site..."}
-                            onChange={(e) =>
-                              handleFieldValueChange(activeSection.id, field.key, e.target.value)
-                            }
-                            className={inputClass}
-                          />
-                        )}
+                        <div className="flex items-center gap-2 shrink-0">
+                          {customCount > 0 && (
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-[var(--gold)]/15 text-[var(--gold)] border border-[var(--gold)]/30">
+                              {customCount} modif.
+                            </span>
+                          )}
+                          <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-[var(--gold)] group-hover:translate-x-0.5 transition-all" />
+                        </div>
                       </div>
                     );
                   })}
                 </div>
-              </div>
-            )}
-          </div>
-        </aside>
+              ) : (
+                /* TAB 2: SECTION SETTINGS / INSPECTOR */
+                <div className="space-y-4">
+                  {/* Inspector Header */}
+                  <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+                    <button
+                      type="button"
+                      onClick={() => setSidebarTab("sections")}
+                      className="text-xs font-semibold text-slate-400 hover:text-[var(--gold)] flex items-center gap-1 transition-colors cursor-pointer"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                      <span>Toutes les sections</span>
+                    </button>
+                    <span className="px-2 py-0.5 rounded-md text-[10px] font-mono uppercase bg-slate-800 text-slate-300">
+                      ID: {activeSection?.id}
+                    </span>
+                  </div>
+
+                  <div className="text-start">
+                    <h3 className="font-bold text-base text-white flex items-center gap-2">
+                      <span>{activeSection?.label}</span>
+                    </h3>
+                    {activeSection?.description && (
+                      <p className="text-xs text-slate-400 mt-1">{activeSection.description}</p>
+                    )}
+                  </div>
+
+                  {/* Section Fields */}
+                  <div className="space-y-4 pt-1">
+                    {activeSection?.fields.map((field) => {
+                      const isFieldHighlighted = activeFieldKey === field.key;
+                      const custom = isCustomised(field);
+                      const currentVal = readValue(field, lang);
+                      const isValEmpty = isEmpty(currentVal);
+                      const currentStr = String(currentVal ?? "");
+
+                      return (
+                        <div
+                          key={field.key}
+                          id={`field-box-${activeSection.id}-${field.key}`}
+                          className={`p-4 rounded-2xl border transition-all text-start space-y-3 ${
+                            isFieldHighlighted
+                              ? "bg-slate-850 border-[var(--gold)] ring-2 ring-[var(--gold)]/40 shadow-lg"
+                              : "bg-slate-900/80 border-slate-800 hover:border-slate-700"
+                          }`}
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <label className="text-xs font-bold text-slate-200 flex items-center gap-2">
+                              <span>{field.label}</span>
+                              <span className="px-1.5 py-0.2 rounded text-[9px] font-mono uppercase bg-slate-800 text-slate-400">
+                                {field.type}
+                              </span>
+                            </label>
+
+                            <div className="flex items-center gap-1.5">
+                              {/* Copy Default Button */}
+                              <button
+                                type="button"
+                                onClick={() => handleCopyFromDefault(activeSection.id, field.key)}
+                                title={
+                                  lang === DEFAULT_LANG
+                                    ? "Insérer le texte recommandé par défaut"
+                                    : "Copier la valeur depuis la version par défaut"
+                                }
+                                className="p-1 rounded text-slate-400 hover:text-[var(--gold)] hover:bg-[var(--gold)]/10 transition cursor-pointer"
+                              >
+                                <Sparkles className="w-3.5 h-3.5" />
+                              </button>
+
+                              {custom && (
+                                <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-[var(--gold)]/15 text-[var(--gold)] border border-[var(--gold)]/30">
+                                  Personnalisé
+                                </span>
+                              )}
+                              {!isValEmpty && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleFieldValueChange(activeSection.id, field.key, "")}
+                                  title="Réinitialiser à vide"
+                                  className="p-1 rounded text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition cursor-pointer"
+                                >
+                                  <RotateCcw className="w-3 h-3" />
+                                </button>
+                              )}
+                            </div>
+                          </div>
+
+                          {field.hint && (
+                            <p className="text-[11px] text-slate-400 font-light">{field.hint}</p>
+                          )}
+
+                          {/* Control By Type */}
+                          {field.type === "image" ? (
+                            <div className="space-y-2">
+                              <div className="flex items-center gap-2">
+                                <input
+                                  id={`field-input-${activeSection.id}-${field.key}`}
+                                  type="text"
+                                  dir="ltr"
+                                  value={currentStr}
+                                  placeholder="/assets/image.jpg ou https://..."
+                                  onChange={(e) =>
+                                    handleFieldValueChange(activeSection.id, field.key, e.target.value)
+                                  }
+                                  className={`${inputClass} flex-1 font-mono text-xs`}
+                                />
+                                <label
+                                  className="btn-base btn-gold text-xs py-2 px-3 flex items-center gap-1.5 cursor-pointer shrink-0 font-bold shadow-md"
+                                  title="Téléverser une image depuis votre ordinateur"
+                                >
+                                  {uploadingKey === field.key ? (
+                                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                  ) : (
+                                    <Upload className="w-3.5 h-3.5" />
+                                  )}
+                                  <span>Importer</span>
+                                  <input
+                                    type="file"
+                                    accept="image/*"
+                                    className="hidden"
+                                    onChange={async (e) => {
+                                      const file = e.target.files?.[0];
+                                      if (file) {
+                                        await handleUploadImage(file, field.key, activeSection.id);
+                                      }
+                                    }}
+                                  />
+                                </label>
+                              </div>
+
+                              {/* Live Thumbnail Preview */}
+                              {Boolean(currentVal) && (
+                                <div className="relative w-full h-32 rounded-xl overflow-hidden border border-[var(--gold)]/40 bg-black/40 group">
+                                  <img
+                                    src={resolveSiteImageUrl(currentStr)}
+                                    alt={field.label}
+                                    className="w-full h-full object-cover"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => handleFieldValueChange(activeSection.id, field.key, "")}
+                                    className="absolute top-2 end-2 p-1.5 rounded-full bg-black/70 text-white hover:bg-red-600 transition opacity-0 group-hover:opacity-100 cursor-pointer"
+                                    title="Supprimer cette image"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          ) : field.type === "html" || MULTILINE_KEY.test(field.key) ? (
+                            <div className="space-y-1">
+                              <textarea
+                                id={`field-input-${activeSection.id}-${field.key}`}
+                                rows={3}
+                                dir={activeLangObj.dir}
+                                value={currentStr}
+                                placeholder={BUILTIN_SITE_DEFAULTS[field.key] || "Texte par défaut du site..."}
+                                onChange={(e) =>
+                                  handleFieldValueChange(activeSection.id, field.key, e.target.value)
+                                }
+                                className={`${inputClass} leading-relaxed resize-y`}
+                              />
+                              <div className="flex items-center justify-between text-[10px] text-slate-500 font-mono">
+                                <span>{currentStr.length} caractères</span>
+                                {currentStr.length > 0 && currentStr.length < 250 && (
+                                  <span className="text-emerald-400 font-sans">✓ Longueur optimale</span>
+                                )}
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="space-y-1">
+                              <input
+                                id={`field-input-${activeSection.id}-${field.key}`}
+                                type="text"
+                                dir={activeLangObj.dir}
+                                value={currentStr}
+                                placeholder={BUILTIN_SITE_DEFAULTS[field.key] || "Texte par défaut du site..."}
+                                onChange={(e) =>
+                                  handleFieldValueChange(activeSection.id, field.key, e.target.value)
+                                }
+                                className={inputClass}
+                              />
+                              <div className="flex items-center justify-between text-[10px] text-slate-500 font-mono">
+                                <span>{currentStr.length} caractères</span>
+                                {field.key === "title" && currentStr.length >= 20 && currentStr.length <= 70 && (
+                                  <span className="text-emerald-400 font-sans">✓ Idéal SEO</span>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          </aside>
+        )}
 
         {/* ----------------------------------------------------------------------- */}
-        {/* RIGHT PANEL: LIVE INTERACTIVE SHOPIFY PREVIEW CANVAS                   */}
+        {/* RIGHT PANEL: LIVE INTERACTIVE PREVIEW CANVAS WITH CLICK-TO-EDIT        */}
         {/* ----------------------------------------------------------------------- */}
-        <main className="flex-1 bg-[#070b12] overflow-y-auto flex flex-col items-center p-3 sm:p-6 lg:p-8 relative scrollbar-thin">
-          {/* Subtle canvas background grid */}
+        <main className="flex-1 bg-[#05080e] overflow-y-auto flex flex-col items-center p-3 sm:p-6 lg:p-8 relative scrollbar-thin">
+          {/* Studio Canvas Background Grid */}
           <div
-            className="absolute inset-0 opacity-[0.03] pointer-events-none"
+            className="absolute inset-0 opacity-[0.035] pointer-events-none"
             style={{
-              backgroundImage: `radial-gradient(circle at 1px 1px, #d4a956 1px, transparent 0)`,
-              backgroundSize: "24px 24px",
+              backgroundImage: `radial-gradient(circle at 1px 1px, #d4af37 1px, transparent 0)`,
+              backgroundSize: "28px 28px",
             }}
           />
 
-          {/* Interactive Device Viewport Frame */}
+          {/* Interactive Device Viewport Frame with Zoom */}
           <div
-            className={`transition-all duration-300 w-full flex flex-col relative z-10 ${
+            style={{
+              transform: zoomLevel !== 100 ? `scale(${zoomLevel / 100})` : undefined,
+              transformOrigin: "top center",
+              transition: "transform 0.2s ease, max-width 0.3s ease",
+            }}
+            className={`w-full flex flex-col relative z-10 ${
               deviceMode === "mobile"
-                ? "max-w-[390px] rounded-[44px] border-[10px] border-slate-800 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.9)] overflow-hidden my-4 bg-slate-950 ring-1 ring-slate-700/50"
+                ? "max-w-[390px] rounded-[48px] border-[10px] border-slate-800 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.95)] overflow-hidden my-4 bg-slate-950 ring-1 ring-slate-700/60"
                 : deviceMode === "tablet"
-                ? "max-w-[768px] rounded-[30px] border-[8px] border-slate-800 shadow-[0_20px_50px_rgba(0,0,0,0.8)] overflow-hidden my-4 bg-slate-950 ring-1 ring-slate-700/50"
-                : "w-full max-w-6xl rounded-2xl border border-slate-800 shadow-2xl overflow-hidden bg-slate-950"
+                ? "max-w-[768px] rounded-[32px] border-[8px] border-slate-800 shadow-[0_20px_50px_rgba(0,0,0,0.85)] overflow-hidden my-4 bg-slate-950 ring-1 ring-slate-700/60"
+                : "w-full max-w-6xl rounded-2xl border border-slate-800 shadow-2xl overflow-hidden bg-slate-950 my-2"
             }`}
           >
-            {/* Simulated Device / Browser Top Header */}
-            <div className="bg-slate-900 px-4 py-2.5 border-b border-slate-800 flex items-center justify-between text-xs select-none">
+            {/* Simulated Device Top Bar */}
+            <div className="bg-[#0b1320] px-4 py-2.5 border-b border-slate-800 flex items-center justify-between text-xs select-none">
               <div className="flex items-center gap-1.5">
                 <span className="w-2.5 h-2.5 rounded-full bg-red-500/80 inline-block" />
                 <span className="w-2.5 h-2.5 rounded-full bg-amber-500/80 inline-block" />
                 <span className="w-2.5 h-2.5 rounded-full bg-emerald-500/80 inline-block" />
               </div>
 
-              {/* Faux browser URL or Mobile notch */}
+              {/* Faux browser URL or Mobile Dynamic Island */}
               {deviceMode === "mobile" ? (
-                <div className="w-24 h-4 bg-black rounded-full mx-auto" />
+                <div className="w-24 h-4 bg-black rounded-full mx-auto shadow-inner" />
               ) : (
                 <div className="flex items-center gap-2 px-3 py-1 rounded-lg bg-slate-950/80 border border-slate-800 text-[11px] font-mono text-slate-400 max-w-sm truncate">
                   <span className="text-emerald-400">🔒</span>
@@ -1006,14 +1315,14 @@ export default function SinglePageContentManager({ pageId }: { pageId: string })
             >
               {/* Floating Inline Quick Edit Bar (When clicking canvas element) */}
               {inlineQuickEdit && (
-                <div className="sticky top-2 z-50 mx-4 p-3 rounded-2xl bg-slate-900/95 border-2 border-[var(--gold)] shadow-2xl backdrop-blur-md flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 animate-in fade-in duration-200">
+                <div className="sticky top-2 z-50 mx-4 p-3 rounded-2xl bg-slate-900/95 border-2 border-[var(--gold)] shadow-2xl backdrop-blur-md flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 animate-in fade-in zoom-in-95 duration-150">
                   <div className="flex items-center gap-2 min-w-0">
                     <span className="p-1.5 rounded-lg bg-[var(--gold)]/20 text-[var(--gold)] shrink-0">
-                      <Edit3 className="w-4 h-4" />
+                      <Edit3 className="w-4 h-4 text-[var(--gold)]" />
                     </span>
                     <div className="truncate text-start">
                       <span className="text-[10px] uppercase font-bold text-[var(--gold)] tracking-wider block">
-                        Modification directe en ligne
+                        Modification directe en direct
                       </span>
                       <span className="text-xs font-bold text-white truncate block">
                         {inlineQuickEdit.label}
@@ -1037,14 +1346,16 @@ export default function SinglePageContentManager({ pageId }: { pageId: string })
                     <button
                       type="button"
                       onClick={() => setInlineQuickEdit(null)}
-                      className="p-1.5 rounded-lg bg-[var(--gold)] text-black font-bold text-xs hover:scale-105 transition-transform shrink-0"
+                      title="Valider"
+                      className="p-1.5 rounded-lg bg-[var(--gold)] text-black font-bold text-xs hover:scale-105 transition-transform shrink-0 cursor-pointer shadow-md"
                     >
                       <Check className="w-4 h-4" />
                     </button>
                     <button
                       type="button"
                       onClick={() => setInlineQuickEdit(null)}
-                      className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition shrink-0"
+                      title="Fermer"
+                      className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition shrink-0 cursor-pointer"
                     >
                       <X className="w-4 h-4" />
                     </button>
@@ -1074,14 +1385,13 @@ export default function SinglePageContentManager({ pageId }: { pageId: string })
                       backgroundPosition: "center",
                     }}
                   >
-                    {/* Dark gradient overlay */}
                     <div className="absolute inset-0 bg-gradient-to-b from-black/85 via-black/60 to-black/90 pointer-events-none" />
 
                     {/* Change Background Button Overlay */}
                     <button
                       type="button"
                       onClick={() => handleCanvasElementClick("hero", "image", "Image de fond de la bannière")}
-                      className="absolute top-4 end-4 px-3 py-1.5 rounded-xl text-xs font-bold bg-black/75 text-amber-300 border border-amber-400/40 opacity-0 group-hover/hero:opacity-100 transition-opacity flex items-center gap-1.5 hover:bg-black cursor-pointer shadow-lg z-20"
+                      className="absolute top-4 end-4 px-3 py-1.5 rounded-xl text-xs font-bold bg-black/80 text-amber-300 border border-amber-400/40 opacity-0 group-hover/hero:opacity-100 transition-opacity flex items-center gap-1.5 hover:bg-black cursor-pointer shadow-lg z-20"
                     >
                       <ImageIcon className="w-3.5 h-3.5 text-[var(--gold)]" />
                       <span>Changer l'image de fond</span>
@@ -1094,7 +1404,7 @@ export default function SinglePageContentManager({ pageId }: { pageId: string })
                         className="group/item relative cursor-pointer"
                         title="Cliquer pour modifier le badge"
                       >
-                        <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono font-bold tracking-widest uppercase bg-amber-400/10 text-amber-300 border border-amber-300/30 group-hover/item:ring-2 group-hover/item:ring-[var(--gold)] group-hover/item:bg-amber-400/20 transition-all">
+                        <span className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-xs font-mono font-bold tracking-widest uppercase bg-amber-400/10 text-amber-300 border border-amber-300/30 group-hover/item:ring-2 group-hover/item:ring-[var(--gold)] group-hover/item:bg-amber-400/20 transition-all">
                           <span>{heroEyebrow}</span>
                           <Edit3 className="w-3 h-3 text-[var(--gold)] opacity-0 group-hover/item:opacity-100 transition-opacity" />
                         </span>
@@ -1111,7 +1421,7 @@ export default function SinglePageContentManager({ pageId }: { pageId: string })
                         </h1>
                       </div>
 
-                      {/* Gold separator rule */}
+                      {/* Gold Separator Rule */}
                       <div className="w-20 h-0.5 bg-gradient-to-r from-transparent via-[var(--gold)] to-transparent mx-auto" />
 
                       {/* Subtitle */}

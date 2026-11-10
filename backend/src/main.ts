@@ -1087,6 +1087,10 @@ async function bootstrap() {
                 'X-Request-Id',
                 'X-Original-URI',
                 'X-Rewrite-URL',
+                'X-Idempotency-Key',
+                'Idempotency-Key',
+                'x-idempotency-key',
+                'idempotency-key',
             ],
             credentials: true,
             optionsSuccessStatus: 204,
@@ -1104,10 +1108,14 @@ async function bootstrap() {
             res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, PUT, PATCH, POST, DELETE, OPTIONS');
             res.setHeader(
                 'Access-Control-Allow-Headers',
-                'Content-Type, Authorization, X-Requested-With, Cache-Control, Pragma, Expires, If-Modified-Since, Accept, Origin, X-Request-Id, X-Original-URI, X-Rewrite-URL',
+                'Content-Type, Authorization, X-Requested-With, Cache-Control, Pragma, Expires, If-Modified-Since, Accept, Origin, X-Request-Id, X-Original-URI, X-Rewrite-URL, X-Idempotency-Key, Idempotency-Key, x-idempotency-key, idempotency-key',
             );
             res.setHeader('Access-Control-Max-Age', '86400');
 
+            const reqH = req.headers['access-control-request-headers'];
+            if (reqH) {
+                res.setHeader('Access-Control-Allow-Headers', reqH);
+            }
             if (req.method === 'OPTIONS') {
                 return res.sendStatus(204);
             }

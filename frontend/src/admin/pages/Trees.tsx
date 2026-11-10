@@ -538,15 +538,14 @@ export default function Trees() {
     }
 
     const idempotencyKey = `tree_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
-    const reqConfig = {
-      headers: {
-        "X-Idempotency-Key": idempotencyKey,
-      },
-    };
+    fd.append("idempotencyKey", idempotencyKey);
+    fd.append("idempotency_key", idempotencyKey);
 
-    const res = isAdmin
-      ? await api.post("/admin/trees", fd, reqConfig)
-      : await api.post("/my/trees", fd, reqConfig);
+    const endpoint = isAdmin
+      ? `/admin/trees?idempotencyKey=${encodeURIComponent(idempotencyKey)}`
+      : `/my/trees?idempotencyKey=${encodeURIComponent(idempotencyKey)}`;
+
+    const res = await api.post(endpoint, fd);
 
     const payload = res?.data;
     const newId = payload?.data?.id ?? payload?.id ?? (res as any)?.id;
