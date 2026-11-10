@@ -67,6 +67,13 @@ export function TreeCard({ tree }: { tree: TreeRecord }) {
   const [showModal, setShowModal] = useState(false);
 
   const rawTitle = (tree.name || tree.title || "").trim();
+  const rawSummary = (tree.description || tree.notes || tree.provenance || tree.summary || "").trim();
+
+  // Completely exclude phantom or dummy test trees
+  if (/^new\s+family\s+tree$/i.test(rawTitle) || /genealogical\s+tree\s+uploaded\s+via\s+admin/i.test(rawSummary)) {
+    return null;
+  }
+
   const isGenericTitle = /^(my\s+family\s+tree|family\s+tree|arbre\s+g[ée]n[ée]alogique|default\s+tree)/i.test(rawTitle);
   const titleStr = tree.isLocalized
     ? rawTitle
@@ -77,9 +84,8 @@ export function TreeCard({ tree }: { tree: TreeRecord }) {
   // Only ever show the real author of the tree. Never invent an institution
   // ("laboratory") when the owner is missing or a generic account label.
   const rawOwner = (typeof tree.owner === "string" ? tree.owner : tree.owner?.full_name || "").trim();
-  const ownerStr = /^(admin|super\s*admin|user|researcher|roots\s+tunisia)$/i.test(rawOwner) ? "" : rawOwner;
+  const ownerStr = /^(admin|super\s*admin|user|researcher|roots\s+tunisia|laboratoire.*|laborator.*)$/i.test(rawOwner) ? "" : rawOwner;
 
-  const rawSummary = (tree.description || tree.notes || tree.provenance || tree.summary || "").trim();
   const summaryStr = rawSummary;
 
   const rawLocation = (tree.governorate || tree.region || "").trim();

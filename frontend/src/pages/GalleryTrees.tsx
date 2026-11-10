@@ -151,14 +151,22 @@ export default function GalleryTrees() {
   const filteredTrees = useMemo(() => {
     return sourceTrees.filter((item) => {
       const titleStr = item.name || item.title || `Family Tree #${item.id}`;
-      const creatorStr = item.owner?.full_name || item.creator || "";
+      // Purge phantom/dummy test cards like "New Family Tree"
+      if (/^new\s+family\s+tree$/i.test(titleStr.trim())) return false;
+
       const descStr = item.description || item.notes || item.provenance || "";
+      // Purge placeholder description
+      if (/genealogical\s+tree\s+uploaded\s+via\s+admin/i.test(descStr.trim())) return false;
+
+      const rawCreator = item.owner?.full_name || item.creator || "";
+      const isGenericCreator = /^(admin|super\s*admin|user|researcher|roots\s+tunisia|laboratoire.*|laborator.*)/i.test(rawCreator.trim());
+      const creatorStr = isGenericCreator ? "" : rawCreator.trim();
       const govStr = item.governorate || item.region || "Tunisia";
 
       const matchQuery =
         !query ||
         titleStr.toLowerCase().includes(query.toLowerCase()) ||
-        creatorStr.toLowerCase().includes(query.toLowerCase()) ||
+        (creatorStr && creatorStr.toLowerCase().includes(query.toLowerCase())) ||
         descStr.toLowerCase().includes(query.toLowerCase()) ||
         govStr.toLowerCase().includes(query.toLowerCase());
       const matchGov = selectedGov === "All" || govStr === selectedGov;
@@ -242,7 +250,9 @@ export default function GalleryTrees() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch">
             {filteredTrees.map((tree) => {
               const titleStr = tree.name || tree.title || `Family Tree #${tree.id}`;
-              const creatorStr = tree.owner?.full_name || tree.creator || "";
+              const rawCreator = tree.owner?.full_name || tree.creator || "";
+              const isGenericCreator = /^(admin|super\s*admin|user|researcher|roots\s+tunisia|laboratoire.*|laborator.*)/i.test(rawCreator.trim());
+              const creatorStr = isGenericCreator ? "" : rawCreator.trim();
               const descStr = tree.description || tree.notes || tree.provenance || "";
               const govStr = tree.governorate || tree.region || "Tunisia";
               const { individuals: memberCount, generations: genCount } = getTreeMetrics(tree);

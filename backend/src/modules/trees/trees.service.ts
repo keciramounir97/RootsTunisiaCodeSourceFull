@@ -20,6 +20,7 @@ export class TreesService implements OnModuleInit {
         try {
             await this.ensureTreeSchema();
             await this.backfillGedcomText();
+            await this.purgePhantomTrees();
         } catch (err: any) {
             console.warn(`Tree schema init skipped: ${err?.message || err}`);
         }
@@ -58,6 +59,23 @@ export class TreesService implements OnModuleInit {
             await this.knex.schema.alterTable('family_trees', (table: any) => {
                 table.text('gedcom_text', 'longtext').nullable();
             });
+        }
+    }
+
+    /** Purges any phantom or dummy test trees (e.g. 'New Family Tree' or
+     *  'Genealogical tree uploaded via admin') so only genuine user trees exist. */
+    private async purgePhantomTrees() {
+        try {
+            if (!(await this.knex.schema.hasTable('family_trees'))) return;
+            const deleted = await this.knex('family_trees')
+                .where('title', 'like', '%New Family Tree%')
+                .orWhere('description', 'like', '%Genealogical tree uploaded via admin%')
+                .delete();
+            if (deleted > 0) {
+                console.log(`[TreesService] Purged ${deleted} phantom/dummy test tree(s).`);
+            }
+        } catch (err: any) {
+            console.warn(`[TreesService] Purge phantom trees note: ${err?.message || err}`);
         }
     }
 
@@ -118,6 +136,12 @@ export class TreesService implements OnModuleInit {
             .select(this.backupFlagSelect())
             .select(countSelect)
             .where((builder: any) => builder.where('is_public', true).orWhereNull('is_public'))
+            .andWhere((builder: any) => {
+                builder.whereNot('title', 'like', '%New Family Tree%').orWhereNull('title');
+            })
+            .andWhere((builder: any) => {
+                builder.whereNot('description', 'like', '%Genealogical tree uploaded via admin%').orWhereNull('description');
+            })
             .orderBy('created_at', 'desc')
             .withGraphFetched('owner')
             .modifyGraph('owner', (builder: any) => builder.select('id', 'full_name'));

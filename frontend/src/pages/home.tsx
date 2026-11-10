@@ -208,8 +208,18 @@ export default function Home() {
     })();
   }, []);
 
-  // Only trees that really exist are shown (no invented placeholder cards).
-  const displayedTrees = dbTrees.slice(0, dbTrees.length >= 6 ? 6 : 3);
+  // Only genuine user-created trees are shown (no phantom or test cards).
+  const displayedTrees = useMemo(() => {
+    return dbTrees
+      .filter((tree) => {
+        const title = String(tree?.title || tree?.name || "").trim();
+        const desc = String(tree?.description || tree?.notes || tree?.summary || "").trim();
+        if (/^new\s+family\s+tree$/i.test(title)) return false;
+        if (/genealogical\s+tree\s+uploaded\s+via\s+admin/i.test(desc)) return false;
+        return true;
+      })
+      .slice(0, dbTrees.length >= 6 ? 6 : 3);
+  }, [dbTrees]);
 
   return (
     <div dir={isRtl ? "rtl" : "ltr"} className="text-[var(--foreground)] min-h-screen">
