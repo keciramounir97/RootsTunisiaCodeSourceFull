@@ -154,9 +154,11 @@ export default function GalleryTrees() {
       // Purge phantom/dummy test cards like "New Family Tree" or duplicate "Arbre Guagliardo"
       if (/^new\s+family\s+tree$/i.test(titleStr.trim())) return false;
       if (/^arbre\s+(famille\s+)?guagliardo$/i.test(titleStr.trim())) return false;
+      if (titleStr.trim() === "111") return false;
 
       const descStr = item.description || item.notes || item.provenance || "";
       // Purge placeholder description
+      if (descStr.trim() === "1111") return false;
       if (/genealogical\s+tree\s+uploaded\s+via\s+admin/i.test(descStr.trim())) return false;
 
       const rawCreator = item.owner?.full_name || item.creator || "";

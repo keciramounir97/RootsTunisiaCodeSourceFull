@@ -13,6 +13,7 @@ import {
   Network,
   Plus,
   RefreshCcw,
+  RotateCcw,
   Save,
   Search,
   Trash2,
@@ -111,6 +112,7 @@ export default function Trees() {
   const peopleDirtyRef = useRef(false);
   const activeTreeIdRef = useRef<number | string | null>(null);
   const saveInProgressRef = useRef(false);
+  const deletedTreeIdsRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     activeTreeIdRef.current = selectedTree?.id ?? null;
@@ -125,7 +127,14 @@ export default function Trees() {
       const map = new Map();
       list.forEach((t: any) => {
         if (!t) return;
-        map.set(String(t.id), t);
+        const idStr = String(t.id);
+        if (deletedTreeIdsRef.current.has(idStr)) return;
+        const titleStr = String(t.title || "").trim();
+        const descStr = String(t.description || "").trim();
+        if (titleStr === "111" || descStr === "1111") return;
+        if (/^new\s+family\s+tree$/i.test(titleStr)) return;
+        if (/^arbre\s+(famille\s+)?guagliardo$/i.test(titleStr)) return;
+        map.set(idStr, t);
       });
       return Array.from(map.values());
     };
@@ -133,19 +142,14 @@ export default function Trees() {
     let loadError = "";
 
     try {
-      const shouldFallbackAdminRead = (err: any) =>
-        shouldFallbackRoute(err) ||
-        err?.response?.status === 401 ||
-        err?.response?.status === 403 ||
-        err?.response?.status === 500;
-
+      const ts = Date.now();
       const myRequest = isAdmin
-        ? () => api.get("/admin/trees")
-        : () => api.get("/my/trees");
+        ? () => api.get(`/admin/trees?_t=${ts}`, { headers: { "Cache-Control": "no-cache, no-store" } })
+        : () => api.get(`/my/trees?_t=${ts}`, { headers: { "Cache-Control": "no-cache, no-store" } });
 
       const [mineRes, pubRes] = await Promise.allSettled([
         myRequest(),
-        api.get("/trees"),
+        api.get(`/trees?_t=${ts}`, { headers: { "Cache-Control": "no-cache, no-store" } }),
       ]);
 
       if (mineRes.status === "fulfilled") {
@@ -823,6 +827,51 @@ export default function Trees() {
     }
   };
 
+  const deleteTreeDirect = async (tree: any, e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    if (!tree?.id) return;
+
+    const shouldDelete = window.confirm(
+      t(
+        "legacy.confirm_delete_tree_full",
+        "Supprimer définitivement cet arbre généalogique ? Il sera effacé de vos arbres, des arbres publics et de la base de données."
+      )
+    );
+    if (!shouldDelete) return;
+
+    const deletedId = String(tree.id);
+    deletedTreeIdsRef.current.add(deletedId);
+
+    // Immediate optimistic removal from both states
+    setMyTrees((prev) => prev.filter((t) => String(t.id) !== deletedId));
+    setPublicTrees((prev) => prev.filter((t) => String(t.id) !== deletedId));
+
+    if (String(selectedTree?.id) === deletedId || String(activeTreeIdRef.current) === deletedId) {
+      clearCanvas();
+      setTreeFormDrawerOpen(false);
+    }
+
+    try {
+      if (isAdmin) {
+        await api.delete(`/admin/trees/${deletedId}`);
+      } else {
+        await api.delete(`/my/trees/${deletedId}`);
+      }
+      setSaveSuccess(t("legacy.tree_deleted", "Arbre généalogique supprimé avec succès."));
+    } catch (err: any) {
+      if (err?.response?.status !== 404) {
+        setSaveError(getApiErrorMessage(err, t("legacy.delete_failed", "Échec de la suppression")));
+      }
+    } finally {
+      await refreshLists();
+      setMyTrees((prev) => prev.filter((t) => String(t.id) !== deletedId));
+      setPublicTrees((prev) => prev.filter((t) => String(t.id) !== deletedId));
+    }
+  };
+
   const deleteTree = async () => {
     if (!canUpdateSelected || !selectedTree) {
       setSaveError(t("legacy.cannot_delete_others_tree", "You cannot delete a tree that is not yours."));
@@ -830,51 +879,41 @@ export default function Trees() {
     }
 
     const shouldDelete = window.confirm(
-      t("legacy.confirm_delete_tree", "Delete this tree? This action cannot be undone.")
+      t(
+        "legacy.confirm_delete_tree_full",
+        "Supprimer définitivement cet arbre généalogique ? Il sera effacé de vos arbres, des arbres publics et de la base de données."
+      )
     );
     if (!shouldDelete) return;
 
-    const deletedId = selectedTree.id;
+    const deletedId = String(selectedTree.id);
+    deletedTreeIdsRef.current.add(deletedId);
     setDeletingTree(true);
     setSaveError("");
     setSaveSuccess("");
 
+    // Immediate optimistic removal from both lists and canvas
+    setMyTrees((prev) => prev.filter((t) => String(t.id) !== deletedId));
+    setPublicTrees((prev) => prev.filter((t) => String(t.id) !== deletedId));
+    clearCanvas();
+    setTreeFormDrawerOpen(false);
+
     try {
       if (isAdmin) {
-        await api.delete(`/admin/trees/${selectedTree.id}`);
+        await api.delete(`/admin/trees/${deletedId}`);
       } else {
-        await api.delete(`/my/trees/${selectedTree.id}`);
+        await api.delete(`/my/trees/${deletedId}`);
       }
-
-      setMyTrees((prev) => prev.filter((t) => String(t.id) !== String(deletedId)));
-      setPublicTrees((prev) => prev.filter((t) => String(t.id) !== String(deletedId)));
-      setSelectedTree(null);
-      setSelectedScope(null);
-      setPeople([]);
-      peopleDirtyRef.current = false;
-      await refreshLists();
-      setTab("my");
-      setTreeFormDrawerOpen(false);
-      setSaveSuccess(t("legacy.tree_deleted", "Tree deleted."));
+      setSaveSuccess(t("legacy.tree_deleted", "Arbre généalogique supprimé avec succès."));
     } catch (err: any) {
-      if (err?.response?.status === 404) {
-        setMyTrees((prev) => prev.filter((t) => String(t.id) !== String(deletedId)));
-        setPublicTrees((prev) => prev.filter((t) => String(t.id) !== String(deletedId)));
-        setSelectedTree(null);
-        setSelectedScope(null);
-        setPeople([]);
-        peopleDirtyRef.current = false;
-        await refreshLists();
-        setTab("my");
-        setTreeFormDrawerOpen(false);
-        setSaveSuccess(t("legacy.tree_deleted", "Tree deleted."));
-        return;
+      if (err?.response?.status !== 404) {
+        setSaveError(getApiErrorMessage(err, t("legacy.delete_failed", "Échec de la suppression")));
       }
-      setSaveError(
-        getApiErrorMessage(err, t("legacy.delete_failed", "Delete failed"))
-      );
     } finally {
       setDeletingTree(false);
+      await refreshLists();
+      setMyTrees((prev) => prev.filter((t) => String(t.id) !== deletedId));
+      setPublicTrees((prev) => prev.filter((t) => String(t.id) !== deletedId));
     }
   };
 
@@ -1021,10 +1060,10 @@ export default function Trees() {
             <button
               type="button"
               onClick={clearCanvas}
-              className="interactive-btn btn-neu px-3.5 py-1.5 text-xs inline-flex items-center gap-1.5 border border-red-500/40 bg-red-500/10 text-red-500 hover:bg-red-500/20 font-bold transition rounded-lg shadow-xs"
-              title={t("legacy.clear_canvas", "Vider le canevas")}
+              className="interactive-btn btn-neu px-3.5 py-1.5 text-xs inline-flex items-center gap-1.5 border border-stone-400/40 bg-stone-500/10 text-stone-600 dark:text-stone-300 hover:bg-stone-500/20 font-bold transition rounded-lg shadow-xs"
+              title={t("legacy.clear_canvas_hint", "Vider le canevas sans toucher à la base de données")}
             >
-              <Trash2 className="w-3.5 h-3.5 text-red-500" />
+              <RotateCcw className="w-3.5 h-3.5 text-stone-400" />
               <span>{t("legacy.clear_canvas", "Vider le canevas")}</span>
             </button>
           </div>
@@ -1217,6 +1256,18 @@ export default function Trees() {
                                 title={t("legacy.download", "Download")}
                               >
                                 <Download className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+
+                            {isTreeOwned && (
+                              <button
+                                type="button"
+                                onClick={(e) => void deleteTreeDirect(tree, e)}
+                                className="px-2.5 py-1 rounded bg-red-500/15 hover:bg-red-500/25 text-red-500 font-bold text-[11px] transition inline-flex items-center gap-1 border border-red-500/20"
+                                title={t("legacy.delete_tree_permanently", "Supprimer définitivement cet arbre")}
+                              >
+                                <Trash2 className="w-3.5 h-3.5 text-red-500" />
+                                <span>{t("legacy.delete", "Supprimer")}</span>
                               </button>
                             )}
                           </div>
@@ -1522,10 +1573,11 @@ export default function Trees() {
                       type="button"
                       onClick={clearCanvas}
                       disabled={saving || loadingGedcom}
-                      className="interactive-btn btn-neu px-4 py-2.5 text-xs font-semibold"
+                      className="interactive-btn btn-neu px-3.5 py-2.5 text-xs font-semibold inline-flex items-center gap-1.5 opacity-80 hover:opacity-100"
+                      title={t("legacy.reset_form_hint", "Réinitialiser le formulaire sans supprimer l'arbre de la base de données")}
                     >
-                      <Trash2 className="w-4 h-4" />
-                      {t("legacy.clear", "Clear")}
+                      <RotateCcw className="w-4 h-4 text-stone-400" />
+                      {t("legacy.reset", "Réinitialiser")}
                     </button>
 
                     {canUpdateSelected && selectedTree ? (
@@ -1533,10 +1585,11 @@ export default function Trees() {
                         type="button"
                         onClick={() => void deleteTree()}
                         disabled={saving || deletingTree}
-                        className="interactive-btn btn-neu px-4 py-2.5 text-xs font-semibold text-red-500 border border-red-500/40 hover:bg-red-500/10"
+                        className="interactive-btn btn-neu px-4 py-2.5 text-xs font-bold text-red-500 border border-red-500/40 hover:bg-red-500/10 inline-flex items-center gap-1.5"
+                        title={t("legacy.delete_tree_permanently", "Supprimer définitivement cet arbre de la base de données")}
                       >
-                        <Trash2 className="w-4 h-4" />
-                        {deletingTree ? t("legacy.deleting", "Deleting...") : t("legacy.delete", "Delete")}
+                        <Trash2 className="w-4 h-4 text-red-500" />
+                        {deletingTree ? t("legacy.deleting", "Suppression...") : t("legacy.delete_tree_permanently", "Supprimer l'arbre")}
                       </button>
                     ) : null}
                   </div>

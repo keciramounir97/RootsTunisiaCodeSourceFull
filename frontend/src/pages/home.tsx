@@ -216,6 +216,7 @@ export default function Home() {
         const desc = String(tree?.description || tree?.notes || tree?.summary || "").trim();
         if (/^new\s+family\s+tree$/i.test(title)) return false;
         if (/^arbre\s+(famille\s+)?guagliardo$/i.test(title)) return false;
+        if (title === "111" || desc === "1111") return false;
         if (/genealogical\s+tree\s+uploaded\s+via\s+admin/i.test(desc)) return false;
         return true;
       })

@@ -1,5 +1,5 @@
 
-import { Controller, Get, Post, Put, Delete, Body, Param, UseGuards, Request, UseInterceptors, UploadedFile, Res, NotFoundException, ForbiddenException, ParseIntPipe } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, UseGuards, Request, UseInterceptors, UploadedFile, Res, NotFoundException, ForbiddenException, ParseIntPipe, Header } from '@nestjs/common';
 import { TreesService } from './trees.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -29,6 +29,9 @@ export class TreesController {
     }
 
     @Get('trees')
+    @Header('Cache-Control', 'no-cache, no-store, must-revalidate, max-age=0')
+    @Header('Pragma', 'no-cache')
+    @Header('Expires', '0')
     async listPublic() {
         return this.treesService.listPublic();
     }
@@ -62,6 +65,9 @@ export class TreesController {
 
     @Get('my/trees')
     @UseGuards(JwtAuthGuard)
+    @Header('Cache-Control', 'no-cache, no-store, must-revalidate, max-age=0')
+    @Header('Pragma', 'no-cache')
+    @Header('Expires', '0')
     async listMy(@Request() req) {
         return this.treesService.listByUser(req.user.id);
     }
@@ -141,6 +147,9 @@ export class TreesController {
     @Get('admin/trees')
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles('admin', 'super_admin')
+    @Header('Cache-Control', 'no-cache, no-store, must-revalidate, max-age=0')
+    @Header('Pragma', 'no-cache')
+    @Header('Expires', '0')
     async listAdmin() {
         return this.treesService.listAdmin();
     }

@@ -73,6 +73,8 @@ export function TreeCard({ tree }: { tree: TreeRecord }) {
   if (
     /^new\s+family\s+tree$/i.test(rawTitle) ||
     /^arbre\s+(famille\s+)?guagliardo$/i.test(rawTitle) ||
+    rawTitle === "111" ||
+    rawSummary === "1111" ||
     /genealogical\s+tree\s+uploaded\s+via\s+admin/i.test(rawSummary)
   ) {
     return null;

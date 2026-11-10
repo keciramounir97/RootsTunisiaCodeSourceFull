@@ -72,6 +72,8 @@ export class TreesService implements OnModuleInit {
                 .orWhere('description', 'like', '%Genealogical tree uploaded via admin%')
                 .orWhere('title', 'like', '%Arbre Guagliardo%')
                 .orWhere('title', 'like', '%Arbre Famille Guagliardo%')
+                .orWhere('title', '=', '111')
+                .orWhere('description', '=', '1111')
                 .delete();
             if (deleted > 0) {
                 console.log(`[TreesService] Purged ${deleted} phantom/dummy test tree(s) and duplicates.`);
@@ -129,9 +131,6 @@ export class TreesService implements OnModuleInit {
     }
 
     async listPublic() {
-        const cached = this.getCached('public');
-        if (cached) return cached;
-
         const countSelect = this.knex.raw('(SELECT COUNT(*) FROM persons WHERE persons.tree_id = family_trees.id) as people_count');
 
         const rows = await Tree.query(this.knex)
@@ -142,23 +141,21 @@ export class TreesService implements OnModuleInit {
                 builder.whereNot('title', 'like', '%New Family Tree%')
                     .whereNot('title', 'like', '%Arbre Guagliardo%')
                     .whereNot('title', 'like', '%Arbre Famille Guagliardo%')
+                    .whereNot('title', '=', '111')
                     .orWhereNull('title');
             })
             .andWhere((builder: any) => {
-                builder.whereNot('description', 'like', '%Genealogical tree uploaded via admin%').orWhereNull('description');
+                builder.whereNot('description', 'like', '%Genealogical tree uploaded via admin%')
+                    .whereNot('description', '=', '1111')
+                    .orWhereNull('description');
             })
             .orderBy('created_at', 'desc')
             .withGraphFetched('owner')
             .modifyGraph('owner', (builder: any) => builder.select('id', 'full_name'));
-        const result = rows.map((r: any) => this.stripGedcomText(r));
-        this.setCached('public', result);
-        return result;
+        return rows.map((r: any) => this.stripGedcomText(r));
     }
 
     async getPublic(id: number) {
-        const cached = this.getCached(`tree_pub_${id}`);
-        if (cached) return cached;
-
         const tree = await Tree.query(this.knex)
             .findById(id)
             .select(this.backupFlagSelect())
@@ -167,59 +164,63 @@ export class TreesService implements OnModuleInit {
             .modifyGraph('owner', (builder: any) => builder.select('id', 'full_name'));
 
         if (!tree) throw new NotFoundException('Tree not found');
-        const result = this.stripGedcomText(tree);
-        this.setCached(`tree_pub_${id}`, result);
-        return result;
+        return this.stripGedcomText(tree);
     }
 
     async listByUser(userId: number) {
-        const cacheKey = `user_${userId}`;
-        const cached = this.getCached(cacheKey);
-        if (cached) return cached;
-
         const countSelect = this.knex.raw('(SELECT COUNT(*) FROM persons WHERE persons.tree_id = family_trees.id) as people_count');
 
         const rows = await Tree.query(this.knex)
             .select(this.backupFlagSelect())
             .select(countSelect)
             .where('user_id', userId)
+            .andWhere((builder: any) => {
+                builder.whereNot('title', 'like', '%New Family Tree%')
+                    .whereNot('title', 'like', '%Arbre Guagliardo%')
+                    .whereNot('title', 'like', '%Arbre Famille Guagliardo%')
+                    .whereNot('title', '=', '111')
+                    .orWhereNull('title');
+            })
+            .andWhere((builder: any) => {
+                builder.whereNot('description', '=', '1111')
+                    .orWhereNull('description');
+            })
             .orderBy('created_at', 'desc')
             .withGraphFetched('owner')
             .modifyGraph('owner', (builder: any) => builder.select('id', 'full_name', 'email'));
-        const result = rows.map((r: any) => this.stripGedcomText(r));
-        this.setCached(cacheKey, result);
-        return result;
+        return rows.map((r: any) => this.stripGedcomText(r));
     }
 
     async listAdmin() {
-        const cached = this.getCached('admin');
-        if (cached) return cached;
-
         const countSelect = this.knex.raw('(SELECT COUNT(*) FROM persons WHERE persons.tree_id = family_trees.id) as people_count');
 
         const rows = await Tree.query(this.knex)
             .select(this.backupFlagSelect())
             .select(countSelect)
+            .andWhere((builder: any) => {
+                builder.whereNot('title', 'like', '%New Family Tree%')
+                    .whereNot('title', 'like', '%Arbre Guagliardo%')
+                    .whereNot('title', 'like', '%Arbre Famille Guagliardo%')
+                    .whereNot('title', '=', '111')
+                    .orWhereNull('title');
+            })
+            .andWhere((builder: any) => {
+                builder.whereNot('description', '=', '1111')
+                    .orWhereNull('description');
+            })
             .orderBy('created_at', 'desc')
             .withGraphFetched('owner')
             .modifyGraph('owner', (builder: any) => builder.select('id', 'full_name', 'email'));
-        const result = rows.map((r: any) => this.stripGedcomText(r));
-        this.setCached('admin', result);
-        return result;
+        return rows.map((r: any) => this.stripGedcomText(r));
     }
 
     async findOne(id: number) {
-        const cached = this.getCached(`tree_${id}`);
-        if (cached) return cached;
-
         const tree = await Tree.query(this.knex)
             .findById(id)
             .select(this.backupFlagSelect())
             .withGraphFetched('owner');
         if (!tree) throw new NotFoundException('Tree not found');
-        const result = this.stripGedcomText(tree);
-        this.setCached(`tree_${id}`, result);
-        return result;
+        return this.stripGedcomText(tree);
     }
 
     async getGedcomContentDirect(id: number): Promise<string | null> {
