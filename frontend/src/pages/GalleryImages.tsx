@@ -18,6 +18,7 @@ import {
 import { api } from "../api/client";
 import { useTranslation } from "../context/TranslationContext";
 import { useTheme } from "../context/ThemeContext";
+import { useSiteContent } from "../hooks/useSiteContent";
 import RootsPageShell from "../components/RootsPageShell";
 import GalleryCommentsModal from "../components/GalleryCommentsModal";
 import {
@@ -121,6 +122,7 @@ const baseCuratedImages: ImageItem[] = [
 export default function GalleryImages() {
   const { theme } = useTheme();
   const { t, isRtl } = useTranslation();
+  const { getText, getImage } = useSiteContent();
 
   const [images, setImages] = useState<ImageItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -250,17 +252,18 @@ export default function GalleryImages() {
 
   return (
     <RootsPageShell
+      heroBackgroundUrl={getImage("gallery_images", "hero", "image") ?? getImage("gallery", "hero", "image")}
       hero={
         <div className="space-y-4 text-center">
           <p className="eyebrow text-[var(--gold)] text-shadow-gold tracking-widest font-bold">
-            {t("nav_photos")}
+            {getText("gallery_images", "hero", "eyebrow") ?? getText("gallery", "hero", "eyebrow") ?? t("nav_photos")}
           </p>
           <h1 className="display-xl text-white font-bold hero-title-shadow text-shadow-glow tracking-wide">
-            {t("gallery_teaser_title")}
+            {getText("gallery_images", "hero", "title") ?? getText("gallery", "hero", "title") ?? t("gallery_teaser_title")}
           </h1>
           <div className="gold-rule mt-4 w-28 mx-auto shadow-lg" />
           <p className="max-w-3xl mx-auto text-base text-slate-100/95 font-medium drop-shadow-md">
-            {t("gallery_teaser_subtitle")}
+            {getText("gallery_images", "hero", "subtitle") ?? getText("gallery", "hero", "subtitle") ?? t("gallery_teaser_subtitle")}
           </p>
         </div>
       }

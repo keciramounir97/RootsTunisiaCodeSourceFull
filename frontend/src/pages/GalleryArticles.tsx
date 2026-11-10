@@ -15,6 +15,7 @@ import { api } from "../api/client";
 import { getApiErrorMessage, getApiRoot } from "../api/helpers";
 import { useTranslation } from "../context/TranslationContext";
 import { useAuth } from "../admin/components/AuthContext";
+import { useSiteContent } from "../hooks/useSiteContent";
 import { PageHero, Section } from "../components/site/Primitives";
 import SEO from "../components/SEO";
 import manuscript from "../assets/family-archive.jpg";
@@ -38,6 +39,7 @@ import {
 export default function GalleryArticles() {
   const { t, isRtl } = useTranslation();
   const { user } = useAuth();
+  const { getText, getImage } = useSiteContent();
   const apiRoot = useMemo(() => getApiRoot(), []);
 
   const [posts, setPosts] = useState<NormalizedArticle[]>([]);
@@ -240,13 +242,16 @@ export default function GalleryArticles() {
         )}
       />
       <PageHero
-        eyebrow={t("community", "Community")}
-        title={t("articles_feed", "Heritage Stories")}
-        subtitle={t(
-          "articles_intro",
-          "Share family discoveries, sijillat notes, and photographs from Carthage to Djerba.",
-        )}
-        image={kairouan}
+        eyebrow={getText("gallery_articles", "hero", "eyebrow") ?? t("community", "Community")}
+        title={getText("gallery_articles", "hero", "title") ?? t("articles_feed", "Heritage Stories")}
+        subtitle={
+          getText("gallery_articles", "hero", "subtitle") ??
+          t(
+            "articles_intro",
+            "Share family discoveries, sijillat notes, and photographs from Carthage to Djerba.",
+          )
+        }
+        image={getImage("gallery_articles", "hero", "image") ?? kairouan}
       />
 
       <Section>

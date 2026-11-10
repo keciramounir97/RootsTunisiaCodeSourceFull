@@ -100,7 +100,6 @@ const CATEGORIES: SidebarCategory[] = [
       { to: "/admin/contact-content", labelKey: "contact_public_content", Icon: Mail, roles: [3] },
       { to: "/admin/archives-content", labelKey: "archives_public_content", Icon: Archive, roles: [3] },
       { to: "/admin/sources-content", labelKey: "sources_public_content", Icon: FileText, roles: [3] },
-      { to: "/admin/content", labelKey: "public_content_manager", Icon: Layout, roles: [3] },
       { to: "/admin/site-image-placeholders", labelKey: "site_image_placeholders", Icon: MapPinned, roles: [3] },
       { to: "/admin/legal-content", labelKey: "legal_content", Icon: Scale, roles: [3] },
       { to: "/admin/footer-settings", labelKey: "footer_settings", Icon: Globe },

@@ -25,6 +25,7 @@ import {
   Upload,
   Clock,
   Compass,
+  Newspaper,
 } from "lucide-react";
 import { useTranslation } from "../../context/TranslationContext";
 import { api } from "../../api/client";
@@ -123,6 +124,18 @@ const PAGE_META: Record<string, { icon: any; titleKey: string; defaultTitle: str
     titleKey: "periods_public_content",
     defaultTitle: "Contenu Public · Périodes Historiques",
     defaultSubtitle: "Gérez la chronologie et les présentations des 9 grandes ères historiques tunisiennes.",
+  },
+  articles: {
+    icon: Newspaper,
+    titleKey: "articles_public_content",
+    defaultTitle: "Contenu Public · Articles & Chroniques",
+    defaultSubtitle: "Gérez les en-têtes et textes introductifs de la section des articles scientifiques et chroniques historiques.",
+  },
+  gallery_articles: {
+    icon: Newspaper,
+    titleKey: "articles_public_content",
+    defaultTitle: "Contenu Public · Articles & Chroniques",
+    defaultSubtitle: "Gérez les en-têtes et textes introductifs de la section des articles scientifiques et chroniques historiques.",
   },
 };
 
@@ -578,12 +591,54 @@ export default function SinglePageContentManager({ pageId }: { pageId: string })
   const loadContent = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await api.get("/site-content/admin");
-      const d = (res.data?.data ?? res.data) as SiteContentDocument;
+      let res;
+      try {
+        res = await api.get("/admin/site-content");
+      } catch {
+        res = await api.get("/site-content/admin");
+      }
+      let d = (res.data?.data ?? res.data) as SiteContentDocument;
+      if (!d || typeof d !== "object") {
+        d = { version: 1, updatedAt: null, updatedBy: null, pages: [] };
+      }
+
+      let pages = Array.isArray(d.pages) ? [...d.pages] : [];
+      let p = pages.find((x) => x.id === pageId);
+      if (!p) {
+        p = {
+          id: pageId,
+          label: meta.defaultTitle,
+          description: meta.defaultSubtitle,
+          sections: [
+            {
+              id: "hero",
+              label: "Bannière Hero",
+              description: "Titre, sous-titre et image d'arrière-plan de la bannière principale.",
+              fields: [
+                { key: "eyebrow", type: "text", label: "Badge / Surtitre", value: "" },
+                { key: "title", type: "text", label: "Titre principal", value: "" },
+                { key: "subtitle", type: "text", label: "Sous-titre", value: "" },
+                { key: "image", type: "image", label: "Image de bannière", value: "" },
+              ],
+            },
+            {
+              id: "intro",
+              label: "Introduction & Présentation",
+              description: "Texte introductif ou description détaillée.",
+              fields: [
+                { key: "title", type: "text", label: "Titre de section", value: "" },
+                { key: "body", type: "html", label: "Corps du texte (mise en forme)", value: "" },
+              ],
+            },
+          ],
+        };
+        pages.push(p);
+        d = { ...d, pages };
+      }
+
       setDoc(d);
       setDirty(false);
       // Auto-select first section if available
-      const p = d?.pages?.find((x) => x.id === pageId);
       if (p?.sections?.length) {
         setSectionId(p.sections[0].id);
       }
@@ -592,7 +647,7 @@ export default function SinglePageContentManager({ pageId }: { pageId: string })
     } finally {
       setLoading(false);
     }
-  }, [pageId]);
+  }, [pageId, meta.defaultTitle, meta.defaultSubtitle]);
 
   useEffect(() => {
     void loadContent();
@@ -635,7 +690,11 @@ export default function SinglePageContentManager({ pageId }: { pageId: string })
     if (!doc) return;
     try {
       setSaving(true);
-      await api.put("/site-content", doc);
+      try {
+        await api.put("/admin/site-content", { pages: doc.pages });
+      } catch {
+        await api.put("/site-content", { pages: doc.pages });
+      }
       await refreshSiteContent();
       setDirty(false);
       setToast({ message: t("cms_saved_toast", "Contenu enregistré et publié avec succès."), tone: "success" });
@@ -650,10 +709,17 @@ export default function SinglePageContentManager({ pageId }: { pageId: string })
     try {
       setUploadingKey(key);
       const fd = new FormData();
-      fd.append("file", file);
-      const res = await api.post("/site-content/upload", fd, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+      fd.append("image", file);
+      let res;
+      try {
+        res = await api.post("/admin/site-content/upload", fd, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+      } catch {
+        res = await api.post("/site-content/upload", fd, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+      }
       const url = res.data?.data?.url || res.data?.url;
       return url || null;
     } catch (err) {

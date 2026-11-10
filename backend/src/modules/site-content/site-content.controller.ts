@@ -56,13 +56,14 @@ export class AdminSiteContentController {
 
   @Put()
   saveDocument(@Body() body: any, @Request() req) {
-    return this.siteContentService.saveDocument(body, req.user.id);
+    const payload = body?.pages ? body : { pages: Array.isArray(body) ? body : [] };
+    return this.siteContentService.saveDocument(payload, req.user?.id || 1);
   }
 
   @Post("upload")
   @UseInterceptors(FileInterceptor("image", siteContentUploadOptions))
   upload(@UploadedFile() file: Express.Multer.File, @Request() req) {
-    return this.siteContentService.registerUpload(file, req.user.id);
+    return this.siteContentService.registerUpload(file, req.user?.id || 1);
   }
 }
 
@@ -74,5 +75,28 @@ export class PublicSiteContentController {
   @Header("Cache-Control", "public, max-age=30")
   getPublicContent() {
     return this.siteContentService.getPublicContent();
+  }
+
+  @Get("admin")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles("admin", "super_admin")
+  getAdminDocument() {
+    return this.siteContentService.getDocument();
+  }
+
+  @Put()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles("admin", "super_admin")
+  saveAdminDocument(@Body() body: any, @Request() req) {
+    const payload = body?.pages ? body : { pages: Array.isArray(body) ? body : [] };
+    return this.siteContentService.saveDocument(payload, req.user?.id || 1);
+  }
+
+  @Post("upload")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles("admin", "super_admin")
+  @UseInterceptors(FileInterceptor("image", siteContentUploadOptions))
+  uploadAdmin(@UploadedFile() file: Express.Multer.File, @Request() req) {
+    return this.siteContentService.registerUpload(file, req.user?.id || 1);
   }
 }

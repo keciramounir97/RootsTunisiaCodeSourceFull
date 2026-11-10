@@ -690,16 +690,7 @@ function AppRoutes() {
             </Suspense>
           }
         />
-        <Route
-          path="content"
-          element={
-            <Suspense fallback={<AdminLoadingFallback />}>
-              <ProtectedRoute roles={[3]}>
-                <ContentManager />
-              </ProtectedRoute>
-            </Suspense>
-          }
-        />
+        <Route path="content" element={<Navigate to="/admin/home-content" replace />} />
         <Route
           path="home-content"
           element={

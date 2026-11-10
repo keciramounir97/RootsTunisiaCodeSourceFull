@@ -4,6 +4,7 @@ import { PageHero, Section, SectionHeading } from "../components/site/Primitives
 import eljem from "../assets/eljem.jpg";
 import SEO from "../components/SEO";
 import { useTranslation } from "../context/TranslationContext";
+import { useSiteContent } from "../hooks/useSiteContent";
 import {
   ArrowRight,
   BookOpen,
@@ -139,6 +140,7 @@ const periods: PeriodItem[] = [
 
 export default function Periods() {
   const { t, isRtl } = useTranslation();
+  const { getText, getImage } = useSiteContent();
   const [activeCategory, setActiveCategory] = useState<string>("all");
   const [selectedEra, setSelectedEra] = useState<PeriodItem | null>(null);
   const [showComparator, setShowComparator] = useState<boolean>(false);
@@ -500,10 +502,10 @@ export default function Periods() {
       )}
 
       <PageHero
-        eyebrow={t("tunisian_timeline_eyebrow")}
-        title={t("periods_hero_title")}
-        subtitle={t("periods_hero_subtitle")}
-        image={eljem}
+        eyebrow={getText("periods", "hero", "eyebrow") ?? t("tunisian_timeline_eyebrow")}
+        title={getText("periods", "hero", "title") ?? t("periods_hero_title")}
+        subtitle={getText("periods", "hero", "subtitle") ?? t("periods_hero_subtitle")}
+        image={getImage("periods", "hero", "image") ?? eljem}
       >
         <Link to="/sources" className="btn-base btn-gold w-full sm:w-auto min-w-[180px]">
           {t("browse_sources")}

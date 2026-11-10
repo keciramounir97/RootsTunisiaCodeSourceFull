@@ -26,6 +26,7 @@ import {
 import { api } from "../api/client";
 import { useTranslation } from "../context/TranslationContext";
 import { useTheme } from "../context/ThemeContext";
+import { useSiteContent } from "../hooks/useSiteContent";
 import RootsPageShell from "../components/RootsPageShell";
 import GalleryCommentsModal from "../components/GalleryCommentsModal";
 import {
@@ -61,6 +62,7 @@ const formatDuration = (seconds: number) => {
 export default function GalleryAudios() {
   const { theme } = useTheme();
   const { t, isRtl } = useTranslation();
+  const { getText, getImage } = useSiteContent();
   const audioRef = useRef<HTMLAudioElement>(null);
 
   const [audios, setAudios] = useState<AudioItem[]>([]);
@@ -220,17 +222,18 @@ export default function GalleryAudios() {
 
   return (
     <RootsPageShell
+      heroBackgroundUrl={getImage("audio", "hero", "image")}
       hero={
         <div className="space-y-4 text-center">
           <p className="eyebrow text-[var(--gold)] text-shadow-gold tracking-widest font-bold">
-            {t("nav_audios")}
+            {getText("audio", "hero", "eyebrow") ?? t("nav_audios")}
           </p>
           <h1 className="display-xl text-white font-bold hero-title-shadow text-shadow-glow tracking-wide">
-            {t("voices_before_they_disappear")}
+            {getText("audio", "hero", "title") ?? t("voices_before_they_disappear")}
           </h1>
           <div className="gold-rule mt-4 w-28 mx-auto shadow-lg" />
           <p className="max-w-3xl mx-auto text-base text-slate-100/95 font-medium drop-shadow-md">
-            {t("access_audio_archives")}
+            {getText("audio", "hero", "subtitle") ?? t("access_audio_archives")}
           </p>
         </div>
       }

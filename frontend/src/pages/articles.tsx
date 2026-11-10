@@ -15,6 +15,7 @@ import { api } from "../api/client";
 import { getApiErrorMessage, getApiRoot } from "../api/helpers";
 import { useTranslation } from "../context/TranslationContext";
 import { useAuth } from "../admin/components/AuthContext";
+import { useSiteContent } from "../hooks/useSiteContent";
 import { PageHero, Section } from "../components/site/Primitives";
 import SEO from "../components/SEO";
 import manuscript from "../assets/family-archive.jpg";
@@ -38,6 +39,7 @@ import {
 export default function ArticlesPage() {
   const { t, isRtl } = useTranslation();
   const { user } = useAuth();
+  const { getText, getImage } = useSiteContent();
   const apiRoot = useMemo(() => getApiRoot(), []);
 
   const [articles, setArticles] = useState<NormalizedArticle[]>([]);
@@ -260,13 +262,17 @@ export default function ArticlesPage() {
       />
 
       <PageHero
-        eyebrow={t("nav_articles")}
-        title={t("articles_hero_title", "Tunisian Lineage, Written in the Open")}
-        subtitle={t(
-          "articles_hero_subtitle",
-          "Discoveries from civil registry, court sijillat, habous deeds, and family memory indexed across twenty-four governorates.",
-        )}
-        image={manuscript}
+        eyebrow={getText("gallery_articles", "hero", "eyebrow") ?? getText("articles", "hero", "eyebrow") ?? t("nav_articles")}
+        title={getText("gallery_articles", "hero", "title") ?? getText("articles", "hero", "title") ?? t("articles_hero_title", "Tunisian Lineage, Written in the Open")}
+        subtitle={
+          getText("gallery_articles", "hero", "subtitle") ??
+          getText("articles", "hero", "subtitle") ??
+          t(
+            "articles_hero_subtitle",
+            "Discoveries from civil registry, court sijillat, habous deeds, and family memory indexed across twenty-four governorates.",
+          )
+        }
+        image={getImage("gallery_articles", "hero", "image") ?? getImage("articles", "hero", "image") ?? manuscript}
       >
         <Link to="/gallery/articles" className="btn-base btn-gold w-full sm:w-auto min-w-[180px]">
           {t("articles_community_feed", "Community Feed")}

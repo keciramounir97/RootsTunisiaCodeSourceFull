@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { api } from "../api/client";
 import { useTranslation } from "../context/TranslationContext";
+import { useSiteContent } from "../hooks/useSiteContent";
 import RootsPageShell from "../components/RootsPageShell";
 import { Link, useLocation } from "react-router-dom";
 import FamilyCardModal from "../components/FamilyCardModal";
@@ -51,6 +52,7 @@ interface TreeItem {
 
 export default function GalleryTrees() {
   const { t, isRtl } = useTranslation();
+  const { getText, getImage } = useSiteContent();
   const location = useLocation();
 
   const [trees, setTrees] = useState<TreeItem[]>([]);
@@ -166,17 +168,18 @@ export default function GalleryTrees() {
 
   return (
     <RootsPageShell
+      heroBackgroundUrl={getImage("gallery_trees", "hero", "image") ?? getImage("gallery", "hero", "image")}
       hero={
         <div className="space-y-4 text-center">
           <p className="eyebrow text-[var(--gold)] text-shadow-gold tracking-widest font-bold">
-            {t("nav_trees")}
+            {getText("gallery_trees", "hero", "eyebrow") ?? getText("gallery", "hero", "eyebrow") ?? t("nav_trees")}
           </p>
           <h1 className="display-xl text-white font-bold hero-title-shadow text-shadow-glow tracking-wide">
-            {t("family_trees_title")}
+            {getText("gallery_trees", "hero", "title") ?? getText("gallery", "hero", "title") ?? t("family_trees_title")}
           </h1>
           <div className="gold-rule mt-4 w-28 mx-auto shadow-lg" />
           <p className="max-w-3xl mx-auto text-base text-slate-100/95 font-medium drop-shadow-md">
-            {t("family_trees_desc")}
+            {getText("gallery_trees", "hero", "subtitle") ?? getText("gallery", "hero", "subtitle") ?? t("family_trees_desc")}
           </p>
         </div>
       }
