@@ -7,8 +7,6 @@ import {
   Download,
   FileCode,
   Sparkles,
-  CheckCircle2,
-  AlertCircle,
   User,
   ShieldCheck,
   MapPin,
@@ -18,22 +16,11 @@ import {
   FileText,
   Link2,
   ExternalLink,
-  BookOpen,
   Calendar,
   ScrollText,
-  Eye,
   Music,
-  FileCode2,
   Award,
-  Search,
-  Maximize2,
-  ZoomIn,
-  ZoomOut,
-  Share2,
-  ArrowRight,
-  Heart,
   ChevronRight,
-  ChevronLeft,
   Archive,
   Building,
 } from "lucide-react";
@@ -48,21 +35,52 @@ interface FamilyCardModalProps {
   onClose: () => void;
 }
 
-interface ArchivalDocumentItem {
+interface RealMemberSourceItem {
   id: string;
-  category: "civil" | "decree" | "notary" | "waqf" | "census";
-  title: string;
+  memberId: string;
   memberName: string;
-  memberRole: string;
-  memberId?: string;
-  date: string;
-  location: string;
-  repository: string;
-  cote: string;
-  linkUrl: string;
-  previewImage: string;
-  summary: string;
+  memberRole?: string;
+  gender?: string;
+  url: string;
+  label: string;
+  kind: "image" | "audio" | "document" | "external" | "archive";
+  archiveSource?: string;
+  documentCode?: string;
+  reliability?: string;
+  details?: string;
 }
+
+const cleanArchText = (val: unknown): string => {
+  if (Array.isArray(val)) return val.map(cleanArchText).filter(Boolean).join(", ");
+  const s = String(val || "").trim();
+  if (!s || /^@[^@]+@$/.test(s)) return "";
+  return s;
+};
+
+const classifySourceLink = (linkKind: string | undefined, url: string | undefined): RealMemberSourceItem["kind"] => {
+  const lower = String(url || "").toLowerCase();
+  if (linkKind === "audio" || /\.(mp3|wav|ogg|m4a)(?:[?#].*)?$/i.test(lower) || lower.includes("/uploads/audios/")) {
+    return "audio";
+  }
+  if (linkKind === "image" || /\.(png|jpe?g|gif|webp)(?:[?#].*)?$/i.test(lower) || lower.includes("/uploads/gallery/")) {
+    return "image";
+  }
+  if (linkKind === "document" || /\.(pdf|docx?|txt)(?:[?#].*)?$/i.test(lower) || lower.includes("/uploads/documents/")) {
+    return "document";
+  }
+  return "external";
+};
+
+const isDirectPreviewUrl = (kind: string, url: string): boolean => {
+  const lower = String(url || "").toLowerCase();
+  return (
+    kind === "image" ||
+    kind === "audio" ||
+    kind === "document" ||
+    /\.(png|jpe?g|gif|webp|pdf|mp3|wav|ogg|m4a)(?:[?#].*)?$/i.test(lower) ||
+    lower.includes("/uploads/")
+  );
+};
 
 export default function FamilyCardModal({ tree, individual, onClose }: FamilyCardModalProps) {
   const { t, locale } = useTranslation();
@@ -70,16 +88,14 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
   const [activeTab, setActiveTab] = useState<"schema" | "details" | "sources">("schema");
   const [fetchedPeople, setFetchedPeople] = useState<any[] | null>(null);
   const [loadingGedcom, setLoadingGedcom] = useState(false);
-  
-  // Selected Individual in Volet 2 (Fiche & GEDCOM) for "kinda like individuals" detail card
+
+  // Selected Individual in Volet 2 (Fiche & GEDCOM)
   const [selectedPerson, setSelectedPerson] = useState<any | null>(null);
   const [personTilt, setPersonTilt] = useState({ x: 0, y: 0, active: false });
   const personSurfaceRef = useRef<HTMLDivElement | null>(null);
 
-  // Selected Source in Volet 3 (Aperçu des Sources) for live preview of links and documents
-  const [selectedSourceId, setSelectedSourceId] = useState<string>("src-1");
+  // Selected Source member filter & live preview modal state
   const [selectedSourceMemberId, setSelectedSourceMemberId] = useState<string>("all");
-  const [sourceZoom, setSourceZoom] = useState(false);
   const [previewSource, setPreviewSource] = useState<{
     url: string;
     label: string;
@@ -90,7 +106,6 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
     date?: string;
     location?: string;
   } | null>(null);
-  const [sourceZoomLevel, setSourceZoomLevel] = useState<number>(1);
 
   // 3D Card Tilt State for Standalone Individual Modal
   const [previewTilt, setPreviewTilt] = useState({ x: 0, y: 0, active: false });
@@ -156,6 +171,14 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
       ? t("tree_default_summary", "Lignée familiale et archives patronymiques répertoriées avec actes d'état civil et registres historiques.")
       : rawDesc;
 
+  // Reset state when switching trees
+  useEffect(() => {
+    setFetchedPeople(null);
+    setSelectedPerson(null);
+    setSelectedSourceMemberId("all");
+    setPreviewSource(null);
+  }, [tree?.id]);
+
   // Initial check if GEDCOM text is already attached
   useEffect(() => {
     if (isIndividualModal) return;
@@ -173,7 +196,7 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
     }
   }, [tree?.id, tree?.gedcom_text, tree?.content, tree?.gedcom_data, tree?.gedcomText, isIndividualModal]);
 
-  // Dynamically fetch exact GEDCOM data for DB trees so schema matches Tree Builder 100%
+  // Dynamically fetch exact GEDCOM / DB people for this tree so schema and details match Tree Builder 100%
   useEffect(() => {
     if (isIndividualModal) return;
     const targetTreeId = tree?.id;
@@ -228,13 +251,35 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
             }
             if (Array.isArray(treeObj.people) && treeObj.people.length > 0) {
               setFetchedPeople(treeObj.people);
+              setLoadingGedcom(false);
+              return;
             }
           }
         } catch {
           // Ignore
         }
+
+        // Fallback to SQL persons table if GEDCOM file was not uploaded separately
+        try {
+          const peopleRes = await api.get(`/trees/${targetTreeId}/people`);
+          const peopleRows = peopleRes?.data?.data || peopleRes?.data;
+          if (Array.isArray(peopleRows) && peopleRows.length > 0 && isMounted) {
+            setFetchedPeople(peopleRows);
+            setLoadingGedcom(false);
+            return;
+          }
+        } catch {
+          // Ignore
+        }
+
+        if (isMounted) {
+          setFetchedPeople([]);
+        }
       } catch (err) {
         console.warn("Could not fetch GEDCOM schema for modal:", err);
+        if (isMounted) {
+          setFetchedPeople([]);
+        }
       } finally {
         if (isMounted) setLoadingGedcom(false);
       }
@@ -245,95 +290,61 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
     };
   }, [tree?.id, tree?.data_format, isIndividualModal]);
 
-  // Compute final linked graph nodes for D3 Tree Builder canvas and person details
+  const normalizePersonList = (list: any[]) =>
+    list.map((p: any, idx: number) => {
+      const id = p.id != null ? String(p.id) : `@I${idx + 1}@`;
+      const rawName = typeof p.name === "string" ? p.name.trim() : "";
+      const existingNamesObj = p.names && typeof p.names === "object" ? p.names : null;
+      const rawGiven = p.first_name || p.firstName || p.given || "";
+      const surname = p.last_name || p.lastName || p.surname || "";
+      const fullName =
+        existingNamesObj?.fr ||
+        existingNamesObj?.en ||
+        existingNamesObj?.ar ||
+        rawName ||
+        [rawGiven, surname].filter(Boolean).join(" ").trim() ||
+        `Individu #${idx + 1}`;
+      const father = p.father || p.father_id || p.fatherId ? String(p.father || p.father_id || p.fatherId) : null;
+      const mother = p.mother || p.mother_id || p.motherId ? String(p.mother || p.mother_id || p.motherId) : null;
+      const spouse = p.spouse || p.spouse_id || p.spouseId ? String(p.spouse || p.spouse_id || p.spouseId) : null;
+      const children = Array.isArray(p.children) ? p.children.map(String) : [];
+      const bDate = p.birth_date || p.birthDate || p.birthYear || p.birth_year || "";
+      const dDate = p.death_date || p.deathDate || p.deathYear || p.death_year || "";
+
+      return {
+        ...p,
+        id,
+        given: rawGiven || (surname ? "" : fullName),
+        surname,
+        name: fullName,
+        names: existingNamesObj || { fr: fullName, en: fullName, ar: fullName },
+        gender: (p.gender || "").toUpperCase().startsWith("F") ? "F" : (p.gender || "").toUpperCase().startsWith("M") ? "M" : "",
+        birthYear: p.birthYear || bDate,
+        birthDate: bDate,
+        birthPlace: p.birth_place || p.birthPlace || "",
+        deathDate: dDate,
+        deathPlace: p.death_place || p.deathPlace || "",
+        profession: p.profession || p.occupation || p.job || "",
+        occupation: p.occupation || p.profession || p.job || "",
+        father,
+        mother,
+        spouse,
+        children,
+      };
+    });
+
+  // Real individuals belonging strictly to this tree (never inject fake sample people for a DB tree)
   const displayPeople = useMemo(() => {
-    if (fetchedPeople && fetchedPeople.length > 0) {
-      return fetchedPeople;
+    if (Array.isArray(fetchedPeople) && fetchedPeople.length > 0) {
+      return normalizePersonList(fetchedPeople);
     }
 
-    let list = [...rawPeopleList];
-
-    if (list.length > 0 && typeof list[0] === "object" && (list[0].id != null || list[0].first_name || list[0].firstName)) {
-      return list.map((p: any, idx: number) => {
-        const id = p.id != null ? String(p.id) : `@I${idx + 1}@`;
-        const given = p.first_name || p.firstName || p.given || "Individu";
-        const surname = p.last_name || p.lastName || p.surname || "";
-        const fullName = `${given} ${surname}`.trim();
-        const father = p.father || p.father_id || p.fatherId ? String(p.father || p.father_id || p.fatherId) : null;
-        const mother = p.mother || p.mother_id || p.motherId ? String(p.mother || p.mother_id || p.motherId) : null;
-        const spouse = p.spouse || p.spouse_id || p.spouseId ? String(p.spouse || p.spouse_id || p.spouseId) : null;
-        const children = Array.isArray(p.children) ? p.children.map(String) : [];
-
-        return {
-          ...p,
-          id,
-          given,
-          surname,
-          names: { fr: fullName, en: fullName },
-          gender: (p.gender || "M").toUpperCase().startsWith("F") ? "F" : "M",
-          birthDate: p.birth_date || p.birthDate || p.birthYear || "",
-          birthPlace: p.birth_place || p.birthPlace || governorate,
-          deathDate: p.death_date || p.deathDate || p.deathYear || "",
-          deathPlace: p.death_place || p.deathPlace || "",
-          occupation: p.occupation || p.profession || p.job || "Négociant / Propriétaire",
-          father,
-          mother,
-          spouse,
-          children,
-        };
-      });
+    if (rawPeopleList.length > 0) {
+      return normalizePersonList(rawPeopleList);
     }
 
-    // Fallback lineage graph
-    const p1Id = "@I1@";
-    const p2Id = "@I2@";
-    const p3Id = "@I3@";
-    const p1Name = title.split(",")[0] || "Patriarche";
-    const p2Name = t("ind_sample_f_1", "Épouse & Mère de famille");
-    const p3Name = t("ind_sample_m_2", "Fils Héritier & Lignée");
-
-    return [
-      {
-        id: p1Id,
-        given: p1Name,
-        surname: "",
-        names: { fr: p1Name, en: p1Name, ar: p1Name },
-        gender: "M",
-        birthDate: "1882",
-        birthPlace: governorate,
-        occupation: "Commerçant & Administrateur",
-        spouse: p2Id,
-        children: [p3Id],
-        details: "Fondateur de la branche patronymique enregistrée aux registres consulaires et municipaux.",
-      },
-      {
-        id: p2Id,
-        given: p2Name,
-        surname: "",
-        names: { fr: p2Name, en: p2Name, ar: p2Name },
-        gender: "F",
-        birthDate: "1887",
-        birthPlace: governorate,
-        occupation: "Gestionnaire du patrimoine foncier",
-        spouse: p1Id,
-        children: [p3Id],
-        details: "Mentionnée aux actes notariés d'acquisition immobilière et de contrat dotal.",
-      },
-      {
-        id: p3Id,
-        given: p3Name,
-        surname: "",
-        names: { fr: p3Name, en: p3Name, ar: p3Name },
-        gender: "M",
-        birthDate: "1914",
-        birthPlace: governorate,
-        occupation: "Cadre d'entreprise et d'administration",
-        father: p1Id,
-        mother: p2Id,
-        details: "Recensé au registre d'état civil et au rôle général de la population.",
-      },
-    ];
-  }, [rawPeopleList, title, governorate, fetchedPeople, t]);
+    return [];
+  }, [rawPeopleList, fetchedPeople]);
 
   // Set default selected person when people are available
   useEffect(() => {
@@ -342,238 +353,127 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
     }
   }, [displayPeople, selectedPerson]);
 
-  // Real exact metrics computed directly from loaded people graph
-  const treeMetrics = useMemo(() => {
-    if (displayPeople && displayPeople.length > 0) {
-      const realGenerations = computeRealGenerations(displayPeople);
-      return {
-        individuals: displayPeople.length,
-        generations: realGenerations,
-        couplesCount: Math.max(0, Math.floor(displayPeople.length / 2)),
-        sourcesCount: 0,
-      };
-    }
+  // Safe name extractor matching TreesBuilder
+  const nameOf = (p: any): string => {
+    if (!p) return "Individu";
+    const fromNames = p.names?.[locale] || p.names?.fr || p.names?.en || p.names?.ar || (typeof p.name === "string" ? p.name : "");
+    if (fromNames && String(fromNames).trim()) return String(fromNames).trim();
+    const givenSurname = [p.given, p.first_name, p.firstName, p.surname, p.last_name, p.lastName].filter(Boolean).map(String).join(" ").trim();
+    return givenSurname || "Individu";
+  };
 
-    return getTreeMetrics(tree);
-  }, [tree, displayPeople]);
+  // Detect strictly real sources from every individual's Open Details modal (matching TreesBuilder Open Details)
+  const allMemberSources = useMemo<RealMemberSourceItem[]>(() => {
+    const list: RealMemberSourceItem[] = [];
+    const seen = new Set<string>();
 
-  const membersCount = treeMetrics.individuals;
-  const generations = treeMetrics.generations;
-
-  // Real Archival Documents dynamically extracted from the actual members of THIS tree only
-  const archivalDocuments: ArchivalDocumentItem[] = useMemo(() => {
-    const list: ArchivalDocumentItem[] = [];
-    const seenIds = new Set<string>();
-
-    const safeTitle = String(title || "Arbre Généalogique");
-    const safeGov = String(governorate || "Tunis");
-    const govCode = safeGov.slice(0, 3).toUpperCase();
-    const treeCleanId = String(tree?.id || "FONDS").replace(/[^0-9a-zA-Z]/g, "") || "FONDS";
-
-    // 1. Traverse all real members of this tree
     displayPeople.forEach((p: any, idx: number) => {
       if (!p) return;
       const memberId = String(p.id ?? `@I${idx + 1}@`);
-      const memberName =
-        p.names?.fr ||
-        p.names?.en ||
-        p.names?.ar ||
-        (p.given || p.surname ? `${p.given || ""} ${p.surname || ""}`.trim() : "") ||
-        p.name ||
-        `Membre #${idx + 1}`;
+      const memberName = nameOf(p) || `Individu #${idx + 1}`;
 
       const isFemale = (p.gender || "").toUpperCase().startsWith("F");
       const hasChildren = Array.isArray(p.children) && p.children.length > 0;
+      const memberRole = isFemale
+        ? (hasChildren ? "Mère & Conjointe" : "Fille")
+        : (hasChildren ? "Père de famille" : (p.father || p.mother ? "Fils" : "Individu"));
 
-      let memberRole = isFemale
-        ? (hasChildren ? "Mère & Conjointe" : "Fille déclarée")
-        : (hasChildren ? "Père de famille & Déclarant" : (p.father || p.mother ? "Fils déclaré" : "Membre de la lignée"));
-      if (p.occupation || p.profession) {
-        memberRole = `${memberRole} • ${p.occupation || p.profession}`;
-      }
+      const archSrc = cleanArchText(p.archiveSource);
+      const docCode = cleanArchText(p.documentCode);
+      const extracted = typeof extractPersonLinks === "function" ? extractPersonLinks(p) : [];
 
-      // A) Extract explicit attached links / files
-      try {
-        const extracted = extractPersonLinks(p);
-        if (Array.isArray(extracted) && extracted.length > 0) {
-          extracted.forEach((link: any, linkIdx: number) => {
-            const docId = `src-member-${memberId}-link-${linkIdx}`;
-            if (seenIds.has(docId)) return;
-            seenIds.add(docId);
+      // 1. Exact links/documents shown in "Sources & Documents" of this individual's Open Details modal
+      if (Array.isArray(extracted) && extracted.length > 0) {
+        extracted.forEach((l: any, lIdx: number) => {
+          const key = `${memberId}::${l.url}::${l.label}`;
+          if (seen.has(key)) return;
+          seen.add(key);
 
-            let cat: ArchivalDocumentItem["category"] = "civil";
-            if (link.kind === "document" || /\.pdf$/i.test(link.url)) cat = "decree";
-            else if (link.kind === "audio") cat = "census";
-            else if (link.kind === "image") cat = "civil";
+          const kind = classifySourceLink(l.kind, l.url);
 
-            list.push({
-              id: docId,
-              category: cat,
-              title: link.label || `Document numérisé : ${memberName}`,
-              memberName,
-              memberRole,
-              memberId,
-              date: p.birthDate || p.deathDate || "Document d'Archives",
-              location: p.birthPlace || safeGov,
-              repository: p.archiveSource || "Archives Nationales de Tunisie — Pièces Rattachées",
-              cote: p.documentCode || `DOC-${govCode}-${memberId}-${linkIdx + 1}`,
-              linkUrl: link.url,
-              previewImage: link.kind === "image" ? link.url : "/assets/gallery/gallery-23d42dbda236debb753376b4f3046223.jpeg",
-              summary: p.details || `Document authentique numérisé et rattaché spécifiquement à la fiche de ${memberName}.`,
-            });
+          list.push({
+            id: `src-${memberId}-${lIdx}`,
+            memberId,
+            memberName,
+            memberRole,
+            gender: p.gender,
+            url: l.url,
+            label: l.label || l.url,
+            kind,
+            archiveSource: archSrc || undefined,
+            documentCode: docCode || undefined,
+            reliability: p.reliability || undefined,
+            details: p.details || undefined,
           });
-        }
-      } catch (err) {
-        console.warn("Could not extract person links:", err);
-      }
-
-      // B) Primary Vital Record: Acte de Naissance & Registre d'État Civil
-      const birthDocId = `src-member-${memberId}-birth`;
-      if (!seenIds.has(birthDocId)) {
-        seenIds.add(birthDocId);
-        const birthYear = p.birthDate || p.birthYear || "1900";
-        const birthLoc = p.birthPlace || safeGov;
-        list.push({
-          id: birthDocId,
-          category: "civil",
-          title: `Acte de Naissance & Registre d'État Civil — ${memberName}`,
-          memberName,
-          memberRole: isFemale ? "Sujet de l'acte (Fille déclarée)" : "Sujet de l'acte (Nouveau-né)",
-          memberId,
-          date: p.birthDate ? `Enregistré le ${p.birthDate}` : `Registre de l'État Civil (~${birthYear})`,
-          location: `${birthLoc} — Registres Municipaux`,
-          repository: p.archiveSource || "Archives Nationales de Tunisie & Registres de l'État Civil",
-          cote: p.documentCode ? `${p.documentCode}-NAIS` : `EC-${govCode}-${birthYear}-N-${memberId.replace(/[^0-9]/g, "") || idx + 1}`,
-          linkUrl: "/assets/gallery/gallery-23d42dbda236debb753376b4f3046223.jpeg",
-          previewImage: "/assets/gallery/gallery-23d42dbda236debb753376b4f3046223.jpeg",
-          summary: `Extrait officiel certifiant la naissance, le nom patronymique et la filiation directe de ${memberName}${birthLoc ? " à " + birthLoc : ""}${p.birthDate ? " en date du " + p.birthDate : ""}.`,
         });
       }
 
-      // C) Acte de Mariage / Notarié / Union Légitime
-      if (p.spouse || hasChildren) {
-        let spouseName = "";
-        if (p.spouse) {
-          const spousePerson = displayPeople.find((sp: any) => String(sp.id) === String(p.spouse));
-          if (spousePerson) {
-            spouseName = spousePerson.names?.fr || spousePerson.names?.en || spousePerson.given || "Conjoint(e)";
+      // 2. Explicit archival reference / cote fields set on this person's Open Details modal (excluding bare @xref@ pointers & URL duplicates)
+      if (archSrc || docCode) {
+        const archLabel = [archSrc, docCode].filter(Boolean).join(" • ");
+        const alreadyInLink = Array.isArray(extracted) && extracted.some((l: any) =>
+          l.url && (archSrc.includes(l.url) || l.url.includes(archSrc) || String(l.raw || "").trim() === archSrc)
+        );
+        if (archLabel && !alreadyInLink) {
+          const key = `${memberId}::archive::${archLabel}`;
+          if (!seen.has(key)) {
+            seen.add(key);
+            list.push({
+              id: `arch-${memberId}`,
+              memberId,
+              memberName,
+              memberRole,
+              gender: p.gender,
+              url: "",
+              label: archLabel,
+              kind: "archive",
+              archiveSource: archSrc || undefined,
+              documentCode: docCode || undefined,
+              reliability: p.reliability || undefined,
+              details: p.details || undefined,
+            });
           }
-        }
-        if (!spouseName && displayPeople.length > 1) {
-          const other = displayPeople.find(
-            (o: any) =>
-              String(o.id) !== memberId &&
-              ((isFemale && !o.gender?.toUpperCase().startsWith("F")) || (!isFemale && o.gender?.toUpperCase().startsWith("F")))
-          );
-          if (other) spouseName = other.names?.fr || other.given || "Conjoint(e)";
-        }
-
-        const marriageKey = [memberId, p.spouse || spouseName].sort().join("-");
-        const marriageDocId = `src-marriage-${marriageKey}`;
-        if (!seenIds.has(marriageDocId)) {
-          seenIds.add(marriageDocId);
-          list.push({
-            id: marriageDocId,
-            category: "notary",
-            title: `Contrat de Mariage & Sijill Notarié — ${memberName}${spouseName ? " & " + spouseName : ""}`,
-            memberName: spouseName ? `${memberName} & ${spouseName}` : memberName,
-            memberRole: "Conjoints / Union Légitime",
-            memberId,
-            date: p.birthDate ? `Célébré vers ${parseInt(p.birthDate, 10) + 24 || "1912"}` : "Acte de Mariage Enregistré",
-            location: `${safeGov} — Étude Notariale / Tribunal`,
-            repository: "Tribunal de Première Instance & Archives Notariales de Tunisie",
-            cote: `NOT-${govCode}-M-${memberId.replace(/[^0-9]/g, "") || idx + 1}`,
-            linkUrl: "/assets/gallery/gallery-ed77376d6038f1b4b3a76abae84a8354.jpeg",
-            previewImage: "/assets/gallery/gallery-ed77376d6038f1b4b3a76abae84a8354.jpeg",
-            summary: `Acte notarié officiel consignant la célébration de l'union matrimoniale, la dotation légale et la communauté des biens enregistrée au greffe notarié.`,
-          });
-        }
-      }
-
-      // D) Acte de Décès (if death date or place exists)
-      if (p.deathDate || p.deathPlace) {
-        const deathDocId = `src-member-${memberId}-death`;
-        if (!seenIds.has(deathDocId)) {
-          seenIds.add(deathDocId);
-          list.push({
-            id: deathDocId,
-            category: "civil",
-            title: `Acte de Décès & Constat Légal — ${memberName}`,
-            memberName,
-            memberRole: "Défunt(e) & Clôture Successorale",
-            memberId,
-            date: p.deathDate ? `Dressé le ${p.deathDate}` : "Registre Nécrologique",
-            location: `${p.deathPlace || safeGov} — Greffe Municipal`,
-            repository: "Archives de la Municipalité & Conservation Foncière",
-            cote: `DEC-${govCode}-${p.deathDate || "REG"}-${memberId.replace(/[^0-9]/g, "") || idx + 1}`,
-            linkUrl: "/assets/gallery/gallery-26af214f1c8b3bf735c91e0b19434b6d.jpeg",
-            previewImage: "/assets/gallery/gallery-26af214f1c8b3bf735c91e0b19434b6d.jpeg",
-            summary: `Procès-verbal de constatation de décès de ${memberName}${p.deathPlace ? " à " + p.deathPlace : ""} et dévolution successorale.`,
-          });
-        }
-      }
-
-      // E) Census / Rôle de la population / Activité
-      if (p.occupation || p.profession || idx === 0) {
-        const censusDocId = `src-member-${memberId}-census`;
-        if (!seenIds.has(censusDocId)) {
-          seenIds.add(censusDocId);
-          list.push({
-            id: censusDocId,
-            category: "census",
-            title: `Feuille de Recensement Nominatif de la Population — ${memberName}`,
-            memberName,
-            memberRole: p.occupation || p.profession || "Chef de ménage / Recensé",
-            memberId,
-            date: p.birthDate ? `Recensement Quinquennal (~${parseInt(p.birthDate, 10) + 30 || "1931"})` : "Recensement Général",
-            location: `${safeGov} — Circonscription Urbaine`,
-            repository: "Fonds Général des Recensements de la Population de Tunisie",
-            cote: `REC-POP-${govCode}-${memberId.replace(/[^0-9]/g, "") || idx + 1}`,
-            linkUrl: "/assets/gallery/gallery-d8a073e7662663d89908e46862a7ea52.jpeg",
-            previewImage: "/assets/gallery/gallery-d8a073e7662663d89908e46862a7ea52.jpeg",
-            summary: `Dénombrement officiel au rôle nominatif de la population avec mention de la profession (${p.occupation || p.profession || "Activité enregistrée"}), du domicile et de la parenté.`,
-          });
         }
       }
     });
 
-    // 2. Tree-level provenance / Archive Source
-    if (tree?.archive_source || tree?.document_code || tree?.provenance) {
-      const treeDocId = "src-tree-provenance";
-      if (!seenIds.has(treeDocId)) {
-        seenIds.add(treeDocId);
-        list.unshift({
-          id: treeDocId,
-          category: "decree",
-          title: `Fonds d'Origine de la Lignée — ${tree.archive_source || safeTitle}`,
-          memberName: `Lignée Complète (${safeTitle})`,
-          memberRole: "Fonds d'Origine & Dépôt Global",
-          memberId: "all",
-          date: "Fonds d'Archives Historiques",
-          location: safeGov,
-          repository: tree.archive_source || "Archives Nationales de Tunisie (Daftarkhana)",
-          cote: tree.document_code || `ARC-TUN-${treeCleanId}`,
-          linkUrl: "/assets/gallery/gallery-406579d6ca9e71a5619f4a5d7ec6aacb.jpeg",
-          previewImage: "/assets/gallery/gallery-406579d6ca9e71a5619f4a5d7ec6aacb.jpeg",
-          summary: `Notice documentaire générale de l'arbre ${safeTitle} certifiant la constitution du dossier archivistique au dépôt de ${safeGov}.`,
-        });
-      }
+    return list;
+  }, [displayPeople, locale]);
+
+  // Real exact metrics computed directly from loaded people graph
+  const treeMetrics = useMemo(() => {
+    if (fetchedPeople !== null || rawPeopleList.length > 0) {
+      const couplePairs = new Set<string>();
+      displayPeople.forEach((p: any) => {
+        if (p?.spouse) {
+          couplePairs.add([String(p.id), String(p.spouse)].sort().join("::"));
+        }
+        if (p?.father && p?.mother) {
+          couplePairs.add([String(p.father), String(p.mother)].sort().join("::"));
+        }
+      });
+      return {
+        individuals: displayPeople.length,
+        generations: displayPeople.length > 0 ? computeRealGenerations(displayPeople) : 0,
+        couplesCount: couplePairs.size,
+        sourcesCount: allMemberSources.length,
+      };
     }
 
-    return list;
-  }, [tree, displayPeople, title, governorate]);
+    return {
+      ...getTreeMetrics(tree),
+      sourcesCount: allMemberSources.length,
+    };
+  }, [tree, fetchedPeople, rawPeopleList.length, displayPeople, allMemberSources.length]);
 
-  // Filtered Archival Documents by Selected Member
-  const filteredArchivalDocuments = useMemo(() => {
-    if (selectedSourceMemberId === "all") return archivalDocuments;
-    return archivalDocuments.filter(
-      (doc) => doc.memberId === selectedSourceMemberId || doc.memberId === "all"
-    );
-  }, [archivalDocuments, selectedSourceMemberId]);
+  const membersCount = treeMetrics.individuals;
+  const generations = treeMetrics.generations;
 
-  const activeSource = useMemo(() => {
-    return archivalDocuments.find((s) => s.id === selectedSourceId) || archivalDocuments[0];
-  }, [archivalDocuments, selectedSourceId]);
+  // Filtered Real Sources by Selected Member
+  const filteredMemberSources = useMemo(() => {
+    if (selectedSourceMemberId === "all") return allMemberSources;
+    return allMemberSources.filter((s) => s.memberId === selectedSourceMemberId);
+  }, [allMemberSources, selectedSourceMemberId]);
 
   const handleDownloadGedcom = async () => {
     if (!tree?.id) {
@@ -588,79 +488,89 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
       return;
     }
 
-    try {
-      window.open(`/api/trees/${tree.id}/gedcom`, "_blank");
-    } catch {
-      window.open(`/trees/${tree.id}/gedcom`, "_blank");
-    }
+    const base = String(api.defaults.baseURL || "/api").replace(/\/+$/, "");
+    window.open(`${base}/trees/${tree.id}/gedcom`, "_blank", "noopener,noreferrer");
   };
 
-  const getCategoryBadge = (cat: ArchivalDocumentItem["category"]) => {
-    switch (cat) {
-      case "civil":
-        return { label: "État Civil", color: "bg-blue-500/15 text-blue-400 border-blue-500/30" };
-      case "decree":
-        return { label: "Décret Officiel", color: "bg-amber-500/15 text-amber-400 border-amber-500/30" };
-      case "notary":
-        return { label: "Acte Notarié", color: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30" };
-      case "waqf":
-        return { label: "Sijill & Titre Foncier", color: "bg-purple-500/15 text-purple-400 border-purple-500/30" };
-      case "census":
-        return { label: "Recensement", color: "bg-teal-500/15 text-teal-400 border-teal-500/30" };
+  const getSourceKindBadge = (kind: RealMemberSourceItem["kind"]) => {
+    switch (kind) {
+      case "image":
+        return { label: "IMAGE", color: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30" };
+      case "audio":
+        return { label: "AUDIO", color: "bg-amber-500/15 text-amber-400 border-amber-500/30" };
+      case "document":
+        return { label: "DOCUMENT", color: "bg-blue-500/15 text-blue-400 border-blue-500/30" };
+      case "external":
+        return { label: "LIEN EXTERNE", color: "bg-teal-500/15 text-teal-400 border-teal-500/30" };
+      case "archive":
       default:
-        return { label: "Archive", color: "bg-[var(--gold)]/15 text-[var(--gold)] border-[var(--gold)]/30" };
+        return { label: "ARCHIVE", color: "bg-[var(--gold)]/15 text-[var(--gold)] border-[var(--gold)]/30" };
     }
-  };
-
-  // Safe name extractor matching TreesBuilder
-  const nameOf = (p: any): string => {
-    if (!p) return "Individu";
-    const fromNames = p.names?.[locale] || p.names?.fr || p.names?.en || p.names?.ar || (typeof p.name === "string" ? p.name : "");
-    if (fromNames && String(fromNames).trim()) return String(fromNames).trim();
-    const givenSurname = [p.given, p.first_name, p.firstName, p.surname, p.last_name, p.lastName].filter(Boolean).map(String).join(" ").trim();
-    return givenSurname || "Individu";
   };
 
   // Current person with safe fallback to first member
   const currentPerson = selectedPerson || (displayPeople.length > 0 ? displayPeople[0] : null);
 
-  // Sources for the currently selected person in Volet 2 (Matching TreesBuilder open details)
+  // Open source action matching TreesBuilder Open Details modal strictly
+  const openSourceAction = (item: {
+    url?: string;
+    label: string;
+    kind: string;
+    memberName?: string;
+    archiveSource?: string;
+    documentCode?: string;
+    date?: string;
+    location?: string;
+  }) => {
+    const url = String(item.url || "").trim();
+    if (!url) return;
+    if (!isDirectPreviewUrl(item.kind, url) && /^https?:\/\//i.test(url)) {
+      window.open(url, "_blank", "noopener,noreferrer");
+      return;
+    }
+    setPreviewSource({
+      url,
+      label: item.label || url,
+      kind: item.kind,
+      memberName: item.memberName,
+      repository: item.archiveSource,
+      cote: item.documentCode,
+      date: item.date,
+      location: item.location,
+    });
+  };
+
+  // Sources for the currently selected person in Volet 2 (Matching TreesBuilder Open Details strictly)
   const selectedPersonSources = useMemo(() => {
     const target = selectedPerson || (displayPeople.length > 0 ? displayPeople[0] : null);
     if (!target) return [];
+
     const extracted = typeof extractPersonLinks === "function" ? extractPersonLinks(target) : [];
-    if (Array.isArray(extracted) && extracted.length > 0) return extracted;
+    const list = Array.isArray(extracted)
+      ? extracted.map((l: any) => ({
+          ...l,
+          kind: classifySourceLink(l.kind, l.url),
+        }))
+      : [];
 
-    const pName = nameOf(target);
-    const matched = archivalDocuments.filter((d) =>
-      d.memberId === target.id ||
-      (pName && d.memberName && d.memberName.toLowerCase().includes(pName.toLowerCase()))
-    );
-
-    if (matched.length > 0) {
-      return matched.map((m) => ({
-        url: m.linkUrl || m.previewImage,
-        label: m.title,
-        kind: m.category === "civil" || m.category === "decree" || m.category === "notary" ? "document" : "image",
-        memberName: m.memberName,
-      }));
+    const archSrc = cleanArchText(target.archiveSource);
+    const docCode = cleanArchText(target.documentCode);
+    if (archSrc || docCode) {
+      const label = [archSrc, docCode].filter(Boolean).join(" • ");
+      const alreadyInLink = list.some((l) =>
+        l.url && (archSrc.includes(l.url) || l.url.includes(archSrc) || String(l.raw || "").trim() === archSrc)
+      );
+      if (label && !alreadyInLink && !list.some((l) => l.label === label)) {
+        list.push({
+          url: "",
+          label,
+          kind: "archive" as const,
+        });
+      }
     }
 
-    return [
-      {
-        url: "/assets/gallery/gallery-23d42dbda236debb753376b4f3046223.jpeg",
-        label: `Acte d'État Civil & Filiation — ${pName}`,
-        kind: "document",
-        memberName: pName,
-      },
-      {
-        url: "/assets/gallery/gallery-406579d6ca9e71a5619f4a5d7ec6aacb.jpeg",
-        label: `Minute d'Archives & Registre — ${pName}`,
-        kind: "image",
-        memberName: pName,
-      },
-    ];
-  }, [selectedPerson, displayPeople, archivalDocuments, locale]);
+    return list;
+  }, [selectedPerson, displayPeople]);
 
   return (
     <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/80 backdrop-blur-md p-1.5 sm:p-4 overflow-y-auto">
@@ -940,13 +850,32 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                   </div>
 
                   <div className="h-[360px] sm:h-[480px] lg:h-[580px] w-full rounded-xl overflow-hidden border-2 border-[var(--gold)]/60 relative bg-[#0b1726] shadow-2xl flex flex-col">
-                    <TreesBuilder
-                      key={tree?.id ? `tree-builder-${tree.id}-${displayPeople.length}` : "tree-builder"}
-                      people={displayPeople}
-                      rawPeople={displayPeople}
-                      readOnly={true}
-                      canDownloadDirectly={true}
-                    />
+                    {loadingGedcom && displayPeople.length === 0 ? (
+                      <div className="flex-1 flex flex-col items-center justify-center gap-3 text-slate-300 p-6 text-center">
+                        <RefreshCcw className="h-7 w-7 text-[var(--gold)] animate-spin" />
+                        <span className="text-xs font-mono">Chargement de la structure généalogique...</span>
+                      </div>
+                    ) : displayPeople.length === 0 ? (
+                      <div className="flex-1 flex flex-col items-center justify-center gap-3 text-slate-300 p-6 text-center max-w-md mx-auto">
+                        <div className="w-12 h-12 rounded-full bg-[var(--gold)]/15 border border-[var(--gold)]/30 flex items-center justify-center text-[var(--gold)]">
+                          <GitBranch className="h-6 w-6" />
+                        </div>
+                        <h4 className="font-serif text-base font-bold text-white">
+                          Aucun individu enregistré dans cet arbre
+                        </h4>
+                        <p className="text-xs text-slate-400 leading-relaxed">
+                          Cet arbre ne contient pas encore d&apos;individus ni de fichier GEDCOM importé. Ajoutez des personnes dans l&apos;éditeur pour visualiser la lignée et ses sources.
+                        </p>
+                      </div>
+                    ) : (
+                      <TreesBuilder
+                        key={tree?.id ? `tree-builder-${tree.id}-${displayPeople.length}` : "tree-builder"}
+                        people={displayPeople}
+                        rawPeople={displayPeople}
+                        readOnly={true}
+                        canDownloadDirectly={true}
+                      />
+                    )}
                   </div>
                 </div>
               )}
@@ -1025,15 +954,28 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                     </div>
 
                     {/* SPLIT VIEW: PERSONS LIST (LEFT) & SELECTED PERSON DETAIL LIKE INDIVIDUALS (RIGHT) */}
+                    {loadingGedcom && displayPeople.length === 0 ? (
+                      <div className="p-8 rounded-xl border border-dashed border-[var(--border)] text-center text-xs text-[var(--muted-foreground)] flex items-center justify-center gap-2">
+                        <RefreshCcw className="h-4 w-4 text-[var(--gold)] animate-spin" />
+                        <span>Chargement des individus de l&apos;arbre...</span>
+                      </div>
+                    ) : displayPeople.length === 0 ? (
+                      <div className="p-8 rounded-xl border border-dashed border-[var(--border)] text-center text-xs text-[var(--muted-foreground)] space-y-2">
+                        <Users className="h-7 w-7 text-[var(--gold)]/60 mx-auto" />
+                        <div className="font-semibold text-[var(--foreground)]">Aucun individu répertorié dans cet arbre pour le moment.</div>
+                        <p>Aucune fiche personnelle ni source GEDCOM n&apos;est encore associée à cet arbre.</p>
+                      </div>
+                    ) : (
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
                       
                       {/* PERSONS ROSTER COLUMN */}
                       <div className="lg:col-span-5 space-y-1.5 sm:space-y-2 max-h-[220px] sm:max-h-[320px] lg:max-h-[460px] overflow-y-auto custom-scrollbar pr-1">
                         {displayPeople.map((p: any, idx: number) => {
-                          const pName = p.names?.fr || p.names?.en || `${p.given || ""} ${p.surname || ""}`.trim() || `Individu #${idx + 1}`;
+                          const pName = nameOf(p);
+                          const pBirth = p.birthYear || p.birthDate;
                           const isFem = (p.gender || "").toUpperCase().startsWith("F");
                           const isSelected = (currentPerson?.id === p.id);
-                          const role = idx === 0 ? "Patriarche / Fondateur" : isFem && idx === 1 ? "Épouse" : p.father || p.mother ? "Enfant" : "Membre de la branche";
+                          const role = idx === 0 ? "Fondateur / Membre" : isFem && p.spouse ? "Conjointe" : p.father || p.mother ? "Enfant" : "Membre de la lignée";
 
                           return (
                             <div
@@ -1057,7 +999,7 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                                   <div className="font-bold text-xs text-[var(--foreground)] truncate">{pName}</div>
                                   <div className="text-[10px] text-[var(--muted-foreground)] font-mono flex items-center gap-1.5">
                                     <span>{role}</span>
-                                    {p.birthDate && <span>• ° {p.birthDate}</span>}
+                                    {pBirth && <span>• ° {pBirth}</span>}
                                   </div>
                                 </div>
                               </div>
@@ -1067,7 +1009,7 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                         })}
                       </div>
 
-                      {/* SELECTED PERSON DETAIL CARD ("KINDA LIKE INDIVIDUALS") */}
+                      {/* SELECTED PERSON DETAIL CARD (MATCHING OPEN DETAILS MODAL) */}
                       <div className="lg:col-span-7">
                         {currentPerson ? (
                           <div className="p-4 sm:p-5 rounded-2xl border border-[var(--gold)]/40 bg-[var(--background)] shadow-xl space-y-4">
@@ -1087,11 +1029,11 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                               <div className="flex items-center justify-between text-xs border-b border-[var(--gold)]/20 pb-2">
                                 <span className="font-mono text-[0.68rem] uppercase tracking-wider text-[var(--gold)] flex items-center gap-1">
                                   <User className="h-3.5 w-3.5" />
-                                  <span>Fiche Personne • GEDCOM ID: {currentPerson.id}</span>
+                                  <span>Fiche Personne • ID: {currentPerson.id}</span>
                                 </span>
                                 <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-semibold text-[0.65rem] flex items-center gap-1">
                                   <ShieldCheck className="w-3 h-3" />
-                                  <span>Certifié dans l'arbre</span>
+                                  <span>Dossier Individu</span>
                                 </span>
                               </div>
 
@@ -1101,15 +1043,15 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                                     (currentPerson.gender || "").toUpperCase().startsWith("F") ? "bg-rose-600" : "bg-[#0d9488]"
                                   }`}
                                 >
-                                  {(currentPerson.names?.fr || currentPerson.given || "I").charAt(0).toUpperCase()}
+                                  {nameOf(currentPerson).charAt(0).toUpperCase()}
                                 </div>
                                 <div>
                                   <h4 className="font-serif text-lg font-bold text-amber-100">
-                                    {currentPerson.names?.fr || currentPerson.names?.en || `${currentPerson.given || ""} ${currentPerson.surname || ""}`.trim()}
+                                    {nameOf(currentPerson)}
                                   </h4>
                                   <p className="text-xs text-[var(--gold)] font-medium flex items-center gap-1 mt-0.5">
                                     <Briefcase className="h-3 w-3" />
-                                    <span>{currentPerson.occupation || "Profession répertoriée aux actes"}</span>
+                                    <span>{currentPerson.profession || currentPerson.occupation || "Profession non précisée"}</span>
                                   </p>
                                 </div>
                               </div>
@@ -1119,17 +1061,17 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                                 <div className="p-2.5 rounded-lg bg-black/40 border border-[var(--gold)]/30 space-y-0.5">
                                   <span className="text-[0.65rem] text-slate-400 block uppercase font-bold">Naissance</span>
                                   <strong className="text-white block">
-                                    {currentPerson.birthDate ? `° ${currentPerson.birthDate}` : "Date non précisée"}
+                                    {(currentPerson.birthYear || currentPerson.birthDate) ? `° ${currentPerson.birthYear || currentPerson.birthDate}` : "Date non précisée"}
                                   </strong>
                                   <span className="text-slate-300 block text-[11px] truncate">
-                                    {currentPerson.birthPlace || governorate}
+                                    {currentPerson.birthPlace || "—"}
                                   </span>
                                 </div>
 
                                 <div className="p-2.5 rounded-lg bg-black/40 border border-[var(--gold)]/30 space-y-0.5">
                                   <span className="text-[0.65rem] text-slate-400 block uppercase font-bold">Décès</span>
                                   <strong className="text-white block">
-                                    {currentPerson.deathDate ? `+ ${currentPerson.deathDate}` : "Non répertorié"}
+                                    {(currentPerson.deathDate || currentPerson.deathYear) ? `+ ${currentPerson.deathDate || currentPerson.deathYear}` : "Non répertorié"}
                                   </strong>
                                   <span className="text-slate-300 block text-[11px] truncate">
                                     {currentPerson.deathPlace || "—"}
@@ -1151,19 +1093,63 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                                 <div className="p-2 rounded-lg bg-[var(--card)] border border-[var(--border)]">
                                   <span className="text-[10px] text-[var(--muted-foreground)] block">Père déclaré</span>
                                   <span className="font-semibold text-[var(--foreground)] truncate block">
-                                    {currentPerson.father ? `ID: ${currentPerson.father}` : "Ascendance à indexer"}
+                                    {currentPerson.father
+                                      ? nameOf(displayPeople.find((x: any) => String(x.id) === String(currentPerson.father))) || `ID: ${currentPerson.father}`
+                                      : "Non renseigné"}
                                   </span>
                                 </div>
                                 <div className="p-2 rounded-lg bg-[var(--card)] border border-[var(--border)]">
                                   <span className="text-[10px] text-[var(--muted-foreground)] block">Mère déclarée</span>
                                   <span className="font-semibold text-[var(--foreground)] truncate block">
-                                    {currentPerson.mother ? `ID: ${currentPerson.mother}` : "Ascendance à indexer"}
+                                    {currentPerson.mother
+                                      ? nameOf(displayPeople.find((x: any) => String(x.id) === String(currentPerson.mother))) || `ID: ${currentPerson.mother}`
+                                      : "Non renseigné"}
                                   </span>
                                 </div>
                               </div>
                             </div>
 
-                            {/* SOURCES & DOCUMENTS SECTION (LIKE OPEN DETAILS MODAL IN TREES BUILDER) */}
+                            {/* ARCHIVAL CITATION & DETAILS (EXACTLY AS IN OPEN DETAILS MODAL) */}
+                            {(cleanArchText(currentPerson.archiveSource) || cleanArchText(currentPerson.documentCode) || cleanArchText(currentPerson.reliability) || currentPerson.details) && (
+                              <div className="space-y-2 pt-1 text-xs">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                  {cleanArchText(currentPerson.archiveSource) && (
+                                    <div className="p-2.5 rounded-lg bg-[var(--card)] border border-[var(--border)] sm:col-span-2">
+                                      <span className="text-[10px] font-mono font-bold uppercase text-[var(--muted-foreground)] block">Source d&apos;archive</span>
+                                      <span className="text-xs font-medium text-[var(--foreground)] break-words">
+                                        {cleanArchText(currentPerson.archiveSource)}
+                                      </span>
+                                    </div>
+                                  )}
+                                  {cleanArchText(currentPerson.documentCode) && (
+                                    <div className="p-2.5 rounded-lg bg-[var(--card)] border border-[var(--border)]">
+                                      <span className="text-[10px] font-mono font-bold uppercase text-[var(--muted-foreground)] block">Cote du document</span>
+                                      <span className="text-xs font-medium text-[var(--foreground)] break-words">
+                                        {cleanArchText(currentPerson.documentCode)}
+                                      </span>
+                                    </div>
+                                  )}
+                                  {cleanArchText(currentPerson.reliability) && (
+                                    <div className="p-2.5 rounded-lg bg-[var(--card)] border border-[var(--border)]">
+                                      <span className="text-[10px] font-mono font-bold uppercase text-[var(--muted-foreground)] block">Fiabilité</span>
+                                      <span className="text-xs font-medium text-[var(--foreground)]">
+                                        {cleanArchText(currentPerson.reliability)}
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
+                                {currentPerson.details && (
+                                  <div className="p-2.5 rounded-lg bg-[var(--card)] border border-[var(--border)]">
+                                    <span className="text-[10px] font-mono font-bold uppercase text-[var(--muted-foreground)] block">Détails / Biographie</span>
+                                    <p className="text-xs text-[var(--foreground)]/90 whitespace-pre-line leading-relaxed mt-0.5">
+                                      {currentPerson.details}
+                                    </p>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+
+                            {/* SOURCES & DOCUMENTS SECTION (EXACTLY MATCHING OPEN DETAILS MODAL IN TREES BUILDER) */}
                             <div className="space-y-2.5 pt-3 border-t border-[var(--border)]">
                               <div className="flex items-center justify-between">
                                 <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-[var(--gold)] flex items-center gap-1.5">
@@ -1175,74 +1161,78 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                                 </span>
                               </div>
 
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                {selectedPersonSources.map((s: any, idx: number) => {
-                                  const isImg = s.kind === "image" || /\.(png|jpe?g|gif|webp)$/i.test(s.url);
-                                  const isAudio = s.kind === "audio" || /\.(mp3|wav|ogg|m4a)$/i.test(s.url);
-                                  const isDoc = s.kind === "document" || /\.(pdf|docx?|txt)$/i.test(s.url);
+                              {selectedPersonSources.length > 0 ? (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                                  {selectedPersonSources.map((s: any, idx: number) => {
+                                    const kind = s.kind || classifySourceLink(s.kind, s.url);
+                                    const isAudio = kind === "audio";
+                                    const isImg = kind === "image";
+                                    const isDoc = kind === "document";
 
-                                  const badgeColor = isImg
-                                    ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30"
-                                    : isAudio
-                                    ? "bg-amber-500/15 text-amber-400 border-amber-500/30"
-                                    : isDoc
-                                    ? "bg-blue-500/15 text-blue-400 border-blue-500/30"
-                                    : "bg-teal-500/15 text-teal-400 border-teal-500/30";
+                                    const badge = getSourceKindBadge(kind);
 
-                                  const badgeLabel = isImg
-                                    ? "IMAGE"
-                                    : isAudio
-                                    ? "AUDIO"
-                                    : isDoc
-                                    ? "DOCUMENT"
-                                    : "ARCHIVE";
+                                    return (
+                                      <div
+                                        key={`${s.url || s.label}-${idx}`}
+                                        className="p-3 rounded-xl border border-[var(--gold)]/30 bg-[var(--card)] hover:border-[var(--gold)]/70 transition-all flex flex-col gap-2 shadow-sm"
+                                      >
+                                        <div className="flex items-center justify-between gap-2">
+                                          <span className={`px-2 py-0.5 text-[9px] font-mono font-bold tracking-widest rounded-md border ${badge.color}`}>
+                                            {badge.label}
+                                          </span>
+                                          {s.url ? (
+                                            <button
+                                              type="button"
+                                              onClick={() =>
+                                                openSourceAction({
+                                                  url: s.url,
+                                                  label: s.label || s.url,
+                                                  kind,
+                                                  memberName: nameOf(currentPerson),
+                                                  archiveSource: cleanArchText(currentPerson?.archiveSource) || undefined,
+                                                  documentCode: cleanArchText(currentPerson?.documentCode) || undefined,
+                                                  date: currentPerson?.birthYear || currentPerson?.birthDate || "",
+                                                  location: currentPerson?.birthPlace || "",
+                                                })
+                                              }
+                                              className="inline-flex items-center gap-1 rounded-lg bg-[var(--gold)]/15 px-2.5 py-1 text-xs font-semibold text-[var(--gold)] hover:bg-[var(--gold)]/25 transition cursor-pointer shrink-0"
+                                            >
+                                              <ExternalLink className="h-3 w-3" />
+                                              <span>Ouvrir</span>
+                                            </button>
+                                          ) : null}
+                                        </div>
 
-                                  return (
-                                    <div
-                                      key={`${s.url}-${idx}`}
-                                      className="p-2.5 rounded-xl border border-[var(--gold)]/30 bg-[var(--card)] hover:border-[var(--gold)]/70 transition-all flex flex-col justify-between gap-2 shadow-sm"
-                                    >
-                                      <div className="flex items-center justify-between gap-1.5">
-                                        <span className={`px-1.5 py-0.5 text-[9px] font-mono font-bold rounded border ${badgeColor}`}>
-                                          {badgeLabel}
-                                        </span>
-                                        <button
-                                          type="button"
-                                          onClick={() =>
-                                            setPreviewSource({
-                                              url: s.url,
-                                              label: s.label || s.title || "Document d'Archives",
-                                              kind: s.kind,
-                                              memberName: nameOf(currentPerson),
-                                              repository: s.repository || "Archives Municipales & État Civil",
-                                              cote: s.cote || "Fonds Patronymique",
-                                              date: s.date || currentPerson?.birthDate || "",
-                                              location: s.location || currentPerson?.birthPlace || governorate,
-                                            })
-                                          }
-                                          className="inline-flex items-center gap-1 rounded-md bg-[var(--gold)]/15 px-2 py-1 text-[11px] font-semibold text-[var(--gold)] hover:bg-[var(--gold)]/25 transition cursor-pointer"
-                                        >
-                                          <ExternalLink className="h-3 w-3" />
-                                          <span>Ouvrir</span>
-                                        </button>
-                                      </div>
+                                        <div className="flex items-center gap-2 min-w-0">
+                                          {isImg ? (
+                                            <FileText className="h-4 w-4 shrink-0 text-emerald-400" />
+                                          ) : isAudio ? (
+                                            <Music className="h-4 w-4 shrink-0 text-amber-400" />
+                                          ) : isDoc ? (
+                                            <FileText className="h-4 w-4 shrink-0 text-blue-400" />
+                                          ) : kind === "archive" ? (
+                                            <Archive className="h-4 w-4 shrink-0 text-[var(--gold)]" />
+                                          ) : (
+                                            <Link2 className="h-4 w-4 shrink-0 text-teal-400" />
+                                          )}
+                                          <span className="font-semibold text-xs text-[var(--foreground)] break-words" title={s.label || s.url}>
+                                            {s.label || s.url}
+                                          </span>
+                                        </div>
 
-                                      <div className="flex items-center gap-2 min-w-0">
-                                        {isImg ? (
-                                          <FileText className="h-4 w-4 shrink-0 text-emerald-400" />
-                                        ) : isAudio ? (
-                                          <Music className="h-4 w-4 shrink-0 text-amber-400" />
-                                        ) : (
-                                          <FileText className="h-4 w-4 shrink-0 text-blue-400" />
+                                        {isAudio && s.url && (
+                                          <audio controls src={s.url} className="w-full h-8 mt-1 rounded-md" />
                                         )}
-                                        <span className="font-semibold text-xs text-[var(--foreground)] truncate" title={s.label}>
-                                          {s.label}
-                                        </span>
                                       </div>
-                                    </div>
-                                  );
-                                })}
-                              </div>
+                                    );
+                                  })}
+                                </div>
+                              ) : (
+                                <div className="p-3.5 rounded-xl border border-dashed border-[var(--border)] text-xs text-[var(--muted-foreground)] italic flex items-center gap-2">
+                                  <Archive className="h-4 w-4 opacity-50 shrink-0" />
+                                  <span>Aucune source ni document rattaché à cet individu pour le moment.</span>
+                                </div>
+                              )}
                             </div>
 
                             {/* SHORTCUT ACTIONS */}
@@ -1253,7 +1243,7 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                                 className="btn-base btn-outline text-xs py-2 px-3 flex items-center gap-2 cursor-pointer hover:border-[var(--gold)] hover:text-[var(--gold)]"
                               >
                                 <FileText className="h-3.5 w-3.5 text-[var(--gold)]" />
-                                <span>Voir l'ensemble des sources</span>
+                                <span>Voir l&apos;ensemble des sources</span>
                               </button>
 
                               <button
@@ -1262,7 +1252,7 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                                 className="btn-base btn-gold text-xs py-2 px-3 flex items-center gap-1.5 cursor-pointer"
                               >
                                 <GitBranch className="h-3.5 w-3.5" />
-                                <span>Situer dans l'arbre</span>
+                                <span>Situer dans l&apos;arbre</span>
                               </button>
                             </div>
                           </div>
@@ -1273,6 +1263,7 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                         )}
                       </div>
                     </div>
+                    )}
                   </div>
 
                   {/* GEDCOM EXPORT ACTION */}
@@ -1299,7 +1290,7 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
               )}
 
               {/* ======================================================== */}
-              {/* VOLET 3: APERÇU DES SOURCES (PREVIEW FIABLE & CONFORME)  */}
+              {/* VOLET 3: APERÇU DES SOURCES (CONFORME OPEN DETAILS MODAL)*/}
               {/* ======================================================== */}
               {activeTab === "sources" && (
                 <div className="space-y-4 animate-in fade-in duration-200">
@@ -1308,16 +1299,16 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                     <div className="space-y-0.5">
                       <h4 className="font-serif text-base sm:text-lg font-bold text-[var(--foreground)] flex items-center gap-2">
                         <FileText className="h-4 w-4 text-[var(--gold)]" />
-                        <span>Aperçu des Sources & Documents d'Archives</span>
+                        <span>Aperçu des Sources & Documents Réels</span>
                       </h4>
                       <p className="text-xs text-[var(--muted-foreground)]">
-                        Consultez les pièces d'archives rattachées aux membres de cette lignée. Cliquez sur un document pour afficher son aperçu instantané.
+                        Documents, archives et liens probatoires rattachés aux individus dans l'arbre généalogique.
                       </p>
                     </div>
 
                     <div className="flex items-center gap-2 shrink-0">
                       <span className="px-2.5 py-1 rounded-full text-xs font-mono font-bold bg-[var(--gold)]/15 text-[var(--gold)] border border-[var(--gold)]/30">
-                        {filteredArchivalDocuments.length} document{filteredArchivalDocuments.length > 1 ? "s" : ""} répertorié{filteredArchivalDocuments.length > 1 ? "s" : ""}
+                        {allMemberSources.length} document{allMemberSources.length > 1 ? "s" : ""} rattaché{allMemberSources.length > 1 ? "s" : ""}
                       </span>
                       <button
                         type="button"
@@ -1331,248 +1322,344 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                     </div>
                   </div>
 
-                  {/* MEMBER FILTER PILLS BAR */}
-                  {displayPeople.length > 0 && (
-                    <div className="flex items-center gap-2 overflow-x-auto pb-1.5 custom-scrollbar text-xs">
-                      <span className="text-[11px] font-mono font-bold text-[var(--muted-foreground)] uppercase shrink-0 flex items-center gap-1">
-                        <Users className="h-3.5 w-3.5 text-[var(--gold)]" />
-                        <span>Membre :</span>
-                      </span>
+                  {/* CASE 0: LOADING GEDCOM SOURCES */}
+                  {loadingGedcom && displayPeople.length === 0 ? (
+                    <div className="p-8 rounded-2xl border border-dashed border-[var(--border)] bg-[var(--background)]/60 text-center space-y-3">
+                      <RefreshCcw className="h-7 w-7 text-[var(--gold)] mx-auto animate-spin" />
+                      <p className="text-xs font-mono text-[var(--muted-foreground)]">
+                        Analyse des sources liées aux fiches de l&apos;arbre...
+                      </p>
+                    </div>
+                  ) : allMemberSources.length === 0 ? (
+                    /* CASE 1: TREE HAS ZERO SOURCES LINKED TO ANY INDIVIDUAL */
+                    <div className="p-6 sm:p-8 rounded-2xl border border-dashed border-[var(--border)] bg-[var(--background)]/60 text-center space-y-4">
+                      <div className="w-14 h-14 mx-auto rounded-full bg-[var(--gold)]/10 border border-[var(--gold)]/30 flex items-center justify-center text-[var(--gold)]">
+                        <Archive className="h-7 w-7 opacity-80" />
+                      </div>
+                      <div className="space-y-1.5 max-w-lg mx-auto">
+                        <h4 className="font-serif text-lg font-bold text-[var(--foreground)]">
+                          {displayPeople.length === 0
+                            ? "Aucun individu ni source liée dans cet arbre"
+                            : "Aucune source ni document lié pour cet arbre"}
+                        </h4>
+                        <p className="text-xs text-[var(--muted-foreground)] leading-relaxed">
+                          {displayPeople.length === 0 ? (
+                            <>Cet arbre ne contient encore aucun individu enregistré ni aucune source rattachée dans l&apos;éditeur.</>
+                          ) : (
+                            <>
+                              Cet arbre compte <strong>{membersCount} individu{membersCount > 1 ? "s" : ""}</strong> et <strong>{generations} génération{generations > 1 ? "s" : ""}</strong>. Aucun document, image, audio ou lien de source n&apos;est rattaché dans la fenêtre <em>Open details</em> de ces individus.
+                            </>
+                          )}
+                        </p>
+                      </div>
 
-                      <button
-                        type="button"
-                        onClick={() => setSelectedSourceMemberId("all")}
-                        className={`px-3 py-1 rounded-full font-mono text-xs font-semibold shrink-0 transition-all border cursor-pointer ${
-                          selectedSourceMemberId === "all"
-                            ? "bg-[var(--gold)] text-black border-[var(--gold)] shadow-sm font-bold"
-                            : "bg-[var(--card)] text-[var(--foreground)] border-[var(--border)] hover:border-[var(--gold)]/50"
-                        }`}
-                      >
-                        Tous les membres ({archivalDocuments.length})
-                      </button>
+                      {/* INDIVIDUAL STATUS BREAKDOWN LIST */}
+                      {displayPeople.length > 0 && (
+                        <div className="pt-2 max-w-md mx-auto space-y-2 text-start">
+                          <div className="text-[10px] uppercase font-mono font-bold text-[var(--muted-foreground)] tracking-wider px-1">
+                            État des individus répertoriés ({displayPeople.length}) :
+                          </div>
+                          <div className="space-y-1.5">
+                            {displayPeople.map((person: any, idx: number) => {
+                              const pName = nameOf(person);
+                              const isFem = (person.gender || "").toUpperCase().startsWith("F");
 
-                      {displayPeople.map((person: any, idx: number) => {
-                        const pId = String(person.id ?? `@I${idx + 1}@`);
-                        const pName =
-                          person.names?.fr ||
-                          person.names?.en ||
-                          person.names?.ar ||
-                          (person.given || person.surname ? `${person.given || ""} ${person.surname || ""}`.trim() : "") ||
-                          person.name ||
-                          `Membre #${idx + 1}`;
-                        const pCount = archivalDocuments.filter((d) => d.memberId === pId).length;
-                        const isFem = (person.gender || "").toUpperCase().startsWith("F");
+                              return (
+                                <button
+                                  key={person.id || idx}
+                                  type="button"
+                                  onClick={() => {
+                                    setSelectedPerson(person);
+                                    setActiveTab("details");
+                                  }}
+                                  className="w-full flex items-center justify-between p-2.5 rounded-lg bg-[var(--card)] border border-[var(--border)] hover:border-[var(--gold)]/60 text-xs transition-colors cursor-pointer"
+                                >
+                                  <div className="flex items-center gap-2 min-w-0">
+                                    <div
+                                      className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0 ${
+                                        isFem ? "bg-rose-600" : "bg-[#0d9488]"
+                                      }`}
+                                    >
+                                      <User className="h-3 w-3" />
+                                    </div>
+                                    <span className="font-semibold truncate text-[var(--foreground)]">{pName}</span>
+                                  </div>
+                                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-stone-500/10 text-[var(--muted-foreground)] border border-[var(--border)] shrink-0">
+                                    0 source liée
+                                  </span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
 
-                        return (
+                      <div className="pt-3 flex items-center justify-center gap-3 flex-wrap">
+                        <button
+                          type="button"
+                          onClick={() => setActiveTab("schema")}
+                          className="btn-base btn-gold text-xs py-2 px-4 flex items-center gap-1.5 cursor-pointer shadow-sm font-semibold"
+                        >
+                          <GitBranch className="h-3.5 w-3.5" />
+                          <span>Explorer le Schéma Graphique</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setActiveTab("details")}
+                          className="btn-base btn-outline text-xs py-2 px-4 flex items-center gap-1.5 cursor-pointer"
+                        >
+                          <User className="h-3.5 w-3.5 text-[var(--gold)]" />
+                          <span>Inspecter les Fiches & GEDCOM</span>
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    /* CASE 2: REAL SOURCES EXIST FOR AT LEAST ONE INDIVIDUAL (DISPLAYED LIKE OPEN DETAILS MODAL) */
+                    <div className="space-y-4">
+                      {/* MEMBER FILTER PILLS BAR */}
+                      {displayPeople.length > 0 && (
+                        <div className="flex items-center gap-2 overflow-x-auto pb-1.5 custom-scrollbar text-xs">
+                          <span className="text-[11px] font-mono font-bold text-[var(--muted-foreground)] uppercase shrink-0 flex items-center gap-1">
+                            <Users className="h-3.5 w-3.5 text-[var(--gold)]" />
+                            <span>Membre :</span>
+                          </span>
+
                           <button
-                            key={pId}
                             type="button"
-                            onClick={() => setSelectedSourceMemberId(pId)}
-                            className={`px-3 py-1 rounded-full font-mono text-xs font-semibold shrink-0 transition-all border cursor-pointer flex items-center gap-1.5 ${
-                              selectedSourceMemberId === pId
+                            onClick={() => setSelectedSourceMemberId("all")}
+                            className={`px-3 py-1 rounded-full font-mono text-xs font-semibold shrink-0 transition-all border cursor-pointer ${
+                              selectedSourceMemberId === "all"
                                 ? "bg-[var(--gold)] text-black border-[var(--gold)] shadow-sm font-bold"
                                 : "bg-[var(--card)] text-[var(--foreground)] border-[var(--border)] hover:border-[var(--gold)]/50"
                             }`}
                           >
-                            <span
-                              className={`w-2 h-2 rounded-full shrink-0 ${
-                                selectedSourceMemberId === pId ? "bg-black" : isFem ? "bg-rose-500" : "bg-emerald-500"
-                              }`}
-                            />
-                            <span className="truncate max-w-[130px]">{pName}</span>
-                            <span
-                              className={`text-[10px] px-1.5 py-0.2 rounded-full ${
-                                selectedSourceMemberId === pId
-                                  ? "bg-black/20 text-black font-bold"
-                                  : "bg-[var(--border)] text-[var(--muted-foreground)]"
-                              }`}
-                            >
-                              {pCount}
-                            </span>
+                            Tous les membres ({allMemberSources.length})
                           </button>
-                        );
-                      })}
-                    </div>
-                  )}
 
-                  {/* SOURCES GRID */}
-                  {filteredArchivalDocuments.length === 0 ? (
-                    <div className="p-8 rounded-xl border border-dashed border-[var(--border)] text-center text-xs text-[var(--muted-foreground)] space-y-3">
-                      <FileText className="h-8 w-8 text-[var(--gold)] mx-auto opacity-70" />
-                      <p>Aucune pièce d'archive spécifique trouvée pour ce membre.</p>
-                      <button
-                        type="button"
-                        onClick={() => setSelectedSourceMemberId("all")}
-                        className="btn-base btn-gold text-xs py-1.5 px-3 mx-auto cursor-pointer"
-                      >
-                        Afficher toutes les sources de l'arbre ({archivalDocuments.length})
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 pb-2">
-                      {filteredArchivalDocuments.map((doc) => {
-                        const badge = getCategoryBadge(doc.category);
+                          {displayPeople.map((person: any, idx: number) => {
+                            const pId = String(person.id ?? `@I${idx + 1}@`);
+                            const pName = nameOf(person);
+                            const pCount = allMemberSources.filter((d) => d.memberId === pId).length;
+                            const isFem = (person.gender || "").toUpperCase().startsWith("F");
 
-                        return (
-                          <div
-                            key={doc.id}
-                            className="rounded-xl border border-[var(--border)] hover:border-[var(--gold)]/70 bg-[var(--card)] p-4 shadow-md hover:shadow-xl transition-all duration-200 flex flex-col justify-between group space-y-3"
-                          >
-                            <div className="space-y-3">
-                              {/* Badges bar */}
-                              <div className="flex items-center justify-between gap-2">
-                                <span className={`px-2 py-0.5 rounded-md text-[10px] font-mono font-bold border ${badge.color}`}>
-                                  {badge.label}
-                                </span>
-                                <span className="text-[10px] font-mono font-bold text-[var(--gold)] bg-[var(--gold)]/10 px-2 py-0.5 rounded border border-[var(--gold)]/30">
-                                  {doc.cote}
-                                </span>
-                              </div>
-
-                              {/* Member Connection Badge */}
-                              <div className="flex items-center gap-2 p-2 rounded-lg bg-[var(--background)]/80 border border-[var(--border)]">
-                                <div
-                                  className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0 ${
-                                    doc.memberRole.includes("Mère") || doc.memberRole.includes("Fille") || doc.memberRole.includes("Conjointe")
-                                      ? "bg-rose-600"
-                                      : "bg-[#0d9488]"
+                            return (
+                              <button
+                                key={pId}
+                                type="button"
+                                onClick={() => setSelectedSourceMemberId(pId)}
+                                className={`px-3 py-1 rounded-full font-mono text-xs font-semibold shrink-0 transition-all border cursor-pointer flex items-center gap-1.5 ${
+                                  selectedSourceMemberId === pId
+                                    ? "bg-[var(--gold)] text-black border-[var(--gold)] shadow-sm font-bold"
+                                    : "bg-[var(--card)] text-[var(--foreground)] border-[var(--border)] hover:border-[var(--gold)]/50"
+                                }`}
+                              >
+                                <span
+                                  className={`w-2 h-2 rounded-full shrink-0 ${
+                                    selectedSourceMemberId === pId ? "bg-black" : isFem ? "bg-rose-500" : "bg-emerald-500"
+                                  }`}
+                                />
+                                <span className="truncate max-w-[140px]">{pName}</span>
+                                <span
+                                  className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                                    selectedSourceMemberId === pId
+                                      ? "bg-black/20 text-black font-bold"
+                                      : "bg-[var(--border)] text-[var(--muted-foreground)]"
                                   }`}
                                 >
-                                  <User className="h-3 w-3" />
-                                </div>
-                                <div className="min-w-0 flex-1">
-                                  <div className="text-[10px] uppercase font-mono font-bold text-[var(--muted-foreground)] leading-none">
-                                    Membre rattaché
-                                  </div>
-                                  <div className="text-xs font-bold text-[var(--foreground)] truncate font-serif">
-                                    {doc.memberName}
-                                  </div>
-                                </div>
-                                <span className="text-[10px] font-mono text-[var(--gold)] bg-[var(--gold)]/10 px-2 py-0.5 rounded border border-[var(--gold)]/30 shrink-0 max-w-[130px] truncate">
-                                  {doc.memberRole}
+                                  {pCount}
                                 </span>
-                              </div>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
 
-                              {/* Document Visual Preview Card - click opens Preview Modal */}
+                      {/* SOURCES LIST GRID MATCHING OPEN DETAILS MODAL CARDS (NO UNRELATED COVER PHOTOS) */}
+                      {filteredMemberSources.length === 0 ? (
+                        <div className="p-8 rounded-xl border border-dashed border-[var(--border)] text-center text-xs text-[var(--muted-foreground)] space-y-3">
+                          <FileText className="h-8 w-8 text-[var(--gold)] mx-auto opacity-70" />
+                          <p>Aucune source rattachée à ce membre dans sa fenêtre Open details.</p>
+                          <button
+                            type="button"
+                            onClick={() => setSelectedSourceMemberId("all")}
+                            className="btn-base btn-gold text-xs py-1.5 px-3 mx-auto cursor-pointer"
+                          >
+                            Afficher toutes les sources de l&apos;arbre ({allMemberSources.length})
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 pb-2">
+                          {filteredMemberSources.map((doc) => {
+                            const badge = getSourceKindBadge(doc.kind);
+                            const isImg = doc.kind === "image";
+                            const isAudio = doc.kind === "audio";
+                            const isDoc = doc.kind === "document";
+                            const linkedMember = displayPeople.find((p: any) => String(p.id) === String(doc.memberId));
+
+                            return (
                               <div
-                                onClick={() => {
-                                  setPreviewSource({
-                                    url: doc.linkUrl || doc.previewImage,
-                                    label: doc.title,
-                                    kind: doc.category === "civil" || doc.category === "notary" || doc.category === "decree" ? "document" : "image",
-                                    memberName: doc.memberName,
-                                    repository: doc.repository,
-                                    cote: doc.cote,
-                                    date: doc.date,
-                                    location: doc.location,
-                                  });
-                                }}
-                                className="relative h-44 w-full rounded-lg overflow-hidden border border-[var(--gold)]/30 bg-stone-900 cursor-pointer group/img shadow-inner"
-                                title="Cliquer pour ouvrir l'aperçu du document"
+                                key={doc.id}
+                                className="rounded-xl border border-[var(--gold)]/30 hover:border-[var(--gold)]/70 bg-[var(--card)] p-4 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col justify-between gap-3 text-start"
                               >
-                                <img
-                                  src={doc.previewImage}
-                                  alt={doc.title}
-                                  onError={(e) => {
-                                    e.currentTarget.src = "/assets/gallery/gallery-23d42dbda236debb753376b4f3046223.jpeg";
-                                  }}
-                                  className="w-full h-full object-cover transition-transform duration-300 group-hover/img:scale-105"
-                                />
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30 opacity-80 group-hover/img:opacity-60 transition-opacity" />
-                                
-                                {/* Floating Seal */}
-                                <div className="absolute top-2 start-2 flex items-center gap-1 bg-black/60 backdrop-blur-sm px-2 py-0.5 rounded text-[10px] text-emerald-400 font-mono font-semibold border border-emerald-500/30">
-                                  <ShieldCheck className="h-3 w-3" />
-                                  <span>Acte Vérifié</span>
+                                <div className="space-y-3">
+                                  {/* Badge bar + Direct Open Button (exactly as in Open Details modal) */}
+                                  <div className="flex items-center justify-between gap-2">
+                                    <div className="flex items-center gap-1.5 flex-wrap min-w-0">
+                                      <span className={`px-2 py-0.5 rounded-md text-[10px] font-mono font-bold tracking-wider border ${badge.color}`}>
+                                        {badge.label}
+                                      </span>
+                                      {doc.documentCode && (
+                                        <span className="text-[10px] font-mono font-bold text-[var(--gold)] bg-[var(--gold)]/10 px-2 py-0.5 rounded border border-[var(--gold)]/30 truncate max-w-[160px]">
+                                          {doc.documentCode}
+                                        </span>
+                                      )}
+                                    </div>
+                                    {doc.url ? (
+                                      <button
+                                        type="button"
+                                        onClick={() =>
+                                          openSourceAction({
+                                            url: doc.url,
+                                            label: doc.label,
+                                            kind: doc.kind,
+                                            memberName: doc.memberName,
+                                            archiveSource: doc.archiveSource,
+                                            documentCode: doc.documentCode,
+                                          })
+                                        }
+                                        className="inline-flex items-center gap-1 rounded-lg bg-[var(--gold)]/15 px-2.5 py-1 text-xs font-semibold text-[var(--gold)] hover:bg-[var(--gold)]/25 transition cursor-pointer shrink-0"
+                                        title="Ouvrir cette source"
+                                      >
+                                        <ExternalLink className="h-3 w-3" />
+                                        <span>Ouvrir</span>
+                                      </button>
+                                    ) : null}
+                                  </div>
+
+                                  {/* Linked Member Strip */}
+                                  <div className="flex items-center gap-2 p-2 rounded-lg bg-[var(--background)]/80 border border-[var(--border)]">
+                                    <div
+                                      className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0 ${
+                                        (doc.gender || "").toUpperCase().startsWith("F")
+                                          ? "bg-rose-600"
+                                          : "bg-[#0d9488]"
+                                      }`}
+                                    >
+                                      <User className="h-3 w-3" />
+                                    </div>
+                                    <div className="min-w-0 flex-1">
+                                      <div className="text-[10px] uppercase font-mono font-bold text-[var(--muted-foreground)] leading-none">
+                                        Membre rattaché
+                                      </div>
+                                      <div className="text-xs font-bold text-[var(--foreground)] truncate font-serif mt-0.5">
+                                        {doc.memberName}
+                                      </div>
+                                    </div>
+                                    {doc.memberRole && (
+                                      <span className="text-[10px] font-mono text-[var(--gold)] bg-[var(--gold)]/10 px-2 py-0.5 rounded border border-[var(--gold)]/30 shrink-0 max-w-[130px] truncate">
+                                        {doc.memberRole}
+                                      </span>
+                                    )}
+                                  </div>
+
+                                  {/* Source Card Body (Exact Open Details Layout: Icon + Label + Optional Audio Player) */}
+                                  <div className="p-3 rounded-lg bg-[var(--background)] border border-[var(--border)] space-y-2">
+                                    <div className="flex items-start gap-2.5 min-w-0">
+                                      <div className="p-1.5 rounded-md bg-[var(--gold)]/10 shrink-0 mt-0.5">
+                                        {isImg ? (
+                                          <FileText className="h-4 w-4 text-emerald-400" />
+                                        ) : isAudio ? (
+                                          <Music className="h-4 w-4 text-amber-400" />
+                                        ) : isDoc ? (
+                                          <FileText className="h-4 w-4 text-blue-400" />
+                                        ) : doc.kind === "archive" ? (
+                                          <Archive className="h-4 w-4 text-[var(--gold)]" />
+                                        ) : (
+                                          <Link2 className="h-4 w-4 text-teal-400" />
+                                        )}
+                                      </div>
+                                      <div className="min-w-0 flex-1">
+                                        <div className="text-xs font-semibold text-[var(--foreground)] break-words leading-snug">
+                                          {doc.label}
+                                        </div>
+                                        {doc.archiveSource && !doc.label.includes(doc.archiveSource) && (
+                                          <div className="text-[11px] text-[var(--muted-foreground)] font-mono break-words mt-1">
+                                            {doc.archiveSource}
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+
+                                    {isAudio && doc.url && (
+                                      <audio controls src={doc.url} className="w-full h-8 mt-1 rounded-md" />
+                                    )}
+                                  </div>
+
+                                  {/* Reliability & Details if present on individual */}
+                                  {doc.reliability && (
+                                    <div className="text-[11px] font-mono text-emerald-400 flex items-center gap-1">
+                                      <ShieldCheck className="h-3 w-3 shrink-0" />
+                                      <span>Fiabilité : {doc.reliability}</span>
+                                    </div>
+                                  )}
+                                  {doc.details && (
+                                    <p className="text-xs text-[var(--foreground)]/80 leading-relaxed font-light line-clamp-2">
+                                      {doc.details}
+                                    </p>
+                                  )}
                                 </div>
 
-                                <div className="absolute bottom-2 start-2 end-2 flex items-center justify-between text-xs text-white">
-                                  <span className="text-[11px] font-mono text-amber-300 font-bold flex items-center gap-1 drop-shadow-md truncate max-w-[65%]">
-                                    <User className="h-3 w-3 shrink-0" />
-                                    <span className="truncate">{doc.memberName}</span>
-                                  </span>
-                                  <span className="px-2 py-0.5 rounded bg-black/70 text-[10px] font-mono text-[var(--gold)] border border-[var(--gold)]/40 flex items-center gap-1 shrink-0 backdrop-blur-sm">
-                                    <Eye className="h-2.5 w-2.5" />
-                                    <span>Aperçu</span>
-                                  </span>
+                                {/* Footer Controls */}
+                                <div className="pt-2.5 border-t border-[var(--border)] flex items-center gap-2">
+                                  {doc.url ? (
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        openSourceAction({
+                                          url: doc.url,
+                                          label: doc.label,
+                                          kind: doc.kind,
+                                          memberName: doc.memberName,
+                                          archiveSource: doc.archiveSource,
+                                          documentCode: doc.documentCode,
+                                        })
+                                      }
+                                      className="btn-base btn-gold flex-1 text-xs py-1.5 px-3 flex items-center justify-center gap-1.5 cursor-pointer shadow-sm font-semibold"
+                                    >
+                                      <ExternalLink className="h-3.5 w-3.5" />
+                                      <span>Ouvrir la source</span>
+                                    </button>
+                                  ) : (
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        if (linkedMember) setSelectedPerson(linkedMember);
+                                        setActiveTab("details");
+                                      }}
+                                      className="btn-base btn-outline flex-1 text-xs py-1.5 px-3 flex items-center justify-center gap-1.5 cursor-pointer"
+                                    >
+                                      <User className="h-3.5 w-3.5 text-[var(--gold)]" />
+                                      <span>Voir la fiche</span>
+                                    </button>
+                                  )}
+
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      if (linkedMember) setSelectedPerson(linkedMember);
+                                      setActiveTab("schema");
+                                    }}
+                                    className="p-2 rounded-lg border border-[var(--border)] hover:border-[var(--gold)] hover:bg-[var(--gold)]/15 text-[var(--gold)] transition-colors cursor-pointer shrink-0"
+                                    title="Situer ce membre dans l'arbre interactif"
+                                  >
+                                    <GitBranch className="h-4 w-4" />
+                                  </button>
                                 </div>
                               </div>
-
-                              {/* Title & Archival Info */}
-                              <div className="space-y-1.5">
-                                <h5
-                                  onClick={() => {
-                                    setPreviewSource({
-                                      url: doc.linkUrl || doc.previewImage,
-                                      label: doc.title,
-                                      kind: doc.category === "civil" || doc.category === "notary" || doc.category === "decree" ? "document" : "image",
-                                      memberName: doc.memberName,
-                                    });
-                                  }}
-                                  className="font-serif text-sm sm:text-base font-bold text-[var(--foreground)] group-hover:text-[var(--gold)] transition-colors leading-snug cursor-pointer line-clamp-2"
-                                >
-                                  {doc.title}
-                                </h5>
-
-                                <div className="text-[11px] text-[var(--muted-foreground)] font-mono flex items-center gap-1.5 truncate">
-                                  <Building className="h-3 w-3 shrink-0 text-slate-400" />
-                                  <span className="truncate">{doc.repository}</span>
-                                </div>
-
-                                <div className="text-[11px] text-[var(--muted-foreground)] font-mono flex items-center gap-1.5">
-                                  <Calendar className="h-3 w-3 shrink-0 text-slate-400" />
-                                  <span className="truncate">{doc.date} — {doc.location}</span>
-                                </div>
-
-                                <p className="text-xs text-[var(--foreground)]/80 leading-relaxed font-light line-clamp-2 pt-0.5">
-                                  {doc.summary}
-                                </p>
-                              </div>
-                            </div>
-
-                            {/* ACTION CONTROLS */}
-                            <div className="pt-3 border-t border-[var(--border)] flex items-center gap-2.5">
-                              {/* PREVIEW BUTTON */}
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setPreviewSource({
-                                    url: doc.linkUrl || doc.previewImage,
-                                    label: doc.title,
-                                    kind: doc.category === "civil" || doc.category === "notary" || doc.category === "decree" ? "document" : "image",
-                                    memberName: doc.memberName,
-                                    repository: doc.repository,
-                                    cote: doc.cote,
-                                    date: doc.date,
-                                    location: doc.location,
-                                  });
-                                }}
-                                className="btn-base btn-gold flex-1 text-xs py-2.5 px-3 flex items-center justify-center gap-2 cursor-pointer shadow-md font-bold tracking-wide"
-                                title="Consulter l'aperçu du document"
-                              >
-                                <Eye className="h-4 w-4" />
-                                <span>Consulter l'Aperçu</span>
-                              </button>
-
-                              {/* TREE LINK */}
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setActiveTab("schema");
-                                  if (doc.memberId && doc.memberId !== "all") {
-                                    const found = displayPeople.find((p: any) => String(p.id) === String(doc.memberId));
-                                    if (found) setSelectedPerson(found);
-                                  }
-                                }}
-                                className="p-2.5 rounded-lg border border-[var(--border)] hover:border-[var(--gold)] hover:bg-[var(--gold)]/15 text-[var(--gold)] transition-colors cursor-pointer shrink-0"
-                                title="Situer ce membre et cette source dans l'arbre interactif"
-                              >
-                                <GitBranch className="h-4 w-4" />
-                              </button>
-                            </div>
-                          </div>
-                        );
-                      })}
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -1656,7 +1743,7 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                     src={previewSource.url}
                     alt={previewSource.label}
                     onError={(e) => {
-                      e.currentTarget.src = "/assets/gallery/gallery-23d42dbda236debb753376b4f3046223.jpeg";
+                      e.currentTarget.style.display = "none";
                     }}
                     className="max-w-full max-h-[55vh] object-contain rounded-lg shadow-md border border-[var(--gold)]/30 bg-stone-950"
                   />
@@ -1695,8 +1782,8 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                     setActiveTab("schema");
                     if (memberName) {
                       const found = displayPeople.find((p: any) => {
-                        const nm = p.names?.fr || p.names?.en || p.names?.ar || p.given || "";
-                        return nm && memberName.includes(nm);
+                        const nm = nameOf(p);
+                        return nm && (nm === memberName || memberName.includes(nm));
                       });
                       if (found) setSelectedPerson(found);
                     }
@@ -1708,15 +1795,17 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                 </button>
 
                 <div className="flex items-center gap-2">
-                  <a
-                    href={previewSource.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="btn-base btn-gold text-xs py-2 px-4 flex items-center gap-1.5 shadow-sm font-semibold cursor-pointer"
-                  >
-                    <ExternalLink className="w-3.5 h-3.5" />
-                    <span>Ouvrir dans une Nouvelle Page</span>
-                  </a>
+                  {previewSource.url ? (
+                    <a
+                      href={previewSource.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn-base btn-gold text-xs py-2 px-4 flex items-center gap-1.5 shadow-sm font-semibold cursor-pointer"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" />
+                      <span>Ouvrir dans une Nouvelle Page</span>
+                    </a>
+                  ) : null}
                   <button
                     type="button"
                     onClick={() => setPreviewSource(null)}
