@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "../context/TranslationContext";
 import SEO from "../components/SEO";
 import { api } from "../api/client";
+import SiteCustomBlocks from "../components/cms/SiteCustomBlocks";
 
 type LegalSection = { heading: string; body: string };
 type LegalDocument = { title: string; intro: string; sections: LegalSection[] };
@@ -119,6 +120,7 @@ export default function Terms() {
               </section>
             ))}
           </div>
+          <SiteCustomBlocks pageId="terms" className="mt-8" />
         </div>
       </div>
     </div>

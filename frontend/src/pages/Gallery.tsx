@@ -29,6 +29,7 @@ import kairouan from "../assets/slider-kairouan.jpg";
 import manuscript from "../assets/family-archive.jpg";
 import SEO from "../components/SEO";
 import { useSiteContent } from "../hooks/useSiteContent";
+import SiteCustomBlocks from "../components/cms/SiteCustomBlocks";
 
 interface CuratedItem {
   id: string;
@@ -434,6 +435,8 @@ export default function Gallery() {
           </div>
         </div>
       )}
+
+      <SiteCustomBlocks pageId="gallery" />
     </div>
   );
 }

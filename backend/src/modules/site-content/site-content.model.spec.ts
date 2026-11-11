@@ -3,21 +3,51 @@ import {
   buildDefaultPages,
   collectUploadedFilenames,
   mergeWithDefaults,
+  sanitizeBuilderCss,
+  sanitizeBuilderHtml,
   sanitizeHtml,
   sanitizePages,
   toPublicContent,
 } from "./site-content.model";
 
 describe("site-content model", () => {
-  it("seeds all required pages with typed fields", () => {
+  it("seeds all required pages with typed fields including grapes_builder", () => {
     const pages = buildDefaultPages();
     expect(pages.map((p) => p.id)).toEqual([
-      "home", "about", "gallery", "library", "audio", "documents", "contact", "research",
+      "home",
+      "about",
+      "gallery",
+      "gallery_images",
+      "gallery_trees",
+      "gallery_articles",
+      "gallery_documents",
+      "library",
+      "audio",
+      "documents",
+      "contact",
+      "research",
+      "archives",
+      "sources",
+      "periods",
+      "subscriptions",
+      "refund",
+      "privacy",
+      "terms",
+      "cookies",
+      "footer",
     ]);
     const types = new Set(
       pages.flatMap((p) => p.sections.flatMap((s) => s.fields.map((f) => f.type))),
     );
-    expect([...types].sort()).toEqual(["html", "image", "list", "text"]);
+    expect([...types].sort()).toEqual([
+      "builder_html",
+      "css",
+      "html",
+      "image",
+      "json",
+      "list",
+      "text",
+    ]);
   });
 
   it("merges stored values over the default schema and keeps custom entries", () => {
@@ -128,11 +158,34 @@ describe("site-content model", () => {
             fields: [
               { key: "a", type: "image", label: "a", value: "/uploads/site-content/sc-1.png" },
               { key: "b", type: "image", label: "b", value: "https://x.test/uploads/site-content/sc-2.png" },
+              {
+                key: "html",
+                type: "builder_html",
+                label: "html",
+                value: '<section><img src="/uploads/site-content/sc-3.jpg" alt="Carthage"></section>',
+              },
             ],
           },
         ],
       },
     ]);
-    expect([...names]).toEqual(["sc-1.png"]);
+    expect([...names].sort()).toEqual(["sc-1.png", "sc-3.jpg"]);
+  });
+
+  it("sanitizes GrapesJS builder_html and css safely while preserving visual blocks", () => {
+    const cleanHtml = sanitizeBuilderHtml(
+      '<section class="rt-hero" style="background: #0d1321; background-image: expression(alert(1));" onclick="bad()"><h1 id="t1">Carthage</h1><img src="/assets/slider-carthage.jpg" alt="Carthage"><img src="javascript:alert(1)" onerror="bad()"><script>alert(1)</script><a href="https://rootstunisia.com">Go</a><a href="javascript:evil()">Skip</a></section>',
+    );
+    expect(cleanHtml).toContain('<section class="rt-hero"');
+    expect(cleanHtml).toContain('<h1 id="t1">Carthage</h1>');
+    expect(cleanHtml).toContain('<img src="/assets/slider-carthage.jpg" alt="Carthage">');
+    expect(cleanHtml).toContain('<a href="https://rootstunisia.com" target="_blank" rel="noopener noreferrer">Go</a>');
+    expect(cleanHtml).not.toMatch(/onclick|onerror|script|javascript:|expression\(/i);
+
+    const cleanCss = sanitizeBuilderCss(
+      '@import url("https://evil.test/x.css"); .rt-hero { color: #d4a650; width: expression(1); background: url(data:text/html,evil); }</style><script>x()</script>',
+    );
+    expect(cleanCss).toContain("color: #d4a650");
+    expect(cleanCss).not.toMatch(/@import|<\/?script|<\/?style|expression\s*\(|data:/i);
   });
 });

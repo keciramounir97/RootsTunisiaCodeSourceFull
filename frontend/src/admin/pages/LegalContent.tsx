@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { Suspense, lazy, useCallback, useEffect, useState } from "react";
 import {
   Scale,
   Lock,
@@ -19,6 +19,10 @@ import {
 import { api } from "../../api/client";
 import { getApiErrorMessage } from "../../api/helpers";
 import { useTranslation } from "../../context/TranslationContext";
+import { refreshSiteContent } from "../../hooks/useSiteContent";
+import type { GrapesBuilderPayload } from "../components/cms/GrapesJsBuilder";
+
+const GrapesJsBuilder = lazy(() => import("../components/cms/GrapesJsBuilder"));
 
 type LegalSection = { heading: string; body: string };
 
@@ -73,7 +77,111 @@ export default function LegalContent() {
   const [saving, setSaving] = useState(false);
   const [savedSuccess, setSavedSuccess] = useState(false);
   const [previewMode, setPreviewMode] = useState(false);
+  const [grapesMode, setGrapesMode] = useState(false);
+  const [grapesPayload, setGrapesPayload] = useState<GrapesBuilderPayload>({
+    html: "",
+    css: "",
+    projectJson: "",
+  });
   const [error, setError] = useState("");
+
+  // Sync legal page's GrapesJS visual block state with /admin/site-content
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      try {
+        const res = await api.get("/admin/site-content");
+        const contentDoc = res.data?.data ?? res.data;
+        const page = contentDoc?.pages?.find((p: any) => p.id === selectedSlug);
+        const gSec = page?.sections?.find((s: any) => s.id === "grapes_builder");
+        const readFld = (key: string): string => {
+          const fld = gSec?.fields?.find((f: any) => f.key === key);
+          if (!fld) return "";
+          const tr = fld.translations?.[selectedLocale];
+          if (typeof tr === "string" && tr.trim()) return tr;
+          return typeof fld.value === "string" ? fld.value : "";
+        };
+        if (active) {
+          setGrapesPayload({
+            html: readFld("html"),
+            css: readFld("css"),
+            projectJson: readFld("project"),
+          });
+        }
+      } catch {
+        if (active) setGrapesPayload({ html: "", css: "", projectJson: "" });
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [selectedSlug, selectedLocale]);
+
+  const handleSaveGrapes = useCallback(
+    async (payloadOverride?: GrapesBuilderPayload) => {
+      const payload = payloadOverride || grapesPayload;
+      setSaving(true);
+      setError("");
+      setSavedSuccess(false);
+      try {
+        const res = await api.get("/admin/site-content");
+        const contentDoc = res.data?.data ?? res.data ?? { pages: [] };
+        const pages: any[] = Array.isArray(contentDoc.pages)
+          ? JSON.parse(JSON.stringify(contentDoc.pages))
+          : [];
+        let page = pages.find((p: any) => p.id === selectedSlug);
+        if (!page) {
+          page = {
+            id: selectedSlug,
+            label: selectedSlug,
+            path: `/${selectedSlug}`,
+            sections: [],
+          };
+          pages.push(page);
+        }
+        let gSec = page.sections.find((s: any) => s.id === "grapes_builder");
+        if (!gSec) {
+          gSec = {
+            id: "grapes_builder",
+            label: "GrapesJS Visual Builder",
+            fields: [
+              { key: "html", type: "builder_html", label: "GrapesJS HTML", value: "" },
+              { key: "css", type: "css", label: "GrapesJS CSS", value: "" },
+              { key: "project", type: "json", label: "GrapesJS Project Data", value: "" },
+            ],
+          };
+          page.sections.push(gSec);
+        }
+        const upsert = (key: "html" | "css" | "project", type: string, val: string) => {
+          let fld = gSec.fields.find((f: any) => f.key === key);
+          if (!fld) {
+            fld = { key, type, label: key, value: "" };
+            gSec.fields.push(fld);
+          }
+          fld.type = type;
+          const translations = { ...(fld.translations || {}) };
+          if (val) translations[selectedLocale] = val;
+          else delete translations[selectedLocale];
+          fld.translations = translations;
+          if (!fld.value && selectedLocale === "fr") fld.value = val;
+        };
+        upsert("html", "builder_html", payload.html);
+        upsert("css", "css", payload.css);
+        upsert("project", "json", payload.projectJson);
+
+        await api.put("/admin/site-content", { pages });
+        await refreshSiteContent();
+        setGrapesPayload(payload);
+        setSavedSuccess(true);
+        setTimeout(() => setSavedSuccess(false), 3000);
+      } catch (err) {
+        setError(getApiErrorMessage(err, "Échec de la sauvegarde GrapesJS"));
+      } finally {
+        setSaving(false);
+      }
+    },
+    [grapesPayload, selectedLocale, selectedSlug],
+  );
 
   const loadDocument = useCallback(async () => {
     setLoading(true);
@@ -195,10 +303,29 @@ export default function LegalContent() {
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <button
             type="button"
-            onClick={() => setPreviewMode((v) => !v)}
+            onClick={() => {
+              setGrapesMode((v) => !v);
+              setPreviewMode(false);
+            }}
+            disabled={!doc}
+            className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border text-xs font-bold transition-colors cursor-pointer disabled:opacity-50 ${
+              grapesMode
+                ? "border-[var(--gold)] bg-[var(--gold)] text-[#18130a]"
+                : "border-[var(--border)] bg-[var(--card)] text-[var(--foreground)] hover:border-[var(--gold)]"
+            }`}
+          >
+            <FileText className="w-4 h-4" />
+            <span>{grapesMode ? "Éditeur Clauses" : "GrapesJS Builder"}</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setPreviewMode((v) => !v);
+              setGrapesMode(false);
+            }}
             disabled={!doc}
             className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-[var(--border)] bg-[var(--card)] text-xs font-bold text-[var(--foreground)] hover:border-[var(--gold)] transition-colors cursor-pointer disabled:opacity-50"
           >
@@ -278,6 +405,35 @@ export default function LegalContent() {
       ) : !doc ? (
         <div className="p-10 rounded-3xl border border-[var(--border)] bg-[var(--card)] text-center text-xs text-[var(--muted-foreground)]">
           {t("legal_content_load_failed", "Échec du chargement du document légal.")}
+        </div>
+      ) : grapesMode ? (
+        <div className="space-y-4">
+          <Suspense
+            fallback={
+              <div className="p-10 rounded-3xl border border-[var(--border)] bg-[var(--card)] text-center text-xs text-[var(--muted-foreground)]">
+                Chargement de GrapesJS Builder…
+              </div>
+            }
+          >
+            <GrapesJsBuilder
+              pageId={selectedSlug}
+              localeCode={selectedLocale}
+              initialHtml={grapesPayload.html}
+              initialCss={grapesPayload.css}
+              initialProjectJson={grapesPayload.projectJson}
+              seedContext={{
+                pageId: selectedSlug,
+                pageTitle: doc.title,
+                heroTitle: doc.title,
+                heroSubtitle: doc.intro,
+                introBody: doc.intro,
+                legalSections: doc.sections,
+              }}
+              onChange={setGrapesPayload}
+              onSaveRequested={(payload) => void handleSaveGrapes(payload)}
+              isRtl={selectedLocale === "ar"}
+            />
+          </Suspense>
         </div>
       ) : previewMode ? (
         <div className="p-8 rounded-3xl border-2 border-[var(--gold)]/40 bg-[var(--card)] shadow-xl space-y-6 text-start max-w-4xl mx-auto">

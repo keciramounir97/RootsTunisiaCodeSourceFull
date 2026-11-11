@@ -20,6 +20,7 @@ import {
 import { useTranslation } from "../context/TranslationContext";
 import { api } from "../api/client";
 import { useSiteContent } from "../hooks/useSiteContent";
+import SiteCustomBlocks from "../components/cms/SiteCustomBlocks";
 import { PageHero, Section, SectionHeading } from "../components/site/Primitives";
 import sidiBouSaid from "../assets/slider-sidibousaid.jpg";
 import SEO from "../components/SEO";
@@ -55,8 +56,16 @@ export default function ContactUs() {
         } catch {}
       }
     };
+    const handleFooterUpdated = (e: Event) => {
+      const detail = (e as CustomEvent)?.detail;
+      if (detail) setFooterConfig(detail);
+    };
     window.addEventListener("storage", handleStorage);
-    return () => window.removeEventListener("storage", handleStorage);
+    window.addEventListener("roots_footer_updated", handleFooterUpdated);
+    return () => {
+      window.removeEventListener("storage", handleStorage);
+      window.removeEventListener("roots_footer_updated", handleFooterUpdated);
+    };
   }, []);
 
   // Public Content Manager overrides (hardcoded/i18n defaults when unset).
@@ -64,8 +73,16 @@ export default function ContactUs() {
   const heroTitle = getText("contact", "hero", "title") ?? t("contact_hero_title");
   const heroSubtitle = getText("contact", "hero", "subtitle") ?? t("contact_hero_subtitle");
   const heroImage = getImage("contact", "hero", "image") ?? sidiBouSaid;
-  const email = footerConfig.email || getText("contact", "details", "email")?.trim() || "contact@rootstunisia.com";
-  const phone = footerConfig.phone || getText("contact", "details", "phone")?.trim() || "+216 71 000 000";
+  const email =
+    getText("contact", "details", "email")?.trim() ||
+    getText("footer", "config", "email")?.trim() ||
+    footerConfig.email ||
+    "contact@rootstunisia.com";
+  const phone =
+    getText("contact", "details", "phone")?.trim() ||
+    getText("footer", "config", "phone")?.trim() ||
+    footerConfig.phone ||
+    "+216 71 000 000";
   const phoneHref = phone.replace(/[^\d+]/g, "") || "+21671000000";
   const hours = getText("contact", "details", "hours") ?? "09:00 – 17:00 (GMT+1)";
   const formTitle = getText("contact", "form", "title") ?? t("how_can_we_help");
@@ -634,6 +651,8 @@ export default function ContactUs() {
           </div>
         </div>
       </Section>
+
+      <SiteCustomBlocks pageId="contact" />
     </div>
   );
 }

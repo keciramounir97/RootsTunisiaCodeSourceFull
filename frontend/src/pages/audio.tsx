@@ -6,6 +6,7 @@ import djerba from "../assets/djerba.jpg";
 import SEO from "../components/SEO";
 import { useTranslation } from "../context/TranslationContext";
 import { useSiteContent } from "../hooks/useSiteContent";
+import SiteCustomBlocks from "../components/cms/SiteCustomBlocks";
 import { api } from "../api/client";
 
 interface RecordingItem {
@@ -247,6 +248,8 @@ export default function Audio() {
           </div>
         )}
       </Section>
+
+      <SiteCustomBlocks pageId="audio" />
     </div>
   );
 }

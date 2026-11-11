@@ -6,6 +6,7 @@ import { useTranslation } from "../context/TranslationContext";
 import sidiBouSaid from "../assets/slider-sidibousaid.jpg";
 import SEO from "../components/SEO";
 import { api } from "../api/client";
+import SiteCustomBlocks from "../components/cms/SiteCustomBlocks";
 
 type LegalSection = { heading: string; body: string };
 type LegalDocument = { title: string; intro: string; sections: LegalSection[] };
@@ -183,6 +184,7 @@ export default function RefundPolicy() {
             </Link>
             <p>{t("last_updated_date", "Last updated: October 2026")}</p>
           </div>
+          <SiteCustomBlocks pageId="refund" className="mt-8" />
         </div>
       </Section>
     </div>

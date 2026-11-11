@@ -5,6 +5,7 @@ import eljem from "../assets/eljem.jpg";
 import SEO from "../components/SEO";
 import { useTranslation } from "../context/TranslationContext";
 import { useSiteContent } from "../hooks/useSiteContent";
+import SiteCustomBlocks from "../components/cms/SiteCustomBlocks";
 import {
   ArrowRight,
   BookOpen,
@@ -863,6 +864,8 @@ export default function Periods() {
           })}
         </div>
       </Section>
+
+      <SiteCustomBlocks pageId="periods" />
     </div>
   );
 }

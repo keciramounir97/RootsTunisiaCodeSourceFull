@@ -1,8 +1,11 @@
-import { useMemo, useState } from "react";
+import { Suspense, lazy, useCallback, useEffect, useMemo, useState } from "react";
 import type { ElementType } from "react";
 import { useTranslation } from "../../context/TranslationContext";
 import { useThemeStore } from "../../store/theme";
 import { notifyAdminSaved } from "../utils/notifications";
+import { api } from "../../api/client";
+import { refreshSiteContent } from "../../hooks/useSiteContent";
+import type { GrapesBuilderPayload } from "../components/cms/GrapesJsBuilder";
 import {
   Facebook,
   Instagram,
@@ -23,7 +26,11 @@ import {
   Music,
   Eye,
   Link as LinkIcon,
+  Layout,
+  Sparkles,
 } from "lucide-react";
+
+const GrapesJsBuilder = lazy(() => import("../components/cms/GrapesJsBuilder"));
 
 const STORAGE_KEY = "RootsTunisia_footer_settings";
 
@@ -78,8 +85,8 @@ export const DEFAULT_FOOTER_CONFIG: FooterConfig = {
   ],
   location: "Rue de la Kasbah, Médina de Tunis, Tunisie",
   email: "contact@rootstunisia.com",
-  phone: "+961 36 26 082",
-  whatsapp: "+961 36 26 082",
+  phone: "+216 71 000 000",
+  whatsapp: "+216 71 000 000",
 };
 
 function normalizeFooterConfig(value: Partial<FooterConfig> | null): FooterConfig {
@@ -123,6 +130,66 @@ export default function FooterSettings() {
 
   const [config, setConfig] = useState<FooterConfig>(loadFooterConfig);
   const [saved, setSaved] = useState(false);
+  const [savingRemote, setSavingRemote] = useState(false);
+  const [editorTab, setEditorTab] = useState<"form" | "grapesjs">("form");
+  const [grapesPayload, setGrapesPayload] = useState<GrapesBuilderPayload>({
+    html: "",
+    css: "",
+    projectJson: "",
+  });
+
+  // Hydrate footer configuration and GrapesJS footer visual layout from server
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      try {
+        const res = await api.get("/admin/site-content");
+        const contentDoc = res.data?.data ?? res.data;
+        const page = contentDoc?.pages?.find((p: any) => p.id === "footer");
+        if (!page || !active) return;
+
+        const cfgSec = page.sections?.find((s: any) => s.id === "config");
+        const readCfg = (key: string): string => {
+          const fld = cfgSec?.fields?.find((f: any) => f.key === key);
+          return typeof fld?.value === "string" ? fld.value.trim() : "";
+        };
+        const srvLocation = readCfg("location");
+        const srvEmail = readCfg("email");
+        const srvPhone = readCfg("phone");
+        const srvWhatsapp = readCfg("whatsapp");
+
+        if (srvLocation || srvEmail || srvPhone || srvWhatsapp) {
+          setConfig((prev) => {
+            const next = {
+              ...prev,
+              location: srvLocation || prev.location,
+              email: srvEmail || prev.email,
+              phone: srvPhone || prev.phone,
+              whatsapp: srvWhatsapp || prev.whatsapp,
+            };
+            saveFooterConfig(next);
+            return next;
+          });
+        }
+
+        const gSec = page.sections?.find((s: any) => s.id === "grapes_builder");
+        const readG = (key: string): string => {
+          const fld = gSec?.fields?.find((f: any) => f.key === key);
+          return typeof fld?.value === "string" ? fld.value : "";
+        };
+        setGrapesPayload({
+          html: readG("html"),
+          css: readG("css"),
+          projectJson: readG("project"),
+        });
+      } catch {
+        // Keep local fallback cleanly if server request fails
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const enabledSocialLinks = useMemo(
     () => config.socialLinks.filter((link) => link.enabled && link.url.trim()),
@@ -139,12 +206,85 @@ export default function FooterSettings() {
   } focus:ring-2 focus:ring-[#d9a441]/20`;
   const labelClass = `text-xs font-semibold uppercase tracking-wide ${isDark ? "text-[#d9a441]" : "text-[#24766f]"}`;
 
-  const handleSave = () => {
-    saveFooterConfig(config);
-    setSaved(true);
-    notifyAdminSaved(t("settings_saved", "Saved."));
-    setTimeout(() => setSaved(false), 2500);
-  };
+  const handleSave = useCallback(
+    async (grapesOverride?: GrapesBuilderPayload) => {
+      saveFooterConfig(config);
+      try {
+        window.dispatchEvent(new CustomEvent("roots_footer_updated", { detail: config }));
+      } catch {
+        // Ignore custom event dispatch errors in headless test envs
+      }
+
+      const activeGrapes = grapesOverride || grapesPayload;
+      try {
+        setSavingRemote(true);
+        const res = await api.get("/admin/site-content");
+        const contentDoc = res.data?.data ?? res.data ?? { pages: [] };
+        const pages: any[] = Array.isArray(contentDoc.pages)
+          ? JSON.parse(JSON.stringify(contentDoc.pages))
+          : [];
+        let footerPage = pages.find((p: any) => p.id === "footer");
+        if (!footerPage) {
+          footerPage = {
+            id: "footer",
+            label: "Footer & Global Settings",
+            path: "/",
+            sections: [],
+          };
+          pages.push(footerPage);
+        }
+
+        let cfgSec = footerPage.sections.find((s: any) => s.id === "config");
+        if (!cfgSec) {
+          cfgSec = { id: "config", label: "Contact & Social Settings", fields: [] };
+          footerPage.sections.push(cfgSec);
+        }
+        const upsertText = (key: string, label: string, val: string) => {
+          let fld = cfgSec.fields.find((f: any) => f.key === key);
+          if (!fld) {
+            fld = { key, type: "text", label, value: "" };
+            cfgSec.fields.push(fld);
+          }
+          fld.value = val;
+        };
+        upsertText("location", "Location / City", config.location);
+        upsertText("email", "Public e-mail", config.email);
+        upsertText("phone", "Phone number", config.phone);
+        upsertText("whatsapp", "WhatsApp number", config.whatsapp);
+
+        let gSec = footerPage.sections.find((s: any) => s.id === "grapes_builder");
+        if (!gSec) {
+          gSec = { id: "grapes_builder", label: "GrapesJS Visual Builder", fields: [] };
+          footerPage.sections.push(gSec);
+        }
+        const upsertBuilder = (key: "html" | "css" | "project", type: string, val: string) => {
+          let fld = gSec.fields.find((f: any) => f.key === key);
+          if (!fld) {
+            fld = { key, type, label: key, value: "" };
+            gSec.fields.push(fld);
+          }
+          fld.type = type;
+          fld.value = val;
+        };
+        upsertBuilder("html", "builder_html", activeGrapes.html);
+        upsertBuilder("css", "css", activeGrapes.css);
+        upsertBuilder("project", "json", activeGrapes.projectJson);
+
+        await api.put("/admin/site-content", { pages });
+        await refreshSiteContent();
+        if (grapesOverride) setGrapesPayload(grapesOverride);
+      } catch {
+        // Local storage + live event still succeeded
+      } finally {
+        setSavingRemote(false);
+      }
+
+      setSaved(true);
+      notifyAdminSaved(t("settings_saved", "Saved."));
+      setTimeout(() => setSaved(false), 2500);
+    },
+    [config, grapesPayload, t],
+  );
 
   const addLink = () => {
     setConfig((prev) => ({
@@ -187,17 +327,72 @@ export default function FooterSettings() {
                 )}
               </p>
             </div>
-            <button
-              type="button"
-              onClick={handleSave}
-              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-[#d9a441] px-5 text-sm font-semibold text-[#071827] shadow-sm transition hover:bg-[#c4932e]"
-            >
-              {saved ? <CheckCircle className="h-4 w-4" /> : <Save className="h-4 w-4" />}
-              {saved ? t("settings_saved", "Saved") : t("save_settings", "Save Settings")}
-            </button>
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="inline-flex rounded-md border border-[var(--border)] bg-black/10 p-0.5">
+                <button
+                  type="button"
+                  onClick={() => setEditorTab("form")}
+                  className={`inline-flex items-center gap-1.5 rounded px-3 py-2 text-xs font-bold cursor-pointer transition ${
+                    editorTab === "form"
+                      ? "bg-[#d9a441] text-[#071827]"
+                      : "hover:text-[#d9a441]"
+                  }`}
+                >
+                  <Layout className="h-3.5 w-3.5" />
+                  <span>Coordonnées & Réseaux</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setEditorTab("grapesjs")}
+                  className={`inline-flex items-center gap-1.5 rounded px-3 py-2 text-xs font-bold cursor-pointer transition ${
+                    editorTab === "grapesjs"
+                      ? "bg-[#d9a441] text-[#071827]"
+                      : "hover:text-[#d9a441]"
+                  }`}
+                >
+                  <Sparkles className="h-3.5 w-3.5" />
+                  <span>GrapesJS Builder</span>
+                </button>
+              </div>
+              <button
+                type="button"
+                disabled={savingRemote}
+                onClick={() => void handleSave()}
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-[#d9a441] px-5 text-sm font-semibold text-[#071827] shadow-sm transition hover:bg-[#c4932e] disabled:opacity-60 cursor-pointer"
+              >
+                {saved ? <CheckCircle className="h-4 w-4" /> : <Save className="h-4 w-4" />}
+                {savingRemote ? "..." : saved ? t("settings_saved", "Saved") : t("save_settings", "Save Settings")}
+              </button>
+            </div>
           </div>
         </div>
 
+        {editorTab === "grapesjs" ? (
+          <Suspense
+            fallback={
+              <div className="rounded-xl border border-[var(--border)] p-10 text-center text-sm opacity-80">
+                Chargement du constructeur GrapesJS du Pied de Page…
+              </div>
+            }
+          >
+            <GrapesJsBuilder
+              pageId="footer"
+              localeCode="default"
+              initialHtml={grapesPayload.html}
+              initialCss={grapesPayload.css}
+              initialProjectJson={grapesPayload.projectJson}
+              seedContext={{
+                pageId: "footer",
+                pageTitle: "Pied de Page Roots Tunisia",
+                contactEmail: config.email,
+                contactPhone: config.phone,
+                contactAddress: config.location,
+              }}
+              onChange={setGrapesPayload}
+              onSaveRequested={(payload) => void handleSave(payload)}
+            />
+          </Suspense>
+        ) : (
         <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
           <div className="space-y-6">
             <section className={`rounded-lg border ${panel} p-5 shadow-sm`}>
@@ -416,6 +611,7 @@ export default function FooterSettings() {
             </div>
           </aside>
         </div>
+        )}
       </div>
     </div>
   );

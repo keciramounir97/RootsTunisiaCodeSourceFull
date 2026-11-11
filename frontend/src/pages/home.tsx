@@ -30,6 +30,7 @@ import SEO from "../components/SEO";
 import { useTranslation } from "../context/TranslationContext";
 import { api } from "../api/client";
 import { useSiteContent } from "../hooks/useSiteContent";
+import SiteCustomBlocks from "../components/cms/SiteCustomBlocks";
 import { getApiRoot } from "../api/helpers";
 
 function resolveBannerUrl(pathOrUrl?: string | null) {
@@ -794,6 +795,8 @@ export default function Home() {
           </div>
         </div>
       </Section>
+
+      <SiteCustomBlocks pageId="home" />
     </div>
   );
 }

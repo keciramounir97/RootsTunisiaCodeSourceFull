@@ -5,6 +5,8 @@ import { useTranslation } from "../context/TranslationContext";
 import { api } from "../api/client";
 import { Logo } from "./site/Logo";
 import { loadFooterConfig } from "../admin/pages/FooterSettings";
+import { useSiteContent } from "../hooks/useSiteContent";
+import SiteCustomBlocks from "./cms/SiteCustomBlocks";
 
 interface FooterProps {
   data?: {
@@ -39,6 +41,7 @@ const fallbackFooter = {
 
 export default function Footer({ data }: FooterProps) {
   const { t, isRtl } = useTranslation();
+  const { getText } = useSiteContent();
   const [footer, setFooter] = useState<any>(data || fallbackFooter);
   const [loaded, setLoaded] = useState(Boolean(data));
   const [newsletterEmail, setNewsletterEmail] = useState("");
@@ -53,13 +56,27 @@ export default function Footer({ data }: FooterProps) {
       setFooter(data);
       setLoaded(true);
     } else {
-      try {
-        const cfg = loadFooterConfig();
-        if (cfg) setFooter(cfg);
-      } catch {
-        setFooter(fallbackFooter);
-      }
+      const syncFromLocal = () => {
+        try {
+          const cfg = loadFooterConfig();
+          if (cfg) setFooter(cfg);
+        } catch {
+          setFooter(fallbackFooter);
+        }
+      };
+      syncFromLocal();
       setLoaded(true);
+      const onFooterUpdate = (ev: Event) => {
+        const custom = (ev as CustomEvent)?.detail;
+        if (custom) setFooter(custom);
+        else syncFromLocal();
+      };
+      window.addEventListener("roots_footer_updated", onFooterUpdate);
+      window.addEventListener("storage", syncFromLocal);
+      return () => {
+        window.removeEventListener("roots_footer_updated", onFooterUpdate);
+        window.removeEventListener("storage", syncFromLocal);
+      };
     }
   }, [data]);
 
@@ -98,11 +115,20 @@ export default function Footer({ data }: FooterProps) {
   const customTagline = footer?.brandTagline && (!isRtl || /[\u0600-\u06FF]/.test(footer.brandTagline)) ? footer.brandTagline : null;
   const customFineprint = footer?.fineprint && (!isRtl || /[\u0600-\u06FF]/.test(footer.fineprint)) ? footer.fineprint : null;
 
+  const resolvedLocation =
+    getText("footer", "config", "location") || footer?.location || "Tunis, Tunisie";
+  const resolvedEmail =
+    getText("footer", "config", "email") || footer?.email || "contact@rootstunisia.com";
+  const resolvedPhone =
+    getText("footer", "config", "phone") || footer?.phone || "+216 71 000 000";
+  const cleanTelHref = resolvedPhone.replace(/[^\d+]/g, "") || "+21671000000";
+
   return (
     <footer
       dir={isRtl ? "rtl" : "ltr"}
       className="mt-20 border-t border-[var(--gold)]/35 bg-[var(--secondary)]/60 text-[var(--foreground)] text-start"
     >
+      <SiteCustomBlocks pageId="footer" />
       <div className="mx-auto grid w-full max-w-[var(--content-max)] gap-8 sm:gap-10 px-4 py-12 sm:px-6 sm:py-14 lg:px-8 sm:grid-cols-2 lg:grid-cols-4">
         <div>
           <Logo size="lg" />
@@ -147,15 +173,19 @@ export default function Footer({ data }: FooterProps) {
           <h4 className="eyebrow">{t("contact")}</h4>
           <ul className="mt-4 space-y-3 text-sm text-[var(--muted-foreground)]">
             <li className="flex items-center gap-2">
+              <MapPin className="h-4 w-4 text-[var(--gold)] shrink-0" />
+              <span>{resolvedLocation}</span>
+            </li>
+            <li className="flex items-center gap-2">
               <Mail className="h-4 w-4 text-[var(--gold)] shrink-0" />
-              <a href="mailto:contact@rootstunisia.com" className="hover:text-[var(--gold)]" dir="ltr">
-                contact@rootstunisia.com
+              <a href={`mailto:${resolvedEmail}`} className="hover:text-[var(--gold)]" dir="ltr">
+                {resolvedEmail}
               </a>
             </li>
             <li className="flex items-center gap-2">
               <Phone className="h-4 w-4 text-[var(--gold)] shrink-0" />
-              <a href="tel:+9613626082" className="hover:text-[var(--gold)]" dir="ltr">
-                +961 36 26 082
+              <a href={`tel:${cleanTelHref}`} className="hover:text-[var(--gold)]" dir="ltr">
+                {resolvedPhone}
               </a>
             </li>
           </ul>

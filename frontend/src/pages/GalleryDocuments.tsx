@@ -22,6 +22,7 @@ import { api } from "../api/client";
 import { useTranslation } from "../context/TranslationContext";
 import { useTheme } from "../context/ThemeContext";
 import { useSiteContent } from "../hooks/useSiteContent";
+import SiteCustomBlocks from "../components/cms/SiteCustomBlocks";
 import RootsPageShell from "../components/RootsPageShell";
 import GalleryCommentsModal from "../components/GalleryCommentsModal";
 import { useAuth } from "../admin/components/AuthContext";
@@ -458,6 +459,8 @@ export default function GalleryDocuments() {
           defaultLikes={commentTarget.likes}
         />
       )}
+
+      <SiteCustomBlocks pageId="documents" fallbackPageId="gallery_documents" />
     </RootsPageShell>
   );
 }

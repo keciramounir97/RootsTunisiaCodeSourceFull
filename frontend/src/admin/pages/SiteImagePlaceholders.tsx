@@ -395,7 +395,23 @@ export default function SiteImagePlaceholders() {
             </div>
 
             {grouped.map(([key, pageSlots]) => {
-              const [, pageLabel, pagePath] = key.split("::");
+              const [pageIdKey, pageLabel, pagePath] = key.split("::");
+              const studioAdminRouteMap: Record<string, string> = {
+                home: "/admin/home-content?mode=grapesjs",
+                about: "/admin/about-content?mode=grapesjs",
+                gallery: "/admin/gallery-content?mode=grapesjs",
+                gallery_images: "/admin/gallery-content?mode=grapesjs",
+                library: "/admin/library-content?mode=grapesjs",
+                audio: "/admin/audio-content?mode=grapesjs",
+                documents: "/admin/documents-content?mode=grapesjs",
+                gallery_documents: "/admin/documents-content?mode=grapesjs",
+                periods: "/admin/periods-content?mode=grapesjs",
+                contact: "/admin/contact-content?mode=grapesjs",
+                archives: "/admin/archives-content?mode=grapesjs",
+                sources: "/admin/sources-content?mode=grapesjs",
+                research: "/admin/sources-content?mode=grapesjs",
+              };
+              const grapesRoute = studioAdminRouteMap[pageIdKey];
               return (
                 <section
                   key={key}
@@ -406,14 +422,25 @@ export default function SiteImagePlaceholders() {
                       <h3 className="text-base font-bold text-[var(--foreground)]">{pageLabel}</h3>
                       <p className="text-xs text-[var(--muted-foreground)] font-mono">{pagePath}</p>
                     </div>
-                    <Link
-                      to={pagePath}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex items-center gap-1 text-xs font-semibold text-[var(--gold)] hover:underline"
-                    >
-                      Ouvrir la page publique <ExternalLink className="h-3 w-3" />
-                    </Link>
+                    <div className="flex flex-wrap items-center gap-3">
+                      {grapesRoute ? (
+                        <Link
+                          to={grapesRoute}
+                          className="inline-flex items-center gap-1 rounded-md border border-[var(--gold)]/40 bg-[var(--gold)]/10 px-2.5 py-1 text-xs font-bold text-[var(--gold)] hover:bg-[var(--gold)] hover:text-[#18130a] transition-colors"
+                        >
+                          <Sparkles className="h-3 w-3" />
+                          GrapesJS Studio
+                        </Link>
+                      ) : null}
+                      <Link
+                        to={pagePath}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-1 text-xs font-semibold text-[var(--gold)] hover:underline"
+                      >
+                        Ouvrir la page publique <ExternalLink className="h-3 w-3" />
+                      </Link>
+                    </div>
                   </div>
 
                   <div className="grid gap-4 sm:grid-cols-2">

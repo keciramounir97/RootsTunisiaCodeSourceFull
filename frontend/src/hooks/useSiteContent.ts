@@ -14,7 +14,14 @@ import { resolveSiteImageUrl } from "./useSiteImages";
  *   const title = getText("home", "hero", "title") ?? t("hero_title");
  */
 
-export type SiteContentFieldType = "text" | "html" | "image" | "list";
+export type SiteContentFieldType =
+  | "text"
+  | "html"
+  | "image"
+  | "list"
+  | "builder_html"
+  | "css"
+  | "json";
 export type SiteContentValue = string | string[];
 
 export interface PublicFieldEntry {

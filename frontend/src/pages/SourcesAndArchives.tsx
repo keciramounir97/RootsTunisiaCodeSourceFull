@@ -16,6 +16,7 @@ import kairouan from "../assets/slider-kairouan.jpg";
 import SEO from "../components/SEO";
 import { useTranslation } from "../context/TranslationContext";
 import { useSiteContent } from "../hooks/useSiteContent";
+import SiteCustomBlocks from "../components/cms/SiteCustomBlocks";
 import {
   usePublicCards,
   resolveCardText,
@@ -159,6 +160,28 @@ export default function SourcesAndArchives() {
     );
   };
 
+  const isArchivesRoute = location.pathname.includes("/archives");
+  const cmsPageId = isArchivesRoute || activeTab === "archives" ? "archives" : "sources";
+  const heroEyebrow =
+    getText(cmsPageId, "hero", "eyebrow") ??
+    getText("research", "hero", "eyebrow") ??
+    t("sources_and_archives_nav", "Patrimoine & Archives");
+  const heroTitle =
+    getText(cmsPageId, "hero", "title") ??
+    getText("research", "hero", "title") ??
+    t("tunisian_sources_repositories", "Sources & Archives de Tunisie");
+  const heroSubtitle =
+    getText(cmsPageId, "hero", "subtitle") ??
+    getText("research", "hero", "subtitle") ??
+    t(
+      "tunisian_sources_repositories_desc",
+      "Fonds d'archives officiels, registres civils, tribunaux charaïques et institutions patrimoniales de Tunisie."
+    );
+  const heroImg =
+    getImage(cmsPageId, "hero", "image") ??
+    getImage("research", "hero", "image") ??
+    kairouan;
+
   return (
     <div dir={isRtl ? "rtl" : "ltr"} className="bg-[var(--background)] text-[var(--foreground)] min-h-screen">
       <SEO
@@ -178,16 +201,10 @@ export default function SourcesAndArchives() {
 
       {/* Page Hero */}
       <PageHero
-        eyebrow={getText("research", "hero", "eyebrow") ?? t("sources_and_archives_nav", "Patrimoine & Archives")}
-        title={getText("research", "hero", "title") ?? t("tunisian_sources_repositories", "Sources & Archives de Tunisie")}
-        subtitle={
-          getText("research", "hero", "subtitle") ??
-          t(
-            "tunisian_sources_repositories_desc",
-            "Fonds d'archives officiels, registres civils, tribunaux charaïques et institutions patrimoniales de Tunisie."
-          )
-        }
-        image={getImage("research", "hero", "image") ?? kairouan}
+        eyebrow={heroEyebrow}
+        title={heroTitle}
+        subtitle={heroSubtitle}
+        image={heroImg}
       >
         <Link to="/periods" className="btn-base btn-gold w-full sm:w-auto min-w-[180px]">
           {t("see_the_timeline", "Voir la Chronologie")}
@@ -355,6 +372,8 @@ export default function SourcesAndArchives() {
           })}
         </div>
       </Section>
+
+      <SiteCustomBlocks pageId={cmsPageId} fallbackPageId="research" />
     </div>
   );
 }

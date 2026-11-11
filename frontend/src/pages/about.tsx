@@ -11,6 +11,7 @@ import TunisiaGovernoratesMap from "../components/TunisiaGovernoratesMap";
 import SEO from "../components/SEO";
 import { useTranslation } from "../context/TranslationContext";
 import { useSiteContent } from "../hooks/useSiteContent";
+import SiteCustomBlocks from "../components/cms/SiteCustomBlocks";
 import carthage from "../assets/slider-carthage.jpg";
 import medina from "../assets/medina-tunis.jpg";
 
@@ -276,6 +277,8 @@ export default function About() {
           </div>
         </div>
       </Section>
+
+      <SiteCustomBlocks pageId="about" />
     </div>
   );
 }
