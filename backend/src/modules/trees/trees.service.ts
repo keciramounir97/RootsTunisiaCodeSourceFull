@@ -20,6 +20,7 @@ export class TreesService implements OnModuleInit {
         try {
             await this.ensureTreeSchema();
             await this.backfillGedcomText();
+            await this.backfillMissingPersons();
             await this.purgePhantomTrees();
         } catch (err: any) {
             console.warn(`Tree schema init skipped: ${err?.message || err}`);
@@ -51,13 +52,39 @@ export class TreesService implements OnModuleInit {
         if (filled) console.log(`Backfilled gedcom_text for ${filled} tree(s).`);
     }
 
-    /** Adds the `gedcom_text` column so a full copy of each tree's GEDCOM is
+    /** Auto-heals missing persons/individuals records for trees that have GEDCOM text or file */
+    private async backfillMissingPersons() {
+        try {
+            if (!(await this.knex.schema.hasTable('family_trees'))) return;
+            const trees = await this.knex('family_trees')
+                .select('id', 'gedcom_path', 'gedcom_text')
+                .where((b: any) => b.whereNotNull('gedcom_path').orWhereNotNull('gedcom_text'));
+
+            for (const t of trees) {
+                const count = await this.knex('persons').where('tree_id', t.id).count('id as c').first();
+                const num = Number((count as any)?.c ?? 0);
+                if (num === 0 && (t.gedcom_text || t.gedcom_path)) {
+                    console.log(`[TreesService] Auto-healing missing persons for tree #${t.id}...`);
+                    await this.rebuildPeople(t.id, t.gedcom_path || '');
+                }
+            }
+        } catch (err: any) {
+            console.warn(`[TreesService] backfillMissingPersons note: ${err?.message || err}`);
+        }
+    }
+
+    /** Adds the `gedcom_text` and `category` columns so a full copy of each tree's GEDCOM is
      *  stored in the database, surviving even if the uploads folder is wiped. */
     private async ensureTreeSchema() {
         if (!(await this.knex.schema.hasTable('family_trees'))) return;
         if (!(await this.knex.schema.hasColumn('family_trees', 'gedcom_text'))) {
             await this.knex.schema.alterTable('family_trees', (table: any) => {
                 table.text('gedcom_text', 'longtext').nullable();
+            });
+        }
+        if (!(await this.knex.schema.hasColumn('family_trees', 'category'))) {
+            await this.knex.schema.alterTable('family_trees', (table: any) => {
+                table.string('category', 100).nullable();
             });
         }
     }
@@ -352,6 +379,7 @@ export class TreesService implements OnModuleInit {
                 return await Tree.query(trx).insertAndFetch({
                     title,
                     description: data.description,
+                    category: data.category,
                     archive_source: data.archiveSource,
                     document_code: data.documentCode,
                     gedcom_path: gedcomPath,
@@ -367,10 +395,12 @@ export class TreesService implements OnModuleInit {
                 this.gedcomCache.set(Number(newTree.id), { text: gedcomText, expiry: Date.now() + 60000 });
             }
 
-            if (gedcomPath) {
-                this.rebuildPeople(newTree.id, gedcomPath).catch((e: any) =>
-                    console.warn(`rebuildPeople async note for tree #${newTree.id}:`, e?.message || e),
-                );
+            if (gedcomPath || gedcomText) {
+                try {
+                    await this.rebuildPeople(newTree.id, gedcomPath || '');
+                } catch (e: any) {
+                    console.error(`rebuildPeople sync error for tree #${newTree.id}:`, e?.message || e);
+                }
             }
 
             this.activityService.log(userId, 'trees', `Created tree: ${title}`).catch(() => {});
@@ -412,6 +442,7 @@ export class TreesService implements OnModuleInit {
         const title = data.title ?? data.name;
         if (title) updateData.title = title;
         if (data.description !== undefined) updateData.description = data.description;
+        if (data.category !== undefined) updateData.category = data.category;
         if (data.archiveSource !== undefined) updateData.archive_source = data.archiveSource;
         if (data.documentCode !== undefined) updateData.document_code = data.documentCode;
 
@@ -481,10 +512,12 @@ export class TreesService implements OnModuleInit {
         await Tree.query(this.knex).patch(updateData).where('id', id);
         this.clearCache();
 
-        if (gedcomPath && (file || updateData.gedcom_text || tree.is_public !== isPublic)) {
-            this.rebuildPeople(id, gedcomPath).catch((e: any) =>
-                console.warn(`rebuildPeople async note for tree #${id}:`, e?.message || e)
-            );
+        if ((gedcomPath || updateData.gedcom_text) && (file || updateData.gedcom_text || tree.is_public !== isPublic)) {
+            try {
+                await this.rebuildPeople(id, gedcomPath || '');
+            } catch (e: any) {
+                console.error(`rebuildPeople sync error for tree #${id}:`, e?.message || e);
+            }
         }
 
         this.activityService.log(userId, 'trees', `Updated tree: ${tree.title}`).catch(() => {});
@@ -707,13 +740,23 @@ export class TreesService implements OnModuleInit {
                 content = fs.readFileSync(filePath, 'utf8');
                 sourceName = path.basename(filePath);
             } else {
-                const stored = await Tree.query(this.knex).findById(treeId).select('gedcom_text');
+                const stored = await Tree.query(this.knex).findById(treeId).select('gedcom_text', 'gedcom_path');
                 content = typeof (stored as any)?.gedcom_text === 'string' ? (stored as any).gedcom_text : '';
-                sourceName = gedcomPath ? path.basename(gedcomPath) : 'tree.ged';
+                sourceName = (stored as any)?.gedcom_path ? path.basename((stored as any).gedcom_path) : (gedcomPath ? path.basename(gedcomPath) : 'tree.ged');
                 if (!content.trim()) {
                     await Person.query(this.knex).delete().where('tree_id', treeId);
                     await this.knex('individuals').delete().where('tree_id', treeId);
+                    this.clearCache();
                     return;
+                }
+                // Auto-heal file on disk if missing
+                try {
+                    const fname = `tree_${treeId}_auto_${Date.now()}.ged`;
+                    const dest = path.join(TREE_UPLOADS_DIR, fname);
+                    fs.writeFileSync(dest, content, 'utf8');
+                    await this.knex('family_trees').where('id', treeId).update({ gedcom_path: `/uploads/trees/${fname}` });
+                } catch (diskErr: any) {
+                    console.warn(`Disk auto-heal skipped for tree #${treeId}:`, diskErr?.message || diskErr);
                 }
             }
 
@@ -798,6 +841,7 @@ export class TreesService implements OnModuleInit {
                     await trx('individuals').insert(individualsInsert);
                 }
             });
+            this.clearCache();
         } catch (err) {
             console.error('Failed to rebuild tree people', (err as Error)?.message);
         }

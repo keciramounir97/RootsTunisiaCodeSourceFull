@@ -2168,6 +2168,7 @@ export default function TreesBuilder({
   readOnly = false,
   onAutoSave,
   onPersonClick,
+  onFileImported,
   dataFormat = "gedcom", // "gedcom" | "gedcom7" | "gedcomx" – affects display label and format-specific display
   treeId: _treeId,
   canDownloadDirectly: _canDownloadDirectly = false,
@@ -3468,6 +3469,13 @@ export default function TreesBuilder({
       applyPeopleUpdate(parsed);
       const is70 = importGedcomFormatRef.current === "7.0";
       notifyPerson(is70 ? t("legacy.gedcom7_imported", "GEDCOM 7.0 imported.") : t("legacy.gedcom_imported", "GEDCOM imported."));
+      if (typeof onFileImported === "function") {
+        try {
+          onFileImported(file, text, parsed);
+        } catch (e) {
+          console.warn("onFileImported callback note:", e);
+        }
+      }
     } catch (err) {
       notifyError(
         err?.message || t("legacy.import_gedcom_failed", "Failed to import GEDCOM")
@@ -3532,6 +3540,13 @@ export default function TreesBuilder({
       }
       applyPeopleUpdate(parsed);
       notifyPerson(t("legacy.gedcomx_imported", "GEDCOM X imported."));
+      if (typeof onFileImported === "function") {
+        try {
+          onFileImported(file, text, parsed);
+        } catch (e) {
+          console.warn("onFileImported callback note:", e);
+        }
+      }
     } catch (err) {
       notifyError(
         err?.message ||

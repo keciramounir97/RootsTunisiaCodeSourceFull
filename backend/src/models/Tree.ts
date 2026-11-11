@@ -8,6 +8,7 @@ export class Tree extends BaseModel {
     user_id?: number;
     title!: string;
     description?: string;
+    category?: string | null;
     gedcom_path?: string;
     // Full GEDCOM content stored in the DB as a backup, so trees survive even if
     // the uploads folder is wiped. Populated on create/update; stripped from list

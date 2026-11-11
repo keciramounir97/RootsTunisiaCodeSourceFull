@@ -19,6 +19,9 @@ import {
   Trash2,
   Users,
   X,
+  Upload,
+  FileCode,
+  CheckCircle2,
 } from "lucide-react";
 
 import { useThemeStore } from "../../store/theme";
@@ -89,6 +92,10 @@ export default function Trees() {
   const [drawerMode, setDrawerMode] = useState<"form" | "code">("form");
   const [gedcomCodeDraft, setGedcomCodeDraft] = useState("");
   const [saveFormat, setSaveFormat] = useState("gedcom");
+  const [uploadedGedcomFile, setUploadedGedcomFile] = useState<File | null>(null);
+  const [uploadedGedcomText, setUploadedGedcomText] = useState<string>("");
+  const [uploadedFileName, setUploadedFileName] = useState<string>("");
+  const drawerFileInputRef = useRef<HTMLInputElement | null>(null);
   const [treeForm, setTreeForm] = useState({
     title: "",
     description: "",
@@ -480,56 +487,87 @@ export default function Trees() {
     fd.append("isPublic", String(!!isPublic));
 
     if (includeFile) {
-      const safePeople = Array.isArray(people) ? people : [];
-      let content = "";
-      let mime = "text/plain";
-      let ext = "ged";
-      try {
-        if (saveFormat === "gedcom") {
-          content = buildGedcom(safePeople, locale, t);
-          mime = "text/plain";
-          ext = "ged";
-        } else if (saveFormat === "gedcom7") {
-          content = buildGedcom7(safePeople, locale, t);
-          mime = "text/plain";
-          ext = "ged";
-        } else {
-          if (saveFormat === "gedcomx_json") {
-            content = buildGedcomXJson(safePeople, locale, t);
-            mime = "application/json";
-            ext = "json";
-          } else {
-            content = buildGedcomXXml(safePeople, locale, t);
-            mime = saveFormat === "gedcomx_gedx" ? "application/xml" : "application/xml";
-            ext = saveFormat === "gedcomx_gedx" ? "gedx" : "xml";
-          }
+      if (uploadedGedcomFile) {
+        fd.append("file", uploadedGedcomFile);
+        if (uploadedGedcomText) {
+          fd.append("gedcomText", uploadedGedcomText);
+          fd.append("gedcom_text", uploadedGedcomText);
         }
-      } catch (err: any) {
-        throw new Error(
-          err?.message ||
-            (saveFormat === "gedcom7"
-              ? t("legacy.gedcom7_build_failed", "Failed to build GEDCOM 7.0")
-              : saveFormat === "gedcom"
-                ? t("legacy.gedcom_build_failed", "Failed to build GEDCOM")
-                : t("legacy.gedcomx_build_failed", "Failed to build GEDCOM X"))
-        );
-      }
-      const blob = new Blob([content], { type: mime });
-      if (blob.size > MAX_GEDCOM_BYTES) {
-        throw new Error(t("legacy.file_too_large", "File is too large (max 50MB)."));
-      }
-      const fileName = `${safeTitle}.${ext}`;
-      if (typeof File === "function") {
-        const file = new File([blob], fileName, { type: mime });
+      } else if (uploadedGedcomText && uploadedGedcomText.trim().length > 10) {
+        const ext = saveFormat === "gedcomx_json" ? "json" : saveFormat.startsWith("gedcomx") ? "xml" : "ged";
+        const mime = ext === "json" ? "application/json" : ext === "xml" ? "application/xml" : "text/plain";
+        const blob = new Blob([uploadedGedcomText], { type: mime });
+        const file = new File([blob], `${safeTitle}.${ext}`, { type: mime });
         fd.append("file", file);
+        fd.append("gedcomText", uploadedGedcomText);
+        fd.append("gedcom_text", uploadedGedcomText);
+      } else if (gedcomCodeDraft && gedcomCodeDraft.trim().length > 10) {
+        const ext = saveFormat === "gedcomx_json" ? "json" : saveFormat.startsWith("gedcomx") ? "xml" : "ged";
+        const mime = ext === "json" ? "application/json" : ext === "xml" ? "application/xml" : "text/plain";
+        const blob = new Blob([gedcomCodeDraft], { type: mime });
+        const file = new File([blob], `${safeTitle}.${ext}`, { type: mime });
+        fd.append("file", file);
+        fd.append("gedcomText", gedcomCodeDraft);
+        fd.append("gedcom_text", gedcomCodeDraft);
       } else {
-        fd.append("file", blob, fileName);
+        const safePeople = Array.isArray(people) ? people : [];
+        let content = "";
+        let mime = "text/plain";
+        let ext = "ged";
+        try {
+          if (saveFormat === "gedcom") {
+            content = buildGedcom(safePeople, locale, t);
+            mime = "text/plain";
+            ext = "ged";
+          } else if (saveFormat === "gedcom7") {
+            content = buildGedcom7(safePeople, locale, t);
+            mime = "text/plain";
+            ext = "ged";
+          } else {
+            if (saveFormat === "gedcomx_json") {
+              content = buildGedcomXJson(safePeople, locale, t);
+              mime = "application/json";
+              ext = "json";
+            } else {
+              content = buildGedcomXXml(safePeople, locale, t);
+              mime = saveFormat === "gedcomx_gedx" ? "application/xml" : "application/xml";
+              ext = saveFormat === "gedcomx_gedx" ? "gedx" : "xml";
+            }
+          }
+        } catch (err: any) {
+          throw new Error(
+            err?.message ||
+              (saveFormat === "gedcom7"
+                ? t("legacy.gedcom7_build_failed", "Failed to build GEDCOM 7.0")
+                : saveFormat === "gedcom"
+                  ? t("legacy.gedcom_build_failed", "Failed to build GEDCOM")
+                  : t("legacy.gedcomx_build_failed", "Failed to build GEDCOM X"))
+          );
+        }
+        const blob = new Blob([content], { type: mime });
+        if (blob.size > MAX_GEDCOM_BYTES) {
+          throw new Error(t("legacy.file_too_large", "File is too large (max 50MB)."));
+        }
+        const fileName = `${safeTitle}.${ext}`;
+        if (typeof File === "function") {
+          const file = new File([blob], fileName, { type: mime });
+          fd.append("file", file);
+        } else {
+          fd.append("file", blob, fileName);
+        }
+        fd.append("gedcomText", content);
+        fd.append("gedcom_text", content);
       }
-      fd.append("gedcomText", content);
-      fd.append("gedcom_text", content);
-      if (saveFormat === "gedcom7") fd.append("dataFormat", "gedcom7");
-      else if (saveFormat === "gedcom") fd.append("dataFormat", "gedcom");
-      else if (saveFormat.startsWith("gedcomx")) fd.append("dataFormat", "gedcomx");
+      if (saveFormat === "gedcom7") {
+        fd.append("dataFormat", "gedcom7");
+        fd.append("data_format", "gedcom7");
+      } else if (saveFormat === "gedcom") {
+        fd.append("dataFormat", "gedcom");
+        fd.append("data_format", "gedcom");
+      } else if (saveFormat.startsWith("gedcomx")) {
+        fd.append("dataFormat", "gedcomx");
+        fd.append("data_format", "gedcomx");
+      }
     }
 
     const targetId = treeId || activeTreeIdRef.current;
@@ -622,6 +660,81 @@ export default function Trees() {
       }
     }
     return { title, description, source, docCode };
+  };
+
+  const handleUploadedGedcomFile = async (file: File) => {
+    if (!file) return;
+    try {
+      const text = await file.text();
+      const trimmed = text.trim();
+      if (!trimmed) {
+        setSaveError(t("legacy.gedcom_empty", "GEDCOM file is empty."));
+        return;
+      }
+      const isX =
+        file.name.endsWith(".json") ||
+        file.name.endsWith(".xml") ||
+        file.name.endsWith(".gedx") ||
+        /^\s*({|<\?xml)/.test(trimmed);
+      const parsed = isX ? parseGedcomX(trimmed) : parseGedcom(trimmed);
+      if (!Array.isArray(parsed) || parsed.length === 0) {
+        setSaveError(
+          t(
+            "no_valid_gedcom_records",
+            "No valid individual records found in the provided GEDCOM file."
+          )
+        );
+        return;
+      }
+
+      setUploadedGedcomFile(file);
+      setUploadedGedcomText(text);
+      setUploadedFileName(file.name);
+      setGedcomCodeDraft(text);
+      setPeople(parsed);
+
+      if (isX) {
+        setSaveFormat(file.name.endsWith(".json") ? "gedcomx_json" : "gedcomx_xml");
+      } else if (/VERS\s+7\.0/i.test(text)) {
+        setSaveFormat("gedcom7");
+      } else {
+        setSaveFormat("gedcom");
+      }
+
+      const meta = extractGedcomMetadata(text);
+      setTreeForm((prev) => ({
+        ...prev,
+        title: prev.title.trim() ? prev.title : (meta.title || file.name.replace(/\.[^/.]+$/, "")),
+        description: prev.description.trim() ? prev.description : (meta.description || ""),
+        archiveSource: prev.archiveSource.trim() ? prev.archiveSource : (meta.source || ""),
+        documentCode: prev.documentCode.trim() ? prev.documentCode : (meta.docCode || ""),
+      }));
+
+      setSaveSuccess(
+        `${t("legacy.gedcom_imported", "GEDCOM importé avec succès")} : ${file.name} (${parsed.length} individus)`
+      );
+      setSaveError("");
+    } catch (err: any) {
+      setSaveError(err?.message || t("legacy.import_gedcom_failed", "Failed to import GEDCOM"));
+    }
+  };
+
+  const handleToolbarFileImported = (file: File, text: string, parsed: any[]) => {
+    setUploadedGedcomFile(file);
+    setUploadedGedcomText(text);
+    setUploadedFileName(file.name);
+    setGedcomCodeDraft(text);
+    const meta = extractGedcomMetadata(text);
+    setTreeForm((prev) => ({
+      ...prev,
+      title: prev.title.trim() ? prev.title : (meta.title || file.name.replace(/\.[^/.]+$/, "")),
+      description: prev.description.trim() ? prev.description : (meta.description || ""),
+      archiveSource: prev.archiveSource.trim() ? prev.archiveSource : (meta.source || ""),
+      documentCode: prev.documentCode.trim() ? prev.documentCode : (meta.docCode || ""),
+      isPublic: true,
+      saveToDb: true,
+    }));
+    setTreeFormDrawerOpen(true);
   };
 
   const runAutoSave = async () => {
@@ -730,11 +843,46 @@ export default function Trees() {
     setPeople([]);
     setGedcomError("");
     setGedcomCodeDraft("");
+    setUploadedGedcomFile(null);
+    setUploadedGedcomText("");
+    setUploadedFileName("");
     peopleDirtyRef.current = false;
   };
 
   const openNewTreeForm = () => {
-    clearCanvas();
+    activeTreeIdRef.current = null;
+    setSelectedTree(null);
+    setSelectedScope(null);
+    setSaveError("");
+    setSaveSuccess("");
+    if (people.length === 0 && !uploadedGedcomFile && !uploadedGedcomText) {
+      setTreeForm({
+        title: "",
+        description: "",
+        category: "",
+        archiveSource: "",
+        documentCode: "",
+        isPublic: true,
+        saveToDb: true,
+      });
+      setUploadedGedcomFile(null);
+      setUploadedGedcomText("");
+      setUploadedFileName("");
+      setGedcomCodeDraft("");
+    } else {
+      const meta = (uploadedGedcomText || gedcomCodeDraft)
+        ? extractGedcomMetadata(uploadedGedcomText || gedcomCodeDraft)
+        : { title: "", description: "", source: "", docCode: "" };
+      setTreeForm((prev) => ({
+        ...prev,
+        title: prev.title.trim() ? prev.title : (meta.title || (uploadedFileName ? uploadedFileName.replace(/\.[^/.]+$/, "") : "")),
+        description: prev.description.trim() ? prev.description : (meta.description || ""),
+        archiveSource: prev.archiveSource.trim() ? prev.archiveSource : (meta.source || ""),
+        documentCode: prev.documentCode.trim() ? prev.documentCode : (meta.docCode || ""),
+        isPublic: true,
+        saveToDb: true,
+      }));
+    }
     setTreeFormDrawerOpen(true);
     setTreesListDrawerOpen(false);
   };
@@ -758,7 +906,18 @@ export default function Trees() {
     try {
       const currentTargetId = activeTreeIdRef.current || (canUpdateSelected ? selectedTree?.id : null);
       const isUpdateMode = Boolean(currentTargetId && !String(currentTargetId).startsWith("mock-"));
+      const hasUploadedFile = !!uploadedGedcomFile || (!!uploadedGedcomText && uploadedGedcomText.trim().length > 10);
       const hasPeople = people.length > 0;
+
+      if (!isUpdateMode && !hasUploadedFile && !hasPeople && !gedcomCodeDraft.trim()) {
+        setSaveError(
+          t(
+            "legacy.tree_requires_gedcom_or_people",
+            "Veuillez charger un fichier GEDCOM ou ajouter des personnes avant d'enregistrer l'arbre."
+          )
+        );
+        return;
+      }
 
       let title = String(treeForm.title || "").trim();
       if (!title && selectedTree?.title) title = String(selectedTree.title).trim();
@@ -770,8 +929,8 @@ export default function Trees() {
 
       const description = String(treeForm.description || "");
       const isPublic = !!treeForm.isPublic;
-      const includeFile = hasPeople || isUpdateMode;
-      const nextHasGedcom = hasPeople;
+      const includeFile = hasUploadedFile || hasPeople || Boolean(gedcomCodeDraft.trim()) || isUpdateMode;
+      const nextHasGedcom = hasUploadedFile || hasPeople;
 
       const treeId = await submitTree({
         treeId: currentTargetId,
@@ -816,6 +975,9 @@ export default function Trees() {
         setSelectedTree(updatedTreeData);
         setSelectedScope("my");
         peopleDirtyRef.current = false;
+        setUploadedGedcomFile(null);
+        setUploadedGedcomText("");
+        setUploadedFileName("");
         setTreeFormDrawerOpen(false);
       }
       await refreshLists();
@@ -1070,27 +1232,25 @@ export default function Trees() {
         </div>
 
         <ErrorBoundary
-          fallback={({ error, reset }) => (
+          fallback={
             <div className={`rounded-lg border ${border} ${metaPanel} p-4`}>
               <div className="font-semibold text-red-500">
                 {t("legacy.tree_builder_error", "Tree builder failed to load.")}
               </div>
-              <div className="text-sm opacity-70">
-                {error?.message || t("legacy.tree_builder_try_again", "Please try again.")}
-              </div>
               <button
                 type="button"
-                onClick={reset}
+                onClick={() => window.location.reload()}
                 className={`mt-3 inline-flex items-center rounded-md border ${border} px-3 py-1 text-xs font-semibold uppercase tracking-wide`}
               >
                 {t("legacy.retry", "Retry")}
               </button>
             </div>
-          )}
+          }
         >
           <TreesBuilder
             people={people}
             setPeople={setPeople}
+            onFileImported={handleToolbarFileImported}
             dataFormat={
               selectedTree?.data_format === "gedcomx"
                 ? "gedcomx"
@@ -1446,6 +1606,71 @@ export default function Trees() {
               ) : (
                 /* FORM MODE TAB */
                 <>
+                  {/* GEDCOM FILE IMPORT ZONE */}
+                  <div className="p-3.5 rounded-xl border border-dashed border-[#0d9488]/40 bg-[#0d9488]/5 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-[#0c4a6e] dark:text-[#5eead4] flex items-center gap-1.5">
+                        <FileCode className="w-4 h-4 text-[#0d9488]" />
+                        {t("legacy.gedcom_file_upload_label", "Fichier GEDCOM (.ged, .gedcom, .gedx, .json)")}
+                      </span>
+                      {people.length > 0 && (
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#0d9488]/20 text-[#0d9488] dark:text-[#5eead4]">
+                          {people.length} {t("legacy.individuals_detected", "individus")}
+                        </span>
+                      )}
+                    </div>
+
+                    <input
+                      ref={drawerFileInputRef}
+                      type="file"
+                      accept=".ged,.gedcom,.gedx,.xml,.json"
+                      className="hidden"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        if (f) void handleUploadedGedcomFile(f);
+                        e.target.value = "";
+                      }}
+                    />
+
+                    {uploadedFileName ? (
+                      <div className="flex items-center justify-between p-2.5 rounded-lg bg-white/80 dark:bg-stone-900/80 border border-[#0d9488]/40 shadow-sm">
+                        <div className="flex items-center gap-2 truncate">
+                          <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                          <span className="text-xs font-semibold truncate text-stone-800 dark:text-stone-200">
+                            {uploadedFileName}
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => drawerFileInputRef.current?.click()}
+                          className="text-[11px] font-bold text-[#0d9488] dark:text-[#5eead4] hover:underline shrink-0 ml-2 cursor-pointer"
+                        >
+                          {t("legacy.change_file", "Changer")}
+                        </button>
+                      </div>
+                    ) : (
+                      <div
+                        onClick={() => drawerFileInputRef.current?.click()}
+                        onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          const f = e.dataTransfer.files?.[0];
+                          if (f) void handleUploadedGedcomFile(f);
+                        }}
+                        className="cursor-pointer flex flex-col items-center justify-center p-3.5 border border-dashed border-stone-300 dark:border-stone-700 hover:border-[#0d9488] rounded-lg transition-all text-center hover:bg-[#0d9488]/10"
+                      >
+                        <Upload className="w-5 h-5 text-[#0d9488] mb-1 opacity-80" />
+                        <span className="text-xs font-semibold text-stone-700 dark:text-stone-300">
+                          {t("legacy.click_or_drag_gedcom", "Cliquez ou glissez-déposez votre fichier GEDCOM ici")}
+                        </span>
+                        <span className="text-[10px] text-stone-400 mt-0.5">
+                          .ged (5.5.1 / 7.0), .gedx, .xml, .json (max 50 Mo)
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
                   <div>
                     <label className="block text-xs font-bold text-[#0c4a6e] dark:text-[#0d9488] mb-1">
                       {t("legacy.tree_title", "Tree title")} <span className="text-red-500">*</span>

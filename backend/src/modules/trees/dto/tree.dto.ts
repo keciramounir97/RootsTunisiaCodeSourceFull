@@ -19,6 +19,10 @@ export class CreateTreeDto {
 
     @IsString()
     @IsOptional()
+    category?: string;
+
+    @IsString()
+    @IsOptional()
     archiveSource?: string;
 
     @IsString()
@@ -31,6 +35,24 @@ export class CreateTreeDto {
     @IsString()
     @IsOptional()
     dataFormat?: string;
+
+    @IsString()
+    @IsOptional()
+    data_format?: string;
+
+    @IsString()
+    @IsOptional()
+    gedcomText?: string;
+
+    @IsString()
+    @IsOptional()
+    gedcom_text?: string;
+
+    @IsOptional()
+    idempotencyKey?: string;
+
+    @IsOptional()
+    idempotency_key?: string;
 }
 
 export class UpdateTreeDto {
@@ -48,6 +70,10 @@ export class UpdateTreeDto {
 
     @IsString()
     @IsOptional()
+    category?: string;
+
+    @IsString()
+    @IsOptional()
     archiveSource?: string;
 
     @IsString()
@@ -60,4 +86,23 @@ export class UpdateTreeDto {
     @IsString()
     @IsOptional()
     dataFormat?: string;
+
+    @IsString()
+    @IsOptional()
+    data_format?: string;
+
+    @IsString()
+    @IsOptional()
+    gedcomText?: string;
+
+    @IsString()
+    @IsOptional()
+    gedcom_text?: string;
+
+    @IsOptional()
+    idempotencyKey?: string;
+
+    @IsOptional()
+    idempotency_key?: string;
 }
+
