@@ -27,7 +27,7 @@ import SEO from "../components/SEO";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { loadFooterConfig, type FooterConfig } from "../admin/pages/FooterSettings";
+import { loadFooterConfig, type FooterConfig } from "../utils/footerConfig";
 
 type ContactFormData = {
   name: string;

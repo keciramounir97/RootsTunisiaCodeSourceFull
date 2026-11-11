@@ -43,6 +43,9 @@ const toIso = (value: unknown): string | null => {
 export class SiteContentService implements OnModuleInit {
   private readonly logger = new Logger(SiteContentService.name);
   private schemaReady: Promise<void> | null = null;
+  private cachedDoc: SiteContentDocument | null = null;
+  private cachedPublic: PublicSiteContent | null = null;
+  private cacheExpiry = 0;
 
   constructor(
     @Inject("KnexConnection") private readonly knex,
@@ -108,23 +111,40 @@ export class SiteContentService implements OnModuleInit {
     };
   }
 
-  /** Admin view: default schema overlaid with stored values. */
+  /** Admin view: default schema overlaid with stored values (cached for 60s). */
   async getDocument(): Promise<SiteContentDocument> {
+    const now = Date.now();
+    if (this.cachedDoc && this.cacheExpiry > now) {
+      return this.cachedDoc;
+    }
     const stored = await this.readStored();
-    return {
+    const doc = {
       version: SITE_CONTENT_VERSION,
       updatedAt: stored.updatedAt,
       updatedBy: stored.updatedBy,
       pages: mergeWithDefaults(stored.pages),
     };
+    this.cachedDoc = doc;
+    this.cacheExpiry = now + 60000;
+    return doc;
   }
 
-  /** Public view: only non-empty overrides. */
+  /** Public view: only non-empty overrides (cached for 60s). */
   async getPublicContent(): Promise<PublicSiteContent> {
-    return toPublicContent(await this.getDocument());
+    const now = Date.now();
+    if (this.cachedPublic && this.cacheExpiry > now) {
+      return this.cachedPublic;
+    }
+    const doc = await this.getDocument();
+    const pub = toPublicContent(doc);
+    this.cachedPublic = pub;
+    return pub;
   }
 
   async saveDocument(body: any, actorId: number): Promise<SiteContentDocument> {
+    this.cachedDoc = null;
+    this.cachedPublic = null;
+    this.cacheExpiry = 0;
     if (!body || typeof body !== "object") {
       throw new BadRequestException("Request body must be an object with `pages`");
     }

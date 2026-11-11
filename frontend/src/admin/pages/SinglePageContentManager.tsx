@@ -68,10 +68,6 @@ import { getApiErrorMessage } from "../../api/helpers";
 import { resolveSiteImageUrl } from "../../hooks/useSiteImages";
 import { refreshSiteContent } from "../../hooks/useSiteContent";
 import Toast from "../../components/Toast";
-import type { GrapesBuilderPayload } from "../components/cms/GrapesJsBuilder";
-import type { GrapesSeedContext } from "../components/cms/grapesTemplates";
-
-const GrapesJsBuilder = lazy(() => import("../components/cms/GrapesJsBuilder"));
 
 // Authentic 100% Tunisian heritage assets (No foreign / Abrahamic paintings!)
 import carthage from "../../assets/01_Carthage_Ancient_Ruins_Landscape.jpg";
@@ -421,10 +417,10 @@ export default function SinglePageContentManager({ pageId }: { pageId: string })
   const [canRedo, setCanRedo] = useState(false);
 
   // Pro Studio Layout Controls
-  const [viewMode, setViewMode] = useState<"visual" | "grapesjs" | "iframe">(() => {
+  const [viewMode, setViewMode] = useState<"visual" | "iframe">(() => {
     try {
       const mode = new URLSearchParams(window.location.search).get("mode");
-      if (mode === "grapesjs" || mode === "iframe") return mode;
+      if (mode === "iframe") return mode;
     } catch {
       // ignore SSR/test window absence
     }
@@ -671,48 +667,6 @@ export default function SinglePageContentManager({ pageId }: { pageId: string })
     [activePage, handleFieldValueChange]
   );
 
-  const mergeGrapesIntoDoc = useCallback(
-    (baseDoc: SiteContentDocument, payload: GrapesBuilderPayload): SiteContentDocument => {
-      const next: SiteContentDocument = JSON.parse(JSON.stringify(baseDoc));
-      const targetPage = next.pages.find((p) => p.id === pageId);
-      if (!targetPage) return baseDoc;
-      let gSection = targetPage.sections.find((s) => s.id === "grapes_builder");
-      if (!gSection) {
-        gSection = {
-          id: "grapes_builder",
-          label: "GrapesJS Visual Builder",
-          fields: [
-            { key: "html", type: "builder_html", label: "GrapesJS HTML", value: "" },
-            { key: "css", type: "css", label: "GrapesJS CSS", value: "" },
-            { key: "project", type: "json", label: "GrapesJS Project Data", value: "" },
-          ],
-        };
-        targetPage.sections.push(gSection);
-      }
-      const upsert = (key: "html" | "css" | "project", type: FieldType, val: string) => {
-        let field = gSection!.fields.find((f) => f.key === key);
-        if (!field) {
-          field = { key, type, label: key, value: "" };
-          gSection!.fields.push(field);
-        }
-        field.type = type;
-        if (lang === DEFAULT_LANG) {
-          field.value = val;
-        } else {
-          const translations = { ...(field.translations || {}) };
-          if (val) translations[lang] = val;
-          else delete translations[lang];
-          field.translations = translations;
-        }
-      };
-      upsert("html", "builder_html", payload.html);
-      upsert("css", "css", payload.css);
-      upsert("project", "json", payload.projectJson);
-      return next;
-    },
-    [lang, pageId],
-  );
-
   // Save changes
   const handleSave = async (overrideDoc?: SiteContentDocument) => {
     const targetDoc = overrideDoc || doc;
@@ -738,28 +692,6 @@ export default function SinglePageContentManager({ pageId }: { pageId: string })
       setSaving(false);
     }
   };
-
-  const handleGrapesChange = useCallback(
-    (payload: GrapesBuilderPayload) => {
-      setDoc((prev) => {
-        if (!prev) return prev;
-        return mergeGrapesIntoDoc(prev, payload);
-      });
-      setDirty(true);
-      setChangeCount((c) => c + 1);
-    },
-    [mergeGrapesIntoDoc],
-  );
-
-  const handleGrapesPublish = useCallback(
-    (payload: GrapesBuilderPayload) => {
-      if (!doc) return;
-      const updated = mergeGrapesIntoDoc(doc, payload);
-      setDoc(updated);
-      void handleSave(updated);
-    },
-    [doc, mergeGrapesIntoDoc],
-  );
 
   // Keyboard Shortcuts: Ctrl+S, Ctrl+Z, Ctrl+Y, Escape
   useEffect(() => {
@@ -1035,19 +967,6 @@ export default function SinglePageContentManager({ pageId }: { pageId: string })
             </button>
             <button
               type="button"
-              onClick={() => setViewMode("grapesjs")}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
-                viewMode === "grapesjs"
-                  ? "bg-[var(--gold)] text-black shadow-md"
-                  : "text-slate-300 hover:text-white hover:bg-slate-800"
-              }`}
-              title="Constructeur visuel glisser-déposer GrapesJS"
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">GrapesJS Builder</span>
-            </button>
-            <button
-              type="button"
               onClick={() => setViewMode("iframe")}
               className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
                 viewMode === "iframe"
@@ -1184,7 +1103,7 @@ export default function SinglePageContentManager({ pageId }: { pageId: string })
         {/* ----------------------------------------------------------------------- */}
         <aside
           className={`border-e border-slate-800 bg-[#0a1220] flex flex-col shrink-0 transition-all duration-300 z-30 shadow-2xl ${
-            viewMode !== "grapesjs" && isSidebarOpen ? "w-full sm:w-[380px] lg:w-[420px]" : "w-0 overflow-hidden border-none"
+            isSidebarOpen ? "w-full sm:w-[380px] lg:w-[420px]" : "w-0 overflow-hidden border-none"
           }`}
         >
           {/* Header of Inspector */}
@@ -1423,62 +1342,7 @@ export default function SinglePageContentManager({ pageId }: { pageId: string })
         {/* RIGHT CANVAS: REAL-TIME STUDIO VISUAL OR LIVE IFRAME                     */}
         {/* ----------------------------------------------------------------------- */}
         <main className="flex-1 bg-[#050912] overflow-hidden flex flex-col relative">
-          {/* VIEW MODE 0: GRAPESJS OPEN-SOURCE PAGE BUILDER */}
-          {viewMode === "grapesjs" ? (
-            <div className="flex-1 overflow-y-auto p-3 sm:p-4">
-              {(() => {
-                const gSec = activePage?.sections.find((s) => s.id === "grapes_builder");
-                const rawVal = (key: "html" | "css" | "project"): string => {
-                  const f = gSec?.fields.find((fld) => fld.key === key);
-                  if (!f) return "";
-                  const v = readValue(f, lang);
-                  return typeof v === "string" ? v : "";
-                };
-                const rawHeroImg = (() => {
-                  const heroSec = activePage?.sections.find((s) => s.id === "hero");
-                  const imgF = heroSec?.fields.find((fld) => fld.key === "image");
-                  const val = imgF && typeof imgF.value === "string" ? imgF.value.trim() : "";
-                  return val || undefined;
-                })();
-                const seedCtx: GrapesSeedContext = {
-                  pageId,
-                  pageTitle: t(meta.titleKey, meta.defaultTitle),
-                  heroEyebrow: getSectionFieldVal("hero", "eyebrow") || "Patrimoine & Généalogie de Tunisie",
-                  heroTitle: getSectionFieldVal("hero", "title") || meta.defaultTitle,
-                  heroSubtitle: getSectionFieldVal("hero", "subtitle") || meta.defaultSubtitle,
-                  heroImage: rawHeroImg,
-                  introTitle: getSectionFieldVal("intro", "title") || getSectionFieldVal("mission", "title") || meta.defaultTitle,
-                  introBody: getSectionFieldVal("intro", "body") || getSectionFieldVal("mission", "intro") || meta.defaultSubtitle,
-                  contactEmail: pageId === "contact" ? getSectionFieldVal("details", "email") : undefined,
-                  contactPhone: pageId === "contact" ? getSectionFieldVal("details", "phone") : undefined,
-                  contactAddress: pageId === "contact" ? getSectionFieldVal("details", "address") : undefined,
-                  contactHours: pageId === "contact" ? getSectionFieldVal("details", "hours") : undefined,
-                };
-                return (
-                  <Suspense
-                    fallback={
-                      <div className="flex h-[560px] items-center justify-center rounded-xl border border-[var(--gold)]/30 bg-[#0d1626] text-sm text-slate-300 gap-2">
-                        <Loader2 className="h-5 w-5 animate-spin text-[var(--gold)]" />
-                        <span>Chargement du constructeur visuel GrapesJS…</span>
-                      </div>
-                    }
-                  >
-                    <GrapesJsBuilder
-                      pageId={pageId}
-                      localeCode={lang}
-                      initialHtml={rawVal("html")}
-                      initialCss={rawVal("css")}
-                      initialProjectJson={rawVal("project")}
-                      seedContext={seedCtx}
-                      onChange={handleGrapesChange}
-                      onSaveRequested={handleGrapesPublish}
-                      isRtl={lang === "ar"}
-                    />
-                  </Suspense>
-                );
-              })()}
-            </div>
-          ) : viewMode === "iframe" ? (
+          {viewMode === "iframe" ? (
             <div className="flex-1 flex flex-col bg-[#050912] p-2 sm:p-4 overflow-hidden">
               <div className="mb-2 p-2 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between gap-3 text-xs">
                 <div className="flex items-center gap-2 text-slate-300">

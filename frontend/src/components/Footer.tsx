@@ -4,7 +4,7 @@ import { Mail, MapPin, Phone, Send } from "lucide-react";
 import { useTranslation } from "../context/TranslationContext";
 import { api } from "../api/client";
 import { Logo } from "./site/Logo";
-import { loadFooterConfig } from "../admin/pages/FooterSettings";
+import { loadFooterConfig } from "../utils/footerConfig";
 import { useSiteContent } from "../hooks/useSiteContent";
 import SiteCustomBlocks from "./cms/SiteCustomBlocks";
 

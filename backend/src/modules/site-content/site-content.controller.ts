@@ -72,7 +72,7 @@ export class PublicSiteContentController {
   constructor(private readonly siteContentService: SiteContentService) {}
 
   @Get()
-  @Header("Cache-Control", "public, max-age=30")
+  @Header("Cache-Control", "public, max-age=60, stale-while-revalidate=300")
   getPublicContent() {
     return this.siteContentService.getPublicContent();
   }

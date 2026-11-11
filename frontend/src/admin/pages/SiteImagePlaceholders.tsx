@@ -397,21 +397,21 @@ export default function SiteImagePlaceholders() {
             {grouped.map(([key, pageSlots]) => {
               const [pageIdKey, pageLabel, pagePath] = key.split("::");
               const studioAdminRouteMap: Record<string, string> = {
-                home: "/admin/home-content?mode=grapesjs",
-                about: "/admin/about-content?mode=grapesjs",
-                gallery: "/admin/gallery-content?mode=grapesjs",
-                gallery_images: "/admin/gallery-content?mode=grapesjs",
-                library: "/admin/library-content?mode=grapesjs",
-                audio: "/admin/audio-content?mode=grapesjs",
-                documents: "/admin/documents-content?mode=grapesjs",
-                gallery_documents: "/admin/documents-content?mode=grapesjs",
-                periods: "/admin/periods-content?mode=grapesjs",
-                contact: "/admin/contact-content?mode=grapesjs",
-                archives: "/admin/archives-content?mode=grapesjs",
-                sources: "/admin/sources-content?mode=grapesjs",
-                research: "/admin/sources-content?mode=grapesjs",
+                home: "/admin/home-content",
+                about: "/admin/about-content",
+                gallery: "/admin/gallery-content",
+                gallery_images: "/admin/gallery-content",
+                library: "/admin/library-content",
+                audio: "/admin/audio-content",
+                documents: "/admin/documents-content",
+                gallery_documents: "/admin/documents-content",
+                periods: "/admin/periods-content",
+                contact: "/admin/contact-content",
+                archives: "/admin/archives-content",
+                sources: "/admin/sources-content",
+                research: "/admin/sources-content",
               };
-              const grapesRoute = studioAdminRouteMap[pageIdKey];
+              const studioRoute = studioAdminRouteMap[pageIdKey];
               return (
                 <section
                   key={key}
@@ -423,13 +423,13 @@ export default function SiteImagePlaceholders() {
                       <p className="text-xs text-[var(--muted-foreground)] font-mono">{pagePath}</p>
                     </div>
                     <div className="flex flex-wrap items-center gap-3">
-                      {grapesRoute ? (
+                      {studioRoute ? (
                         <Link
-                          to={grapesRoute}
+                          to={studioRoute}
                           className="inline-flex items-center gap-1 rounded-md border border-[var(--gold)]/40 bg-[var(--gold)]/10 px-2.5 py-1 text-xs font-bold text-[var(--gold)] hover:bg-[var(--gold)] hover:text-[#18130a] transition-colors"
                         >
                           <Sparkles className="h-3 w-3" />
-                          GrapesJS Studio
+                          Studio Contenu
                         </Link>
                       ) : null}
                       <Link

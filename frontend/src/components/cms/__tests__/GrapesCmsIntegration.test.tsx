@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 
 const { mockGetText } = vi.hoisted(() => ({
@@ -39,25 +39,14 @@ vi.mock("../../../context/TranslationContext", () => ({
   }),
 }));
 
-vi.mock("../../../admin/components/cms/GrapesJsBuilder", () => ({
-  default: ({ pageId }: { pageId: string }) => (
-    <div data-testid="mock-grapes-builder">GrapesJS Canvas ({pageId})</div>
-  ),
-}));
-
 import SiteCustomBlocks, {
   sanitizeClientBuilderHtml,
   scopeBuilderCss,
 } from "../SiteCustomBlocks";
-import {
-  ROOTS_TUNISIA_BLOCKS,
-  TUNISIAN_ASSET_ITEMS,
-  buildStarterTemplateForPage,
-} from "../../../admin/components/cms/grapesTemplates";
-import { DEFAULT_FOOTER_CONFIG } from "../../../admin/pages/FooterSettings";
+import { DEFAULT_FOOTER_CONFIG } from "../../../utils/footerConfig";
 import SinglePageContentManager from "../../../admin/pages/SinglePageContentManager";
 
-describe("GrapesJS CMS Integration for Roots Tunisia", () => {
+describe("CMS Studio Integration for Roots Tunisia (Fast, Clean, GrapesJS Free)", () => {
   beforeEach(() => {
     mockGetText.mockReset();
     apiMock.get.mockReset().mockResolvedValue({
@@ -79,15 +68,6 @@ describe("GrapesJS CMS Integration for Roots Tunisia", () => {
                     { key: "title", type: "text", label: "Heading", value: "Tunisie" },
                   ],
                 },
-                {
-                  id: "grapes_builder",
-                  label: "GrapesJS Visual Builder",
-                  fields: [
-                    { key: "html", type: "builder_html", label: "HTML", value: "" },
-                    { key: "css", type: "css", label: "CSS", value: "" },
-                    { key: "project", type: "json", label: "JSON", value: "" },
-                  ],
-                },
               ],
             },
           ],
@@ -106,7 +86,7 @@ describe("GrapesJS CMS Integration for Roots Tunisia", () => {
     expect(clean).not.toMatch(/script|onclick|onerror|javascript:/i);
   });
 
-  it("scopes GrapesJS CSS rules cleanly without global leakage", () => {
+  it("scopes custom CSS rules cleanly without global leakage", () => {
     const scoped = scopeBuilderCss(
       `@import url("https://bad.test/a.css");
        body { margin: 0; }
@@ -121,39 +101,6 @@ describe("GrapesJS CMS Integration for Roots Tunisia", () => {
     expect(scoped).toContain('[data-rt-gjs-scope="home"] .rt-grid-3');
     expect(scoped).toContain("@keyframes fade");
     expect(scoped).not.toContain("@import");
-  });
-
-  it("uses exclusively authentic Tunisian imagery across blocks and starter templates", () => {
-    expect(TUNISIAN_ASSET_ITEMS.length).toBeGreaterThanOrEqual(13);
-    expect(ROOTS_TUNISIA_BLOCKS.length).toBeGreaterThanOrEqual(8);
-
-    const allPages = [
-      "home",
-      "about",
-      "gallery",
-      "library",
-      "audio",
-      "documents",
-      "periods",
-      "contact",
-      "archives",
-      "sources",
-      "terms",
-      "privacy",
-      "cookies",
-      "refund",
-      "footer",
-    ];
-    for (const pageId of allPages) {
-      const tpl = buildStarterTemplateForPage({
-        pageId,
-        pageTitle: `Page ${pageId}`,
-        heroTitle: "Titre Test",
-      });
-      expect(tpl.html).toContain("<section");
-      expect(tpl.css).toContain(".rt-card");
-      expect(tpl.html).not.toMatch(/abraham|egypt|\+961/i);
-    }
   });
 
   it("renders SiteCustomBlocks dynamically and returns null when empty", () => {
@@ -173,23 +120,22 @@ describe("GrapesJS CMS Integration for Roots Tunisia", () => {
     expect(scopeEl?.innerHTML).toContain('[data-rt-gjs-scope="about"] .rt-box');
   });
 
-  it("uses Tunisian default phone settings cleanly in FooterSettings", () => {
+  it("uses Tunisian default phone settings cleanly in footerConfig", () => {
     expect(DEFAULT_FOOTER_CONFIG.phone).toMatch(/^\+216/);
     expect(DEFAULT_FOOTER_CONFIG.whatsapp).toMatch(/^\+216/);
     expect(DEFAULT_FOOTER_CONFIG.email).toContain("rootstunisia.com");
   });
 
-  it("exposes the GrapesJS Builder tab inside SinglePageContentManager and switches to it cleanly", async () => {
+  it("loads SinglePageContentManager with fast Studio Éditeur and Vraie Page Publique without GrapesJS overhead", async () => {
     render(
       <MemoryRouter>
         <SinglePageContentManager pageId="home" />
       </MemoryRouter>,
     );
-    const grapesTabBtn = await screen.findByRole("button", { name: /GrapesJS Builder/i });
-    expect(grapesTabBtn).toBeTruthy();
-    fireEvent.click(grapesTabBtn);
-    const builder = await screen.findByTestId("mock-grapes-builder");
-    expect(builder.textContent).toContain("home");
+    const studioTabBtn = await screen.findByRole("button", { name: /Studio Éditeur/i });
+    expect(studioTabBtn).toBeTruthy();
+    const livePageTabBtn = await screen.findByRole("button", { name: /Vraie Page Publique/i });
+    expect(livePageTabBtn).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /GrapesJS Builder/i })).toBeNull();
   });
 });
-
