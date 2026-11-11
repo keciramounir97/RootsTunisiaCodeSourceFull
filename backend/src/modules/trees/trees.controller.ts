@@ -24,14 +24,19 @@ export class TreesController {
             res.type('text/plain; charset=utf-8').send(EMPTY_GEDCOM);
             return;
         }
+        const etag = `W/"tree-${id}-${content.length}"`;
+        res.setHeader('ETag', etag);
+        res.setHeader('Cache-Control', 'public, max-age=300, stale-while-revalidate=600');
+        if (res.req?.headers?.['if-none-match'] === etag) {
+            res.status(304).end();
+            return;
+        }
         res.setHeader('Content-Disposition', `attachment; filename="tree_${id}.ged"`);
         res.type('application/octet-stream').send(content);
     }
 
     @Get('trees')
-    @Header('Cache-Control', 'no-cache, no-store, must-revalidate, max-age=0')
-    @Header('Pragma', 'no-cache')
-    @Header('Expires', '0')
+    @Header('Cache-Control', 'public, max-age=30, stale-while-revalidate=120')
     async listPublic() {
         return this.treesService.listPublic();
     }
@@ -59,6 +64,7 @@ export class TreesController {
     }
 
     @Get('trees/:id')
+    @Header('Cache-Control', 'public, max-age=30, stale-while-revalidate=120')
     async getPublic(@Param('id', ParseIntPipe) id: number) {
         return this.treesService.getPublic(id);
     }

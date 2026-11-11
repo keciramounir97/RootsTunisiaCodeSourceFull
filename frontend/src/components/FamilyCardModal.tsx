@@ -82,6 +82,9 @@ const isDirectPreviewUrl = (kind: string, url: string): boolean => {
   );
 };
 
+// Fast module-level in-memory cache for parsed people per tree
+const modalParsedTreeCache = new Map<string | number, { people: any[]; timestamp: number }>();
+
 export default function FamilyCardModal({ tree, individual, onClose }: FamilyCardModalProps) {
   const { t, locale } = useTranslation();
   const isArabic = locale === "ar";
@@ -173,21 +176,32 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
 
   // Reset state when switching trees
   useEffect(() => {
-    setFetchedPeople(null);
     setSelectedPerson(null);
     setSelectedSourceMemberId("all");
     setPreviewSource(null);
+
+    const targetTreeId = tree?.id;
+    if (targetTreeId && modalParsedTreeCache.has(targetTreeId)) {
+      setFetchedPeople(modalParsedTreeCache.get(targetTreeId)!.people);
+      setLoadingGedcom(false);
+    } else {
+      setFetchedPeople(null);
+    }
   }, [tree?.id]);
 
   // Initial check if GEDCOM text is already attached
   useEffect(() => {
     if (isIndividualModal) return;
+    const targetTreeId = tree?.id;
+    if (targetTreeId && modalParsedTreeCache.has(targetTreeId)) return;
+
     const rawContent = tree?.gedcom_text || tree?.content || tree?.gedcom_data || tree?.gedcom || tree?.gedcomText;
     if (typeof rawContent === "string" && rawContent.trim().length > 10) {
       try {
         const isGedcomX = (tree?.data_format || "gedcom") === "gedcomx" || /^\s*(\{|\<\?xml)/.test(rawContent);
         const parsed = isGedcomX ? parseGedcomX(rawContent) : parseGedcom(rawContent);
         if (Array.isArray(parsed) && parsed.length > 0) {
+          if (targetTreeId) modalParsedTreeCache.set(targetTreeId, { people: parsed, timestamp: Date.now() });
           setFetchedPeople(parsed);
         }
       } catch (e) {
@@ -201,6 +215,22 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
     if (isIndividualModal) return;
     const targetTreeId = tree?.id;
     if (!targetTreeId) return;
+
+    // 1. Instant hit from memory cache
+    const cached = modalParsedTreeCache.get(targetTreeId);
+    if (cached && Array.isArray(cached.people) && cached.people.length > 0) {
+      setFetchedPeople(cached.people);
+      setLoadingGedcom(false);
+      return;
+    }
+
+    // 2. Instant hit from preloaded tree object (props)
+    if (Array.isArray(tree?.people) && tree.people.length > 0) {
+      modalParsedTreeCache.set(targetTreeId, { people: tree.people, timestamp: Date.now() });
+      setFetchedPeople(tree.people);
+      setLoadingGedcom(false);
+      return;
+    }
 
     let isMounted = true;
     setLoadingGedcom(true);
@@ -229,6 +259,7 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
           const isGedcomX = (tree?.data_format || "gedcom") === "gedcomx" || /^\s*(\{|\<\?xml)/.test(rawText);
           const parsed = isGedcomX ? parseGedcomX(rawText) : parseGedcom(rawText);
           if (Array.isArray(parsed) && parsed.length > 0) {
+            modalParsedTreeCache.set(targetTreeId, { people: parsed, timestamp: Date.now() });
             setFetchedPeople(parsed);
             setLoadingGedcom(false);
             return;
@@ -244,12 +275,14 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
               const isGedX = treeObj.data_format === "gedcomx" || /^\s*(\{|\<\?xml)/.test(gedText);
               const parsed = isGedX ? parseGedcomX(gedText) : parseGedcom(gedText);
               if (Array.isArray(parsed) && parsed.length > 0) {
+                modalParsedTreeCache.set(targetTreeId, { people: parsed, timestamp: Date.now() });
                 setFetchedPeople(parsed);
                 setLoadingGedcom(false);
                 return;
               }
             }
             if (Array.isArray(treeObj.people) && treeObj.people.length > 0) {
+              modalParsedTreeCache.set(targetTreeId, { people: treeObj.people, timestamp: Date.now() });
               setFetchedPeople(treeObj.people);
               setLoadingGedcom(false);
               return;
@@ -264,6 +297,7 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
           const peopleRes = await api.get(`/trees/${targetTreeId}/people`);
           const peopleRows = peopleRes?.data?.data || peopleRes?.data;
           if (Array.isArray(peopleRows) && peopleRows.length > 0 && isMounted) {
+            modalParsedTreeCache.set(targetTreeId, { people: peopleRows, timestamp: Date.now() });
             setFetchedPeople(peopleRows);
             setLoadingGedcom(false);
             return;

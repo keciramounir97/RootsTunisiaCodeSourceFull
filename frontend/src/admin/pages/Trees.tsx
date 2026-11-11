@@ -52,6 +52,7 @@ import TreesBuilder, {
 import { useAuth } from "../components/AuthContext";
 
 const MAX_GEDCOM_BYTES = 50 * 1024 * 1024;
+const adminTreeCache = new Map<number | string, { raw: string; people: any[] }>();
 
 export default function Trees() {
   const { theme } = useThemeStore();
@@ -350,6 +351,16 @@ export default function Trees() {
     setSelectedTree(tree);
     peopleDirtyRef.current = false;
     setGedcomError("");
+
+    if (adminTreeCache.has(tree.id)) {
+      const cached = adminTreeCache.get(tree.id)!;
+      setPeople(cached.people);
+      peopleDirtyRef.current = false;
+      setSaveSuccess(t("legacy.tree_loaded", "Arbre chargé."));
+      setLoadingGedcom(false);
+      return;
+    }
+
     setLoadingGedcom(true);
 
     try {
@@ -403,6 +414,7 @@ export default function Trees() {
         ];
 
         setPeople(mockPeople);
+        adminTreeCache.set(tree.id, { raw: "", people: mockPeople });
         peopleDirtyRef.current = false;
         setSaveSuccess(t("legacy.tree_loaded", "Arbre chargé."));
         setLoadingGedcom(false);
@@ -431,10 +443,13 @@ export default function Trees() {
 
       if (!raw || raw.trim() === "" || raw.trim() === "0 HEAD\n1 GEDC\n2 VERS 5.5.1\n0 TRLR") {
         setPeople([]);
+        adminTreeCache.set(tree.id, { raw, people: [] });
       } else {
         const isGedcomX = tree.data_format === "gedcomx" || /^\s*({|<\?xml)/.test(raw);
         const parsed = isGedcomX ? parseGedcomX(raw) : parseGedcom(raw);
-        setPeople(Array.isArray(parsed) ? parsed : []);
+        const parsedPeople = Array.isArray(parsed) ? parsed : [];
+        setPeople(parsedPeople);
+        adminTreeCache.set(tree.id, { raw, people: parsedPeople });
       }
 
       peopleDirtyRef.current = false;
@@ -572,6 +587,8 @@ export default function Trees() {
 
     const targetId = treeId || activeTreeIdRef.current;
     if (targetId && !String(targetId).startsWith("mock-")) {
+      adminTreeCache.delete(targetId);
+      adminTreeCache.delete(Number(targetId));
       const res = isAdmin
         ? await api.put(`/admin/trees/${targetId}`, fd)
         : await api.put(`/my/trees/${targetId}`, fd);
@@ -1006,6 +1023,8 @@ export default function Trees() {
 
     const deletedId = String(tree.id);
     deletedTreeIdsRef.current.add(deletedId);
+    adminTreeCache.delete(deletedId);
+    adminTreeCache.delete(Number(deletedId));
 
     // Immediate optimistic removal from both states
     setMyTrees((prev) => prev.filter((t) => String(t.id) !== deletedId));

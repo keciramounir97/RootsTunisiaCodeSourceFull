@@ -111,10 +111,22 @@ export class TreesService implements OnModuleInit {
     }
 
     /** Select all tree columns plus a derived flag that is true once the tree's
-     *  full GEDCOM content is captured in the database (not just on disk). */
+     *  full GEDCOM content is captured in the database (not just on disk).
+     *  Explicitly excludes the multi-megabyte gedcom_text column from list queries for extreme speed. */
     private backupFlagSelect() {
         return [
-            'family_trees.*',
+            'family_trees.id',
+            'family_trees.user_id',
+            'family_trees.title',
+            'family_trees.description',
+            'family_trees.category',
+            'family_trees.archive_source',
+            'family_trees.document_code',
+            'family_trees.gedcom_path',
+            'family_trees.data_format',
+            'family_trees.is_public',
+            'family_trees.created_at',
+            'family_trees.updated_at',
             this.knex.raw(
                 "(CASE WHEN family_trees.gedcom_text IS NOT NULL AND family_trees.gedcom_text <> '' THEN 1 ELSE 0 END) as has_gedcom_backup",
             ),
@@ -147,7 +159,7 @@ export class TreesService implements OnModuleInit {
         return null;
     }
 
-    private setCached(key: string, data: any, ttlMs = 5000) {
+    private setCached(key: string, data: any, ttlMs = 60000) {
         this.treeCache.set(key, { data, expiry: Date.now() + ttlMs });
     }
 
@@ -158,6 +170,10 @@ export class TreesService implements OnModuleInit {
     }
 
     async listPublic() {
+        const cacheKey = 'trees_list_public';
+        const cached = this.getCached(cacheKey);
+        if (cached) return cached;
+
         const countSelect = this.knex.raw('(SELECT COUNT(*) FROM persons WHERE persons.tree_id = family_trees.id) as people_count');
 
         const rows = await Tree.query(this.knex)
@@ -179,10 +195,16 @@ export class TreesService implements OnModuleInit {
             .orderBy('created_at', 'desc')
             .withGraphFetched('owner')
             .modifyGraph('owner', (builder: any) => builder.select('id', 'full_name'));
-        return rows.map((r: any) => this.stripGedcomText(r));
+        const result = rows.map((r: any) => this.stripGedcomText(r));
+        this.setCached(cacheKey, result, 60000); // 60s in-memory cache
+        return result;
     }
 
     async getPublic(id: number) {
+        const cacheKey = `tree_public_${id}`;
+        const cached = this.getCached(cacheKey);
+        if (cached) return cached;
+
         const tree = await Tree.query(this.knex)
             .findById(id)
             .select(this.backupFlagSelect())
@@ -191,10 +213,16 @@ export class TreesService implements OnModuleInit {
             .modifyGraph('owner', (builder: any) => builder.select('id', 'full_name'));
 
         if (!tree) throw new NotFoundException('Tree not found');
-        return this.stripGedcomText(tree);
+        const result = this.stripGedcomText(tree);
+        this.setCached(cacheKey, result, 60000);
+        return result;
     }
 
     async listByUser(userId: number) {
+        const cacheKey = `trees_user_${userId}`;
+        const cached = this.getCached(cacheKey);
+        if (cached) return cached;
+
         const countSelect = this.knex.raw('(SELECT COUNT(*) FROM persons WHERE persons.tree_id = family_trees.id) as people_count');
 
         const rows = await Tree.query(this.knex)
@@ -215,10 +243,16 @@ export class TreesService implements OnModuleInit {
             .orderBy('created_at', 'desc')
             .withGraphFetched('owner')
             .modifyGraph('owner', (builder: any) => builder.select('id', 'full_name', 'email'));
-        return rows.map((r: any) => this.stripGedcomText(r));
+        const result = rows.map((r: any) => this.stripGedcomText(r));
+        this.setCached(cacheKey, result, 20000);
+        return result;
     }
 
     async listAdmin() {
+        const cacheKey = 'trees_list_admin';
+        const cached = this.getCached(cacheKey);
+        if (cached) return cached;
+
         const countSelect = this.knex.raw('(SELECT COUNT(*) FROM persons WHERE persons.tree_id = family_trees.id) as people_count');
 
         const rows = await Tree.query(this.knex)
@@ -238,7 +272,9 @@ export class TreesService implements OnModuleInit {
             .orderBy('created_at', 'desc')
             .withGraphFetched('owner')
             .modifyGraph('owner', (builder: any) => builder.select('id', 'full_name', 'email'));
-        return rows.map((r: any) => this.stripGedcomText(r));
+        const result = rows.map((r: any) => this.stripGedcomText(r));
+        this.setCached(cacheKey, result, 20000);
+        return result;
     }
 
     async findOne(id: number) {
@@ -261,7 +297,7 @@ export class TreesService implements OnModuleInit {
 
         const text = stored.gedcom_text;
         if (typeof text === 'string' && text.trim().length > 0) {
-            this.gedcomCache.set(Number(id), { text, expiry: Date.now() + 30000 });
+            this.gedcomCache.set(Number(id), { text, expiry: Date.now() + 600000 }); // 10 min cache
             return text;
         }
 
@@ -271,7 +307,7 @@ export class TreesService implements OnModuleInit {
             try {
                 const fileText = fs.readFileSync(filePath, 'utf8');
                 if (fileText) {
-                    this.gedcomCache.set(Number(id), { text: fileText, expiry: Date.now() + 30000 });
+                    this.gedcomCache.set(Number(id), { text: fileText, expiry: Date.now() + 600000 }); // 10 min cache
                     return fileText;
                 }
             } catch {}
