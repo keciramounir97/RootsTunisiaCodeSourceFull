@@ -5,7 +5,14 @@ import {
   Search,
   Landmark,
   X,
-  Compass,
+  FolderArchive,
+  Building2,
+  Ship,
+  Shield,
+  Crown,
+  Scroll,
+  Moon,
+  Globe,
 } from "lucide-react";
 import { PageHero, Section } from "../components/site/Primitives";
 import kairouan from "../assets/slider-kairouan.jpg";
@@ -376,15 +383,15 @@ export default function SourcesAndArchives() {
     kairouan;
 
   const categories = useMemo(() => [
-    { key: "all", label: t("tab_all", "Tous les Dépôts"), count: ARCHIVES_DIRECTORY.length },
-    { key: "tunisia", label: "🇹🇳 Tunisie", count: ARCHIVES_DIRECTORY.filter((a) => a.category === "tunisia").length },
-    { key: "france", label: "🇫🇷 France", count: ARCHIVES_DIRECTORY.filter((a) => a.category === "france").length },
-    { key: "italy", label: "🇮🇹 Italie & Sicile", count: ARCHIVES_DIRECTORY.filter((a) => a.category === "italy").length },
-    { key: "malta", label: "🇲🇹 Malte", count: ARCHIVES_DIRECTORY.filter((a) => a.category === "malta").length },
-    { key: "uk", label: "🇬🇧 Royaume-Uni", count: ARCHIVES_DIRECTORY.filter((a) => a.category === "uk").length },
-    { key: "jewish", label: "✡️ Fonds Juifs", count: ARCHIVES_DIRECTORY.filter((a) => a.category === "jewish").length },
-    { key: "ottoman", label: "🌙 Ottoman & Islamique", count: ARCHIVES_DIRECTORY.filter((a) => a.category === "ottoman").length },
-    { key: "maghreb", label: "🇩🇿🇲🇦 Algérie & Maghreb", count: ARCHIVES_DIRECTORY.filter((a) => a.category === "maghreb").length },
+    { key: "all", label: t("tab_all_funds", "Tous les fonds"), count: ARCHIVES_DIRECTORY.length, Icon: FolderArchive },
+    { key: "tunisia", label: "Tunisie", count: ARCHIVES_DIRECTORY.filter((a) => a.category === "tunisia").length, Icon: Landmark },
+    { key: "france", label: "France", count: ARCHIVES_DIRECTORY.filter((a) => a.category === "france").length, Icon: Building2 },
+    { key: "italy", label: "Italie & Sicile", count: ARCHIVES_DIRECTORY.filter((a) => a.category === "italy").length, Icon: Ship },
+    { key: "malta", label: "Malte", count: ARCHIVES_DIRECTORY.filter((a) => a.category === "malta").length, Icon: Shield },
+    { key: "uk", label: "Royaume-Uni", count: ARCHIVES_DIRECTORY.filter((a) => a.category === "uk").length, Icon: Crown },
+    { key: "jewish", label: "Fonds Juifs", count: ARCHIVES_DIRECTORY.filter((a) => a.category === "jewish").length, Icon: Scroll },
+    { key: "ottoman", label: "Ottoman & Islamique", count: ARCHIVES_DIRECTORY.filter((a) => a.category === "ottoman").length, Icon: Moon },
+    { key: "maghreb", label: "Algérie & Maghreb", count: ARCHIVES_DIRECTORY.filter((a) => a.category === "maghreb").length, Icon: Globe },
   ], [t]);
 
   const query = searchQuery.trim().toLowerCase();
@@ -433,66 +440,79 @@ export default function SourcesAndArchives() {
         </Link>
       </PageHero>
 
-      {/* Directory Filter Bar & Live Search */}
+      {/* Fused Directory Search & Category Filter Console */}
       <section className="w-full px-4 pt-6 sm:px-6 sm:pt-8 lg:px-8">
-        <div className="mx-auto w-full max-w-[var(--content-max)] space-y-4">
-          <div className="surface-card p-4 sm:p-6 rounded-xl border border-[var(--gold)]/35 bg-[var(--card)]/95 shadow-md flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4">
-            
-            {/* Search Input */}
-            <div className="relative flex-1">
-              <Search className="absolute start-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--gold)] pointer-events-none" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder={t(
-                  "search_archives_placeholder",
-                  "Rechercher par nom d'archive, pays ou mot-clé (ex: cadis, naturalisation, sicile, tirailleurs, habous)..."
+        <div className="mx-auto w-full max-w-[var(--content-max)]">
+          <div className="surface-card rounded-2xl border border-[var(--gold)]/35 bg-[var(--card)]/95 shadow-lg backdrop-blur-sm overflow-hidden">
+            {/* Top Bar: Search Input & Live Results Counter */}
+            <div className="p-4 sm:p-5 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3.5">
+              <div className="relative flex-1">
+                <Search className="absolute start-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--gold)] pointer-events-none" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder={t(
+                    "search_archives_placeholder",
+                    "Rechercher par nom d'archive, pays ou mot-clé (ex: cadis, naturalisation, sicile, tirailleurs, habous)..."
+                  )}
+                  className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] ps-10 pe-9 py-2.5 text-xs sm:text-sm text-[var(--foreground)] outline-none transition focus:border-[var(--gold)] focus:ring-2 focus:ring-[var(--gold)]/30 font-medium"
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery("")}
+                    className="absolute end-3 top-1/2 -translate-y-1/2 text-[var(--muted-foreground)] hover:text-[var(--foreground)] cursor-pointer p-1"
+                    title={t("clear_search", "Effacer")}
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
                 )}
-                className="w-full rounded-lg border border-[var(--border)] bg-[var(--background)] ps-10 pe-9 py-2.5 text-xs text-[var(--foreground)] outline-none transition focus:border-[var(--gold)] focus:ring-2 focus:ring-[var(--gold)]/30 font-medium"
-              />
-              {searchQuery && (
-                <button
-                  type="button"
-                  onClick={() => setSearchQuery("")}
-                  className="absolute end-3 top-1/2 -translate-y-1/2 text-[var(--muted-foreground)] hover:text-[var(--foreground)] cursor-pointer"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              )}
+              </div>
+
+              {/* Results count badge */}
+              <div className="shrink-0 flex items-center justify-end sm:justify-start gap-2 text-xs font-mono text-[var(--muted-foreground)]">
+                <span>Résultats :</span>
+                <strong className="text-[var(--gold)] font-bold px-3 py-1.5 rounded-lg bg-[var(--gold)]/10 border border-[var(--gold)]/30">
+                  {filteredArchives.length} archive{filteredArchives.length > 1 ? "s" : ""}
+                </strong>
+              </div>
             </div>
 
-            {/* Results count pill */}
-            <div className="shrink-0 flex items-center justify-end gap-2 text-xs font-mono text-[var(--muted-foreground)]">
-              <span>Résultats :</span>
-              <strong className="text-[var(--gold)] font-bold px-2.5 py-1 rounded-md bg-[var(--gold)]/10 border border-[var(--gold)]/30">
-                {filteredArchives.length} archive{filteredArchives.length > 1 ? "s" : ""}
-              </strong>
-            </div>
-          </div>
+            {/* Seamless Inner Divider */}
+            <div className="border-t border-[var(--gold)]/20" />
 
-          {/* Category Filter Pills */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-thin">
-            <Compass className="w-4 h-4 text-[var(--gold)] shrink-0 me-1" />
-            {categories.map((cat) => (
-              <button
-                key={cat.key}
-                type="button"
-                onClick={() => setActiveCategory(cat.key)}
-                className={`px-3 py-1.5 rounded-full text-xs font-serif whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 ${
-                  activeCategory === cat.key
-                    ? "bg-[var(--gold)] text-[#1f160f] font-bold shadow-sm"
-                    : "bg-[var(--card)] text-[var(--foreground)]/80 hover:bg-[var(--gold)]/15 border border-[var(--border)]"
-                }`}
-              >
-                <span>{cat.label}</span>
-                <span className={`text-[10px] font-mono px-1.5 py-0.2 rounded-full ${
-                  activeCategory === cat.key ? "bg-black/20 text-black font-extrabold" : "bg-[var(--background)] text-[var(--muted-foreground)]"
-                }`}>
-                  {cat.count}
-                </span>
-              </button>
-            ))}
+            {/* Bottom Bar: Fused Category Filter Pills with Vector Icons (No Emojis) */}
+            <div className="px-4 py-3 sm:px-5 sm:py-3.5 bg-[var(--gold)]/[0.03] flex items-center gap-2 overflow-x-auto scrollbar-thin">
+              {categories.map((cat) => {
+                const IconComponent = cat.Icon;
+                const isActive = activeCategory === cat.key;
+                return (
+                  <button
+                    key={cat.key}
+                    type="button"
+                    onClick={() => setActiveCategory(cat.key)}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-serif whitespace-nowrap transition-all cursor-pointer inline-flex items-center gap-1.5 shrink-0 border ${
+                      isActive
+                        ? "bg-[var(--gold)] text-[#1f160f] font-bold border-[var(--gold)] shadow-sm"
+                        : "bg-[var(--card)] text-[var(--foreground)]/80 hover:bg-[var(--gold)]/15 border-[var(--border)] hover:border-[var(--gold)]/40"
+                    }`}
+                  >
+                    <IconComponent className={`w-3.5 h-3.5 shrink-0 ${isActive ? "text-[#1f160f]" : "text-[var(--gold)]"}`} />
+                    <span>{cat.label}</span>
+                    <span
+                      className={`text-[10px] font-mono px-1.5 py-0.2 rounded-full ${
+                        isActive
+                          ? "bg-black/20 text-black font-extrabold"
+                          : "bg-[var(--background)] text-[var(--muted-foreground)] border border-[var(--border)]"
+                      }`}
+                    >
+                      {cat.count}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
       </section>
