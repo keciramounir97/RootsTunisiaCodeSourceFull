@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Delete, Body, Param, Query, UseGuards, Request, ParseIntPipe, Header } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards, Request, ParseIntPipe, Header } from '@nestjs/common';
 import { SocialService } from './social.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -10,14 +10,14 @@ export class SocialController {
 
     @Get('interactions')
     @Header('Cache-Control', 'no-cache, no-store, must-revalidate, max-age=0')
-    async getInteractions(@Query('mediaKey') mediaKey: string, @Request() req) {
+    async getInteractions(@Query('mediaKey') mediaKey: string, @Request() req: any) {
         const userId = req.user?.id ? Number(req.user.id) : undefined;
         return this.socialService.getInteractions(mediaKey, userId);
     }
 
     @Get('counts')
     @Header('Cache-Control', 'no-cache, no-store, must-revalidate, max-age=0')
-    async getBatchCounts(@Query('keys') keysStr: string, @Request() req) {
+    async getBatchCounts(@Query('keys') keysStr: string, @Request() req: any) {
         const keys = String(keysStr || '').split(',').map(s => s.trim()).filter(Boolean);
         const userId = req.user?.id ? Number(req.user.id) : undefined;
         return this.socialService.getBatchCounts(keys, userId);
@@ -25,13 +25,13 @@ export class SocialController {
 
     @Post('likes')
     @UseGuards(JwtAuthGuard)
-    async toggleLike(@Body() body: { mediaKey: string; entityType?: string; entityId?: number }, @Request() req) {
+    async toggleLike(@Body() body: { mediaKey: string; entityType?: string; entityId?: number }, @Request() req: any) {
         return this.socialService.toggleLike(body.mediaKey, req.user.id, body.entityType, body.entityId);
     }
 
     @Post('comments')
     @UseGuards(JwtAuthGuard)
-    async addComment(@Body() body: { mediaKey: string; content?: string; text?: string; entityType?: string; entityId?: number }, @Request() req) {
+    async addComment(@Body() body: { mediaKey: string; content?: string; text?: string; entityType?: string; entityId?: number }, @Request() req: any) {
         const text = body.content || body.text || '';
         const userName = req.user.fullName || req.user.full_name || req.user.email || 'Member';
         return this.socialService.addComment(body.mediaKey, req.user.id, userName, text, body.entityType, body.entityId);
@@ -39,30 +39,83 @@ export class SocialController {
 
     @Delete('comments/:id')
     @UseGuards(JwtAuthGuard)
-    async deleteComment(@Param('id', ParseIntPipe) id: number, @Request() req) {
+    async deleteComment(@Param('id', ParseIntPipe) id: number, @Request() req: any) {
         const userRole = Number(req.user?.role_id ?? req.user?.roleId ?? req.user?.role ?? 0);
         return this.socialService.deleteComment(id, req.user.id, userRole);
     }
 
-    // Admin routes for moderation
+    // ========================================================
+    // Super Admin & Admin Moderation and Monitoring Routes
+    // ========================================================
+
+    @Get('admin/stats')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles('admin', 'super_admin', 1, 3)
+    @Header('Cache-Control', 'no-cache, no-store, must-revalidate, max-age=0')
+    async getAdminSocialStats() {
+        return this.socialService.getAdminSocialStats();
+    }
+
     @Get('admin/comments')
     @UseGuards(JwtAuthGuard, RolesGuard)
-    @Roles('admin', 'super_admin')
+    @Roles('admin', 'super_admin', 1, 3)
     @Header('Cache-Control', 'no-cache, no-store, must-revalidate, max-age=0')
     async listAllComments(
         @Query('page') page?: string,
         @Query('limit') limit?: string,
         @Query('search') search?: string,
+        @Query('status') status?: string,
+        @Query('entityType') entityType?: string,
     ) {
-        return this.socialService.listAllComments(Number(page || 1), Number(limit || 50), search);
+        return this.socialService.listAllComments(
+            Number(page || 1),
+            Number(limit || 50),
+            search,
+            status,
+            entityType
+        );
+    }
+
+    @Patch('admin/comments/:id/approve')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles('admin', 'super_admin', 1, 3)
+    async setCommentApproval(
+        @Param('id', ParseIntPipe) id: number,
+        @Body() body: { isApproved: boolean }
+    ) {
+        return this.socialService.setCommentApproval(id, Boolean(body.isApproved));
     }
 
     @Delete('admin/comments/:id')
     @UseGuards(JwtAuthGuard, RolesGuard)
-    @Roles('admin', 'super_admin')
-    async adminDeleteComment(@Param('id', ParseIntPipe) id: number, @Request() req) {
+    @Roles('admin', 'super_admin', 1, 3)
+    async adminDeleteComment(@Param('id', ParseIntPipe) id: number, @Request() req: any) {
         const userRole = Number(req.user?.role_id ?? req.user?.roleId ?? req.user?.role ?? 0);
         return this.socialService.deleteComment(id, req.user.id, userRole);
     }
-}
 
+    @Get('admin/likes')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles('admin', 'super_admin', 1, 3)
+    @Header('Cache-Control', 'no-cache, no-store, must-revalidate, max-age=0')
+    async listAllLikes(
+        @Query('page') page?: string,
+        @Query('limit') limit?: string,
+        @Query('search') search?: string,
+        @Query('entityType') entityType?: string,
+    ) {
+        return this.socialService.listAllLikes(
+            Number(page || 1),
+            Number(limit || 50),
+            search,
+            entityType
+        );
+    }
+
+    @Delete('admin/likes/:id')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles('admin', 'super_admin', 1, 3)
+    async adminDeleteLike(@Param('id', ParseIntPipe) id: number) {
+        return this.socialService.deleteLike(id);
+    }
+}

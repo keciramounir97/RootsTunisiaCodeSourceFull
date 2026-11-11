@@ -20,6 +20,7 @@ import {
   Power,
   ListChecks,
   StickyNote,
+  MessageSquare,
 } from "lucide-react";
 import { fetchStats, fetchRecentActivity } from "../utils/api";
 import { formatDate } from "../utils/helpers";
@@ -288,6 +289,12 @@ export default function Dashboard() {
       title: t("my_sources_archives", "My Sources & Archives"),
       desc: t("my_sources_desc", "Saved reference sources with custom links & uploaded icons."),
       Icon: Archive,
+    },
+    {
+      to: "/admin/social-comments",
+      title: t("social_comments_moderation", "Commentaires & Interactions"),
+      desc: t("social_comments_desc", "Superviser les mentions J'aime et modérer les commentaires en temps réel."),
+      Icon: MessageSquare,
     },
     {
       to: "/admin/users",
