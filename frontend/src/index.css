@@ -3515,11 +3515,15 @@ html {
     margin-right: 0;
     border-radius: 8px;
   }
+}
 
-  /* Ensure images don't overflow */
-  img {
-    max-width: 100%;
-    height: auto;
+/* Keep base responsive image rule inside @layer base so utility classes (e.g. Logo height/max-width) still win on mobile */
+@layer base {
+  @media (max-width: 500px) {
+    img {
+      max-width: 100%;
+      height: auto;
+    }
   }
 }
 

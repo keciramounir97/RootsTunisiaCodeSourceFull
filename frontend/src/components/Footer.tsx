@@ -105,7 +105,7 @@ export default function Footer({ data }: FooterProps) {
     >
       <div className="mx-auto grid w-full max-w-[var(--content-max)] gap-8 sm:gap-10 px-4 py-12 sm:px-6 sm:py-14 lg:px-8 sm:grid-cols-2 lg:grid-cols-4">
         <div>
-          <Logo />
+          <Logo size="lg" />
           <p className="mt-4 max-w-xs text-sm leading-relaxed text-[var(--muted-foreground)]">
             {customTagline || t("footer_tagline")}
           </p>

@@ -119,13 +119,13 @@ export function Navbar() {
   return (
     <header
       dir={isRtl ? "rtl" : "ltr"}
-      className="sticky top-0 z-40 px-2 pt-2 sm:px-6 sm:pt-3.5 lg:px-8"
+      className="sticky top-0 z-40 px-2 pt-2 sm:px-3 lg:px-5 xl:px-8 sm:pt-3.5"
     >
-      <div className="mx-auto flex w-full max-w-[var(--content-max)] items-center gap-1.5 sm:gap-4 md:gap-6 lg:gap-8 rounded-lg border border-[var(--gold)]/35 bg-[var(--card)]/95 px-2.5 py-2 sm:px-6 sm:py-3 shadow-xl backdrop-blur-md">
+      <div className="mx-auto flex w-full max-w-[var(--content-max)] items-center gap-1.5 sm:gap-2.5 lg:gap-4 xl:gap-6 rounded-lg border border-[var(--gold)]/35 bg-[var(--card)]/95 px-2.5 py-2 sm:px-3.5 lg:px-5 xl:px-6 sm:py-3 shadow-xl backdrop-blur-md">
         <Logo />
 
         {/* Desktop Nav */}
-        <nav className="hidden items-center gap-7 lg:gap-9 ms-2 lg:ms-4 md:flex h-8">
+        <nav className="hidden items-center gap-2.5 lg:gap-4 xl:gap-7 ms-1 lg:ms-2 xl:ms-4 md:flex h-8 whitespace-nowrap shrink-0">
           {/* Home */}
           <div className="flex items-center h-8">
             <NavLink
@@ -226,17 +226,33 @@ export function Navbar() {
         </nav>
 
         <div className="ms-auto flex items-center gap-1 sm:gap-2">
-          {/* Search bar */}
+          {/* Compact Search Icon (tablet / small desktop 768px–1279px) */}
+          <NavLink
+            to="/gallery"
+            aria-label={t("nav_search_placeholder")}
+            title={t("nav_search_placeholder")}
+            className={({ isActive }) =>
+              `hidden md:flex xl:hidden h-[34px] w-[34px] rounded-sm border items-center justify-center transition-colors cursor-pointer ${
+                isActive
+                  ? "border-[var(--gold)] bg-[var(--gold)]/15 text-[var(--gold)]"
+                  : "border-[var(--border)] text-[var(--foreground)] hover:border-[var(--gold)] hover:bg-[var(--gold)]/15 hover:text-[var(--gold)]"
+              }`
+            }
+          >
+            <Search className="h-3.5 w-3.5" />
+          </NavLink>
+
+          {/* Search bar (wide desktop xl+) */}
           <form
             onSubmit={handleSearchSubmit}
-            className="hidden items-center gap-2 rounded-sm border border-[var(--border)] bg-[var(--background)]/70 px-3.5 py-1.5 lg:flex h-[34px]"
+            className="hidden items-center gap-2 rounded-sm border border-[var(--border)] bg-[var(--background)]/70 px-3 xl:px-3.5 py-1.5 xl:flex h-[34px]"
           >
             <Search className="h-3.5 w-3.5 text-[var(--muted-foreground)] shrink-0" />
             <input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={t("nav_search_placeholder")}
-              className="w-36 bg-transparent text-xs text-[var(--foreground)] text-start outline-none placeholder:text-[var(--muted-foreground)] focus:w-48 transition-all"
+              className="w-36 xl:w-40 bg-transparent text-xs text-[var(--foreground)] text-start outline-none placeholder:text-[var(--muted-foreground)] focus:w-52 transition-all"
             />
           </form>
 
@@ -329,7 +345,7 @@ export function Navbar() {
           <button
             aria-label={t("toggle_menu")}
             onClick={() => setOpen((v) => !v)}
-            className="h-[34px] w-[34px] flex items-center justify-center rounded-sm border border-[var(--border)] text-[var(--foreground)] md:hidden cursor-pointer"
+            className="h-8 w-8 sm:h-[34px] sm:w-[34px] flex items-center justify-center rounded-sm border border-[var(--border)] text-[var(--foreground)] md:hidden cursor-pointer shrink-0"
           >
             {open ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
           </button>
