@@ -44,12 +44,16 @@ export class UsersService {
         const privileges = this.parsePrivileges(
             row.privileges ?? row.adminPrivileges ?? row.admin_privileges,
         );
+        const isVerified = Boolean(row.isVerified ?? row.is_verified ?? false);
         return {
             ...row,
             role: roleId,
             roleId,
             role_id: roleId,
             phone: row.phone ?? row.phoneNumber ?? row.phone_number ?? null,
+            isVerified,
+            is_verified: isVerified,
+            isValidated: isVerified || row.status === 'active',
             privileges,
             permissions: privileges,
             adminPrivileges: privileges,
@@ -65,6 +69,7 @@ export class UsersService {
                 'users.email',
                 'users.role_id as roleId',
                 'users.status',
+                'users.is_verified as isVerified',
                 'users.admin_privileges as adminPrivileges',
                 'users.created_at as createdAt',
                 'users.last_login as lastLogin',
@@ -86,6 +91,7 @@ export class UsersService {
                 'users.role_id',
                 'users.role_id as roleId',
                 'users.status',
+                'users.is_verified as isVerified',
                 'users.admin_privileges as adminPrivileges',
                 'users.created_at as createdAt',
                 'users.last_login as lastLogin',
@@ -123,13 +129,23 @@ export class UsersService {
         }
 
         const privileges = this.serializePrivileges(data.privileges);
+        const isVerified = data.isValidated !== undefined
+            ? Boolean(data.isValidated)
+            : data.isVerified !== undefined
+                ? Boolean(data.isVerified)
+                : data.is_verified !== undefined
+                    ? Boolean(data.is_verified)
+                    : data.status === 'active';
+        const status = data.status || (isVerified ? 'active' : 'pending');
+
         const insertPayload: Record<string, any> = {
             full_name: data.fullName || data.full_name,
             phone_number: data.phone || data.phoneNumber || data.phone_number || null,
             email: data.email,
             password: passwordHash,
             role_id: data.roleId ?? data.role_id ?? 2,
-            status: 'active',
+            status,
+            is_verified: isVerified ? 1 : 0,
         };
         if (privileges !== undefined) {
             insertPayload.admin_privileges = privileges;
@@ -162,6 +178,18 @@ export class UsersService {
 
         if (data.roleId !== undefined) updateData.role_id = data.roleId;
         if (data.role_id !== undefined) updateData.role_id = data.role_id;
+
+        if (data.isValidated !== undefined) {
+            const isVerified = Boolean(data.isValidated);
+            updateData.is_verified = isVerified ? 1 : 0;
+            if (data.status === undefined) {
+                updateData.status = isVerified ? 'active' : 'pending';
+            }
+        } else if (data.isVerified !== undefined) {
+            updateData.is_verified = data.isVerified ? 1 : 0;
+        } else if (data.is_verified !== undefined) {
+            updateData.is_verified = data.is_verified ? 1 : 0;
+        }
 
         if (data.status !== undefined) updateData.status = data.status;
 

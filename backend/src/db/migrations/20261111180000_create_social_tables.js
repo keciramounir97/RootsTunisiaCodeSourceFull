@@ -41,3 +41,4 @@ exports.down = async function(knex) {
   await knex.schema.dropTableIfExists('social_likes');
   await knex.schema.dropTableIfExists('social_comments');
 };
+

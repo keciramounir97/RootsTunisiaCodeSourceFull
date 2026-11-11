@@ -1,12 +1,11 @@
 import { useMemo, useState } from "react";
-import { Shield, Crown, UserCog } from "lucide-react";
+import { Shield, Crown } from "lucide-react";
 import { useLanguage } from "../../i18n";
 import { useAuth } from "../components/AuthContext";
 import AdminManagement from "./AdminManagement";
 import SuperAdmins from "./SuperAdmins";
-import RoleDistribution from "./RoleDistribution";
 
-type TabId = "page-admins" | "super-admins" | "role-distribution";
+type TabId = "page-admins" | "super-admins";
 
 const TABS: { id: TabId; labelKey: string; fallback: string; Icon: typeof Shield }[] = [
   {
@@ -20,12 +19,6 @@ const TABS: { id: TabId; labelKey: string; fallback: string; Icon: typeof Shield
     labelKey: "admins_roles_tab_super_admins",
     fallback: "Super Administrators",
     Icon: Crown,
-  },
-  {
-    id: "role-distribution",
-    labelKey: "admins_roles_tab_role_distribution",
-    fallback: "Role Distribution",
-    Icon: UserCog,
   },
 ];
 
@@ -113,7 +106,6 @@ export default function AdminsRoles({
         <div role="tabpanel" className="admins-roles-panel">
           {tab === "page-admins" ? <AdminManagement embedded /> : null}
           {tab === "super-admins" ? <SuperAdmins embedded /> : null}
-          {tab === "role-distribution" ? <RoleDistribution embedded /> : null}
         </div>
       </div>
     </div>

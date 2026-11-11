@@ -45,6 +45,12 @@ export class UpdateUserDto {
     @IsArray()
     @IsOptional()
     privileges?: string[];
+
+    @IsOptional()
+    isValidated?: boolean;
+
+    @IsOptional()
+    isVerified?: boolean;
 }
 
 export class CreateUserDto {
@@ -86,4 +92,14 @@ export class CreateUserDto {
     @IsArray()
     @IsOptional()
     privileges?: string[];
+
+    @IsOptional()
+    isValidated?: boolean;
+
+    @IsOptional()
+    isVerified?: boolean;
+
+    @IsString()
+    @IsOptional()
+    status?: string;
 }
