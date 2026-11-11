@@ -236,7 +236,7 @@ export default function FooterSettings() {
                   value={config.location}
                   onChange={(e) => setConfig((prev) => ({ ...prev, location: e.target.value }))}
                   className={inputClass}
-                  placeholder="Tunis, Tunisie"
+                  placeholder="Laisser vide pour masquer (ex: Tunis, Tunisie)"
                 />
               </div>
 
@@ -264,7 +264,7 @@ export default function FooterSettings() {
                   value={config.phone}
                   onChange={(e) => setConfig((prev) => ({ ...prev, phone: e.target.value }))}
                   className={inputClass}
-                  placeholder="+216 71 000 000"
+                  placeholder="Laisser vide pour masquer (ex: +216 ...)"
                 />
               </div>
 
@@ -278,7 +278,7 @@ export default function FooterSettings() {
                   value={config.whatsapp}
                   onChange={(e) => setConfig((prev) => ({ ...prev, whatsapp: e.target.value }))}
                   className={inputClass}
-                  placeholder="+216 71 000 000"
+                  placeholder="Laisser vide pour masquer (ex: +216 ...)"
                 />
               </div>
             </div>

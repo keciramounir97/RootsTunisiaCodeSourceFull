@@ -115,12 +115,12 @@ export default function Footer({ data }: FooterProps) {
   const customFineprint = footer?.fineprint && (!isRtl || /[\u0600-\u06FF]/.test(footer.fineprint)) ? footer.fineprint : null;
 
   const resolvedLocation =
-    getText("footer", "config", "location") || footer?.location || "Avenue Habib Bourguiba, 1000 Tunis, Tunisie";
+    getText("footer", "config", "location")?.trim() || footer?.location?.trim() || "";
   const resolvedEmail =
-    getText("footer", "config", "email") || footer?.email || "contact@rootstunisia.com";
+    getText("footer", "config", "email")?.trim() || footer?.email?.trim() || "contact@rootstunisia.com";
   const resolvedPhone =
-    getText("footer", "config", "phone") || footer?.phone || "+216 71 234 567";
-  const cleanTelHref = resolvedPhone.replace(/[^\d+]/g, "") || "+21671234567";
+    getText("footer", "config", "phone")?.trim() || footer?.phone?.trim() || "";
+  const cleanTelHref = resolvedPhone ? resolvedPhone.replace(/[^\d+]/g, "") : "";
 
   return (
     <footer
@@ -171,22 +171,26 @@ export default function Footer({ data }: FooterProps) {
         <div>
           <h4 className="eyebrow">{t("contact")}</h4>
           <ul className="mt-4 space-y-3 text-sm text-[var(--muted-foreground)]">
-            <li className="flex items-center gap-2">
-              <MapPin className="h-4 w-4 text-[var(--gold)] shrink-0" />
-              <span>{resolvedLocation}</span>
-            </li>
+            {resolvedLocation ? (
+              <li className="flex items-center gap-2">
+                <MapPin className="h-4 w-4 text-[var(--gold)] shrink-0" />
+                <span>{resolvedLocation}</span>
+              </li>
+            ) : null}
             <li className="flex items-center gap-2">
               <Mail className="h-4 w-4 text-[var(--gold)] shrink-0" />
               <a href={`mailto:${resolvedEmail}`} className="hover:text-[var(--gold)]" dir="ltr">
                 {resolvedEmail}
               </a>
             </li>
-            <li className="flex items-center gap-2">
-              <Phone className="h-4 w-4 text-[var(--gold)] shrink-0" />
-              <a href={`tel:${cleanTelHref}`} className="hover:text-[var(--gold)]" dir="ltr">
-                {resolvedPhone}
-              </a>
-            </li>
+            {resolvedPhone ? (
+              <li className="flex items-center gap-2">
+                <Phone className="h-4 w-4 text-[var(--gold)] shrink-0" />
+                <a href={`tel:${cleanTelHref}`} className="hover:text-[var(--gold)]" dir="ltr">
+                  {resolvedPhone}
+                </a>
+              </li>
+            ) : null}
           </ul>
 
           <form className="mt-5 space-y-2" onSubmit={handleNewsletterSubmit}>

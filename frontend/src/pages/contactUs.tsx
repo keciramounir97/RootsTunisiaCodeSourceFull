@@ -81,9 +81,9 @@ export default function ContactUs() {
   const phone =
     getText("contact", "details", "phone")?.trim() ||
     getText("footer", "config", "phone")?.trim() ||
-    footerConfig.phone ||
-    "+216 71 234 567";
-  const phoneHref = phone.replace(/[^\d+]/g, "") || "+21671234567";
+    footerConfig.phone?.trim() ||
+    "";
+  const phoneHref = phone ? phone.replace(/[^\d+]/g, "") : "";
   const hours = getText("contact", "details", "hours") ?? "09:00 – 17:00 (GMT+1)";
   const formTitle = getText("contact", "form", "title") ?? t("how_can_we_help");
   const formIntro = getText("contact", "form", "intro") ?? t("direct_contact_desc");
@@ -95,8 +95,10 @@ export default function ContactUs() {
   const igLink =
     footerConfig.socialLinks.find((l) => l.enabled && l.icon === "instagram")?.url ||
     "https://instagram.com";
-  const rawWa = (footerConfig.whatsapp || phone).replace(/[^\d]/g, "") || "21671234567";
-  const whatsappUrl = `https://wa.me/${rawWa}?text=${encodeURIComponent("Bonjour Roots Tunisia, je souhaite des renseignements sur vos recherches généalogiques.")}`;
+  const rawWa = (footerConfig.whatsapp || phone || "").replace(/[^\d]/g, "");
+  const whatsappUrl = rawWa
+    ? `https://wa.me/${rawWa}?text=${encodeURIComponent("Bonjour Roots Tunisia, je souhaite des renseignements sur vos recherches généalogiques.")}`
+    : `mailto:${email}`;
 
   const [loading, setLoading] = useState(false);
   const [selectedTopic, setSelectedTopic] = useState<string>("topic_general");
@@ -244,34 +246,59 @@ export default function ContactUs() {
         <div className="mx-auto w-full max-w-[var(--content-max)]">
           <div className="grid gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-4 items-stretch">
             {/* Direct Phone Card */}
-            <a
-              href={`tel:${phoneHref}`}
-              className="surface-card group flex h-full flex-col justify-between p-5 sm:p-6 rounded-lg border border-[var(--gold)]/35 hover:border-[var(--gold)] transition-all bg-[var(--card)]/95 shadow-md hover:-translate-y-1 text-start"
-            >
-              <div className="flex items-center gap-3">
-                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[var(--gold)]/15 text-[var(--gold)] ring-1 ring-[var(--gold)]/45 shrink-0">
-                  <Phone className="h-5 w-5" />
+            {phone ? (
+              <a
+                href={`tel:${phoneHref}`}
+                className="surface-card group flex h-full flex-col justify-between p-5 sm:p-6 rounded-lg border border-[var(--gold)]/35 hover:border-[var(--gold)] transition-all bg-[var(--card)]/95 shadow-md hover:-translate-y-1 text-start"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[var(--gold)]/15 text-[var(--gold)] ring-1 ring-[var(--gold)]/45 shrink-0">
+                    <Phone className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-wider text-[var(--muted-foreground)]">
+                      {t("nav_contact")}
+                    </p>
+                    <p dir="ltr" className="font-display text-base font-bold text-[var(--foreground)] group-hover:text-[var(--gold)] transition-colors">
+                      {phone}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-wider text-[var(--muted-foreground)]">
-                    {t("nav_contact")}
-                  </p>
-                  <p dir="ltr" className="font-display text-base font-bold text-[var(--foreground)] group-hover:text-[var(--gold)] transition-colors">
-                    {phone}
-                  </p>
+                <div className="mt-4 pt-3 border-t border-[var(--gold)]/20 text-xs font-bold text-[var(--gold)] uppercase tracking-wider flex items-center justify-between">
+                  <span>{t("direct_contact")}</span>
+                  <span>{isRtl ? "←" : "→"}</span>
                 </div>
-              </div>
-              <div className="mt-4 pt-3 border-t border-[var(--gold)]/20 text-xs font-bold text-[var(--gold)] uppercase tracking-wider flex items-center justify-between">
-                <span>{t("direct_contact")}</span>
-                <span>{isRtl ? "←" : "→"}</span>
-              </div>
-            </a>
+              </a>
+            ) : (
+              <a
+                href={`mailto:${email}`}
+                className="surface-card group flex h-full flex-col justify-between p-5 sm:p-6 rounded-lg border border-[var(--gold)]/35 hover:border-[var(--gold)] transition-all bg-[var(--card)]/95 shadow-md hover:-translate-y-1 text-start"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[var(--gold)]/15 text-[var(--gold)] ring-1 ring-[var(--gold)]/45 shrink-0">
+                    <Phone className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-wider text-[var(--muted-foreground)]">
+                      {t("nav_contact")}
+                    </p>
+                    <p className="font-display text-sm font-bold text-[var(--foreground)] group-hover:text-[var(--gold)] transition-colors">
+                      Assistance Directe
+                    </p>
+                  </div>
+                </div>
+                <div className="mt-4 pt-3 border-t border-[var(--gold)]/20 text-xs font-bold text-[var(--gold)] uppercase tracking-wider flex items-center justify-between">
+                  <span>{t("direct_contact")}</span>
+                  <span>{isRtl ? "←" : "→"}</span>
+                </div>
+              </a>
+            )}
 
             {/* WhatsApp Support Card */}
             <a
               href={whatsappUrl}
-              target="_blank"
-              rel="noopener noreferrer"
+              target={rawWa ? "_blank" : undefined}
+              rel={rawWa ? "noopener noreferrer" : undefined}
               className="surface-card group flex h-full flex-col justify-between p-5 sm:p-6 rounded-lg border border-emerald-500/35 hover:border-emerald-500 transition-all bg-[var(--card)]/95 shadow-md hover:-translate-y-1 text-start"
             >
               <div className="flex items-center gap-3">
@@ -283,7 +310,7 @@ export default function ContactUs() {
                     WhatsApp Support
                   </p>
                   <p dir="ltr" className="font-display text-base font-bold text-[var(--foreground)] group-hover:text-emerald-500 transition-colors">
-                    {footerConfig.whatsapp || phone}
+                    {footerConfig.whatsapp || phone || "Sur Demande"}
                   </p>
                 </div>
               </div>

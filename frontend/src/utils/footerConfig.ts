@@ -67,10 +67,10 @@ export const DEFAULT_FOOTER_CONFIG: FooterConfig = {
     { id: "ig", icon: "instagram", url: "https://instagram.com", enabled: true },
     { id: "yt", icon: "youtube", url: "https://youtube.com", enabled: true },
   ],
-  location: "Avenue Habib Bourguiba, 1000 Tunis, Tunisie",
+  location: "",
   email: "contact@rootstunisia.com",
-  phone: "+216 71 234 567",
-  whatsapp: "+216 71 234 567",
+  phone: "",
+  whatsapp: "",
 };
 
 export function normalizeFooterConfig(value: Partial<FooterConfig> | null): FooterConfig {

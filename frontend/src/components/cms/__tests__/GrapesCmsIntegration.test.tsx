@@ -120,9 +120,9 @@ describe("CMS Studio Integration for Roots Tunisia (Fast, Clean, GrapesJS Free)"
     expect(scopeEl?.innerHTML).toContain('[data-rt-gjs-scope="about"] .rt-box');
   });
 
-  it("uses Tunisian default phone settings cleanly in footerConfig", () => {
-    expect(DEFAULT_FOOTER_CONFIG.phone).toMatch(/^\+216/);
-    expect(DEFAULT_FOOTER_CONFIG.whatsapp).toMatch(/^\+216/);
+  it("leaves phone and address vacant by default in footerConfig until configured by admin", () => {
+    expect(DEFAULT_FOOTER_CONFIG.phone).toBe("");
+    expect(DEFAULT_FOOTER_CONFIG.location).toBe("");
     expect(DEFAULT_FOOTER_CONFIG.email).toContain("rootstunisia.com");
   });
 

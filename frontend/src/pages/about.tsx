@@ -284,18 +284,18 @@ export default function About() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4 border-t border-[var(--border)]">
-            {/* Box 1: Ancrage réel */}
+            {/* Box 1: Permanence & Contact */}
             <div className="p-5 rounded-xl bg-[var(--background)] border border-[var(--border)] space-y-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--gold)]/15 text-[var(--gold)]">
                 <MapPin className="h-5 w-5" />
               </div>
               <h3 className="text-base font-display font-bold text-[var(--foreground)]">
-                Ancrage Physique à Tunis
+                Permanence & Recherche
               </h3>
               <p className="text-xs text-[var(--muted-foreground)] leading-relaxed">
-                <strong>Adresse :</strong> Avenue Habib Bourguiba, 1000 Tunis, Tunisie<br />
-                <strong>Téléphone :</strong> +216 71 234 567<br />
-                <strong>Contact :</strong> contact@rootstunisia.com
+                <strong>Contact Officiel :</strong> contact@rootstunisia.com<br />
+                <strong>Support Archivistique :</strong> Équipe Roots Tunisia<br />
+                <strong>Disponibilité :</strong> Du Lundi au Vendredi (9h – 17h)
               </p>
             </div>
 
