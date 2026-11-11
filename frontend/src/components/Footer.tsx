@@ -18,7 +18,7 @@ interface FooterProps {
 
 const explore = [
   { to: "/gallery/trees", labelKey: "nav_trees" },
-  { to: "/gallery", labelKey: "nav_photos" },
+  { to: "/gallery/images", labelKey: "nav_photos" },
   { to: "/library", labelKey: "nav_library" },
   { to: "/audio", labelKey: "nav_audios" },
   { to: "/gallery/articles", labelKey: "nav_articles" },
@@ -27,8 +27,7 @@ const explore = [
 const research = [
   { to: "/about", labelKey: "nav_about" },
   { to: "/periods", labelKey: "nav_periods" },
-  { to: "/sources", labelKey: "nav_sources" },
-  { to: "/archives", labelKey: "nav_archives" },
+  { to: "/sources", labelKey: "nav_sources_and_archives" },
   { to: "/subscriptions", labelKey: "nav_subscriptions" },
   { to: "/contact", labelKey: "nav_contact" },
 ];
@@ -116,12 +115,12 @@ export default function Footer({ data }: FooterProps) {
   const customFineprint = footer?.fineprint && (!isRtl || /[\u0600-\u06FF]/.test(footer.fineprint)) ? footer.fineprint : null;
 
   const resolvedLocation =
-    getText("footer", "config", "location") || footer?.location || "Tunis, Tunisie";
+    getText("footer", "config", "location") || footer?.location || "Avenue Habib Bourguiba, 1000 Tunis, Tunisie";
   const resolvedEmail =
     getText("footer", "config", "email") || footer?.email || "contact@rootstunisia.com";
   const resolvedPhone =
-    getText("footer", "config", "phone") || footer?.phone || "+216 71 000 000";
-  const cleanTelHref = resolvedPhone.replace(/[^\d+]/g, "") || "+21671000000";
+    getText("footer", "config", "phone") || footer?.phone || "+216 71 234 567";
+  const cleanTelHref = resolvedPhone.replace(/[^\d+]/g, "") || "+21671234567";
 
   return (
     <footer

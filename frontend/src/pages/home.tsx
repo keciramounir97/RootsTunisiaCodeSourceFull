@@ -43,12 +43,12 @@ function resolveBannerUrl(pathOrUrl?: string | null) {
 }
 
 const slides = [
-  { image: carthageRuins, labelKey: "hero_slide_carthage" },
+  { image: medinaDoor, labelKey: "hero_slide_medina" },
   { image: sidiBouSaidDoors, labelKey: "hero_slide_sidi" },
   { image: kairouanMosque, labelKey: "hero_slide_kairouan" },
-  { image: elJemPanorama, labelKey: "hero_slide_eljem" },
-  { image: medinaDoor, labelKey: "hero_slide_medina" },
   { image: fortressPalms, labelKey: "hero_slide_fortress" },
+  { image: elJemPanorama, labelKey: "hero_slide_eljem" },
+  { image: carthageRuins, labelKey: "hero_slide_carthage" },
 ];
 
 const stats = [
@@ -69,7 +69,7 @@ const tools = [
     icon: Camera,
     titleKey: "tool_photos_title",
     bodyKey: "tool_photos_body",
-    to: "/gallery",
+    to: "/gallery/images",
   },
   {
     icon: BookOpen,
@@ -293,7 +293,7 @@ export default function Home() {
                 if (!slideLabel) return null;
                 return (
                   <Link
-                    to="/gallery"
+                    to="/gallery/images"
                     className="inline-flex items-center gap-1.5 rounded-full border border-white/30 bg-black/45 px-3 py-1 text-xs font-semibold !text-[#f5c857] hover:bg-black/65 transition-colors"
                   >
                     <MapPin className="h-3.5 w-3.5" />
@@ -706,7 +706,7 @@ export default function Home() {
           })}
         </div>
         <div className="mt-10 text-center">
-          <Link to="/gallery" className="btn-base btn-red w-full sm:w-auto">
+          <Link to="/gallery/images" className="btn-base btn-red w-full sm:w-auto">
             {t("open_full_photo_gallery")}
           </Link>
         </div>
@@ -763,7 +763,7 @@ export default function Home() {
                 </h3>
               </div>
               <Link
-                to="/gallery"
+                to="/gallery/images"
                 onClick={() => setLightboxIndex(null)}
                 className="btn-base btn-gold w-full sm:w-auto"
               >

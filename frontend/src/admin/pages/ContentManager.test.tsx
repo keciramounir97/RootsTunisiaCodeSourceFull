@@ -1,4 +1,4 @@
-﻿import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor, within } from "@testing-library/react";
 
 const apiMock = vi.hoisted(() => ({
@@ -52,7 +52,7 @@ const makeDoc = () => ({
 });
 
 const headingInput = () =>
-  screen.getAllByPlaceholderText(/built-in site text/i).find((el) => el.tagName === "INPUT")!;
+  screen.getAllByPlaceholderText(/built-in site text|texte intégré/i).find((el) => el.tagName === "INPUT")!;
 
 describe("ContentManager", () => {
   beforeEach(() => {
@@ -69,10 +69,10 @@ describe("ContentManager", () => {
     }));
 
     const { container } = render(<ContentManager />);
-    await screen.findByText("Public Content Manager");
+    await screen.findByText(/Public Content Manager|Gestionnaire de contenu public/i);
     expect(apiMock.get).toHaveBeenCalledWith("/admin/site-content");
 
-    const save = screen.getByRole("button", { name: /save & publish/i });
+    const save = screen.getByRole("button", { name: /save & publish|enregistrer/i });
     expect(save).toBeDisabled();
 
     // Edit the heading (all languages) + a French override
@@ -83,7 +83,7 @@ describe("ContentManager", () => {
     fireEvent.change(screen.getByPlaceholderText("Roots Tunisia"), { target: { value: "Racines de Tunisie" } });
 
     // Upload an image under "All languages"
-    fireEvent.click(screen.getByRole("tab", { name: /All languages/ }));
+    fireEvent.click(screen.getByRole("tab", { name: /All languages|Toutes les langues/i }));
     const fileInput = container.querySelector('input[type="file"]') as HTMLInputElement;
     const file = new File([new Uint8Array([1, 2, 3])], "hero.png", { type: "image/png" });
     fireEvent.change(fileInput, { target: { files: [file] } });
@@ -95,7 +95,7 @@ describe("ContentManager", () => {
     );
 
     // List item
-    fireEvent.click(screen.getByRole("button", { name: /add item/i }));
+    fireEvent.click(screen.getByRole("button", { name: /add item|ajouter/i }));
     fireEvent.change(within(screen.getByText("1").parentElement!).getByRole("textbox"), {
       target: { value: "First bullet" },
     });
@@ -104,7 +104,7 @@ describe("ContentManager", () => {
     fireEvent.click(screen.getByRole("button", { name: /Contact/ }));
     expect(screen.getByText("E-mail")).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: /save & publish/i }));
+    fireEvent.click(screen.getByRole("button", { name: /save & publish|enregistrer/i }));
     await waitFor(() => expect(apiMock.put).toHaveBeenCalledTimes(1));
     const [url, body] = apiMock.put.mock.calls[0];
     expect(url).toBe("/admin/site-content");
@@ -116,30 +116,30 @@ describe("ContentManager", () => {
     expect(hero.find((f: any) => f.key === "image").value).toBe("/uploads/site-content/sc-abc.png");
     expect(hero.find((f: any) => f.key === "items").value).toEqual(["First bullet"]);
 
-    await screen.findByText(/content saved and published/i);
-    await waitFor(() => expect(screen.getByRole("button", { name: /save & publish/i })).toBeDisabled());
+    await screen.findByText(/content saved and published|Contenu enregistré et publié/i);
+    await waitFor(() => expect(screen.getByRole("button", { name: /save & publish|enregistrer/i })).toBeDisabled());
     expect(localStorage.setItem).not.toHaveBeenCalled();
   });
 
   it("keeps the draft and reports an error when saving fails", async () => {
     apiMock.put.mockRejectedValue({ response: { status: 500, data: { message: "boom" } } });
     render(<ContentManager />);
-    await screen.findByText("Public Content Manager");
+    await screen.findByText(/Public Content Manager|Gestionnaire de contenu public/i);
     fireEvent.change(headingInput(), {
       target: { value: "Draft" },
     });
-    fireEvent.click(screen.getByRole("button", { name: /save & publish/i }));
-    await screen.findByText(/boom|saving failed/i);
-    expect(screen.getByText(/unsaved changes/i)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /save & publish/i })).toBeEnabled();
+    fireEvent.click(screen.getByRole("button", { name: /save & publish|enregistrer/i }));
+    await screen.findByText(/boom|saving failed|échec/i);
+    expect(screen.getByText(/unsaved changes|modifications/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /save & publish|enregistrer/i })).toBeEnabled();
   });
 
   it("shows a retry state when loading fails", async () => {
     apiMock.get.mockRejectedValueOnce(new Error("network"));
     render(<ContentManager />);
-    const retry = await screen.findByRole("button", { name: /retry/i });
+    const retry = await screen.findByRole("button", { name: /retry|réessayer/i });
     fireEvent.click(retry);
-    await screen.findByText("Public Content Manager");
-    expect(within(document.body).getAllByText("Hero banner").length).toBeGreaterThan(0);
+    await screen.findByText(/Public Content Manager|Gestionnaire de contenu public/i);
+    expect(within(document.body).getAllByText(/Hero banner|Bannière/i).length).toBeGreaterThan(0);
   });
 });

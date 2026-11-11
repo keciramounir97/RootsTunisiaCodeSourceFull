@@ -28,6 +28,7 @@ export default function AdminArticles() {
     visibility: "public" as "public" | "community" | "private",
     images: [] as string[],
     videos: [] as string[],
+    sources: [] as Array<{ title: string; cote?: string; url?: string; note?: string }>,
   });
   const [toast, setToast] = useState({ message: "", tone: "success" as "success" | "error" });
 
@@ -67,7 +68,7 @@ export default function AdminArticles() {
     setEditingId(null);
     setImageInput("");
     setVideoInput("");
-    setForm({ title: "", category: "", content: "", visibility: "public", images: [], videos: [] });
+    setForm({ title: "", category: "", content: "", visibility: "public", images: [], videos: [], sources: [] });
   };
 
   const addMedia = (kind: "images" | "videos", url: string) => {
@@ -80,12 +81,36 @@ export default function AdminArticles() {
     setForm((prev) => ({ ...prev, [kind]: prev[kind].filter((u) => u !== url) }));
   };
 
+  const addSource = () => {
+    setForm((prev) => ({
+      ...prev,
+      sources: [...prev.sources, { title: "", cote: "", url: "", note: "" }],
+    }));
+  };
+
+  const updateSource = (index: number, field: "title" | "cote" | "url" | "note", val: string) => {
+    setForm((prev) => {
+      const copy = [...prev.sources];
+      copy[index] = { ...copy[index], [field]: val };
+      return { ...prev, sources: copy };
+    });
+  };
+
+  const removeSource = (index: number) => {
+    setForm((prev) => ({
+      ...prev,
+      sources: prev.sources.filter((_, i) => i !== index),
+    }));
+  };
+
   const saveArticle = async (e: FormEvent) => {
     e.preventDefault();
     if (!form.content.trim()) {
       notify(t("content_required", "Please enter content"), "error");
       return;
     }
+
+    const validSources = form.sources.filter((s) => s.title.trim().length > 0);
 
     const payload = {
       title: form.title.trim() || form.content.trim().slice(0, 90),
@@ -94,6 +119,7 @@ export default function AdminArticles() {
       visibility: form.visibility,
       images: form.images,
       videos: form.videos,
+      sources: validSources,
     };
 
     try {
@@ -101,13 +127,21 @@ export default function AdminArticles() {
       const shouldFallback = (err: any) => shouldFallbackRoute(err) || [401, 403, 500].includes(err?.response?.status);
       if (editingId) {
         await requestWithFallback(
-          [() => api.put(`/admin/articles/${editingId}`, payload), () => api.put(`/my/articles/${editingId}`, payload)],
+          [
+            () => api.put(`/admin/articles/${editingId}`, payload),
+            () => api.put(`/my/articles/${editingId}`, payload),
+            () => api.put(`/articles/${editingId}`, payload),
+          ],
           shouldFallback,
         );
         notify(t("article_updated", "Post updated."));
       } else {
         await requestWithFallback(
-          [() => api.post("/admin/articles", payload), () => api.post("/my/articles", payload)],
+          [
+            () => api.post("/admin/articles", payload),
+            () => api.post("/my/articles", payload),
+            () => api.post("/articles", payload),
+          ],
           shouldFallback,
         );
         notify(t("article_created", "Post published."));
@@ -126,7 +160,11 @@ export default function AdminArticles() {
     try {
       const shouldFallback = (err: any) => shouldFallbackRoute(err) || [401, 403, 500].includes(err?.response?.status);
       await requestWithFallback(
-        [() => api.delete(`/admin/articles/${id}`), () => api.delete(`/my/articles/${id}`)],
+        [
+          () => api.delete(`/admin/articles/${id}`),
+          () => api.delete(`/my/articles/${id}`),
+          () => api.delete(`/articles/${id}`),
+        ],
         shouldFallback,
       );
       notify(t("article_deleted", "Post deleted."));
@@ -145,6 +183,7 @@ export default function AdminArticles() {
       visibility: item.visibility || "public",
       images: Array.isArray(item.images) ? item.images : [],
       videos: Array.isArray(item.videos) ? item.videos : [],
+      sources: Array.isArray(item.sources) ? item.sources : [],
     });
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -286,6 +325,66 @@ export default function AdminArticles() {
               </div>
             ) : null}
 
+            {/* Attached Sources section */}
+            <div className="p-4 rounded-md border border-[var(--gold)]/30 bg-[var(--background)]/60 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold uppercase tracking-wider text-[var(--gold)]">
+                  Sources & Documents d&apos;Archives Rattachés ({form.sources.length})
+                </span>
+                <button
+                  type="button"
+                  onClick={addSource}
+                  className="text-xs font-bold text-[var(--gold)] hover:underline inline-flex items-center gap-1 cursor-pointer"
+                >
+                  + Ajouter une source
+                </button>
+              </div>
+
+              {form.sources.length === 0 ? (
+                <p className="text-xs text-[var(--muted-foreground)] italic">
+                  Aucune source rattachée. Cliquez sur « Ajouter une source » pour lier une cote d&apos;archive.
+                </p>
+              ) : (
+                form.sources.map((src, index) => (
+                  <div key={index} className="grid grid-cols-1 sm:grid-cols-12 gap-2 p-2.5 rounded bg-[var(--card)] border border-[var(--border)] items-center">
+                    <div className="sm:col-span-4">
+                      <input
+                        value={src.title}
+                        onChange={(e) => updateSource(index, "title", e.target.value)}
+                        placeholder="Dépôt / Institution (ex: Archives Nationales)"
+                        className="w-full text-xs p-1.5 rounded border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)]"
+                      />
+                    </div>
+                    <div className="sm:col-span-3">
+                      <input
+                        value={src.cote || ""}
+                        onChange={(e) => updateSource(index, "cote", e.target.value)}
+                        placeholder="Cote d'archive (ex: Série Majba n°12)"
+                        className="w-full text-xs p-1.5 rounded border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] font-mono"
+                      />
+                    </div>
+                    <div className="sm:col-span-4">
+                      <input
+                        value={src.url || ""}
+                        onChange={(e) => updateSource(index, "url", e.target.value)}
+                        placeholder="Lien web (ex: http://www.archives.nat.tn)"
+                        className="w-full text-xs p-1.5 rounded border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)]"
+                      />
+                    </div>
+                    <div className="sm:col-span-1 flex justify-end">
+                      <button
+                        type="button"
+                        onClick={() => removeSource(index)}
+                        className="p-1 text-slate-400 hover:text-red-500 cursor-pointer"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
             <div className="flex flex-wrap items-center gap-3">
               <select
                 value={form.visibility}
@@ -357,11 +456,18 @@ export default function AdminArticles() {
                       </div>
                     </div>
                     {article.title ? <h3 className="mt-4 font-display text-xl">{article.title}</h3> : null}
-                    {article.category ? (
-                      <span className="mt-3 inline-flex px-2.5 py-1 rounded-sm bg-[var(--gold)]/15 text-[var(--gold)] text-xs font-semibold">
-                        {article.category}
-                      </span>
-                    ) : null}
+                    <div className="mt-3 flex flex-wrap gap-2 items-center">
+                      {article.category ? (
+                        <span className="inline-flex px-2.5 py-1 rounded-sm bg-[var(--gold)]/15 text-[var(--gold)] text-xs font-semibold">
+                          {article.category}
+                        </span>
+                      ) : null}
+                      {article.sources && article.sources.length > 0 ? (
+                        <span className="inline-flex px-2.5 py-1 rounded-sm bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-xs font-semibold">
+                          {article.sources.length} source{article.sources.length > 1 ? "s" : ""} vérifiée{article.sources.length > 1 ? "s" : ""}
+                        </span>
+                      ) : null}
+                    </div>
                     <p className="mt-2 whitespace-pre-wrap text-sm">{article.content}</p>
                     {(article.images?.length || article.videos?.length) ? (
                       <div className="mt-3 grid md:grid-cols-2 gap-3">

@@ -47,8 +47,10 @@ export default function Payment() {
 
   // Tier base USD calculation:
   const isAnnual = intervalParam === "annual";
-  const baseUSD = tierParam === "3" ? (isAnnual ? 19.99 * 10 : 19.99) : (isAnnual ? 9.99 * 10 : 9.99);
-  const tierName = tierParam === "3" ? "Family Historian" : "Premium";
+  const defaultUSD = tierParam === "3" ? (isAnnual ? 3.99 * 10 : 3.99) : (isAnnual ? 1.99 * 10 : 1.99);
+  const amountFromQuery = parseFloat(queryParams.get("amount") || "");
+  const baseUSD = !isNaN(amountFromQuery) && amountFromQuery > 0 ? amountFromQuery : defaultUSD;
+  const tierName = tierParam === "3" ? "Historien & Généalogie Pro" : "Chercheur & Actes";
   const tierId = parseInt(tierParam, 10) || 2;
 
   // Real-time converted amount

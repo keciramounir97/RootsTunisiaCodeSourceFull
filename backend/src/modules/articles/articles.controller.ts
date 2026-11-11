@@ -34,6 +34,7 @@ export class ArticlesController {
     }
 
     @Post('my/articles')
+    @Post('articles')
     @UseGuards(JwtAuthGuard)
     async createMy(@Body() body: any, @Request() req) {
         return this.articlesService.create(body, req.user.id);
@@ -41,6 +42,8 @@ export class ArticlesController {
 
     @Put('my/articles/:id')
     @Patch('my/articles/:id')
+    @Put('articles/:id')
+    @Patch('articles/:id')
     @UseGuards(JwtAuthGuard)
     async updateMy(@Param('id', ParseIntPipe) id: number, @Body() body: any, @Request() req) {
         const userRole = req.user?.role_id ?? req.user?.roleId ?? req.user?.role;
@@ -48,6 +51,7 @@ export class ArticlesController {
     }
 
     @Delete('my/articles/:id')
+    @Delete('articles/:id')
     @UseGuards(JwtAuthGuard)
     async deleteMy(@Param('id', ParseIntPipe) id: number, @Request() req) {
         const userRole = req.user?.role_id ?? req.user?.roleId ?? req.user?.role;

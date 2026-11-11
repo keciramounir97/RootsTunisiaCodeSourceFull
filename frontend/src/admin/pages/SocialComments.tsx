@@ -132,8 +132,16 @@ export default function SocialComments() {
   const fetchStats = useCallback(async () => {
     try {
       const res = await api.get("/social/admin/stats");
-      if (res.data) {
-        setStats(res.data);
+      const raw = res.data?.data ?? res.data;
+      if (raw) {
+        setStats({
+          totalComments: Number(raw.totalComments || 0),
+          approvedComments: Number(raw.approvedComments || 0),
+          pendingComments: Number(raw.pendingComments || 0),
+          totalLikes: Number(raw.totalLikes || 0),
+          uniqueLikedItems: Number(raw.uniqueLikedItems || 0),
+          topLikedItems: Array.isArray(raw.topLikedItems) ? raw.topLikedItems : [],
+        });
       }
     } catch (err: any) {
       console.warn("Could not load social stats", err?.message);
@@ -154,9 +162,10 @@ export default function SocialComments() {
             entityType: commentTypeFilter !== "all" ? commentTypeFilter : undefined,
           },
         });
-        const items = res.data?.items || res.data?.data || [];
-        setComments(Array.isArray(items) ? items : []);
-        setTotalComments(Number(res.data?.total || 0));
+        const raw = res.data?.data ?? res.data;
+        const items = Array.isArray(raw?.items) ? raw.items : Array.isArray(raw) ? raw : [];
+        setComments(items);
+        setTotalComments(Number(raw?.total || items.length || 0));
         setCommentPage(page);
       } catch (err: any) {
         setToastTone("error");
@@ -181,9 +190,10 @@ export default function SocialComments() {
             entityType: likeTypeFilter !== "all" ? likeTypeFilter : undefined,
           },
         });
-        const items = res.data?.items || res.data?.data || [];
-        setLikes(Array.isArray(items) ? items : []);
-        setTotalLikes(Number(res.data?.total || 0));
+        const raw = res.data?.data ?? res.data;
+        const items = Array.isArray(raw?.items) ? raw.items : Array.isArray(raw) ? raw : [];
+        setLikes(items);
+        setTotalLikes(Number(raw?.total || items.length || 0));
         setLikePage(page);
       } catch (err: any) {
         setToastTone("error");
@@ -491,7 +501,7 @@ export default function SocialComments() {
           <Flame className="w-4 h-4" />
           <span>{t("ranking_tab", "📊 Palmarès & Top Ressources")}</span>
           <span className="px-1.5 py-0.5 rounded-md text-[10px] bg-black/20">
-            {stats.topLikedItems.length}
+            {(stats.topLikedItems || []).length}
           </span>
         </button>
       </div>
@@ -929,7 +939,7 @@ export default function SocialComments() {
             </button>
           </div>
 
-          {stats.topLikedItems.length === 0 ? (
+          {(stats.topLikedItems || []).length === 0 ? (
             <div className={`p-16 rounded-xl border ${border} ${cardBg} text-center text-xs opacity-70`}>
               <Award className="w-10 h-10 mx-auto mb-3 opacity-30 text-amber-500" />
               <p className="font-bold text-sm text-gray-700 dark:text-gray-300">
@@ -941,7 +951,7 @@ export default function SocialComments() {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {stats.topLikedItems.map((item, index) => {
+              {(stats.topLikedItems || []).map((item, index) => {
                 const meta = getResourceMeta(item.entity_type, item.media_key);
                 const Icon = meta.icon;
 

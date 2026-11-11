@@ -92,14 +92,6 @@ const baseCuratedItems: CuratedItem[] = [
     year: "c. 1925",
   },
   {
-    id: "manuscript-1",
-    image: manuscript,
-    title: "Charaïque Court Sijill with Beylical Seal",
-    caption: "Handwritten Habous endowment and property inheritance deeds with official Ottoman tugra.",
-    location: "Archives Nationales de Tunisie",
-    year: "1874",
-  },
-  {
     id: "family-1",
     image: medina,
     title: "Medina of Tunis Ornate Studded Door",

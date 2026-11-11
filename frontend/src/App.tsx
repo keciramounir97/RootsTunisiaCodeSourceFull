@@ -229,7 +229,7 @@ function AppRoutes() {
     <Routes location={stripped} key={path}>
       {/* ===== PUBLIC ROUTES ===== */}
       <Route path="/" element={<Home />} />
-      <Route path="/gallery" element={<GalleryPage />} />
+      <Route path="/gallery" element={<Navigate to="/gallery/trees" replace />} />
       <Route path="/gallery/images" element={<GalleryImages />} />
       <Route path="/gallery/trees" element={<GalleryTrees />} />
       <Route path="/gallery/books" element={<GalleryBooks />} />
@@ -241,7 +241,7 @@ function AppRoutes() {
       <Route path="/research" element={<ResearchPage />} />
       <Route path="/genealogy-gallery" element={<GenealogyGallery />} />
       <Route path="/audio" element={<AudioPage />} />
-      <Route path="/my-download-requests" element={<Navigate to="/gallery" replace />} />
+      <Route path="/my-download-requests" element={<Navigate to="/gallery/trees" replace />} />
       <Route path="/help-center" element={<HelpCenter />} />
       <Route path="/library" element={<GalleryBooks />} />
       <Route path="/periods" element={<Periods />} />

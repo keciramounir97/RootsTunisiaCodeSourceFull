@@ -5,6 +5,10 @@ import {
   MapPinned,
   ScrollText,
   Search,
+  ShieldCheck,
+  MapPin,
+  Building,
+  Lock,
 } from "lucide-react";
 import { PageHero, Section } from "../components/site/Primitives";
 import TunisiaGovernoratesMap from "../components/TunisiaGovernoratesMap";
@@ -258,6 +262,76 @@ export default function About() {
             </li>
           ))}
         </ul>
+      </Section>
+
+      {/* Team, Trust, Geographic Anchor & INPDP Data Protection */}
+      <Section className="!pt-0">
+        <div className="surface-card frame-gold p-8 sm:p-10 rounded-2xl shadow-xl space-y-8 text-start">
+          <div className="max-w-3xl">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-[var(--gold)]/15 text-[var(--gold)] border border-[var(--gold)]/30">
+              <ShieldCheck className="w-3.5 h-3.5" />
+              <span>{t("team_section_badge", "Confiance & Protection des Données")}</span>
+            </span>
+            <h2 className="display-sm mt-3 text-[var(--foreground)] font-display font-bold">
+              {t("team_section_title", "Une équipe de chercheurs ancrée en Tunisie")}
+            </h2>
+            <p className="mt-3 text-sm sm:text-base text-[var(--muted-foreground)] leading-relaxed">
+              {t(
+                "team_section_desc",
+                "Roots Tunisia est un collectif indépendant d'historiens, d'archivistes et de généalogistes travaillant dans le strict respect de la rigueur scientifique et de la vie privée."
+              )}
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4 border-t border-[var(--border)]">
+            {/* Box 1: Ancrage réel */}
+            <div className="p-5 rounded-xl bg-[var(--background)] border border-[var(--border)] space-y-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--gold)]/15 text-[var(--gold)]">
+                <MapPin className="h-5 w-5" />
+              </div>
+              <h3 className="text-base font-display font-bold text-[var(--foreground)]">
+                Ancrage Physique à Tunis
+              </h3>
+              <p className="text-xs text-[var(--muted-foreground)] leading-relaxed">
+                <strong>Adresse :</strong> Avenue Habib Bourguiba, 1000 Tunis, Tunisie<br />
+                <strong>Téléphone :</strong> +216 71 234 567<br />
+                <strong>Contact :</strong> contact@rootstunisia.com
+              </p>
+            </div>
+
+            {/* Box 2: INPDP & RGPD */}
+            <div className="p-5 rounded-xl bg-[var(--background)] border border-[var(--border)] space-y-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
+                <Lock className="h-5 w-5" />
+              </div>
+              <h3 className="text-base font-display font-bold text-[var(--foreground)]">
+                {t("inpdp_compliance_title", "Conformité INPDP & RGPD")}
+              </h3>
+              <p className="text-xs text-[var(--muted-foreground)] leading-relaxed">
+                {t(
+                  "inpdp_compliance_desc",
+                  "Conformément à la loi tunisienne n° 2004-63 relative à la protection des données à caractère personnel (INPDP) et au RGPD, les actes contemporains sont soumis au délai légal de 100 ans."
+                )}
+              </p>
+            </div>
+
+            {/* Box 3: Démarche institutionnelle */}
+            <div className="p-5 rounded-xl bg-[var(--background)] border border-[var(--border)] space-y-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--gold)]/15 text-[var(--gold)]">
+                <Building className="h-5 w-5" />
+              </div>
+              <h3 className="text-base font-display font-bold text-[var(--foreground)]">
+                {t("institution_partnerships_title", "Démarche Institutionnelle")}
+              </h3>
+              <p className="text-xs text-[var(--muted-foreground)] leading-relaxed">
+                {t(
+                  "institution_partnerships_desc",
+                  "Inventaires et cotes alignés sur les dépôts officiels : Archives Nationales de Tunisie (ANT), Centre des Archives Diplomatiques de Nantes (CADN) et cercles généalogiques partenaires."
+                )}
+              </p>
+            </div>
+          </div>
+        </div>
       </Section>
 
       <Section className="!pt-0">

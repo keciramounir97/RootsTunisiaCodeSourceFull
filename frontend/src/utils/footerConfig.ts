@@ -67,10 +67,10 @@ export const DEFAULT_FOOTER_CONFIG: FooterConfig = {
     { id: "ig", icon: "instagram", url: "https://instagram.com", enabled: true },
     { id: "yt", icon: "youtube", url: "https://youtube.com", enabled: true },
   ],
-  location: "Rue de la Kasbah, Médina de Tunis, Tunisie",
+  location: "Avenue Habib Bourguiba, 1000 Tunis, Tunisie",
   email: "contact@rootstunisia.com",
-  phone: "+216 71 000 000",
-  whatsapp: "+216 71 000 000",
+  phone: "+216 71 234 567",
+  whatsapp: "+216 71 234 567",
 };
 
 export function normalizeFooterConfig(value: Partial<FooterConfig> | null): FooterConfig {
@@ -108,3 +108,4 @@ export function saveFooterConfig(cfg: FooterConfig) {
     localStorage.setItem(FOOTER_STORAGE_KEY, JSON.stringify(cfg));
   }
 }
+

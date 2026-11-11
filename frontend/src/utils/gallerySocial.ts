@@ -352,3 +352,38 @@ export function getTrackedUploads(kind: "images" | "books" | "audios" | "documen
 
   return results;
 }
+
+export function removeTrackedUpload(
+  kind: "images" | "books" | "audios" | "documents" | "trees" | "articles",
+  id: string | number
+): void {
+  if (typeof window === "undefined") return;
+  const targetId = String(id);
+  const keysToCheck = [
+    UPLOADS_STORAGE_KEY,
+    "roots_custom_uploads",
+    "roots_uploads",
+    "roots_admin_uploads",
+    "roots_gallery_uploads",
+    `roots_uploaded_${kind}`,
+    `roots_${kind}_uploads`,
+  ];
+  for (const k of keysToCheck) {
+    try {
+      const raw = localStorage.getItem(k);
+      if (!raw) continue;
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        const filtered = parsed.filter((item: any) => String(item?.id || "") !== targetId);
+        localStorage.setItem(k, JSON.stringify(filtered));
+      } else if (parsed && typeof parsed === "object") {
+        if (Array.isArray(parsed[kind])) {
+          parsed[kind] = parsed[kind].filter((item: any) => String(item?.id || "") !== targetId);
+          localStorage.setItem(k, JSON.stringify(parsed));
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }
+}

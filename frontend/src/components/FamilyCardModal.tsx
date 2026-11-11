@@ -614,10 +614,6 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
         <div className="flex items-start sm:items-center justify-between gap-2 sm:gap-4 border-b border-[var(--border)] pb-2.5 sm:pb-3.5 shrink-0">
           <div className="space-y-1 min-w-0 flex-1">
             <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
-              <span className="px-2 py-0.5 rounded-full text-[0.6rem] sm:text-[0.65rem] font-bold uppercase tracking-wider bg-[var(--gold)]/15 text-[var(--gold)] border border-[var(--gold)]/30 flex items-center gap-1">
-                <MapPin className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-[var(--gold)] shrink-0" />
-                <span className="truncate">{governorate}</span>
-              </span>
               <span className="px-2 py-0.5 rounded-full text-[0.6rem] sm:text-[0.65rem] font-mono font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
                 <ShieldCheck className="h-2.5 w-2.5 sm:h-3 sm:w-3 shrink-0" />
                 <span>{t("verified_patrimony", "Patrimoine Vérifié")}</span>
@@ -629,12 +625,8 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
               className="text-start group cursor-pointer block max-w-full"
               title="Cliquer pour afficher le schéma interactif de l'arbre"
             >
-              <h2 className="text-base sm:text-xl md:text-2xl font-serif font-bold text-[var(--foreground)] tracking-wide group-hover:text-[var(--gold)] transition-colors flex items-center gap-2 flex-wrap line-clamp-2 sm:line-clamp-none">
+              <h2 className="text-base sm:text-xl md:text-2xl font-serif font-bold text-[var(--foreground)] tracking-wide group-hover:text-[var(--gold)] transition-colors line-clamp-2 sm:line-clamp-none">
                 <span>{title}</span>
-                <span className="inline-flex items-center gap-1 text-[9px] sm:text-[10px] font-mono font-bold px-1.5 sm:px-2 py-0.5 rounded-full bg-[var(--gold)]/15 text-[var(--gold)] border border-[var(--gold)]/35 group-hover:bg-[var(--gold)] group-hover:text-black transition-colors shrink-0">
-                  <GitBranch className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
-                  <span>Voir l'Arbre</span>
-                </span>
               </h2>
             </button>
           </div>
@@ -922,16 +914,8 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                   {/* TREE FICHE HEADER */}
                   <div className="rounded-2xl bg-gradient-to-br from-[#1e293b] via-[#0f172a] to-[#020617] p-5 text-white border-2 border-[var(--gold)]/70 shadow-2xl relative overflow-hidden space-y-3">
                     <div className="flex items-center justify-between border-b border-[var(--gold)]/30 pb-2.5">
-                      <div className="flex items-center gap-2">
-                        <span className="text-[0.68rem] font-bold uppercase tracking-[0.2em] text-[var(--gold)] flex items-center gap-1">
-                          <MapPin className="h-3.5 w-3.5 text-[var(--gold)]" />
-                          <span>{governorate}</span>
-                        </span>
-                        <span className="text-slate-400">•</span>
-                        <span className="text-xs text-amber-200/90 font-mono">Fonds Patronyme & Lineage</span>
-                      </div>
-                      <span className="px-3 py-0.5 rounded-full text-[0.65rem] font-mono font-bold bg-[var(--gold)]/20 text-[var(--gold)] border border-[var(--gold)]/40">
-                        GEDCOM 5.5.1
+                      <span className="text-xs text-amber-200/90 font-mono font-bold uppercase tracking-wider">
+                        Fonds Patronyme & Lignée
                       </span>
                     </div>
 

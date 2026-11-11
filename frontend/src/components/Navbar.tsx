@@ -37,7 +37,7 @@ export function Navbar() {
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      navigate(`/gallery?q=${encodeURIComponent(searchQuery.trim())}`);
+      navigate(`/gallery/trees?q=${encodeURIComponent(searchQuery.trim())}`);
       setSearchQuery("");
       setOpen(false);
     }
@@ -54,13 +54,8 @@ export function Navbar() {
     },
     {
       to: "/sources",
-      label: getTunisiaDropdownText(locale, "nav_sources"),
-      hint: getTunisiaDropdownText(locale, "nav_sources_hint"),
-    },
-    {
-      to: "/archives",
-      label: getTunisiaDropdownText(locale, "nav_archives"),
-      hint: getTunisiaDropdownText(locale, "nav_archives_hint"),
+      label: getTunisiaDropdownText(locale, "nav_sources_and_archives"),
+      hint: getTunisiaDropdownText(locale, "nav_sources_and_archives_hint"),
     },
     {
       to: "/subscriptions",
@@ -106,7 +101,6 @@ export function Navbar() {
     seoPath
   );
   const isGalleryActive = [
-    "/gallery",
     "/gallery/trees",
     "/gallery/images",
     "/gallery/articles",
@@ -228,7 +222,7 @@ export function Navbar() {
         <div className="ms-auto flex items-center gap-1 sm:gap-2">
           {/* Compact Search Icon (tablet / small desktop 768px–1279px) */}
           <NavLink
-            to="/gallery"
+            to="/gallery/trees"
             aria-label={t("nav_search_placeholder")}
             title={t("nav_search_placeholder")}
             className={({ isActive }) =>

@@ -1,14 +1,18 @@
 import { MessageCircle } from "lucide-react";
 import { useTranslation } from "../context/TranslationContext";
+import { loadFooterConfig } from "../utils/footerConfig";
+import { brand } from "../config/brand";
 
 export default function WhatsAppButton() {
   const { t } = useTranslation();
-  const phone = "+9613626082";
-  const message = encodeURIComponent(t("whatsapp_message"));
+  const footerConfig = loadFooterConfig();
+  const rawWa = (footerConfig.whatsapp || brand.whatsapp || "+21671234567").replace(/[^\d]/g, "");
+  const phone = rawWa ? `+${rawWa}` : "+21671234567";
+  const message = encodeURIComponent(t("whatsapp_message", "Bonjour Roots Tunisia, je souhaite des renseignements sur vos recherches et archives."));
 
   return (
     <a
-      href={`https://wa.me/${phone}?text=${message}`}
+      href={`https://wa.me/${rawWa || "21671234567"}?text=${message}`}
       target="_blank"
       rel="noopener noreferrer"
       className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-[#25D366] text-white shadow-xl hover:shadow-2xl hover:scale-110 transition-all flex items-center justify-center group"

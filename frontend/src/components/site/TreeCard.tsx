@@ -1,7 +1,7 @@
 import { getTreeMetrics } from "../../utils/treeMetrics";
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Layers, Users, Eye, MapPin } from "lucide-react";
+import { Layers, Users, Sparkles } from "lucide-react";
 import FamilyCardModal from "../FamilyCardModal";
 import { useTranslation } from "../../context/TranslationContext";
 
@@ -111,13 +111,6 @@ export function TreeCard({ tree }: { tree: TreeRecord }) {
       <article className="surface-card frame-gold flex h-full flex-col p-5 sm:p-6 text-start transition-transform hover:-translate-y-1 rounded-lg bg-[var(--card)] border border-[var(--gold)]/40">
         <div className="flex items-center justify-between">
           <p className="eyebrow text-[var(--gold)]">{t("family_and_lineage")}</p>
-          <Link
-            to={`/gallery/trees?q=${encodeURIComponent(locationStr)}`}
-            className="rounded-sm border border-[var(--gold)]/50 px-2 py-0.5 text-[0.6rem] font-bold uppercase tracking-[0.18em] text-[var(--gold)] bg-[var(--gold)]/10 hover:bg-[var(--gold)]/20 flex items-center gap-1 transition-colors"
-          >
-            <MapPin className="h-3 w-3 text-[var(--gold)]" />
-            <span>{locationStr}</span>
-          </Link>
         </div>
         <button
           type="button"
@@ -127,11 +120,6 @@ export function TreeCard({ tree }: { tree: TreeRecord }) {
         >
           {titleStr}
         </button>
-        {ownerStr ? (
-          <p className="mt-1 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--muted-foreground)]">
-            {t("by_author")} {ownerStr}
-          </p>
-        ) : null}
         <p className="mt-3 flex-1 text-xs leading-relaxed text-[var(--foreground)]/80 line-clamp-3">{summaryStr}</p>
         
         <div className="mt-4 grid grid-cols-2 gap-2 border-t border-[var(--border)] pt-4 text-xs font-mono">
@@ -145,14 +133,12 @@ export function TreeCard({ tree }: { tree: TreeRecord }) {
           </div>
         </div>
 
-        <p className="mt-3 text-[0.68rem] text-[var(--muted-foreground)] font-mono">{t("standard_gedcom")}</p>
-
         <div className="mt-4 flex flex-wrap gap-2">
           <button
             onClick={() => setShowModal(true)}
             className="btn-base btn-gold px-4 py-2 text-[0.65rem] flex items-center gap-1.5 cursor-pointer w-full justify-center"
           >
-            <Eye className="h-3.5 w-3.5" /> {t("show_3d_card_gedcom")}
+            <Sparkles className="h-3.5 w-3.5" /> {t("explore_family_card", "EXPLORE FAMILY CARD")}
           </button>
         </div>
       </article>

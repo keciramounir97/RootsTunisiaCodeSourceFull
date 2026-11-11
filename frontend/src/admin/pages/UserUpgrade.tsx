@@ -268,35 +268,35 @@ export default function UserUpgrade() {
                 <div className="border-t border-[var(--border-color)] pt-4 space-y-2.5 text-xs text-gray-700 dark:text-gray-300">
                   <div className="flex items-center gap-2">
                     <Check className="w-4 h-4 text-green-500 shrink-0" />
-                    <span>{t("max_trees", "Max Trees:")} <b>{tier.max_trees === -1 ? t("unlimited", "Unlimited") : tier.max_trees ?? (isFree ? 25 : tier.price === 9.99 ? 300 : 3000)}</b></span>
+                    <span>{t("max_trees", "Max Trees:")} <b>{tier.max_trees === -1 ? t("unlimited", "Unlimited") : tier.max_trees ?? (isFree ? 50 : tier.id === 2 ? 300 : 3000)}</b></span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Check className="w-4 h-4 text-green-500 shrink-0" />
-                    <span>{t("max_individuals", "Max Individuals:")} <b>{tier.max_individuals === -1 ? t("unlimited", "Unlimited") : tier.max_individuals ?? (isFree ? 25 : tier.price === 9.99 ? 300 : 3000)}</b></span>
+                    <span>{t("max_individuals", "Max Individuals:")} <b>{tier.max_individuals === -1 ? t("unlimited", "Unlimited") : tier.max_individuals ?? (isFree ? 1000 : tier.id === 2 ? 6000 : 30000)}</b></span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Check className="w-4 h-4 text-green-500 shrink-0" />
-                    <span>{t("max_saved_sources", "Max Saved Sources:")} <b>{tier.max_sources === -1 ? t("unlimited", "Unlimited") : tier.max_sources ?? (isFree ? 25 : tier.price === 9.99 ? 300 : 3000)}</b></span>
+                    <span>{t("max_saved_sources", "Max Saved Sources:")} <b>{tier.max_sources === -1 ? t("unlimited", "Unlimited") : tier.max_sources ?? (isFree ? 100 : tier.id === 2 ? 600 : 3000)}</b></span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Check className="w-4 h-4 text-green-500 shrink-0" />
-                    <span>{t("max_research_notes", "Max Research Notes:")} <b>{tier.max_notes === -1 ? t("unlimited", "Unlimited") : tier.max_notes ?? (isFree ? 25 : tier.price === 9.99 ? 300 : 3000)}</b></span>
+                    <span>{t("max_research_notes", "Max Research Notes:")} <b>{tier.max_notes === -1 ? t("unlimited", "Unlimited") : tier.max_notes ?? (isFree ? 100 : tier.id === 2 ? 600 : 3000)}</b></span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Check className="w-4 h-4 text-green-500 shrink-0" />
-                    <span>{t("max_research_tasks", "Max Research Tasks:")} <b>{tier.max_tasks === -1 ? t("unlimited", "Unlimited") : tier.max_tasks ?? (isFree ? 25 : tier.price === 9.99 ? 300 : 3000)}</b></span>
+                    <span>{t("max_research_tasks", "Max Research Tasks:")} <b>{tier.max_tasks === -1 ? t("unlimited", "Unlimited") : tier.max_tasks ?? (isFree ? 100 : tier.id === 2 ? 600 : 3000)}</b></span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Check className="w-4 h-4 text-green-500 shrink-0" />
-                    <span>{t("max_gallery_images", "Max Gallery Images:")} <b>{tier.max_gallery === -1 ? t("unlimited", "Unlimited") : tier.max_gallery ?? (isFree ? 25 : tier.price === 9.99 ? 300 : 3000)}</b></span>
+                    <span>{t("max_gallery_images", "Max Gallery Images:")} <b>{tier.max_gallery === -1 ? t("unlimited", "Unlimited") : tier.max_gallery ?? (isFree ? 100 : tier.id === 2 ? 600 : 3000)}</b></span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Check className="w-4 h-4 text-green-500 shrink-0" />
-                    <span>{t("max_audio_files", "Max Audio Files:")} <b>{tier.max_audios === -1 ? t("unlimited", "Unlimited") : tier.max_audios ?? (isFree ? 25 : tier.price === 9.99 ? 300 : 3000)}</b></span>
+                    <span>{t("max_audio_files", "Max Audio Files:")} <b>{tier.max_audios === -1 ? t("unlimited", "Unlimited") : tier.max_audios ?? (isFree ? 100 : tier.id === 2 ? 600 : 3000)}</b></span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Check className="w-4 h-4 text-green-500 shrink-0" />
-                    <span>{t("max_documents", "Max Documents:")} <b>{tier.max_documents === -1 ? t("unlimited", "Unlimited") : tier.max_documents ?? (isFree ? 25 : tier.price === 9.99 ? 300 : 3000)}</b></span>
+                    <span>{t("max_documents", "Max Documents:")} <b>{tier.max_documents === -1 ? t("unlimited", "Unlimited") : tier.max_documents ?? (isFree ? 100 : tier.id === 2 ? 600 : 3000)}</b></span>
                   </div>
                 </div>
               </div>

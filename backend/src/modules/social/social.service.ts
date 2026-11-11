@@ -1,9 +1,50 @@
-import { Injectable, NotFoundException, BadRequestException, ForbiddenException, Inject } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ForbiddenException, Inject, OnModuleInit, Logger } from '@nestjs/common';
 import { Knex } from 'knex';
 
 @Injectable()
-export class SocialService {
+export class SocialService implements OnModuleInit {
+    private readonly logger = new Logger(SocialService.name);
+
     constructor(@Inject('KnexConnection') private readonly knex: Knex) {}
+
+    async onModuleInit() {
+        try {
+            await this.ensureSocialSchema();
+        } catch (err: any) {
+            this.logger.warn(`Social schema init skipped: ${err?.message || err}`);
+        }
+    }
+
+    private async ensureSocialSchema() {
+        const hasComments = await this.knex.schema.hasTable('social_comments');
+        if (!hasComments) {
+            await this.knex.schema.createTable('social_comments', (table) => {
+                table.increments('id').primary();
+                table.string('media_key', 255).notNullable().index();
+                table.integer('user_id').unsigned().notNullable().index();
+                table.string('user_name', 255).defaultTo('Member');
+                table.text('content').notNullable();
+                table.string('entity_type', 100).defaultTo('tree');
+                table.integer('entity_id').unsigned().nullable();
+                table.boolean('is_approved').defaultTo(true).index();
+                table.timestamp('created_at').defaultTo(this.knex.fn.now());
+                table.timestamp('updated_at').defaultTo(this.knex.fn.now());
+            });
+        }
+
+        const hasLikes = await this.knex.schema.hasTable('social_likes');
+        if (!hasLikes) {
+            await this.knex.schema.createTable('social_likes', (table) => {
+                table.increments('id').primary();
+                table.string('media_key', 255).notNullable().index();
+                table.integer('user_id').unsigned().notNullable().index();
+                table.string('entity_type', 100).defaultTo('tree');
+                table.integer('entity_id').unsigned().nullable();
+                table.timestamp('created_at').defaultTo(this.knex.fn.now());
+                table.unique(['media_key', 'user_id']);
+            });
+        }
+    }
 
     private async resolveItemTitles(items: any[]) {
         if (!items || items.length === 0) return items;
@@ -290,176 +331,201 @@ export class SocialService {
 
     /** Admin list all comments for moderation with filters and title resolution */
     async listAllComments(page = 1, limit = 50, search?: string, status?: string, entityType?: string) {
-        let query = this.knex('social_comments')
-            .leftJoin('users', 'social_comments.user_id', 'users.id')
-            .select(
-                'social_comments.id',
-                'social_comments.media_key',
-                'social_comments.entity_type',
-                'social_comments.entity_id',
-                'social_comments.content',
-                'social_comments.is_approved',
-                'social_comments.created_at',
-                'social_comments.updated_at',
-                this.knex.raw('COALESCE(users.id, social_comments.user_id) as user_id'),
-                this.knex.raw('COALESCE(users.full_name, social_comments.user_name, "Member") as user_name'),
-                'users.email as user_email'
-            );
+        try {
+            await this.ensureSocialSchema();
+            let query = this.knex('social_comments')
+                .leftJoin('users', 'social_comments.user_id', 'users.id')
+                .select(
+                    'social_comments.id',
+                    'social_comments.media_key',
+                    'social_comments.entity_type',
+                    'social_comments.entity_id',
+                    'social_comments.content',
+                    'social_comments.is_approved',
+                    'social_comments.created_at',
+                    'social_comments.updated_at',
+                    this.knex.raw('COALESCE(users.id, social_comments.user_id) as user_id'),
+                    this.knex.raw('COALESCE(users.full_name, social_comments.user_name, "Member") as user_name'),
+                    'users.email as user_email'
+                );
 
-        if (status === 'approved') {
-            query = query.where('social_comments.is_approved', 1);
-        } else if (status === 'pending') {
-            query = query.where((b: any) => b.where('social_comments.is_approved', 0).orWhereNull('social_comments.is_approved'));
+            if (status === 'approved') {
+                query = query.where('social_comments.is_approved', 1);
+            } else if (status === 'pending') {
+                query = query.where((b: any) => b.where('social_comments.is_approved', 0).orWhereNull('social_comments.is_approved'));
+            }
+
+            if (entityType && entityType !== 'all') {
+                query = query.where((b: any) => {
+                    b.where('social_comments.entity_type', entityType)
+                     .orWhere('social_comments.media_key', 'like', `%${entityType}%`);
+                });
+            }
+
+            if (search) {
+                const s = `%${search.trim()}%`;
+                query = query.where((b: any) => {
+                    b.where('social_comments.content', 'like', s)
+                     .orWhere('social_comments.user_name', 'like', s)
+                     .orWhere('users.full_name', 'like', s)
+                     .orWhere('users.email', 'like', s)
+                     .orWhere('social_comments.media_key', 'like', s);
+                });
+            }
+
+            const totalRow: any = await query.clone().clearSelect().count('* as count').first();
+            const items = await query.orderBy('social_comments.created_at', 'desc')
+                .offset((page - 1) * limit)
+                .limit(limit);
+
+            const resolvedItems = await this.resolveItemTitles(items);
+
+            return {
+                items: resolvedItems,
+                total: Number(totalRow?.count || 0),
+                page,
+                limit,
+            };
+        } catch (err: any) {
+            this.logger.error(`listAllComments error: ${err?.message || err}`);
+            return { items: [], total: 0, page, limit };
         }
-
-        if (entityType && entityType !== 'all') {
-            query = query.where((b: any) => {
-                b.where('social_comments.entity_type', entityType)
-                 .orWhere('social_comments.media_key', 'like', `%${entityType}%`);
-            });
-        }
-
-        if (search) {
-            const s = `%${search.trim()}%`;
-            query = query.where((b: any) => {
-                b.where('social_comments.content', 'like', s)
-                 .orWhere('social_comments.user_name', 'like', s)
-                 .orWhere('users.full_name', 'like', s)
-                 .orWhere('users.email', 'like', s)
-                 .orWhere('social_comments.media_key', 'like', s);
-            });
-        }
-
-        const totalRow: any = await query.clone().clearSelect().count('* as count').first();
-        const items = await query.orderBy('social_comments.created_at', 'desc')
-            .offset((page - 1) * limit)
-            .limit(limit);
-
-        const resolvedItems = await this.resolveItemTitles(items);
-
-        return {
-            items: resolvedItems,
-            total: Number(totalRow?.count || 0),
-            page,
-            limit,
-        };
     }
 
     /** Admin list all likes for monitoring with user and title resolution */
     async listAllLikes(page = 1, limit = 50, search?: string, entityType?: string) {
-        let query = this.knex('social_likes')
-            .leftJoin('users', 'social_likes.user_id', 'users.id')
-            .select(
-                'social_likes.id',
-                'social_likes.media_key',
-                'social_likes.entity_type',
-                'social_likes.entity_id',
-                'social_likes.created_at',
-                'users.id as user_id',
-                this.knex.raw('COALESCE(users.full_name, "Member") as user_name'),
-                'users.email as user_email'
-            );
+        try {
+            await this.ensureSocialSchema();
+            let query = this.knex('social_likes')
+                .leftJoin('users', 'social_likes.user_id', 'users.id')
+                .select(
+                    'social_likes.id',
+                    'social_likes.media_key',
+                    'social_likes.entity_type',
+                    'social_likes.entity_id',
+                    'social_likes.created_at',
+                    'users.id as user_id',
+                    this.knex.raw('COALESCE(users.full_name, "Member") as user_name'),
+                    'users.email as user_email'
+                );
 
-        if (entityType && entityType !== 'all') {
-            query = query.where((b: any) => {
-                b.where('social_likes.entity_type', entityType)
-                 .orWhere('social_likes.media_key', 'like', `%${entityType}%`);
-            });
+            if (entityType && entityType !== 'all') {
+                query = query.where((b: any) => {
+                    b.where('social_likes.entity_type', entityType)
+                     .orWhere('social_likes.media_key', 'like', `%${entityType}%`);
+                });
+            }
+
+            if (search) {
+                const s = `%${search.trim()}%`;
+                query = query.where((b: any) => {
+                    b.where('users.full_name', 'like', s)
+                     .orWhere('users.email', 'like', s)
+                     .orWhere('social_likes.media_key', 'like', s);
+                });
+            }
+
+            const totalRow: any = await query.clone().clearSelect().count('* as count').first();
+            const items = await query.orderBy('social_likes.created_at', 'desc')
+                .offset((page - 1) * limit)
+                .limit(limit);
+
+            const resolvedItems = await this.resolveItemTitles(items);
+
+            return {
+                items: resolvedItems,
+                total: Number(totalRow?.count || 0),
+                page,
+                limit,
+            };
+        } catch (err: any) {
+            this.logger.error(`listAllLikes error: ${err?.message || err}`);
+            return { items: [], total: 0, page, limit };
         }
-
-        if (search) {
-            const s = `%${search.trim()}%`;
-            query = query.where((b: any) => {
-                b.where('users.full_name', 'like', s)
-                 .orWhere('users.email', 'like', s)
-                 .orWhere('social_likes.media_key', 'like', s);
-            });
-        }
-
-        const totalRow: any = await query.clone().clearSelect().count('* as count').first();
-        const items = await query.orderBy('social_likes.created_at', 'desc')
-            .offset((page - 1) * limit)
-            .limit(limit);
-
-        const resolvedItems = await this.resolveItemTitles(items);
-
-        return {
-            items: resolvedItems,
-            total: Number(totalRow?.count || 0),
-            page,
-            limit,
-        };
     }
 
     /** Admin overview metrics and top-liked items */
     async getAdminSocialStats() {
-        const [
-            totalCommentsRow,
-            approvedCommentsRow,
-            pendingCommentsRow,
-            totalLikesRow,
-            uniqueLikedItemsRow,
-            uniqueActiveUsersCommentsRow,
-            uniqueActiveUsersLikesRow,
-        ] = await Promise.all([
-            this.knex('social_comments').count('* as count').first() as any,
-            this.knex('social_comments').where('is_approved', 1).count('* as count').first() as any,
-            this.knex('social_comments').where((b) => b.where('is_approved', 0).orWhereNull('is_approved')).count('* as count').first() as any,
-            this.knex('social_likes').count('* as count').first() as any,
-            this.knex('social_likes').countDistinct('media_key as count').first() as any,
-            this.knex('social_comments').countDistinct('user_id as count').first() as any,
-            this.knex('social_likes').countDistinct('user_id as count').first() as any,
-        ]);
+        try {
+            await this.ensureSocialSchema();
+            const [
+                totalCommentsRow,
+                approvedCommentsRow,
+                pendingCommentsRow,
+                totalLikesRow,
+                uniqueLikedItemsRow,
+                uniqueActiveUsersCommentsRow,
+                uniqueActiveUsersLikesRow,
+            ] = await Promise.all([
+                this.knex('social_comments').count('* as count').first() as any,
+                this.knex('social_comments').where('is_approved', 1).count('* as count').first() as any,
+                this.knex('social_comments').where((b) => b.where('is_approved', 0).orWhereNull('is_approved')).count('* as count').first() as any,
+                this.knex('social_likes').count('* as count').first() as any,
+                this.knex('social_likes').countDistinct('media_key as count').first() as any,
+                this.knex('social_comments').countDistinct('user_id as count').first() as any,
+                this.knex('social_likes').countDistinct('user_id as count').first() as any,
+            ]);
 
-        const totalComments = Number(totalCommentsRow?.count || 0);
-        const approvedComments = Number(approvedCommentsRow?.count || 0);
-        const pendingComments = Number(pendingCommentsRow?.count || 0);
-        const totalLikes = Number(totalLikesRow?.count || 0);
-        const uniqueLikedItems = Number(uniqueLikedItemsRow?.count || 0);
+            const totalComments = Number(totalCommentsRow?.count || 0);
+            const approvedComments = Number(approvedCommentsRow?.count || 0);
+            const pendingComments = Number(pendingCommentsRow?.count || 0);
+            const totalLikes = Number(totalLikesRow?.count || 0);
+            const uniqueLikedItems = Number(uniqueLikedItemsRow?.count || 0);
 
-        // Top 10 most liked items
-        const topLikedRaw: any[] = await this.knex('social_likes')
-            .groupBy('media_key', 'entity_type', 'entity_id')
-            .select(
-                'media_key',
-                'entity_type',
-                'entity_id',
-                this.knex.raw('COUNT(*) as likes_count'),
-                this.knex.raw('MAX(created_at) as last_liked_at')
-            )
-            .orderBy('likes_count', 'desc')
-            .limit(10);
+            // Top 10 most liked items
+            const topLikedRaw: any[] = await this.knex('social_likes')
+                .groupBy('media_key', 'entity_type', 'entity_id')
+                .select(
+                    'media_key',
+                    'entity_type',
+                    'entity_id',
+                    this.knex.raw('COUNT(*) as likes_count'),
+                    this.knex.raw('MAX(created_at) as last_liked_at')
+                )
+                .orderBy('likes_count', 'desc')
+                .limit(10);
 
-        // Fetch comments count for these top items
-        const topKeys = topLikedRaw.map((r) => r.media_key).filter(Boolean);
-        const commentsByKeys: Record<string, number> = {};
-        if (topKeys.length > 0) {
-            const commentRows: any[] = await this.knex('social_comments')
-                .whereIn('media_key', topKeys)
-                .andWhere('is_approved', 1)
-                .groupBy('media_key')
-                .select('media_key', this.knex.raw('COUNT(*) as comments_count'));
-            commentRows.forEach((r) => { commentsByKeys[r.media_key] = Number(r.comments_count || 0); });
+            // Fetch comments count for these top items
+            const topKeys = topLikedRaw.map((r) => r.media_key).filter(Boolean);
+            const commentsByKeys: Record<string, number> = {};
+            if (topKeys.length > 0) {
+                const commentRows: any[] = await this.knex('social_comments')
+                    .whereIn('media_key', topKeys)
+                    .andWhere('is_approved', 1)
+                    .groupBy('media_key')
+                    .select('media_key', this.knex.raw('COUNT(*) as comments_count'));
+                commentRows.forEach((r) => { commentsByKeys[r.media_key] = Number(r.comments_count || 0); });
+            }
+
+            const topItemsWithComments = topLikedRaw.map((r) => ({
+                media_key: r.media_key,
+                entity_type: r.entity_type,
+                entity_id: r.entity_id,
+                likes_count: Number(r.likes_count || 0),
+                comments_count: commentsByKeys[r.media_key] || 0,
+                last_liked_at: r.last_liked_at,
+            }));
+
+            const resolvedTopItems = await this.resolveItemTitles(topItemsWithComments);
+
+            return {
+                totalComments,
+                approvedComments,
+                pendingComments,
+                totalLikes,
+                uniqueLikedItems,
+                topLikedItems: resolvedTopItems,
+            };
+        } catch (err: any) {
+            this.logger.error(`getAdminSocialStats error: ${err?.message || err}`);
+            return {
+                totalComments: 0,
+                approvedComments: 0,
+                pendingComments: 0,
+                totalLikes: 0,
+                uniqueLikedItems: 0,
+                topLikedItems: [],
+            };
         }
-
-        const topItemsWithComments = topLikedRaw.map((r) => ({
-            media_key: r.media_key,
-            entity_type: r.entity_type,
-            entity_id: r.entity_id,
-            likes_count: Number(r.likes_count || 0),
-            comments_count: commentsByKeys[r.media_key] || 0,
-            last_liked_at: r.last_liked_at,
-        }));
-
-        const resolvedTopItems = await this.resolveItemTitles(topItemsWithComments);
-
-        return {
-            totalComments,
-            approvedComments,
-            pendingComments,
-            totalLikes,
-            uniqueLikedItems,
-            topLikedItems: resolvedTopItems,
-        };
     }
 }

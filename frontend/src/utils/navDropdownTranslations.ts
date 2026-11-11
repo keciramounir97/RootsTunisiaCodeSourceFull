@@ -6,6 +6,8 @@ export interface DropdownTranslationSet {
   nav_sources_hint: string;
   nav_archives: string;
   nav_archives_hint: string;
+  nav_sources_and_archives: string;
+  nav_sources_and_archives_hint: string;
   nav_subscriptions: string;
   nav_subscriptions_hint: string;
   nav_gallery: string;
@@ -34,6 +36,8 @@ export const TUNISIA_NAV_TRANSLATIONS: Record<string, DropdownTranslationSet> = 
     nav_sources_hint: "Archival guides & primary repositories",
     nav_archives: "Archives",
     nav_archives_hint: "National & regional collections",
+    nav_sources_and_archives: "Sources & Archives",
+    nav_sources_and_archives_hint: "Official portals & international genealogy repositories",
     nav_subscriptions: "Subscriptions",
     nav_subscriptions_hint: "Membership & research passes",
     nav_gallery: "Gallery",
@@ -60,6 +64,8 @@ export const TUNISIA_NAV_TRANSLATIONS: Record<string, DropdownTranslationSet> = 
     nav_sources_hint: "Guides des sources & dépôts primaires",
     nav_archives: "Archives",
     nav_archives_hint: "Fonds nationaux & régionaux",
+    nav_sources_and_archives: "Sources & Archives",
+    nav_sources_and_archives_hint: "Portails officiels et archives internationales pour la Tunisie",
     nav_subscriptions: "Abonnements",
     nav_subscriptions_hint: "Formules & accès à la recherche",
     nav_gallery: "Galerie",
@@ -86,6 +92,8 @@ export const TUNISIA_NAV_TRANSLATIONS: Record<string, DropdownTranslationSet> = 
     nav_sources_hint: "أدلة المصادر والمستودعات الأولية",
     nav_archives: "الأرشيفات والمراكز",
     nav_archives_hint: "الأرشيف الوطني والأرصدة الجهوية",
+    nav_sources_and_archives: "المصادر والأرشيفات",
+    nav_sources_and_archives_hint: "بوابات ومستودعات الأرشيف الدولية للبحث الجينيالوجي",
     nav_subscriptions: "الاشتراكات",
     nav_subscriptions_hint: "خطط الاشتراك وباقات البحث",
     nav_gallery: "المجموعات",

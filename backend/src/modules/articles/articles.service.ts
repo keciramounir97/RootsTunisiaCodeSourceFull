@@ -66,6 +66,7 @@ export class ArticlesService implements OnModuleInit {
         await this.addArticleColumn('author_name', (table) => table.string('author_name', 255).nullable());
         await this.addArticleColumn('images', (table) => table.text('images').nullable());
         await this.addArticleColumn('videos', (table) => table.text('videos').nullable());
+        await this.addArticleColumn('sources', (table) => table.text('sources').nullable());
         await this.addArticleColumn('comments', (table) => table.text('comments').nullable());
         await this.addArticleColumn('visibility', (table) => table.string('visibility', 50).defaultTo('public'));
         await this.addArticleColumn('likes', (table) => table.integer('likes').defaultTo(0));
@@ -155,6 +156,21 @@ export class ArticlesService implements OnModuleInit {
         }
     }
 
+    private parseSources(value: any): Array<{ title: string; cote?: string; url?: string; note?: string }> {
+        if (!value) return [];
+        if (Array.isArray(value)) return value;
+        try {
+            const parsed = JSON.parse(String(value));
+            return Array.isArray(parsed) ? parsed : [];
+        } catch {
+            return String(value)
+                .split('\n')
+                .map((line) => line.trim())
+                .filter(Boolean)
+                .map((title) => ({ title }));
+        }
+    }
+
     private formatArticle(row: any) {
         if (!row) return row;
         const userName = row.userName || row.author_name || row.authorFullName || 'RootsTunisia Admin';
@@ -163,6 +179,7 @@ export class ArticlesService implements OnModuleInit {
             title: row.title || this.buildTitle(null, row.content),
             images: this.parseMedia(row.images),
             videos: this.parseMedia(row.videos),
+            sources: this.parseSources(row.sources),
             comments: this.parseComments(row.comments),
             createdAt: row.created_at || row.createdAt,
             updatedAt: row.updated_at || row.updatedAt,
@@ -429,6 +446,7 @@ export class ArticlesService implements OnModuleInit {
             category: data.category || null,
             images: this.serializeMedia(data.images),
             videos: this.serializeMedia(data.videos),
+            sources: data.sources ? (typeof data.sources === 'string' ? data.sources : JSON.stringify(data.sources)) : null,
             comments: JSON.stringify([]),
             visibility,
             likes: 0,
@@ -465,6 +483,9 @@ export class ArticlesService implements OnModuleInit {
         }
         if (data.images !== undefined) updateData.images = this.serializeMedia(data.images);
         if (data.videos !== undefined) updateData.videos = this.serializeMedia(data.videos);
+        if (data.sources !== undefined) {
+            updateData.sources = data.sources ? (typeof data.sources === 'string' ? data.sources : JSON.stringify(data.sources)) : null;
+        }
         if (data.is_public !== undefined) updateData.is_public = this.parseBoolean(data.is_public);
         if (data.isPublic !== undefined) updateData.is_public = this.parseBoolean(data.isPublic);
         updateData.updated_at = this.knex.fn.now();

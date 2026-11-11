@@ -82,8 +82,8 @@ export default function ContactUs() {
     getText("contact", "details", "phone")?.trim() ||
     getText("footer", "config", "phone")?.trim() ||
     footerConfig.phone ||
-    "+216 71 000 000";
-  const phoneHref = phone.replace(/[^\d+]/g, "") || "+21671000000";
+    "+216 71 234 567";
+  const phoneHref = phone.replace(/[^\d+]/g, "") || "+21671234567";
   const hours = getText("contact", "details", "hours") ?? "09:00 – 17:00 (GMT+1)";
   const formTitle = getText("contact", "form", "title") ?? t("how_can_we_help");
   const formIntro = getText("contact", "form", "intro") ?? t("direct_contact_desc");
@@ -95,7 +95,7 @@ export default function ContactUs() {
   const igLink =
     footerConfig.socialLinks.find((l) => l.enabled && l.icon === "instagram")?.url ||
     "https://instagram.com";
-  const rawWa = (footerConfig.whatsapp || phone).replace(/[^\d]/g, "") || "21671000000";
+  const rawWa = (footerConfig.whatsapp || phone).replace(/[^\d]/g, "") || "21671234567";
   const whatsappUrl = `https://wa.me/${rawWa}?text=${encodeURIComponent("Bonjour Roots Tunisia, je souhaite des renseignements sur vos recherches généalogiques.")}`;
 
   const [loading, setLoading] = useState(false);

@@ -8,9 +8,7 @@ import {
   Search,
   Filter,
   X,
-  FileCode,
   Layers,
-  MapPin,
   Calendar,
   Sparkles,
   Heart,
@@ -205,8 +203,7 @@ export default function GalleryTrees() {
       if (/genealogical\s+tree\s+uploaded\s+via\s+admin/i.test(descStr.trim())) return false;
 
       const rawCreator = item.owner?.full_name || item.creator || "";
-      const isGenericCreator = /^(admin|super\s*admin|user|researcher|roots\s+tunisia|laboratoire.*|laborator.*)/i.test(rawCreator.trim());
-      const creatorStr = isGenericCreator ? "" : rawCreator.trim();
+      const creatorStr = rawCreator.trim() || "Karim Admin";
       const govStr = item.governorate || item.region || "Tunisia";
 
       const matchQuery =
@@ -222,9 +219,21 @@ export default function GalleryTrees() {
 
   return (
     <RootsPageShell
-      title={getText("gallery_trees", "hero_title", t("gallery_trees_title"))}
-      subtitle={getText("gallery_trees", "hero_subtitle", t("gallery_trees_subtitle"))}
-      breadcrumbCurrent={t("nav_family_trees")}
+      heroBackgroundUrl={getImage("trees", "hero", "image")}
+      hero={
+        <div className="space-y-4 text-center">
+          <p className="eyebrow text-[var(--gold)] text-shadow-gold tracking-widest font-bold">
+            {t("nav_family_trees", "Arbres Généalogiques")}
+          </p>
+          <h1 className="display-xl text-white font-bold hero-title-shadow text-shadow-glow tracking-wide">
+            {getText("gallery_trees", "hero_title", t("gallery_trees_title", "Arbres Généalogiques & Lignées de Tunisie"))}
+          </h1>
+          <div className="gold-rule mt-4 w-28 mx-auto shadow-lg" />
+          <p className="max-w-3xl mx-auto text-base text-slate-100/95 font-medium drop-shadow-md">
+            {getText("gallery_trees", "hero_subtitle", t("gallery_trees_subtitle", "Explorez les arbres généalogiques vérifiés et les fiches familiales issues des dépôts d'archives tunisiens."))}
+          </p>
+        </div>
+      }
     >
       <div className="w-full space-y-8">
         {/* Search & Filters */}
@@ -317,8 +326,7 @@ export default function GalleryTrees() {
             {filteredTrees.map((tree) => {
               const titleStr = tree.name || tree.title || `Family Tree #${tree.id}`;
               const rawCreator = tree.owner?.full_name || tree.creator || "";
-              const isGenericCreator = /^(admin|super\s*admin|user|researcher|roots\s+tunisia|laboratoire.*|laborator.*)/i.test(rawCreator.trim());
-              const creatorStr = isGenericCreator ? "" : rawCreator.trim();
+              const creatorStr = rawCreator.trim() || "Karim Admin";
               const descStr = tree.description || tree.notes || tree.provenance || "";
               const govStr = tree.governorate || tree.region || "Tunisia";
               const { individuals: memberCount, generations: genCount } = getTreeMetrics(tree);
@@ -329,26 +337,12 @@ export default function GalleryTrees() {
                   className="surface-card frame-gold p-6 rounded-lg shadow-md space-y-4 flex h-full flex-col justify-between hover:-translate-y-1 transition-all text-start"
                 >
                   <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="px-2.5 py-0.5 rounded-sm text-[0.65rem] font-bold uppercase tracking-wider bg-[var(--gold)]/15 text-[var(--gold)] border border-[var(--gold)]/30 flex items-center gap-1">
-                        <MapPin className="w-3 h-3 text-[var(--gold)]" />
-                        <span>{govStr}</span>
-                      </span>
-                      <span className="flex items-center gap-1 text-[0.65rem] font-mono text-[var(--gold)] font-bold">
-                        <FileCode className="w-3.5 h-3.5" />
-                        <span>GEDCOM 5.5.1</span>
-                      </span>
-                    </div>
-
                     <h3
                       onClick={() => setActiveTree(tree)}
-                      className="text-lg sm:text-xl font-display font-bold text-[var(--foreground)] leading-snug cursor-pointer hover:text-[var(--gold)] transition-colors flex items-center justify-between gap-2 group/title"
+                      className="text-lg sm:text-xl font-display font-bold text-[var(--foreground)] leading-snug cursor-pointer hover:text-[var(--gold)] transition-colors"
                       title="Cliquer pour ouvrir l'arbre généalogique"
                     >
-                      <span>{titleStr}</span>
-                      <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[var(--gold)]/10 text-[var(--gold)] border border-[var(--gold)]/30 group-hover/title:bg-[var(--gold)] group-hover/title:text-black transition-colors font-semibold shrink-0">
-                        Voir l'Arbre ↗
-                      </span>
+                      {titleStr}
                     </h3>
 
                     <p className="text-xs text-[var(--foreground)]/80 leading-relaxed line-clamp-3">
@@ -366,11 +360,6 @@ export default function GalleryTrees() {
                         <Users className="w-3.5 h-3.5 text-[var(--gold)] shrink-0" />
                         <span><strong>{t("individuals_label")}:</strong> {memberCount}</span>
                       </div>
-                    </div>
-
-                    <div className="flex items-center justify-between text-[0.65rem] text-[var(--muted-foreground)]">
-                      <span>{creatorStr ? `${t("by_author")} ${creatorStr}` : ""}</span>
-                      <span>{tree.updated_at ? new Date(tree.updated_at).toLocaleDateString() : t("recently_updated")}</span>
                     </div>
 
                     <div className="pt-2 flex items-center gap-2">
