@@ -26,7 +26,14 @@ import {
 } from "lucide-react";
 import { api } from "../api/client";
 import { useTranslation } from "../context/TranslationContext";
-import TreesBuilder, { parseGedcom, parseGedcomX, extractPersonLinks } from "../admin/components/TreesBuilder";
+import TreesBuilder, {
+  parseGedcom,
+  parseGedcomX,
+  extractPersonLinks,
+  maskSourceLabel,
+  isInternalBackendUrl,
+  handleSafeDownloadOrOpen,
+} from "../admin/components/TreesBuilder";
 import { getTreeMetrics, computeRealGenerations } from "../utils/treeMetrics";
 
 interface FamilyCardModalProps {
@@ -564,7 +571,7 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
     }
     setPreviewSource({
       url,
-      label: item.label || url,
+      label: maskSourceLabel(item.label, url, item.kind),
       kind: item.kind,
       memberName: item.memberName,
       repository: item.archiveSource,
@@ -1720,7 +1727,7 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                     )}
                   </div>
                   <h3 className="font-serif font-bold text-lg sm:text-xl text-[var(--foreground)] tracking-wide leading-snug">
-                    {previewSource.label}
+                    {maskSourceLabel(previewSource.label, previewSource.url, previewSource.kind)}
                   </h3>
                   {/* Clean Archival Citation - NO raw /assets/gallery/... file path */}
                   <div className="text-xs text-[var(--muted-foreground)] flex items-center gap-2 flex-wrap font-mono">
@@ -1814,15 +1821,14 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
 
                 <div className="flex items-center gap-2">
                   {previewSource.url ? (
-                    <a
-                      href={previewSource.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                    <button
+                      type="button"
+                      onClick={() => handleSafeDownloadOrOpen(previewSource.url, previewSource.label)}
                       className="btn-base btn-gold text-xs py-2 px-4 flex items-center gap-1.5 shadow-sm font-semibold cursor-pointer"
                     >
-                      <ExternalLink className="w-3.5 h-3.5" />
-                      <span>Ouvrir dans une Nouvelle Page</span>
-                    </a>
+                      <Download className="w-3.5 h-3.5" />
+                      <span>Télécharger le Document</span>
+                    </button>
                   ) : null}
                   <button
                     type="button"

@@ -11,6 +11,24 @@ const SOURCE_HOST_LABELS: Array<[string, string]> = [
   ["archives.nat.tn", "Archives Nationales de Tunisie"],
 ];
 
+export function isInternalBackendUrl(urlOrPath: string | undefined): boolean {
+  if (!urlOrPath) return false;
+  const s = String(urlOrPath).trim().toLowerCase();
+  return (
+    s.includes("server.rootstunisia.com") ||
+    s.includes("api.rootstunisia.com") ||
+    s.includes("localhost:5000") ||
+    s.includes("127.0.0.1:5000") ||
+    s.includes("/uploads/") ||
+    s.includes("/private_uploads/") ||
+    s.includes("uploads/gallery") ||
+    s.includes("uploads/documents") ||
+    s.includes("uploads/audios") ||
+    /^(?:https?:\/\/[^/]+)?\/?(?:private_)?uploads\//i.test(s) ||
+    /^(?:gallery|doc|file|avatar|audio)-[a-f0-9]{8,}/i.test(s)
+  );
+}
+
 export function isDomainOrHostString(str: string): boolean {
   if (!str) return true;
   const s = String(str).trim().toLowerCase();
@@ -18,7 +36,7 @@ export function isDomainOrHostString(str: string): boolean {
   if (/\s/.test(s)) return false;
   if (
     s.includes("api.roots") ||
-    s.includes("RootsTunisia") ||
+    s.includes("rootstunisia") ||
     s === "localhost" ||
     s.startsWith("localhost:") ||
     s.startsWith("http://") ||
@@ -34,6 +52,59 @@ export function isDomainOrHostString(str: string): boolean {
     return true;
   }
   return false;
+}
+
+export function maskSourceLabel(
+  label: string | undefined,
+  url?: string | undefined,
+  kind?: string | undefined
+): string {
+  const trimmed = (label || "").trim();
+  if (
+    !trimmed ||
+    isInternalBackendUrl(trimmed) ||
+    isDomainOrHostString(trimmed) ||
+    /^(?:gallery|doc|file|avatar|audio)-[a-f0-9]{8,}/i.test(trimmed)
+  ) {
+    const effectiveKind = (kind || "").toLowerCase();
+    if (effectiveKind === "image" || effectiveKind === "photo" || effectiveKind === "gallery") {
+      return "Photographie d'Archive Numérisée";
+    }
+    if (effectiveKind === "audio") {
+      return "Enregistrement Oral d'Archive";
+    }
+    if (effectiveKind === "document" || effectiveKind === "book") {
+      return "Acte & Document d'Archives Officiel";
+    }
+    return "Source d'Archives Certifiée";
+  }
+  return trimmed;
+}
+
+export async function handleSafeDownloadOrOpen(url: string | undefined, label?: string | undefined) {
+  if (!url) return;
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error("Fetch failed");
+    const blob = await res.blob();
+    const blobUrl = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = blobUrl;
+    const extMatch = url.split("?")[0].match(/\.([a-z0-9]+)$/i);
+    const ext = extMatch ? extMatch[1] : "jpg";
+    const cleanLabel = (label || "source_archive")
+      .toLowerCase()
+      .replace(/[^a-z0-9_-]/g, "_")
+      .replace(/_+/g, "_")
+      .slice(0, 40);
+    link.download = `${cleanLabel || "document_archive"}.${ext}`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 15000);
+  } catch {
+    window.open(url, "_blank", "noopener,noreferrer");
+  }
 }
 
 /** Split `Title | url`, markdown links, or `{title,url}` objects into parts. */
@@ -303,6 +374,7 @@ import {
   FileCode2,
   Network,
   ChevronDown,
+  ShieldCheck,
   X,
 } from "lucide-react";
 
@@ -5078,7 +5150,7 @@ export default function TreesBuilder({
                                     if (l.kind === "external" || (/^https?:\/\//i.test(l.url) && !/\.(png|jpe?g|gif|webp|pdf|mp3|wav)$/i.test(l.url))) {
                                       openPersonSourceLink(l.url);
                                     } else {
-                                      setPreviewSource({ url: l.url, label: l.label || l.url, kind: l.kind });
+                                      setPreviewSource({ url: l.url, label: maskSourceLabel(l.label, l.url, l.kind), kind: l.kind });
                                     }
                                   }}
                                   className="inline-flex items-center gap-1 rounded-lg bg-[#0d9488]/15 px-2.5 py-1 text-xs font-semibold text-[#0d9488] dark:text-[#5eead4] hover:bg-[#0d9488]/25 transition"
@@ -5108,8 +5180,8 @@ export default function TreesBuilder({
                               ) : (
                                 <Link2 className="h-4 w-4 shrink-0 text-[#0d9488]" />
                               )}
-                              <span className="font-semibold break-words text-[#162238] dark:text-white" title={l.label || l.url}>
-                                {l.label || l.url}
+                              <span className="font-semibold break-words text-[#162238] dark:text-white" title={maskSourceLabel(l.label, l.url, l.kind)}>
+                                {maskSourceLabel(l.label, l.url, l.kind)}
                               </span>
                             </div>
 
@@ -5276,11 +5348,12 @@ export default function TreesBuilder({
                   >
                     <div className="min-w-0 flex-1">
                       <h3 className={`font-cinzel font-bold text-lg truncate text-[#0c4a6e] dark:text-[#0d9488]`}>
-                        {previewSource.label}
+                        {maskSourceLabel(previewSource.label, previewSource.url, previewSource.kind)}
                       </h3>
-                      <p className="text-[10px] text-stone-500 dark:text-stone-400 truncate mt-1">
-                        {previewSource.url}
-                      </p>
+                      <div className="flex items-center gap-1.5 mt-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
+                        <ShieldCheck className="w-3.5 h-3.5 shrink-0" />
+                        <span>Source d'Archives Certifiée • Fonds Numérisé</span>
+                      </div>
                     </div>
                     <button
                       type="button"
@@ -5327,16 +5400,14 @@ export default function TreesBuilder({
                   <div
                     className={`flex shrink-0 items-center justify-end gap-3 border-t ${border} px-5 py-3.5 ${theme === "dark" ? "bg-[#071827]/40" : "bg-[#f8f5ef]/50"}`}
                   >
-                    <a
-                      href={previewSource.url}
-                      download
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="interactive-btn btn-neu btn-neu--primary px-4 py-2 text-xs flex items-center gap-1.5"
+                    <button
+                      type="button"
+                      onClick={() => handleSafeDownloadOrOpen(previewSource.url, previewSource.label)}
+                      className="interactive-btn btn-neu btn-neu--primary px-4 py-2 text-xs flex items-center gap-1.5 cursor-pointer"
                     >
                       <Download className="w-3.5 h-3.5" />
                       Télécharger / Ouvrir
-                    </a>
+                    </button>
                     <button
                       type="button"
                       onClick={() => setPreviewSource(null)}

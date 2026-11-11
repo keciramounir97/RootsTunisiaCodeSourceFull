@@ -10,6 +10,8 @@ const {
   applyMediaTitlesToLinks,
   parseTitledSourceValue,
   resolveOpenableUrl,
+  maskSourceLabel,
+  isInternalBackendUrl,
 } = await import("./TreesBuilder");
 
 describe("Person source links", () => {
@@ -139,5 +141,41 @@ describe("Person source links", () => {
       },
     ]);
     expect(applyMediaTitlesToLinks(locked, lookup)[0].label).toBe("Family Portrait");
+  });
+
+  it("detects and masks internal backend server URLs and hashes", () => {
+    // 1. isInternalBackendUrl detection
+    expect(isInternalBackendUrl("https://server.rootstunisia.com/uploads/gallery/gallery-3bfdb7d9139ef02f82604cf0e880be26.jpg")).toBe(true);
+    expect(isInternalBackendUrl("https://server.rootstunisia.com/uploads/gallery/gallery-d438de85fe3cad555e6c7f8fde44326f.jpeg")).toBe(true);
+    expect(isInternalBackendUrl("/uploads/gallery/gallery-d438de85fe3cad555e6c7f8fde44326f.jpeg")).toBe(true);
+    expect(isInternalBackendUrl("gallery-d438de85fe3cad555e6c7f8fde44326f.jpeg")).toBe(true);
+    expect(isInternalBackendUrl("https://gallica.bnf.fr/ark:/12148/bpt6k12345")).toBe(false);
+
+    // 2. maskSourceLabel masks raw URLs and hashes
+    expect(
+      maskSourceLabel(
+        "https://server.rootstunisia.com/uploads/gallery/gallery-3bfdb7d9139ef02f82604cf0e880be26.jpg",
+        "https://server.rootstunisia.com/uploads/gallery/gallery-3bfdb7d9139ef02f82604cf0e880be26.jpg",
+        "image"
+      )
+    ).toBe("Photographie d'Archive Numérisée");
+
+    expect(
+      maskSourceLabel(
+        "gallery-d438de85fe3cad555e6c7f8fde44326f.jpeg",
+        "https://server.rootstunisia.com/uploads/gallery/gallery-d438de85fe3cad555e6c7f8fde44326f.jpeg",
+        "image"
+      )
+    ).toBe("Photographie d'Archive Numérisée");
+
+    // 3. maskSourceLabel preserves legitimate human archival titles
+    const realTitle = "El Kef, Tunisie - Ville natale de Victor Samuel Brakha, Marie Sabban et plusieurs membres de la fratrie.";
+    expect(
+      maskSourceLabel(
+        realTitle,
+        "https://server.rootstunisia.com/uploads/gallery/gallery-d438de85fe3cad555e6c7f8fde44326f.jpeg",
+        "image"
+      )
+    ).toBe(realTitle);
   });
 });

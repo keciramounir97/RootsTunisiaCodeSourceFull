@@ -3,6 +3,11 @@ import { ExternalLink, FileText, Plus, X, Trash2, Link2 } from "lucide-react";
 import { api } from "../api/client";
 import { getApiRoot } from "../api/helpers";
 import { useTranslation } from "../context/TranslationContext";
+import {
+  maskSourceLabel,
+  isInternalBackendUrl,
+  isDomainOrHostString,
+} from "../admin/components/TreesBuilder";
 
 interface PersonLink {
   id: number;
@@ -213,9 +218,13 @@ export default function PersonLinksPanel({
                       rel="noreferrer noopener"
                       className="text-sm font-medium text-[var(--brand-teal)] dark:text-[var(--gold-light)] hover:underline truncate block"
                     >
-                      {link.label}
+                      {maskSourceLabel(link.label, link.url, link.type)}
                     </a>
-                    <p className="text-[10px] opacity-50 truncate">{link.url}</p>
+                    {!isInternalBackendUrl(link.url) && !isDomainOrHostString(link.url) ? (
+                      <p className="text-[10px] opacity-50 truncate">
+                        {link.url.startsWith("http") ? new URL(link.url).hostname : link.url}
+                      </p>
+                    ) : null}
                   </div>
                   {isAuthenticated && (
                     <button
