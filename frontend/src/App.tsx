@@ -112,6 +112,7 @@ const AdminContactContent = lazy(() => import("./admin/pages/AdminContactContent
 const AdminPeriodsContent = lazy(() => import("./admin/pages/AdminPeriodsContent"));
 const AdminArchivesContent = lazy(() => import("./admin/pages/AdminArchivesContent"));
 const AdminSourcesContent = lazy(() => import("./admin/pages/AdminSourcesContent"));
+const AdminSourcesArchivesContent = lazy(() => import("./admin/pages/AdminSourcesArchivesContent"));
 const SiteImagePlaceholders = lazy(() => import("./admin/pages/SiteImagePlaceholders"));
 const Diaporama = lazy(() => import("./admin/pages/Diaporama"));
 const EmailTemplates = lazy(() => import("./admin/pages/EmailTemplates"));
@@ -783,24 +784,22 @@ function AppRoutes() {
           }
         />
         <Route
-          path="archives-content"
+          path="sources-archives-content"
           element={
             <Suspense fallback={<AdminLoadingFallback />}>
               <ProtectedRoute roles={[3]}>
-                <AdminArchivesContent />
+                <AdminSourcesArchivesContent />
               </ProtectedRoute>
             </Suspense>
           }
         />
         <Route
+          path="archives-content"
+          element={<Navigate to="/admin/sources-archives-content" replace />}
+        />
+        <Route
           path="sources-content"
-          element={
-            <Suspense fallback={<AdminLoadingFallback />}>
-              <ProtectedRoute roles={[3]}>
-                <AdminSourcesContent />
-              </ProtectedRoute>
-            </Suspense>
-          }
+          element={<Navigate to="/admin/sources-archives-content" replace />}
         />
         <Route
           path="site-image-placeholders"

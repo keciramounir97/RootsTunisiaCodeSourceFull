@@ -1,612 +1,336 @@
-/* AUTO-GENERATED from the existing built-in translations. Seeds the public_cards table once. */
-export interface PublicCardSeed { kind: "source" | "archive"; slug: string; link: string; sort: number; tr: Record<string, { title: string; description: string }>; }
-export const PUBLIC_CARD_SEED: PublicCardSeed[] = [
+export interface PublicCardDirectorySeed {
+  kind: "archive" | "source";
+  category: string;
+  badge: string;
+  title: string;
+  description: string;
+  link: string;
+  tags: string[];
+  sortOrder: number;
+}
+
+export const VERIFIED_ARCHIVES_SEED: PublicCardDirectorySeed[] = [
+  // --- 1. TUNISIE (Archives Nationales, Dépôts & Communes) ---
   {
-    "kind": "source",
-    "slug": "etat_civil",
-    "link": "http://www.archives.nat.tn",
-    "sort": 0,
-    "tr": {
-      "ar": {
-        "title": "دفاتر الحالة المدنية التونسية",
-        "description": "البلديات والمعتمديات · الأرشيف الوطني التونسي — الولادات، الزيجات، الوفيات، أسماء الوالدين، المهن، والمواقع والتواريخ الدقيقة في 24 ولاية."
-      },
-      "en": {
-        "title": "Tunisian Civil Registry (État Civil)",
-        "description": "Municipalities · Archives Nationales de Tunisie — Births, marriages, deaths, parental identities, occupations, exact dates and locations across 24 governorates."
-      },
-      "es": {
-        "title": "Registro civil tunecino",
-        "description": "Municipios · Archivos Nacionales de Túnez — Nacimientos, matrimonios, defunciones, filiación paterna, oficios, fechas y localidades en las 24 gobernaciones."
-      },
-      "fr": {
-        "title": "État civil tunisien",
-        "description": "Municipalités · Archives Nationales de Tunisie — Naissances, mariages, décès, filiations parentales, professions, dates et lieux précis dans les 24 gouvernorats."
-      },
-      "it": {
-        "title": "Stato civile tunisino",
-        "description": "Municipi · Archivi Nazionali di Tunisia — Nascite, matrimoni, decessi, filiazione genitoriale, professioni, date e luoghi precisi nei 24 governatorati."
-      },
-      "mt": {
-        "title": "Stat ċivili Tuneżin",
-        "description": "Muniċipalitajiet · Arkivji Nazzjonali tat-Tuneżija — Twelid, żwiġijiet, imwiet, ismijiet tal-ġenituri, professjonijiet, dati u postijiet preċiżi fl-24 governorat."
-      }
-    }
+    kind: "archive",
+    category: "tunisia",
+    badge: "Archives d'État • Tunis",
+    title: "Archives Nationales de Tunisie (ANT)",
+    description:
+      "Dépôt central de l'histoire tunisienne. Conserve les registres fiscaux de la Majba (recensements nominatifs 1860–1869), les décrets et ordonnances beylicales husseinites, les jugements des tribunaux séculiers de l'Ouzara et les fonds d'actes notariés ('udul).",
+    link: "http://www.archives.nat.tn",
+    tags: ["Majba 1860-1869", "Décrets Beylicaux", "Notariats 'Udul", "Tribunaux Ouzara"],
+    sortOrder: 1,
   },
   {
-    "kind": "source",
-    "slug": "charaique",
-    "link": "http://www.archives.nat.tn",
-    "sort": 1,
-    "tr": {
-      "ar": {
-        "title": "سجلات المحاكم الشرعية",
-        "description": "الأرشيف الوطني التونسي · مستودعات المحاكم الجهوية — حجج التركات، الوصاية الشرعية، عقود الزواج، وقسمة المواريث التي تذكر الأبناء والأجداد لعدة أجيال."
-      },
-      "en": {
-        "title": "Charaïque Court Sijillat",
-        "description": "Archives Nationales de Tunisie · Regional Court Depositories — Inheritance distributions, legal guardianship, marriage settlements, and estate partitions establishing multi-generational descent."
-      },
-      "es": {
-        "title": "Sijillat de tribunales sharíes",
-        "description": "Archivos Nacionales de Túnez · Depósitos judiciales regionales — Particiones hereditarias, tutelas legales, contratos nupciales y ventas que prueban varias generaciones."
-      },
-      "fr": {
-        "title": "Sijillats des tribunaux charaïques",
-        "description": "Archives Nationales de Tunisie · Dépôts des tribunaux régionaux — Partages successoraux, tutelles, contrats matrimoniaux et ventes établissant les filiations sur plusieurs générations."
-      },
-      "it": {
-        "title": "Sijillat dei tribunali sciaraitici",
-        "description": "Archivi Nazionali di Tunisia · Depositi dei tribunali regionali — Divisioni ereditarie, tutele, contratti matrimoniali e compravendite che attestano più generazioni."
-      },
-      "mt": {
-        "title": "Sijillat tal-qrati tax-Xarigħa",
-        "description": "Arkivji Nazzjonali tat-Tuneżija · Depożitorji tal-qrati reġjonali — Tqassim ta’ wirt, kustodja, kuntratti ta’ żwieġ u bejgħ ta’ proprjetà li jikkonfermaw diversi ġenerazzjonijiet."
-      }
-    }
+    kind: "archive",
+    category: "tunisia",
+    badge: "Patrimoine Écrit & Manuscrits • Tunis",
+    title: "Bibliothèque Nationale de Tunisie (BNT)",
+    description:
+      "Conservation du patrimoine imprimé et manuscrit. Abrite les journaux historiques de la Régence, les annuaires administratifs Didot-Bottin, les dictionnaires biographiques des lettrés et des grandes familles (Tarājim), et les archives de l'Université Zitouna.",
+    link: "https://www.bnt.nat.tn",
+    tags: ["Manuscrits Arabes", "Tarājim (Biographies)", "Presse Historique", "Zitouna"],
+    sortOrder: 2,
   },
   {
-    "kind": "source",
-    "slug": "habous",
-    "link": "http://www.archives.nat.tn",
-    "sort": 2,
-    "tr": {
-      "ar": {
-        "title": "حجج الأحباس والأوقاف العائلية",
-        "description": "رصيد جمعية الأحباس · الأرشيف الوطني التونسي — أسماء الواقفين وسلاسل المستحقين من الفروع الذرية المتعاقبة على العقارات والبساتين."
-      },
-      "en": {
-        "title": "Habous (Waqf) Endowment Deeds",
-        "description": "Jamaiyat el Habous Fonds · Archives Nationales de Tunisie — Founders and designated branches of descendants named as perpetual beneficiaries of ancestral properties."
-      },
-      "es": {
-        "title": "Escrituras de habous (waqf)",
-        "description": "Fondo de la Jamaiyat el Habous · Archivos Nacionales de Túnez — Fundadores y ramas descendientes designadas como beneficiarias perpetuas de los bienes familiares."
-      },
-      "fr": {
-        "title": "Actes de habous (waqf)",
-        "description": "Fonds de la Jamaiyat el Habous · Archives Nationales de Tunisie — Constituants et lignées d’ayants droit désignés comme bénéficiaires perpétuels des biens familiaux."
-      },
-      "it": {
-        "title": "Atti di habous (waqf)",
-        "description": "Fondo della Jamaiyat el Habous · Archivi Nazionali di Tunisia — Fondatori e linee di discendenti indicati come beneficiari perpetui dei beni di famiglia."
-      },
-      "mt": {
-        "title": "Atti ta’ habous (waqf)",
-        "description": "Fondi ta’ Jamaiyat el Habous · Arkivji Nazzjonali tat-Tuneżija — Fundaturi u fergħat ta’ dixxendenti maħtura bħala benefiċjarji perpetwi ta’ proprjetajiet tal-familja."
-      }
-    }
+    kind: "archive",
+    category: "tunisia",
+    badge: "État Civil Municipal • Capitale",
+    title: "Archives Municipales de la Ville de Tunis (État Civil)",
+    description:
+      "Registres des actes de naissances, mariages et décès de la commune de Tunis depuis l'instauration de l'état civil moderne (1886). Permet également la recherche des concessions et permis d'inhumation des cimetières de la capitale.",
+    link: "https://www.commune-tunis.gov.tn",
+    tags: ["État Civil (1886-1956)", "Naissances", "Mariages", "Cimetières Municipaux"],
+    sortOrder: 3,
   },
   {
-    "kind": "source",
-    "slug": "beylical",
-    "link": "http://www.archives.nat.tn",
-    "sort": 3,
-    "tr": {
-      "ar": {
-        "title": "الأوامر العلية والمراسيم البايوية",
-        "description": "الأرشيف الوطني التونسي · السلسلة البايوية — التوليات الإدارية والعسكرية، الرتب والإنعامات، الإقطاعات، والإعفاءات الأسرية في الديار البايوية."
-      },
-      "en": {
-        "title": "Beylical Decrees & Commissions",
-        "description": "Archives Nationales de Tunisie · Série Beylicale — Civil and military appointments, honorific titles, land grants, tax exemptions, and court household affiliations."
-      },
-      "es": {
-        "title": "Decretos y órdenes beylicales",
-        "description": "Archivos Nacionales de Túnez · Serie Beylical — Nombramientos civiles y militares, honores, concesiones de tierras y adscripción a las casas beylicales."
-      },
-      "fr": {
-        "title": "Décrets et décrets beylicaux",
-        "description": "Archives Nationales de Tunisie · Série Beylicale — Nominations civiles et militaires, titres d’honneur, concessions territoriales et liens aux maisons beylicales."
-      },
-      "it": {
-        "title": "Decreti e nomine beylicali",
-        "description": "Archivi Nazionali di Tunisia · Serie Beylicale — Nomine civili e militari, titoli onorifici, concessioni terriere e legami con le casate beylicali."
-      },
-      "mt": {
-        "title": "Digrieti u ħatriet tal-bajjiet",
-        "description": "Arkivji Nazzjonali tat-Tuneżija · Serje Beylicale — Ħatriet ċivili u militari, titoli ta’ unur, għotjiet ta’ artijiet u affiljazzjonijiet tal-familja rjali."
-      }
-    }
+    kind: "archive",
+    category: "tunisia",
+    badge: "Fondations Pieuses • Tunis",
+    title: "Archives des Habous & Waqf de Tunisie",
+    description:
+      "Fonds de la Jamâïyat el-Habous. Les actes de constitution de waqf familial (habous ahlī) mentionnent l'arbre généalogique exhaustif des fondateurs, ascendants et de l'ensemble des bénéficiaires et descendants sur plusieurs siècles.",
+    link: "http://www.affaires-religieuses.tn",
+    tags: ["Habous Familial", "Waqf Ahlī", "Généalogies Authentiques", "Successions"],
+    sortOrder: 4,
+  },
+
+  // --- 2. FRANCE (Protectorat, État Civil Consulaire, Militaires) ---
+  {
+    kind: "archive",
+    category: "france",
+    badge: "Archives Diplomatiques & Consulaires • Nantes",
+    title: "Centre des Archives Diplomatiques de Nantes (CADN)",
+    description:
+      "Le fonds fondamental du Protectorat (1881–1956). Conserve la totalité de l'état civil consulaire des Européens de Tunisie, les décrets de naturalisation beylicale et française (1924–1927), les listes électorales, et les déclarations de tutelle et successions.",
+    link: "https://www.diplomatie.gouv.fr/fr/archives-diplomatiques/",
+    tags: ["État Civil Consulaire", "Naturalisations 1924-1927", "Successions", "Listes Électorales"],
+    sortOrder: 5,
   },
   {
-    "kind": "source",
-    "slug": "majba",
-    "link": "http://www.archives.nat.tn",
-    "sort": 4,
-    "tr": {
-      "ar": {
-        "title": "دفاتر الجباية وضريبة المجبا",
-        "description": "الأرشيف الوطني التونسي · السلسلة المالية — أرباب العائلات مقيدين بالدوار والقرية والعرش — وتعد بمثابة إحصاء سكاني تمهيدي بالغ الدقة في القرن التاسع عشر."
-      },
-      "en": {
-        "title": "Majba & Fiscal Tax Rolls",
-        "description": "Archives Nationales de Tunisie · Fiscal Series — Heads of household listed per douar, village, and tribal fraction — serving as an essential 19th-century proto-census."
-      },
-      "es": {
-        "title": "Padrones fiscales de majba",
-        "description": "Archivos Nacionales de Túnez · Series fiscales — Cabezas de familia empadronados por aduar, pueblo y fracción tribal: auténtico protocenso decimonónico."
-      },
-      "fr": {
-        "title": "Rôles d’imposition de la majba",
-        "description": "Archives Nationales de Tunisie · Séries fiscales — Chefs de famille répertoriés par douar, village et fraction tribale — véritable proto-recensement du XIXe siècle."
-      },
-      "it": {
-        "title": "Ruoli fiscali della majba",
-        "description": "Archivi Nazionali di Tunisia · Serie fiscali — Capifamiglia censiti per villaggio, douar e frazione tribale: vero proto-censimento ottocentesco."
-      },
-      "mt": {
-        "title": "Reġistri tat-taxxa tal-majba",
-        "description": "Arkivji Nazzjonali tat-Tuneżija · Serje fiskali — Kapijiet tal-familja mniżżla skont id-douar, raħal u frazzjoni tribali: proto-ċensiment preċiż tas-seklu 19."
-      }
-    }
+    kind: "archive",
+    category: "france",
+    badge: "Fonds Coloniaux & Protectorat • Aix-en-Provence",
+    title: "Archives Nationales d'Outre-Mer (ANOM)",
+    description:
+      "Registres matricules militaires des engagés et appelés en Tunisie, dossiers de carrière des fonctionnaires du Protectorat, concessions agricoles, correspondances ministérielles et rapports de sûreté publique en Afrique du Nord.",
+    link: "https://archives-nationales-outre-mer.culture.gouv.fr/",
+    tags: ["Registres Matricules", "Personnel Protectorat", "Colonisation", "Afrique du Nord"],
+    sortOrder: 6,
   },
   {
-    "kind": "source",
-    "slug": "cadastre",
-    "link": "https://www.otc.nat.tn",
-    "sort": 5,
-    "tr": {
-      "ar": {
-        "title": "السجل العقاري ورسوم الملكية",
-        "description": "ديوان قيس الأراضي والمسح العقاري · إدارة الملكية العقارية — انتقال الملكيات عبر الأجيال، أسماء الورثة والشركاء، القرابات المجاورة، وجغرافية الأراضي."
-      },
-      "en": {
-        "title": "Cadastral Surveys & Land Titles",
-        "description": "Office de la Topographie et du Cadastre (OTC) · Conservation Foncière — Generational property continuity, co-heir names, neighbouring kin, and rural village boundaries."
-      },
-      "es": {
-        "title": "Catastro y títulos de propiedad",
-        "description": "Office de la Topographie et du Cadastre · Conservación de la Propiedad — Continuidad patrimonial, coherederos, parentescos limítrofes y lindes rústicos."
-      },
-      "fr": {
-        "title": "Cadastre et titres fonciers",
-        "description": "Office de la Topographie et du Cadastre (OTC) · Conservation Foncière — Continuité patrimoniale, cohéritiers, parentés voisines et limites foncières villageoises."
-      },
-      "it": {
-        "title": "Catasto e titoli fondiari",
-        "description": "Office de la Topographie et du Cadastre · Conservatoria Fondiaria — Continuità patrimoniale, coeredi, parentele confinanti e confini rurali."
-      },
-      "mt": {
-        "title": "Katast u titoli tal-art",
-        "description": "Office de la Topographie et du Cadastre · Konservazzjoni tal-Art — Kontinwità tal-proprjetà, ko-werrieta, qraba ġirien u fruntieri tar-raħal."
-      }
-    }
+    kind: "archive",
+    category: "france",
+    badge: "Archives Centrales • Pierrefitte / Paris",
+    title: "Archives Nationales de France (Pierrefitte-sur-Seine)",
+    description:
+      "Conservation des dossiers individuels de demandes de naturalisation présidentielle française déposées par les résidents de Tunisie (Français, Italiens, Maltais, Israélites et Tunisiens musulmans) avec arbres généalogiques et enquêtes préfectorales.",
+    link: "https://www.archives-nationales.culture.gouv.fr",
+    tags: ["Décrets de Naturalisation", "Ministère de la Justice", "Dossiers Individuels"],
+    sortOrder: 7,
   },
   {
-    "kind": "source",
-    "slug": "schools",
-    "link": "https://www.uz.rnu.tn",
-    "sort": 6,
-    "tr": {
-      "ar": {
-        "title": "سجلات المدارس والجامعات التاريخية",
-        "description": "المدرسة الصادقية، جامع الزيتونة، المدرسة العلوية، والمعاهد التاريخية — تواريخ الولادة، مهن الآباء، عناوين الإقامة العائلية، وتتابع الأشقاء في التعليم."
-      },
-      "en": {
-        "title": "School, Lycée & University Registers",
-        "description": "Sadiki College, Zitouna University, Collège Alaoui, Lycées — Dates of birth, parental occupations, addresses, and educational progression of young generations."
-      },
-      "es": {
-        "title": "Registros escolares y universitarios",
-        "description": "Colegio Sadiki, Universidad Zitouna, Colegio Alaoui, liceos — Fechas de nacimiento, profesión paterna, domicilios familiares y grupos de hermanos en formación."
-      },
-      "fr": {
-        "title": "Registres scolaires et universitaires",
-        "description": "Collège Sadiki, Université Zitouna, Collège Alaoui, lycées — Dates de naissance, profession du père, adresses familiales et fratries scolarisées."
-      },
-      "it": {
-        "title": "Registri scolastici e universitari",
-        "description": "Collegio Sadiki, Università Zitouna, Collegio Alaoui, licei — Date di nascita, professioni paterne, indirizzi di residenza e gruppi di fratelli scolarizzati."
-      },
-      "mt": {
-        "title": "Reġistri tal-iskejjel u universitajiet",
-        "description": "Kulleġġ Sadiki, Università Zitouna, Kulleġġ Alaoui, liċej — Dati tat-twelid, xogħol tal-missier, indirizzi tal-familja u aħwa fl-edukazzjoni."
-      }
-    }
+    kind: "archive",
+    category: "france",
+    badge: "Archives Militaires • Château de Vincennes & Caen",
+    title: "Service Historique de la Défense (SHD)",
+    description:
+      "Dossiers individuels de carrière, états de service, citations et pensions d'invalidité des soldats tunisiens ayant servi dans l'armée française (notamment le 4e Régiment de Tirailleurs Tunisiens et le 1er Régiment de Spahis) lors des deux guerres mondiales.",
+    link: "https://www.servicehistorique.sga.defense.gouv.fr/",
+    tags: ["4e Tirailleurs Tunisiens", "1er Spahis", "Guerre 1914-1918", "Guerre 1939-1945"],
+    sortOrder: 8,
   },
   {
-    "kind": "source",
-    "slug": "military",
-    "link": "https://www.memoiredeshommes.sga.defense.gouv.fr",
-    "sort": 7,
-    "tr": {
-      "ar": {
-        "title": "سجلات التجنيد والخدمة العسكرية",
-        "description": "الأرشيف الوطني التونسي · الأرشيف العسكري التاريخي — الأوصاف الجسدية، مواطن الأصل والقرى، مستويات التعلم، وسجلات الخدمة والمهام."
-      },
-      "en": {
-        "title": "Military Conscription & Service Rolls",
-        "description": "Archives Nationales de Tunisie · French Military Archives (SHD) — Physical descriptions, native villages, literacy levels, and military postings across the Mediterranean."
-      },
-      "es": {
-        "title": "Listas militares y de reclutamiento",
-        "description": "Archivos Nacionales de Túnez · Archivos militares franceses (SHD) — Filiación física, procedencia geográfica, nivel de instrucción y destinos militares."
-      },
-      "fr": {
-        "title": "Registres militaires et conscription",
-        "description": "Archives Nationales de Tunisie · Archives militaires françaises (SHD) — Signalement physique, localité d’origine, degré d’instruction et affectations militaires."
-      },
-      "it": {
-        "title": "Liste di leva e registri militari",
-        "description": "Archivi Nazionali di Tunisia · Archivi militari francesi (SHD) — Descrizione fisica, località d’origine, livello di istruzione e destinazioni militari."
-      },
-      "mt": {
-        "title": "Listi militari u ta’ reklutaġġ",
-        "description": "Arkivji Nazzjonali tat-Tuneżija · Arkivji militari Franċiżi (SHD) — Deskrizzjoni fiżika, post tal-oriġini, livell ta’ qari u kitba u assenjazzjonijiet militari."
-      }
-    }
+    kind: "archive",
+    category: "france",
+    badge: "Bibliothèque Numérique • BnF Paris",
+    title: "Gallica — Bibliothèque Nationale de France (BnF)",
+    description:
+      "Accès intégral numérisé au Journal Officiel Tunisien (1883–1956), aux annuaires Didot-Bottin d'Afrique du Nord et à la presse historique d'époque (La Dépêche Tunisienne, Le Petit Tunisien), indispensables pour retrouver adresses, professions et avis nécrologiques.",
+    link: "https://gallica.bnf.fr",
+    tags: ["Journal Officiel Tunisien", "Annuaires Commerciaux", "Presse Quotidienne"],
+    sortOrder: 9,
   },
   {
-    "kind": "source",
-    "slug": "community",
-    "link": "http://anom.archivesnationales.culture.gouv.fr/caomec2/",
-    "sort": 8,
-    "tr": {
-      "ar": {
-        "title": "سجلات الجماعات والمهجر",
-        "description": "جربة، تستور، مرسيليا، ليفورنو، باريس، ميلانو — عقود الزواج، وثائق العائلات الأندلسية الموريسكية، وسجلات القنصليات التي تتبع فروع المغتربين."
-      },
-      "en": {
-        "title": "Community & Diaspora Registries",
-        "description": "Djerba, Testour, Marseille, Livorno, Paris, Milan — Ketubot, parish books, Andalusian family papers, and consular registers connecting emigrant branches."
-      },
-      "es": {
-        "title": "Registros comunitarios y de la diáspora",
-        "description": "Djerba, Testour, Marsella, Livorno, París, Milán — Ketubot, libros parroquiales, papeles moriscos y registros consulares que enlazan ramas emigradas."
-      },
-      "fr": {
-        "title": "Registres communautaires et diaspora",
-        "description": "Djerba, Testour, Marseille, Livourne, Paris, Milan — Ketoubot, registres paroissiaux, archives morisques et dossiers consulaires reliant les branches expatriées."
-      },
-      "it": {
-        "title": "Registri comunitari e della diaspora",
-        "description": "Djerba, Testour, Marsiglia, Livorno, Parigi, Milano — Ketubot, registri parrocchiali, carte andaluse e registri consolari che collegano rami emigrati."
-      },
-      "mt": {
-        "title": "Reġistri komunitarji u tal-dijaspora",
-        "description": "Djerba, Testour, Marsilja, Livorno, Pariġi, Milan — Ketubot, reġistri parrokkjali, karti tal-familja Moreska u fajls konsulari li jgħaqqdu fergħat emigrati."
-      }
-    }
+    kind: "archive",
+    category: "france",
+    badge: "Base Nominative des Combattants",
+    title: "Mémoire des Hommes (Ministère des Armées)",
+    description:
+      "Base de données officielle permettant la recherche nominative des tirailleurs, spahis et personnels militaires originaires de Tunisie déclarés « Morts pour la France » durant la Première Guerre mondiale, la Seconde Guerre mondiale et la Guerre d'Indochine.",
+    link: "https://www.memoiredeshommes.sga.defense.gouv.fr",
+    tags: ["Morts pour la France", "Tirailleurs Tunisiens", "Sépultures Militaires"],
+    sortOrder: 10,
+  },
+
+  // --- 3. ITALIE & SICILE (Communauté Italienne de Tunisie) ---
+  {
+    kind: "archive",
+    category: "italy",
+    badge: "Portail National d'État Civil • Ministère de la Culture",
+    title: "Portale Antenati (Archives d'État d'Italie)",
+    description:
+      "Portail officiel de la généalogie italienne donnant accès gratuitement à des millions d'actes d'état civil numérisés (Palerme, Trapani, Messine, Pantelleria) d'où sont issues les familles italiennes et siciliennes établies à Tunis, La Goulette, Bizerte et Sousse.",
+    link: "https://antenati.cultura.gov.it",
+    tags: ["État Civil Italien", "Sicile", "Pantelleria", "Familles de La Goulette"],
+    sortOrder: 11,
   },
   {
-    "kind": "archive",
-    "slug": "ant",
-    "link": "http://www.archives.nat.tn",
-    "sort": 0,
-    "tr": {
-      "ar": {
-        "title": "الأرشيف الوطني التونسي",
-        "description": "تونس العاصمة · شارع 9 أفريل — السلسلة البايوية، دفاتر الجباية، سجلات المحاكم الشرعية، إدارة عهد الحماية، وأرصدة الأوقاف."
-      },
-      "en": {
-        "title": "Archives Nationales de Tunisie (ANT)",
-        "description": "Tunis · Boulevard 9 Avril — Beylical series, fiscal rolls, charaïque court registers, French Protectorate administration, and habous archives."
-      },
-      "es": {
-        "title": "Archivos Nacionales de Túnez (ANT)",
-        "description": "Túnez · Boulevard 9 Avril — Serie beylical, registros fiscales, tribunales sharíes, administración del Protectorado y fondos habous."
-      },
-      "fr": {
-        "title": "Archives Nationales de Tunisie (ANT)",
-        "description": "Tunis · Boulevard 9 Avril — Série beylicale, rôles fiscaux, tribunaux charaïques, administration du Protectorat et fonds des habous."
-      },
-      "it": {
-        "title": "Archivi Nazionali di Tunisia (ANT)",
-        "description": "Tunisi · Boulevard 9 Avril — Serie beylicale, ruoli fiscali, tribunali sciaraitici, amministrazione del Protettorato e fondi habous."
-      },
-      "mt": {
-        "title": "Arkivji Nazzjonali tat-Tuneżija (ANT)",
-        "description": "Tuneż · Boulevard 9 Avril — Serje tal-bajjiet, reġistri fiskali, qrati tax-Xarigħa, amministrazzjoni tal-Protettorat u fondi tal-habous."
-      }
-    }
+    kind: "archive",
+    category: "italy",
+    badge: "Affaires Étrangères • Rome",
+    title: "Archivio Storico Diplomatico (MAECI - Rome)",
+    description:
+      "Archives du Ministère des Affaires Étrangères italien. Conserve les registres d'immatriculation consulaire, les demandes de passeports et les actes d'état civil des sujets italiens établis dans la Régence (Consulat Général de Tunis, La Goulette, Sfax, Monastir).",
+    link: "https://asd.esteri.it/",
+    tags: ["Consulat Italien Tunis", "La Goulette", "Immatriculations Consulaires", "Passeports"],
+    sortOrder: 12,
   },
   {
-    "kind": "archive",
-    "slug": "bnt",
-    "link": "http://www.bnt.nat.tn",
-    "sort": 1,
-    "tr": {
-      "ar": {
-        "title": "المكتبة الوطنية التونسية",
-        "description": "تونس العاصمة · شارع 9 أفريل — مجموعات المخطوطات النادرة، كتب الأنساب والتراجم، المعاجم التاريخية، والدوريات والصحف القديمة."
-      },
-      "en": {
-        "title": "Bibliothèque Nationale de Tunisie (BNT)",
-        "description": "Tunis · Boulevard 9 Avril — Arabic manuscript collections, nasab and genealogical treaties, historical biographies, and rare Tunisian periodicals."
-      },
-      "es": {
-        "title": "Biblioteca Nacional de Túnez (BNT)",
-        "description": "Túnez · Boulevard 9 Avril — Colecciones de manuscritos árabes, tratados de nasab, diccionarios biográficos y hemeroteca histórica."
-      },
-      "fr": {
-        "title": "Bibliothèque Nationale de Tunisie (BNT)",
-        "description": "Tunis · Boulevard 9 Avril — Manuscrits arabes, traités de nasab, dictionnaires biographiques et périodiques tunisiens rares."
-      },
-      "it": {
-        "title": "Biblioteca Nazionale di Tunisia (BNT)",
-        "description": "Tunisi · Boulevard 9 Avril — Manoscritti arabi, trattati di nasab, dizionari biografici ed emeroteca storica tunisina."
-      },
-      "mt": {
-        "title": "Librerija Nazzjonali tat-Tuneżija (BNT)",
-        "description": "Tuneż · Boulevard 9 Avril — Kollezzjonijiet ta’ manuskritti Għarab, trattati ta’ nasab, dizzjunarji bijografiċi u perjodiċi rari Tuneżini."
-      }
-    }
+    kind: "archive",
+    category: "italy",
+    badge: "Archives Provinciales • Palerme, Sicile",
+    title: "Archivio di Stato di Palermo (Sicile)",
+    description:
+      "Registres d'embarquement portuaires vers La Goulette et Tunis, délivrance de passeports pour l'Afrique du Nord, et listes de conscription militaire (Liste di leva) des familles siciliennes ayant émigré en Tunisie entre 1860 et 1940.",
+    link: "https://saassipa.cultura.gov.it/",
+    tags: ["Émigration Sicilienne", "Listes d'embarquement", "Conscription Leva", "Palerme"],
+    sortOrder: 13,
   },
   {
-    "kind": "archive",
-    "slug": "habous",
-    "link": "http://www.archives.nat.tn",
-    "sort": 2,
-    "tr": {
-      "ar": {
-        "title": "رصيد جمعية الأحباس التاريخي",
-        "description": "تونس العاصمة · المدينة العتيقة — حجج الأوقاف والتحبيس، قوائم المستحقين من الذرية، وسجلات الأملاك الحضرية والفلاحية."
-      },
-      "en": {
-        "title": "Jamaiyat el Habous Archive Fonds",
-        "description": "Tunis · Medina — Comprehensive pious endowment deeds, lists of family beneficiaries, and urban and agricultural property inventories."
-      },
-      "es": {
-        "title": "Fondo de la Jamaiyat el Habous",
-        "description": "Túnez · Medina — Escrituras de fundaciones piadosas, listas de beneficiarios familiares e inventarios de fincas rústicas y urbanas."
-      },
-      "fr": {
-        "title": "Fonds de la Jamaiyat el Habous",
-        "description": "Tunis · Médina — Actes de fondations pieuses, listes de bénéficiaires familiaux et inventaires fonciers urbains et ruraux."
-      },
-      "it": {
-        "title": "Fondo della Jamaiyat el Habous",
-        "description": "Tunisi · Medina — Atti di pie fondazioni, elenchi di beneficiari familiari e inventari di beni urbani e agricoli."
-      },
-      "mt": {
-        "title": "Fondi ta’ Jamaiyat el Habous",
-        "description": "Tuneż · Medina — Atti ta’ fondazzjonijiet piji, listi ta’ benefiċjarji tal-familja u inventarji ta’ proprjetajiet urbani u agrikoli."
-      }
-    }
+    kind: "archive",
+    category: "italy",
+    badge: "Archives Maritimes & Notariales • Trapani",
+    title: "Archivio di Stato di Trapani (Sicile)",
+    description:
+      "Fonds d'archives des pêcheurs de corail, marins et négociants de Trapani et de l'île de Pantelleria qui ont fondé les communautés italiennes historiques de La Goulette, Tabarka et de la péninsule du Cap Bon.",
+    link: "https://archiviodistatotrapani.cultura.gov.it",
+    tags: ["Trapani", "Pantelleria", "Pêcheurs de Corail", "Tabarka"],
+    sortOrder: 14,
+  },
+
+  // --- 4. MALTE (Communauté Maltaise de Tunisie) ---
+  {
+    kind: "archive",
+    category: "malta",
+    badge: "Archives Nationales • Rabat & Mdina",
+    title: "National Archives of Malta (Arkivji Nazzjonali ta' Malta)",
+    description:
+      "Registres officiels de demandes de passeports pour Tunis, dépositions judiciaires et certificats de sujets britanniques délivrés aux citoyens maltais vivant à Tunis, Sousse, Mahdia et Djerba de 1840 à 1940.",
+    link: "https://nationalarchives.gov.mt",
+    tags: ["Passeports pour Tunis (1840-1940)", "Sujets Britanniques", "Émigration Maltaise"],
+    sortOrder: 15,
   },
   {
-    "kind": "archive",
-    "slug": "kairouan",
-    "link": "http://www.inp2020.tn",
-    "sort": 3,
-    "tr": {
-      "ar": {
-        "title": "المحكمة الشرعية بالقيروان",
-        "description": "القيروان · المدينة العتيقة — الأحكام الشرعية، قسمة التركات، عقود الزواج، وأوقاف الأسر في الساحل والوسط والجنوب."
-      },
-      "en": {
-        "title": "Tribunal Charaïque de Kairouan",
-        "description": "Kairouan · Historic Medina — Court decrees, inheritance settlements, marriage contracts, and religious endowments across the central Sahel and interior."
-      },
-      "es": {
-        "title": "Tribunal sharí de Kairuán",
-        "description": "Kairuán · Medina histórica — Sentencias judiciales, divisiones de herencia, contratos de matrimonio y donaciones del Sahel y el interior."
-      },
-      "fr": {
-        "title": "Tribunal charaïque de Kairouan",
-        "description": "Kairouan · Médina historique — Sentences judiciaires, liquidations successorales, contrats de mariage et fondations pieuses du Sahel et du centre."
-      },
-      "it": {
-        "title": "Tribunale sciaraitico di Kairouan",
-        "description": "Kairouan · Medina storica — Sentenze giudiziarie, divisioni ereditarie, contratti nuziali e lasciti pii del Sahel e dell’interno."
-      },
-      "mt": {
-        "title": "Qorti tax-Xarigħa ta’ Kairouan",
-        "description": "Kairouan · Medina storika — Sentenzi tal-qorti, qsim ta’ wirt, kuntratti ta’ żwieġ u fondazzjonijiet piji tas-Saħel u l-intern."
-      }
-    }
+    kind: "archive",
+    category: "malta",
+    badge: "Registres Paroissiaux • Malte & Tunisie",
+    title: "Geneanum — Archives & Généalogie Maltaise (Collection Adami)",
+    description:
+      "Collection Adami et registres paroissiaux numérisés : actes de baptême, mariage et sépulture des familles maltaises enregistrés dans les paroisses catholiques de Malte et de Tunisie (Sainte-Croix de Tunis, Saint-Félix de Sousse).",
+    link: "https://geneanum.com",
+    tags: ["Actes Paroissiaux", "Baptêmes & Mariages", "Sainte-Croix de Tunis"],
+    sortOrder: 16,
+  },
+
+  // --- 5. ROYAUME-UNI & COMMONWEALTH ---
+  {
+    kind: "archive",
+    category: "uk",
+    badge: "Archives Gouvernementales • Kew, Londres",
+    title: "The National Archives (TNA - Kew, Royaume-Uni)",
+    description:
+      "Séries diplomatiques du Foreign Office (FO 102, FO 335, FO 84) relatives au Consulat Général de Sa Majesté à Tunis, incluant l'enregistrement des sujets britanniques, des marchands maltais et des résidents protégés sous juridiction beylicale.",
+    link: "https://www.nationalarchives.gov.uk",
+    tags: ["Foreign Office FO 102 / FO 335", "Consulat Général Tunis", "Protégés Britanniques"],
+    sortOrder: 17,
   },
   {
-    "kind": "archive",
-    "slug": "sfax",
-    "link": "https://www.commune-sfax.gov.tn",
-    "sort": 4,
-    "tr": {
-      "ar": {
-        "title": "الأرشيف البلدي والجهوي بصفاقس",
-        "description": "صفاقس · قصر البلدية والمدينة العتيقة — دفاتر الحالة المدنية، رسوم غابات الزيتون، وثائق الميناء، العقود العدلية والتجارية، وأنساب الجنوب."
-      },
-      "en": {
-        "title": "Municipal & Regional Archives of Sfax",
-        "description": "Sfax · Medina and Municipality — Civil registers, olive grove title deeds, port records, commercial notarial acts, and southern lineage documents."
-      },
-      "es": {
-        "title": "Archivos municipales y regionales de Sfax",
-        "description": "Sfax · Medina y Ayuntamiento — Registro civil, títulos de olivares, registros portuarios, protocolos notariales y linajes del Sur."
-      },
-      "fr": {
-        "title": "Archives municipales et régionales de Sfax",
-        "description": "Sfax · Médina et Hôtel de Ville — État civil, titres d’oliveraies, registres portuaires, actes notariés commerciaux et lignées du Sud."
-      },
-      "it": {
-        "title": "Archivi municipali e regionali di Sfax",
-        "description": "Sfax · Medina e Municipio — Stato civile, titoli di uliveti, registri portuali, atti notarili commerciali e lignaggi del Sud."
-      },
-      "mt": {
-        "title": "Arkivji muniċipali u reġjonali ta’ Sfax",
-        "description": "Sfax · Medina u Muniċipalità — Stat ċivili, titoli ta’ msaġar taż-żebbuġ, reġistri tal-port, atti notarili kummerċjali u nisel tan-Nofsinhar."
-      }
-    }
+    kind: "archive",
+    category: "uk",
+    badge: "Sépultures Militaires Alliées",
+    title: "Commonwealth War Graves Commission (CWGC)",
+    description:
+      "Registres commémoratifs et localisation des sépultures des soldats britanniques, canadiens, australiens, néo-zélandais et alliés tombés lors de la Campagne de Tunisie (1942–1943) et inhumés dans les cimetières militaires de Medjez-el-Bab et Enfidaville.",
+    link: "https://www.cwgc.org",
+    tags: ["Campagne de Tunisie 1943", "Medjez-el-Bab", "Enfidaville", "Cimetières Militaires"],
+    sortOrder: 18,
+  },
+
+  // --- 6. ARCHIVES JUIVES & ISRAÉLITES DE TUNISIE ---
+  {
+    kind: "archive",
+    category: "jewish",
+    badge: "Généalogie Juive Nord-Africaine • Paris",
+    title: "Cercle de Généalogie Juive (CGJ - Paris)",
+    description:
+      "Association de référence pour la généalogie juive de Tunisie. Dépouillements complets des registres d'état civil israélite, relevés des sépultures des cimetières du Borgel et de Bab El Khadra à Tunis, et contrats de mariage rabbiniques (kétouboth).",
+    link: "https://www.genealoj.org",
+    tags: ["État Civil Israélite", "Cimetière du Borgel", "Kétouboth", "Granas & Twansa"],
+    sortOrder: 19,
   },
   {
-    "kind": "archive",
-    "slug": "sousse",
-    "link": "https://www.commune-sousse.gov.tn",
-    "sort": 5,
-    "tr": {
-      "ar": {
-        "title": "الأرشيف الجهوي للساحل",
-        "description": "سوسة · المنستير · المهدية — دفاتر الحالة المدنية، سجلات الملاحة البحرية، دفاتر التعاونيات الفلاحية، وملفات المهاجرين."
-      },
-      "en": {
-        "title": "Regional Archives of the Sahel",
-        "description": "Sousse · Monastir · Mahdia — Civil registry collections, maritime navigation files, commercial registrations, and olive cooperative books."
-      },
-      "es": {
-        "title": "Archivos regionales del Sahel",
-        "description": "Sousse · Monastir · Mahdia — Registro civil, libros de navegación marítima, cooperativas de olivar y expedientes consulares."
-      },
-      "fr": {
-        "title": "Archives régionales du Sahel",
-        "description": "Sousse · Monastir · Mahdia — Registres de l’état civil, registres de navigation maritime, coopératives oléicoles et dossiers consulaires."
-      },
-      "it": {
-        "title": "Archivi regionali del Sahel",
-        "description": "Sousse · Monastir · Mahdia — Stato civile, registri di navigazione marittima, cooperative olivicole e fascicoli consolari."
-      },
-      "mt": {
-        "title": "Arkivji reġjonali tas-Saħel",
-        "description": "Sousse · Monastir · Mahdia — Stat ċivili, reġistri tan-navigazzjoni marittima, kooperattivi taż-żebbuġ u fajls konsulari."
-      }
-    }
+    kind: "archive",
+    category: "jewish",
+    badge: "Archives Historiques Communautaires • Jérusalem",
+    title: "Central Archives for the History of the Jewish People (CAHJP)",
+    description:
+      "Plus vaste centre d'archives historiques du judaïsme tunisien. Conserve les registres des tribunaux rabbiniques de Tunis, les registres de Mohel (circoncisions de 1845 à 1950), et les documents d'archives des communautés Granas (Livournais) et Twansa.",
+    link: "https://cahjp.nli.org.il",
+    tags: ["Tribunal Rabbinique Tunis", "Livres de Mohel (1845-1950)", "Granas (Livournais)", "Twansa"],
+    sortOrder: 20,
   },
   {
-    "kind": "archive",
-    "slug": "djerba",
-    "link": "http://www.inp2020.tn",
-    "sort": 6,
-    "tr": {
-      "ar": {
-        "title": "سجلات الجماعات التراثية بجربة",
-        "description": "حومة السوق · الحارة الكبيرة · الحارة الصغيرة — سجلات الجماعات المحلية، عقود الزواج التراثية، ودفاتر الحرف والتجارة التقليدية بجزيرة جربة."
-      },
-      "en": {
-        "title": "Djerba Community Archives",
-        "description": "Houmt Souk · Hara Kebira · Hara Sghira — Historical community books, ketubot marriage contracts, and trade guild records across the island of Djerba."
-      },
-      "es": {
-        "title": "Registros comunitarios de Djerba",
-        "description": "Houmt Souk · Hara Kebira · Hara Sghira — Libros comunitarios, ketubot y registros de gremios comerciales y artesanos de la isla de Djerba."
-      },
-      "fr": {
-        "title": "Registres communautaires de Djerba",
-        "description": "Houmt Souk · Hara Kebira · Hara Sghira — Registres communautaires, contrats de mariage (ketoubot) et livres de corporations artisanales de l’île de Djerba."
-      },
-      "it": {
-        "title": "Registri comunitari di Djerba",
-        "description": "Houmt Souk · Hara Kebira · Hara Sghira — Libri comunitari, ketubot matrimoniali e registri delle corporazioni dell’isola di Djerba."
-      },
-      "mt": {
-        "title": "Reġistri komunitarji ta’ Djerba",
-        "description": "Houmt Souk · Hara Kebira · Hara Sghira — Kotba tal-komunità, ketubot ta’ żwieġ u reġistri tax-xirkiet tal-kummerċ tal-gżira ta’ Djerba."
-      }
-    }
+    kind: "archive",
+    category: "jewish",
+    badge: "Archives Scolaires & Communautaires • Paris",
+    title: "Alliance Israélite Universelle (AIU - Paris)",
+    description:
+      "Registres d'inscription scolaire nominatifs des écoles de l'AIU fondées à Tunis (dès 1878), Sousse, Sfax, Nabeul, Bizerte et Djerba, incluant filiations complètes, professions des parents et dates de naissance des élèves.",
+    link: "https://www.aiu.org/",
+    tags: ["Écoles AIU Tunis", "Registres Scolaires", "Djerba", "Sousse", "Sfax"],
+    sortOrder: 21,
   },
   {
-    "kind": "archive",
-    "slug": "testour",
-    "link": "http://www.inp2020.tn",
-    "sort": 7,
-    "tr": {
-      "ar": {
-        "title": "مجموعات التراث الأندلسي بتستور",
-        "description": "تستور · وادي مجردة — وثائق العائلات الأندلسية الموريسكية، رسوم توزيع الأراضي، اتفاقيات الري، وأحباس الجامع الكبير."
-      },
-      "en": {
-        "title": "Testour Andalusian Heritage Collections",
-        "description": "Testour · Medjerda Valley — Morisco family records, settlement titles, irrigation community pacts, and Great Mosque endowment scrolls."
-      },
-      "es": {
-        "title": "Colecciones andalusíes de Testour",
-        "description": "Testour · Valle del Medjerda — Archivos moriscos, títulos de tierras, acuerdos de regadío y legados de la Gran Mezquita."
-      },
-      "fr": {
-        "title": "Fonds patrimoniaux andalous de Testour",
-        "description": "Testour · Vallée de la Medjerda — Archives des familles morisques, titres d’attribution de terres, règlements d’irrigation et biens de la Grande Mosquée."
-      },
-      "it": {
-        "title": "Collezioni andaluse di Testour",
-        "description": "Testour · Valle della Medjerda — Archivi moriscos, titoli terrieri, patti di irrigazione ed eredità della Grande Moschea."
-      },
-      "mt": {
-        "title": "Kollezzjonijiet Andalusi ta’ Testour",
-        "description": "Testour · Wied Medjerda — Arkivji Moreski, titoli tal-art, ftehimiet ta’ irrigazzjoni u wirt tal-Moskea l-Kbira."
-      }
-    }
+    kind: "archive",
+    category: "jewish",
+    badge: "Société Savante & Recherche • Paris",
+    title: "Société d'Histoire des Juifs de Tunisie (SHJT)",
+    description:
+      "Études monographiques, dépouillements généalogiques et fonds documentaires sur l'histoire des patronymes juifs tunisiens (origines ibériques, toscanes ou autochtones) et leurs trajectoires migratoires en Méditerranée.",
+    link: "https://shjt.fr",
+    tags: ["Patronymes Juifs Tunisiens", "Histoire Communautaire", "Monographies Familiales"],
+    sortOrder: 22,
+  },
+
+  // --- 7. ARCHIVES OTTOMANES & ISLAMIQUES ---
+  {
+    kind: "archive",
+    category: "ottoman",
+    badge: "Archives Impériales Ottomanes • Istanbul",
+    title: "Devlet Arşivleri — Osmanlı Arşivi (Archives d'État Ottomanes)",
+    description:
+      "Fonds impérial ottoman (Mühimme Defterleri). Conserve les firmans sultaniques concernant la Régence de Tunis (Pachalik puis Beylicat husseinite), les nominations des Pachas et Deys, et les correspondances de chancellerie entre Istanbul et le Bardo.",
+    link: "https://www.devletarsivleri.gov.tr",
+    tags: ["Firmans Impériaux", "Pachalik de Tunis", "Divan-ı Hümayun", "Dynastie Husseinite"],
+    sortOrder: 23,
   },
   {
-    "kind": "archive",
-    "slug": "anom",
-    "link": "http://anom.archivesnationales.culture.gouv.fr",
-    "sort": 8,
-    "tr": {
-      "ar": {
-        "title": "الأرشيف الوطني الفرنسي لما وراء البحار",
-        "description": "إكس أون بروفانس، فرنسا — سجلات الحماية التونسية، دفاتر الحالة المدنية للأوروبيين والمختلطين، المسح العقاري، والمراسلات القنصلية."
-      },
-      "en": {
-        "title": "Archives Nationales d’Outre-Mer (ANOM)",
-        "description": "Aix-en-Provence, France — Tunisian Protectorate files, civil registers of European and mixed residents, cadastral surveys, and consular papers."
-      },
-      "es": {
-        "title": "Archivos Nacionales de Ultramar (ANOM)",
-        "description": "Aix-en-Provence, Francia — Series del Protectorado, registro civil europeo y tunecino, expedientes catastrales y correspondencia consular."
-      },
-      "fr": {
-        "title": "Archives Nationales d’Outre-Mer (ANOM)",
-        "description": "Aix-en-Provence, France — Archives du Protectorat de Tunisie, état civil européen et tunisien, dossiers cadastraux et correspondances consulaires."
-      },
-      "it": {
-        "title": "Archivi Nazionali d’Oltremare (ANOM)",
-        "description": "Aix-en-Provence, Francia — Fondi del Protettorato, stato civile europeo e tunisino, catasto e corrispondenza consolare."
-      },
-      "mt": {
-        "title": "Arkivji Nazzjonali ta’ Lil hinn mill-Baħar (ANOM)",
-        "description": "Aix-en-Provence, Franza — Fondi tal-Protettorat, stat ċivili Ewropew u Tuneżin, fajls tal-katast u korrispondenza konsulari."
-      }
-    }
+    kind: "archive",
+    category: "ottoman",
+    badge: "Documentation Islamique • Istanbul",
+    title: "IRCICA — Research Centre for Islamic History and Art",
+    description:
+      "Institution de l'OCI conservant d'importantes collections photographiques d'époque beylicale sur Tunis, des répertoires de manuscrits islamiques, de chartes waqf et d'études sur l'art, les corporations et les notariats arabo-musulmans.",
+    link: "https://www.ircica.org",
+    tags: ["Photothèque Beylicale", "Manuscrits Islamiques", "Corporations & Notariats"],
+    sortOrder: 24,
   },
   {
-    "kind": "archive",
-    "slug": "inp",
-    "link": "http://www.inp2020.tn",
-    "sort": 9,
-    "tr": {
-      "ar": {
-        "title": "المعهد الوطني للتراث",
-        "description": "تونس العاصمة · قرطاج · دار حسين — مدونات النقائش البونية والرومانية، النقائش والكتابات الإسلامية، وسجلات المعالم الأثرية التاريخية."
-      },
-      "en": {
-        "title": "Institut National du Patrimoine (INP)",
-        "description": "Tunis · Carthage · Dar Hussein — Punic and Roman epigraphic corpora, Islamic epigraphy, historical monument inventories, and archeological documentation."
-      },
-      "es": {
-        "title": "Instituto Nacional del Patrimonio (INP)",
-        "description": "Túnez · Cartago · Dar Hussein — Epigrafía púnica y romana, inscripciones árabes islámicas, catálogos arqueológicos y monumentos históricos."
-      },
-      "fr": {
-        "title": "Institut National du Patrimoine (INP)",
-        "description": "Tunis · Carthage · Dar Hussein — Corpus épigraphiques puniques et romains, inscriptions islamiques, inventaires archéologiques et monuments historiques."
-      },
-      "it": {
-        "title": "Istituto Nazionale del Patrimonio (INP)",
-        "description": "Tunisi · Cartagine · Dar Hussein — Epigrafia punica e romana, iscrizioni islamiche, inventari archeologici e monumenti storici."
-      },
-      "mt": {
-        "title": "Istitut Nazzjonali tal-Wirt (INP)",
-        "description": "Tuneż · Kartaġni · Dar Hussein — Epigrafija Punika u Rumana, kitbiet Iżlamiċi, inventarji arkeoloġiċi u monumenti storiċi."
-      }
-    }
-  }
+    kind: "archive",
+    category: "ottoman",
+    badge: "Grande Mosquée Zitouna • Tunis",
+    title: "Fonds des Manuscrits de la Mosquée Zitouna (Département BNT)",
+    description:
+      "Registres d'enseignants et d'étudiants de l'Université Zitouna, diplômes et licences d'enseignement religieux (ijāzāt), biographies de lettrés (tarājim), chorfas et cadis malékites et hanafites de Tunisie, conservés au Département des Manuscrits de la BNT.",
+    link: "https://www.bnt.nat.tn",
+    tags: ["Diplômes Ijaza", "Cadis Hanafites & Malékites", "Chorfas", "Lettrés Zitouniens"],
+    sortOrder: 25,
+  },
+
+  // --- 8. ALGÉRIE & MAGHREB (Liens Transfrontaliers) ---
+  {
+    kind: "archive",
+    category: "maghreb",
+    badge: "Archives Nationales • Alger",
+    title: "Centre National des Archives d'Algérie (CNA)",
+    description:
+      "Fonds documentaires sur les régions frontalières tuniso-algériennes (Khmir, Mogod, Medjerda, Nemencha), traités frontaliers et déplacements séculaires de populations et tribus nomades entre la Tunisie et l'Algérie.",
+    link: "https://www.archives-nationales.dz",
+    tags: ["Tribus Frontalières", "Khmir & Nemencha", "Constantinois", "Frontière Tuniso-Algérienne"],
+    sortOrder: 26,
+  },
+  {
+    kind: "archive",
+    category: "maghreb",
+    badge: "Archives Nationales • Rabat",
+    title: "Archives du Maroc (Rabat)",
+    description:
+      "Documents d'archives relatifs aux familles andalouses ayant transité par Fès et Tétouan avant de s'établir à Testour, Soliman et Tunis, ainsi que les registres des grandes confréries soufies communes (Tidjaniya, Shadhiliya).",
+    link: "https://www.archivesdumaroc.ma",
+    tags: ["Familles Andalouses", "Testour & Soliman", "Confréries Soufies", "Chérifiens"],
+    sortOrder: 27,
+  },
+  {
+    kind: "archive",
+    category: "maghreb",
+    badge: "Base Nominative IREL • En Ligne",
+    title: "ANOM — Base IREL des Registres d'Afrique du Nord (Algérie / Tunisie)",
+    description:
+      "Recherche nominative en ligne dans les registres d'état civil et paroissiaux des localités limitrophes (Bône/Annaba, Constantine, Souk Ahras, Tébessa) où résidaient de nombreuses familles d'origine ou d'alliance tunisienne.",
+    link: "https://archives-nationales-outre-mer.culture.gouv.fr/web/guest/etat-civil",
+    tags: ["Base IREL", "Constantine", "Bône / Annaba", "Frontière & Échanges"],
+    sortOrder: 28,
+  },
 ];

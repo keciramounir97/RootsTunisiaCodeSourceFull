@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Link } from "react-router-dom";
 import {
   ExternalLink,
@@ -13,6 +13,7 @@ import {
   Scroll,
   Moon,
   Globe,
+  Archive,
 } from "lucide-react";
 import { PageHero, Section } from "../components/site/Primitives";
 import kairouan from "../assets/slider-kairouan.jpg";
@@ -20,11 +21,12 @@ import SEO from "../components/SEO";
 import { useTranslation } from "../context/TranslationContext";
 import { useSiteContent } from "../hooks/useSiteContent";
 import SiteCustomBlocks from "../components/cms/SiteCustomBlocks";
+import { api } from "../api/client";
 
 export interface ExternalArchiveItem {
   id: string;
   name: string;
-  category: "all" | "tunisia" | "france" | "italy" | "malta" | "uk" | "jewish" | "ottoman" | "maghreb";
+  category: string;
   categoryLabel: string;
   badge: string;
   description: string;
@@ -99,7 +101,7 @@ export const ARCHIVES_DIRECTORY: ExternalArchiveItem[] = [
     badge: "Fonds Coloniaux & Protectorat • Aix-en-Provence",
     description:
       "Registres matricules militaires des engagés et appelés en Tunisie, dossiers de carrière des fonctionnaires du Protectorat, concessions agricoles, correspondances ministérielles et rapports de sûreté publique en Afrique du Nord.",
-    link: "http://www.archivesnationales.culture.gouv.fr/anom/fr/",
+    link: "https://archives-nationales-outre-mer.culture.gouv.fr/",
     tags: ["Registres Matricules", "Personnel Protectorat", "Colonisation", "Afrique du Nord"],
   },
   {
@@ -121,7 +123,7 @@ export const ARCHIVES_DIRECTORY: ExternalArchiveItem[] = [
     badge: "Archives Militaires • Château de Vincennes & Caen",
     description:
       "Dossiers individuels de carrière, états de service, citations et pensions d'invalidité des soldats tunisiens ayant servi dans l'armée française (notamment le 4e Régiment de Tirailleurs Tunisiens et le 1er Régiment de Spahis) lors des deux guerres mondiales.",
-    link: "https://www.defense.gouv.fr/memoire/service-historique-defense-shd",
+    link: "https://www.servicehistorique.sga.defense.gouv.fr/",
     tags: ["4e Tirailleurs Tunisiens", "1er Spahis", "Guerre 1914-1918", "Guerre 1939-1945"],
   },
   {
@@ -167,7 +169,7 @@ export const ARCHIVES_DIRECTORY: ExternalArchiveItem[] = [
     badge: "Affaires Étrangères • Rome",
     description:
       "Archives du Ministère des Affaires Étrangères italien. Conserve les registres d'immatriculation consulaire, les demandes de passeports et les actes d'état civil des sujets italiens établis dans la Régence (Consulat Général de Tunis, La Goulette, Sfax, Monastir).",
-    link: "https://www.esteri.it/it/ministero/archivio-storico/",
+    link: "https://asd.esteri.it/",
     tags: ["Consulat Italien Tunis", "La Goulette", "Immatriculations Consulaires", "Passeports"],
   },
   {
@@ -178,7 +180,7 @@ export const ARCHIVES_DIRECTORY: ExternalArchiveItem[] = [
     badge: "Archives Provinciales • Palerme, Sicile",
     description:
       "Registres d'embarquement portuaires vers La Goulette et Tunis, délivrance de passeports pour l'Afrique du Nord, et listes de conscription militaire (Liste di leva) des familles siciliennes ayant émigré en Tunisie entre 1860 et 1940.",
-    link: "https://archiviodistatopalermo.it",
+    link: "https://saassipa.cultura.gov.it/",
     tags: ["Émigration Sicilienne", "Listes d'embarquement", "Conscription Leva", "Palerme"],
   },
   {
@@ -207,13 +209,13 @@ export const ARCHIVES_DIRECTORY: ExternalArchiveItem[] = [
   },
   {
     id: "malta-family-history",
-    name: "Malta Family History & Parish Registers Archive",
+    name: "Geneanum — Archives & Généalogie Maltaise (Collection Adami)",
     category: "malta",
     categoryLabel: "Malte",
     badge: "Registres Paroissiaux • Malte & Tunisie",
     description:
       "Collection Adami et registres paroissiaux numérisés : actes de baptême, mariage et sépulture des familles maltaises enregistrés dans les paroisses catholiques de Malte et de Tunisie (Sainte-Croix de Tunis, Saint-Félix de Sousse).",
-    link: "https://maltafamilyhistory.com",
+    link: "https://geneanum.com",
     tags: ["Actes Paroissiaux", "Baptêmes & Mariages", "Sainte-Croix de Tunis"],
   },
 
@@ -272,7 +274,7 @@ export const ARCHIVES_DIRECTORY: ExternalArchiveItem[] = [
     badge: "Archives Scolaires & Communautaires • Paris",
     description:
       "Registres d'inscription scolaire nominatifs des écoles de l'AIU fondées à Tunis (dès 1878), Sousse, Sfax, Nabeul, Bizerte et Djerba, incluant filiations complètes, professions des parents et dates de naissance des élèves.",
-    link: "https://www.aiu.org/fr/bibliotheque",
+    link: "https://www.aiu.org/",
     tags: ["Écoles AIU Tunis", "Registres Scolaires", "Djerba", "Sousse", "Sfax"],
   },
   {
@@ -353,10 +355,23 @@ export const ARCHIVES_DIRECTORY: ExternalArchiveItem[] = [
     badge: "Base Nominative IREL • En Ligne",
     description:
       "Recherche nominative en ligne dans les registres d'état civil et paroissiaux des localités limitrophes (Bône/Annaba, Constantine, Souk Ahras, Tébessa) où résidaient de nombreuses familles d'origine ou d'alliance tunisienne.",
-    link: "http://anom.archivesnationales.culture.gouv.fr/caomec2/",
+    link: "https://archives-nationales-outre-mer.culture.gouv.fr/web/guest/etat-civil",
     tags: ["Base IREL", "Constantine", "Bône / Annaba", "Frontière & Échanges"],
   },
 ];
+
+const LOCATION_ICONS: Record<string, any> = {
+  Landmark,
+  Building2,
+  Ship,
+  Shield,
+  Crown,
+  Scroll,
+  Moon,
+  Globe,
+  Archive,
+  FolderArchive,
+};
 
 export default function SourcesAndArchives() {
   const { t, isRtl } = useTranslation();
@@ -364,6 +379,51 @@ export default function SourcesAndArchives() {
 
   const [activeCategory, setActiveCategory] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
+  const [dbCards, setDbCards] = useState<ExternalArchiveItem[]>([]);
+  const [dbLocations, setDbLocations] = useState<Array<{ key: string; label: string; icon?: string }>>([]);
+
+  useEffect(() => {
+    let active = true;
+    const fetchPublicCards = async () => {
+      try {
+        const [cardsRes, locsRes] = await Promise.allSettled([
+          api.get("/public-cards"),
+          api.get("/public-cards/locations"),
+        ]);
+        if (!active) return;
+        if (locsRes.status === "fulfilled" && Array.isArray(locsRes.value.data?.data || locsRes.value.data)) {
+          const locs = locsRes.value.data?.data || locsRes.value.data;
+          if (locs.length > 0) {
+            setDbLocations(locs);
+          }
+        }
+        if (cardsRes.status === "fulfilled" && Array.isArray(cardsRes.value.data?.data || cardsRes.value.data)) {
+          const raw = cardsRes.value.data?.data || cardsRes.value.data;
+          if (raw.length > 0) {
+            const mapped: ExternalArchiveItem[] = raw.map((c: any) => ({
+              id: String(c.id),
+              name: c.title,
+              category: c.category || "tunisia",
+              categoryLabel: c.category || "Tunisie",
+              badge: c.badge || "Portail d'Archives",
+              description: c.description || "",
+              link: c.link,
+              tags: Array.isArray(c.tags)
+                ? c.tags
+                : (typeof c.tags === "string" ? c.tags.split(",").map((s: string) => s.trim()).filter(Boolean) : []),
+            }));
+            setDbCards(mapped);
+          }
+        }
+      } catch {
+        // Fallback to static ARCHIVES_DIRECTORY
+      }
+    };
+    fetchPublicCards();
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const heroEyebrow =
     getText("sources", "hero", "eyebrow") ??
@@ -382,22 +442,53 @@ export default function SourcesAndArchives() {
     getImage("research", "hero", "image") ??
     kairouan;
 
-  const categories = useMemo(() => [
-    { key: "all", label: t("tab_all_funds", "Tous les fonds"), count: ARCHIVES_DIRECTORY.length, Icon: FolderArchive },
-    { key: "tunisia", label: "Tunisie", count: ARCHIVES_DIRECTORY.filter((a) => a.category === "tunisia").length, Icon: Landmark },
-    { key: "france", label: "France", count: ARCHIVES_DIRECTORY.filter((a) => a.category === "france").length, Icon: Building2 },
-    { key: "italy", label: "Italie & Sicile", count: ARCHIVES_DIRECTORY.filter((a) => a.category === "italy").length, Icon: Ship },
-    { key: "malta", label: "Malte", count: ARCHIVES_DIRECTORY.filter((a) => a.category === "malta").length, Icon: Shield },
-    { key: "uk", label: "Royaume-Uni", count: ARCHIVES_DIRECTORY.filter((a) => a.category === "uk").length, Icon: Crown },
-    { key: "jewish", label: "Fonds Juifs", count: ARCHIVES_DIRECTORY.filter((a) => a.category === "jewish").length, Icon: Scroll },
-    { key: "ottoman", label: "Ottoman & Islamique", count: ARCHIVES_DIRECTORY.filter((a) => a.category === "ottoman").length, Icon: Moon },
-    { key: "maghreb", label: "Algérie & Maghreb", count: ARCHIVES_DIRECTORY.filter((a) => a.category === "maghreb").length, Icon: Globe },
-  ], [t]);
+  const baseLocations = useMemo(() => {
+    if (dbLocations.length > 0) return dbLocations;
+    return [
+      { key: "tunisia", label: "Tunisie", icon: "Landmark" },
+      { key: "france", label: "France", icon: "Building2" },
+      { key: "italy", label: "Italie & Sicile", icon: "Ship" },
+      { key: "malta", label: "Malte", icon: "Shield" },
+      { key: "uk", label: "Royaume-Uni", icon: "Crown" },
+      { key: "jewish", label: "Fonds Juifs", icon: "Scroll" },
+      { key: "ottoman", label: "Ottoman & Islamique", icon: "Moon" },
+      { key: "maghreb", label: "Algérie & Maghreb", icon: "Globe" },
+    ];
+  }, [dbLocations]);
+
+  const locationMap = useMemo(() => {
+    return Object.fromEntries(baseLocations.map((l) => [l.key, l.label]));
+  }, [baseLocations]);
+
+  const allArchives = useMemo(() => {
+    const rawList = dbCards.length > 0 ? dbCards : ARCHIVES_DIRECTORY;
+    return rawList.map((item) => ({
+      ...item,
+      categoryLabel: locationMap[item.category] || item.categoryLabel || item.category,
+    }));
+  }, [dbCards, locationMap]);
+
+  const categories = useMemo(() => {
+    return [
+      {
+        key: "all",
+        label: t("tab_all_funds", "Tous les fonds"),
+        count: allArchives.length,
+        Icon: FolderArchive,
+      },
+      ...baseLocations.map((loc) => ({
+        key: loc.key,
+        label: loc.label,
+        count: allArchives.filter((a) => a.category === loc.key).length,
+        Icon: (loc.icon && LOCATION_ICONS[loc.icon]) || FolderArchive,
+      })),
+    ];
+  }, [baseLocations, allArchives, t]);
 
   const query = searchQuery.trim().toLowerCase();
 
   const filteredArchives = useMemo(() => {
-    return ARCHIVES_DIRECTORY.filter((item) => {
+    return allArchives.filter((item) => {
       const matchCategory = activeCategory === "all" || item.category === activeCategory;
       if (!matchCategory) return false;
 
@@ -406,7 +497,7 @@ export default function SourcesAndArchives() {
       const searchableText = `${item.name} ${item.badge} ${item.categoryLabel} ${item.description} ${item.tags.join(" ")}`.toLowerCase();
       return searchableText.includes(query);
     });
-  }, [activeCategory, query]);
+  }, [allArchives, activeCategory, query]);
 
   return (
     <div dir={isRtl ? "rtl" : "ltr"} className="bg-[var(--background)] text-[var(--foreground)] min-h-screen">

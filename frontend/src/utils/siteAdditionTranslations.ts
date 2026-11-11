@@ -167,6 +167,14 @@ const ROWS: Record<string, Row> = {
     "Contenuto Pubblico delle Fonti",
     "Kontenut Pubbliku tas-Sorsi",
   ],
+  sources_archives_content: [
+    "Sources & Archives Public Content",
+    "Contenu Public Sources & Archives",
+    "المحتوى العام للمصادر والأرشيف",
+    "Contenido Público Fuentes y Archivos",
+    "Contenuto Pubblico Fonti e Archivi",
+    "Kontenut Pubbliku Sorsi u Arkivji",
+  ],
   home_public_content: [
     "Home Public Content",
     "Contenu Public Accueil",

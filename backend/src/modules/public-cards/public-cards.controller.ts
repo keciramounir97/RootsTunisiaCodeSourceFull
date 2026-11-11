@@ -29,6 +29,31 @@ export class AdminPublicCardsController {
     return this.service.list(kind, false);
   }
 
+  @Get("locations")
+  getLocations() {
+    return this.service.getLocations();
+  }
+
+  @Post("locations")
+  addLocation(@Body() body: any, @Request() req) {
+    return this.service.addLocation(body, req.user.id);
+  }
+
+  @Put("locations")
+  saveLocations(@Body() body: any, @Request() req) {
+    return this.service.saveLocations(body?.locations || body, req.user.id);
+  }
+
+  @Delete("locations/:key")
+  deleteLocation(@Param("key") key: string, @Request() req) {
+    return this.service.deleteLocation(key, req.user.id);
+  }
+
+  @Post("reset-verified")
+  resetVerified(@Request() req) {
+    return this.service.seedVerifiedArchives(req.user.id);
+  }
+
   @Post()
   create(@Body() body: any, @Request() req) {
     return this.service.create(body, req.user.id);
@@ -58,6 +83,12 @@ export class PublicCardsController {
   @Header("Cache-Control", "public, max-age=15")
   list(@Query("kind") kind?: string) {
     return this.service.list(kind, true);
+  }
+
+  @Get("locations")
+  @Header("Cache-Control", "public, max-age=30")
+  getLocations() {
+    return this.service.getLocations();
   }
 }
 
