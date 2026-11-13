@@ -119,6 +119,11 @@ describe("Services & Booking Feature", () => {
       expect(screen.getByText("Recherche In Situ aux Archives Nationales")).toBeInTheDocument();
     });
 
+    // Hero diaporama uses Services page copy (not homepage)
+    expect(screen.getByText(/Expertise Archivistique & Paléographique/i)).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /Nos Prestations & Services/i })).toBeInTheDocument();
+    expect(screen.getByRole("tablist", { name: /Diaporama services/i })).toBeInTheDocument();
+
     // Check no-money client policy badges
     expect(screen.getAllByText(/Consultation Gratuite • Sur Devis/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/Réserver une Consultation Gratuite/i).length).toBeGreaterThan(0);
@@ -280,13 +285,13 @@ describe("Services & Booking Feature", () => {
       expect(rootDiv.getAttribute("dir")).toBe(loc === "ar" ? "rtl" : "ltr");
 
       // Guarantees strip, methodology & FAQ link
-      expect(screen.getByText(ui.pill1)).toBeInTheDocument();
+      expect(screen.getAllByText(ui.pill1).length).toBeGreaterThanOrEqual(1);
       expect(screen.getByText(ui.methodTitle)).toBeInTheDocument();
       expect(screen.getByText(ui.faqLinkCta)).toBeInTheDocument();
 
-      // All 6 fallback service cards render with book CTA and localized titles
+      // Hero CTA + 6 fallback service cards
       const bookingCtas = screen.getAllByText(ui.bookFreeConsultationCta);
-      expect(bookingCtas).toHaveLength(6);
+      expect(bookingCtas).toHaveLength(7);
       const locServices = LOCALIZED_SERVICES_BY_LOCALE[loc];
       for (const id of [1, 2, 3, 4, 5, 6]) {
         expect(screen.getByText(locServices[id].title)).toBeInTheDocument();
@@ -343,22 +348,22 @@ describe("Services & Booking Feature", () => {
       expect(screen.getByText("Déchiffrage & Transcription Paléographique")).toBeInTheDocument();
     });
 
-    // Filter to one French category pill
+    // Filter to one French category pill (hero CTA remains + 1 card CTA)
     fireEvent.click(screen.getByRole("button", { name: "Paléographie & Traduction" }));
-    expect(screen.getAllByText("Réserver une Consultation Gratuite")).toHaveLength(1);
+    expect(screen.getAllByText("Réserver une Consultation Gratuite")).toHaveLength(2);
 
     // Switch dynamically to Arabic -> filter resets and all 6 cards appear in Arabic
     fireEvent.click(screen.getByRole("button", { name: "Switch AR" }));
     await waitFor(() => {
-      expect(screen.getAllByText("احجز استشارة مجانية")).toHaveLength(6);
+      expect(screen.getAllByText("احجز استشارة مجانية")).toHaveLength(7);
       expect(screen.getByText(LOCALIZED_SERVICES_BY_LOCALE.ar[1].title)).toBeInTheDocument();
       expect(screen.queryByText("Déchiffrage & Transcription Paléographique")).not.toBeInTheDocument();
     });
 
-    // Switch back dynamically to French -> all 6 cards appear in French
+    // Switch back dynamically to French -> hero + all 6 cards appear in French
     fireEvent.click(screen.getByRole("button", { name: "Switch FR" }));
     await waitFor(() => {
-      expect(screen.getAllByText("Réserver une Consultation Gratuite")).toHaveLength(6);
+      expect(screen.getAllByText("Réserver une Consultation Gratuite")).toHaveLength(7);
       expect(screen.getByText("Déchiffrage & Transcription Paléographique")).toBeInTheDocument();
     });
   });

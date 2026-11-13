@@ -6,6 +6,8 @@ import {
   CheckCircle2,
   MessageCircle,
   ArrowRight,
+  ChevronLeft,
+  ChevronRight,
   ShieldCheck,
   Award,
   Landmark,
@@ -13,6 +15,7 @@ import {
   Sparkles,
   FileCheck,
   RefreshCw,
+  Scroll,
 } from "lucide-react";
 import { api } from "../api/client";
 import { useTranslation } from "../context/TranslationContext";
@@ -23,6 +26,21 @@ import {
   localizeServiceItem,
 } from "../utils/servicesCatalogI18n";
 import { buildConfiguredWhatsAppUrl } from "../utils/whatsAppContact";
+import medinaDoor from "../assets/16_Medina_Ornate_Door_Blue_Grille.jpg";
+import kairouanMosque from "../assets/14_Kairouan_Mosque_Arched_Doorways_Dome.jpg";
+import manuscript from "../assets/manuscript.jpg";
+import familyArchive from "../assets/family-archive.jpg";
+import fortressPalms from "../assets/17_Fortress_Aerial_Courtyard_Palms.jpg";
+import carthageRuins from "../assets/01_Carthage_Ancient_Ruins_Landscape.jpg";
+
+const SERVICES_HERO_SLIDES = [
+  { image: manuscript, captionKey: "pill1" as const },
+  { image: familyArchive, captionKey: "pill2" as const },
+  { image: medinaDoor, captionKey: "pill3" as const },
+  { image: kairouanMosque, captionKey: "pill4" as const },
+  { image: fortressPalms, captionKey: "methodEyebrow" as const },
+  { image: carthageRuins, captionKey: "freeConsultationBadge" as const },
+];
 
 export interface CustomService {
   id: number;
@@ -52,6 +70,19 @@ export default function ServicesPage() {
   const [hasError, setHasError] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [activeSlide, setActiveSlide] = useState(0);
+  const whatsappUrl = buildConfiguredWhatsAppUrl(
+    ui.defaultWhatsappPrefill(ui.heroTitleMain),
+  );
+
+  useEffect(() => {
+    if (SERVICES_HERO_SLIDES.length === 0) return;
+    const id = setInterval(
+      () => setActiveSlide((i) => (i + 1) % SERVICES_HERO_SLIDES.length),
+      6000,
+    );
+    return () => clearInterval(id);
+  }, []);
 
   const fetchServices = async () => {
     setLoading(true);
@@ -140,47 +171,136 @@ export default function ServicesPage() {
         keywords={ui.seoKeywords}
       />
 
-      {/* Hero Banner */}
-      <section className="relative overflow-hidden pt-28 pb-16 lg:pt-36 lg:pb-20 border-b border-[var(--gold)]/20 bg-gradient-to-b from-[var(--card)]/90 via-[var(--background)] to-[var(--background)]">
-        <div className="absolute inset-0 pointer-events-none opacity-10 bg-[radial-gradient(circle_at_50%_20%,var(--gold)_0%,transparent_60%)]" />
-        <div className="max-w-[var(--content-max)] mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-[var(--gold)]/40 bg-[var(--gold)]/10 text-[var(--gold)] text-xs font-semibold uppercase tracking-widest mb-6">
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>{ui.heroEyebrow}</span>
-          </div>
+      {/* Hero Diaporama — same visual pattern as homepage, Services page copy only */}
+      <section className="w-full px-4 pt-4 sm:px-6 lg:px-8">
+        <div className="frame-gold relative mx-auto w-full max-w-[var(--content-max)] overflow-hidden rounded-md min-h-[460px] sm:min-h-[540px] lg:min-h-[600px] flex items-center justify-center">
+          {SERVICES_HERO_SLIDES.map((slide, i) => (
+            <img
+              key={slide.image}
+              src={slide.image}
+              alt={ui[slide.captionKey]}
+              width={1600}
+              height={1000}
+              className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-1000 ${
+                i === activeSlide ? "opacity-100" : "opacity-0"
+              }`}
+            />
+          ))}
+          <div className="hero-scrim absolute inset-0" />
 
-          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-cinzel font-bold text-[var(--foreground)] tracking-tight leading-tight max-w-4xl mx-auto">
-            {ui.heroTitleMain} <span className="text-gradient-gold">{ui.heroTitleGold}</span>
-          </h1>
+          <button
+            type="button"
+            aria-label={isRtl ? "Suivant" : "Précédent"}
+            onClick={() =>
+              setActiveSlide(
+                (i) => (i - 1 + SERVICES_HERO_SLIDES.length) % SERVICES_HERO_SLIDES.length,
+              )
+            }
+            className="absolute start-3 top-1/2 -translate-y-1/2 z-20 hidden sm:flex h-10 w-10 items-center justify-center rounded-full border border-white/40 bg-black/45 !text-white hover:bg-[#d9a441] hover:!text-[#1f160f] hover:border-[#d9a441] transition-colors cursor-pointer"
+          >
+            <ChevronLeft className={`h-5 w-5 ${isRtl ? "rotate-180" : ""}`} />
+          </button>
+          <button
+            type="button"
+            aria-label={isRtl ? "Précédent" : "Suivant"}
+            onClick={() =>
+              setActiveSlide((i) => (i + 1) % SERVICES_HERO_SLIDES.length)
+            }
+            className="absolute end-3 top-1/2 -translate-y-1/2 z-20 hidden sm:flex h-10 w-10 items-center justify-center rounded-full border border-white/40 bg-black/45 !text-white hover:bg-[#d9a441] hover:!text-[#1f160f] hover:border-[#d9a441] transition-colors cursor-pointer"
+          >
+            <ChevronRight className={`h-5 w-5 ${isRtl ? "rotate-180" : ""}`} />
+          </button>
 
-          <p className="mt-5 text-base sm:text-lg text-[var(--foreground)]/75 max-w-2xl mx-auto font-body leading-relaxed">
-            {ui.heroSubtitle}
-          </p>
-
-          {/* Quick Stats / Guarantees Strip */}
-          <div className="mt-10 grid grid-cols-2 md:grid-cols-4 gap-3 max-w-3xl mx-auto">
-            <div className="surface-card p-3 rounded-lg border border-[var(--gold)]/30 flex items-center justify-center gap-2">
-              <Landmark className="w-4 h-4 text-[var(--gold)] shrink-0" />
-              <span className="text-xs font-medium">{ui.pill1}</span>
+          <div className="relative z-10 flex w-full flex-col items-center justify-center px-5 py-12 sm:px-16 sm:py-16 text-center">
+            <p className="eyebrow !text-[#f5c857] text-shadow-dark tracking-widest font-bold inline-flex items-center gap-2">
+              <Sparkles className="h-3.5 w-3.5" />
+              <span>{ui.heroEyebrow}</span>
+            </p>
+            <h1 className="display-xl mt-4 max-w-4xl !text-white font-bold hero-title-shadow text-shadow-glow tracking-wide">
+              {ui.heroTitleMain}{" "}
+              <span className="text-[#f5c857]">{ui.heroTitleGold}</span>
+            </h1>
+            <div className="gold-rule mt-5 w-32 mx-auto shadow-lg" />
+            <p className="mt-5 max-w-2xl text-sm leading-relaxed !text-white drop-shadow-md font-medium sm:text-base">
+              {ui.heroSubtitle}
+            </p>
+            <div className="mt-8 flex w-full sm:w-auto flex-col sm:flex-row flex-wrap justify-center gap-3">
+              <a
+                href="#services-catalog"
+                className="btn-base btn-gold w-full sm:w-auto min-w-[200px] inline-flex items-center justify-center gap-2"
+              >
+                <span>{ui.bookFreeConsultationCta}</span>
+                <ArrowRight className={`h-4 w-4 ${isRtl ? "rotate-180" : ""}`} />
+              </a>
+              {whatsappUrl ? (
+                <a
+                  href={whatsappUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn-base btn-outline-light !text-white hover:!text-white w-full sm:w-auto min-w-[200px] inline-flex items-center justify-center gap-2"
+                >
+                  <MessageCircle className="h-4 w-4" />
+                  <span>{ui.chatWithAgentWhatsappCta}</span>
+                </a>
+              ) : (
+                <Link
+                  to="/contact"
+                  className="btn-base btn-outline-light !text-white hover:!text-white w-full sm:w-auto min-w-[200px] inline-flex items-center justify-center gap-2"
+                >
+                  <Scroll className="h-4 w-4" />
+                  <span>{ui.formHeadingEmail}</span>
+                </Link>
+              )}
             </div>
-            <div className="surface-card p-3 rounded-lg border border-[var(--gold)]/30 flex items-center justify-center gap-2">
-              <FileCheck className="w-4 h-4 text-[var(--gold)] shrink-0" />
-              <span className="text-xs font-medium">{ui.pill2}</span>
-            </div>
-            <div className="surface-card p-3 rounded-lg border border-[var(--gold)]/30 flex items-center justify-center gap-2">
-              <ShieldCheck className="w-4 h-4 text-[var(--gold)] shrink-0" />
-              <span className="text-xs font-medium">{ui.pill3}</span>
-            </div>
-            <div className="surface-card p-3 rounded-lg border border-[var(--gold)]/30 flex items-center justify-center gap-2">
-              <Clock className="w-4 h-4 text-[var(--gold)] shrink-0" />
-              <span className="text-xs font-medium">{ui.pill4}</span>
+            <div className="mt-6 flex flex-col items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-white/30 bg-black/45 px-3 py-1 text-xs font-semibold !text-[#f5c857]">
+                <Landmark className="h-3.5 w-3.5" />
+                <span>{ui[SERVICES_HERO_SLIDES[activeSlide]?.captionKey || "pill1"]}</span>
+              </span>
+              <div className="flex gap-2 mt-1" role="tablist" aria-label="Diaporama services">
+                {SERVICES_HERO_SLIDES.map((slide, i) => (
+                  <button
+                    key={slide.image}
+                    type="button"
+                    role="tab"
+                    aria-selected={i === activeSlide}
+                    aria-label={`${ui[slide.captionKey]} — ${i + 1}`}
+                    onClick={() => setActiveSlide(i)}
+                    className={`h-1.5 rounded-full transition-all cursor-pointer ${
+                      i === activeSlide ? "w-10 bg-[#f5c857]" : "w-4 bg-white/60 hover:bg-white/90"
+                    }`}
+                  />
+                ))}
+              </div>
             </div>
           </div>
         </div>
       </section>
 
+      {/* Guarantees strip under diaporama */}
+      <section className="w-full px-4 pt-6 sm:px-6 sm:pt-8 lg:px-8">
+        <div className="mx-auto w-full max-w-[var(--content-max)] grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="surface-card p-3 rounded-lg border border-[var(--gold)]/30 flex items-center justify-center gap-2">
+            <Landmark className="w-4 h-4 text-[var(--gold)] shrink-0" />
+            <span className="text-xs font-medium">{ui.pill1}</span>
+          </div>
+          <div className="surface-card p-3 rounded-lg border border-[var(--gold)]/30 flex items-center justify-center gap-2">
+            <FileCheck className="w-4 h-4 text-[var(--gold)] shrink-0" />
+            <span className="text-xs font-medium">{ui.pill2}</span>
+          </div>
+          <div className="surface-card p-3 rounded-lg border border-[var(--gold)]/30 flex items-center justify-center gap-2">
+            <ShieldCheck className="w-4 h-4 text-[var(--gold)] shrink-0" />
+            <span className="text-xs font-medium">{ui.pill3}</span>
+          </div>
+          <div className="surface-card p-3 rounded-lg border border-[var(--gold)]/30 flex items-center justify-center gap-2">
+            <Clock className="w-4 h-4 text-[var(--gold)] shrink-0" />
+            <span className="text-xs font-medium">{ui.pill4}</span>
+          </div>
+        </div>
+      </section>
+
       {/* Main Content Area */}
-      <div className="max-w-[var(--content-max)] mx-auto px-4 sm:px-6 lg:px-8 pt-10">
+      <div id="services-catalog" className="max-w-[var(--content-max)] mx-auto px-4 sm:px-6 lg:px-8 pt-10">
         {/* Search & Filter Controls */}
         <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 mb-8">
           <div className="relative flex-1 max-w-md">
