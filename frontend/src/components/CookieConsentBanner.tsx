@@ -77,12 +77,12 @@ export default function CookieConsentBanner() {
       <div className="mx-auto max-w-5xl surface-card rounded-xl border border-[var(--gold)]/40 p-6 sm:p-8 shadow-2xl bg-[var(--card)]/95">
         {!showCustomize ? (
           /* Main Banner */
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-            <div className="flex items-start gap-4">
+          <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4 sm:gap-6 min-w-0">
+            <div className="flex items-start gap-3 sm:gap-4 min-w-0 flex-1">
               <div className="h-10 w-10 rounded-full bg-[var(--gold)]/15 text-[var(--gold)] flex items-center justify-center shrink-0 mt-0.5">
                 <Cookie className="h-5 w-5" />
               </div>
-              <div className="space-y-1">
+              <div className="space-y-1 min-w-0">
                 <h3 className="font-display text-lg font-bold text-[var(--foreground)]">
                   {t("cookie_banner_title")}
                 </h3>
@@ -95,26 +95,26 @@ export default function CookieConsentBanner() {
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto shrink-0 justify-end">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-2.5 w-full lg:w-auto lg:max-w-[min(100%,28rem)] shrink-0 justify-stretch sm:justify-end min-w-0">
               <button
                 type="button"
                 onClick={() => setShowCustomize(true)}
-                className="btn-base btn-outline-ink text-xs py-2 px-3.5 flex items-center gap-1.5"
+                className="btn-base btn-outline-ink text-xs py-2 px-3.5 flex items-center justify-center gap-1.5 flex-1 sm:flex-initial min-w-[8.5rem] min-h-10"
               >
-                <Settings2 className="h-3.5 w-3.5" />
-                {t("customize_cookies")}
+                <Settings2 className="h-3.5 w-3.5 shrink-0" />
+                <span className="truncate">{t("customize_cookies")}</span>
               </button>
               <button
                 type="button"
                 onClick={handleRejectOptional}
-                className="btn-base btn-outline-ink text-xs py-2 px-4"
+                className="btn-base btn-outline-ink text-xs py-2 px-4 flex-1 sm:flex-initial min-w-[8.5rem] min-h-10"
               >
                 {t("reject_optional")}
               </button>
               <button
                 type="button"
                 onClick={handleAcceptAll}
-                className="btn-base btn-gold text-xs py-2 px-5 font-semibold"
+                className="btn-base btn-gold text-xs py-2 px-5 font-semibold flex-1 sm:flex-initial min-w-[8.5rem] min-h-10"
               >
                 {t("accept_all")}
               </button>
@@ -209,20 +209,20 @@ export default function CookieConsentBanner() {
               </div>
             </div>
 
-            <div className="flex justify-end gap-3 pt-2">
+            <div className="flex flex-wrap justify-end gap-2 sm:gap-3 pt-2 min-w-0">
               <button
                 type="button"
                 onClick={handleRejectOptional}
-                className="btn-base btn-outline-ink text-xs py-2 px-4"
+                className="btn-base btn-outline-ink text-xs py-2 px-4 flex-1 sm:flex-initial min-h-10"
               >
                 {t("reject_all_optional")}
               </button>
               <button
                 type="button"
                 onClick={handleSaveCustom}
-                className="btn-base btn-gold text-xs py-2 px-5 font-semibold flex items-center gap-1.5"
+                className="btn-base btn-gold text-xs py-2 px-5 font-semibold flex items-center justify-center gap-1.5 flex-1 sm:flex-initial min-h-10"
               >
-                <Check className="h-3.5 w-3.5" />
+                <Check className="h-3.5 w-3.5 shrink-0" />
                 {t("save_preferences")}
               </button>
             </div>

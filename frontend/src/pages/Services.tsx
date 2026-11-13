@@ -172,8 +172,8 @@ export default function ServicesPage() {
       />
 
       {/* Hero Diaporama — same visual pattern as homepage, Services page copy only */}
-      <section className="w-full px-4 pt-4 sm:px-6 lg:px-8">
-        <div className="frame-gold relative mx-auto w-full max-w-[var(--content-max)] overflow-hidden rounded-md min-h-[460px] sm:min-h-[540px] lg:min-h-[600px] flex items-center justify-center">
+      <section className="w-full px-3 pt-3 sm:px-6 sm:pt-4 lg:px-8">
+        <div className="frame-gold relative mx-auto w-full max-w-[var(--content-max)] overflow-hidden rounded-md min-h-[420px] sm:min-h-[540px] lg:min-h-[600px] flex items-center justify-center">
           {SERVICES_HERO_SLIDES.map((slide, i) => (
             <img
               key={slide.image}
@@ -196,9 +196,9 @@ export default function ServicesPage() {
                 (i) => (i - 1 + SERVICES_HERO_SLIDES.length) % SERVICES_HERO_SLIDES.length,
               )
             }
-            className="absolute start-3 top-1/2 -translate-y-1/2 z-20 hidden sm:flex h-10 w-10 items-center justify-center rounded-full border border-white/40 bg-black/45 !text-white hover:bg-[#d9a441] hover:!text-[#1f160f] hover:border-[#d9a441] transition-colors cursor-pointer"
+            className="absolute start-2 sm:start-3 top-1/2 -translate-y-1/2 z-20 flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-full border border-white/40 bg-black/45 !text-white hover:bg-[#d9a441] hover:!text-[#1f160f] hover:border-[#d9a441] transition-colors cursor-pointer"
           >
-            <ChevronLeft className={`h-5 w-5 ${isRtl ? "rotate-180" : ""}`} />
+            <ChevronLeft className={`h-4 w-4 sm:h-5 sm:w-5 ${isRtl ? "rotate-180" : ""}`} />
           </button>
           <button
             type="button"
@@ -206,58 +206,58 @@ export default function ServicesPage() {
             onClick={() =>
               setActiveSlide((i) => (i + 1) % SERVICES_HERO_SLIDES.length)
             }
-            className="absolute end-3 top-1/2 -translate-y-1/2 z-20 hidden sm:flex h-10 w-10 items-center justify-center rounded-full border border-white/40 bg-black/45 !text-white hover:bg-[#d9a441] hover:!text-[#1f160f] hover:border-[#d9a441] transition-colors cursor-pointer"
+            className="absolute end-2 sm:end-3 top-1/2 -translate-y-1/2 z-20 flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-full border border-white/40 bg-black/45 !text-white hover:bg-[#d9a441] hover:!text-[#1f160f] hover:border-[#d9a441] transition-colors cursor-pointer"
           >
-            <ChevronRight className={`h-5 w-5 ${isRtl ? "rotate-180" : ""}`} />
+            <ChevronRight className={`h-4 w-4 sm:h-5 sm:w-5 ${isRtl ? "rotate-180" : ""}`} />
           </button>
 
-          <div className="relative z-10 flex w-full flex-col items-center justify-center px-5 py-12 sm:px-16 sm:py-16 text-center">
-            <p className="eyebrow !text-[#f5c857] text-shadow-dark tracking-widest font-bold inline-flex items-center gap-2">
-              <Sparkles className="h-3.5 w-3.5" />
+          <div className="relative z-10 flex w-full flex-col items-center justify-center px-4 py-10 sm:px-16 sm:py-16 text-center">
+            <p className="eyebrow !text-[#f5c857] text-shadow-dark !tracking-[0.14em] sm:!tracking-[0.28em] font-bold inline-flex max-w-[95%] flex-wrap items-center justify-center gap-1.5 sm:gap-2 text-center leading-snug">
+              <Sparkles className="h-3.5 w-3.5 shrink-0" />
               <span>{ui.heroEyebrow}</span>
             </p>
-            <h1 className="display-xl mt-4 max-w-4xl !text-white font-bold hero-title-shadow text-shadow-glow tracking-wide">
+            <h1 className="display-xl mt-3 sm:mt-4 max-w-4xl !text-white font-bold hero-title-shadow text-shadow-glow tracking-wide px-1">
               {ui.heroTitleMain}{" "}
               <span className="text-[#f5c857]">{ui.heroTitleGold}</span>
             </h1>
-            <div className="gold-rule mt-5 w-32 mx-auto shadow-lg" />
-            <p className="mt-5 max-w-2xl text-sm leading-relaxed !text-white drop-shadow-md font-medium sm:text-base">
+            <div className="gold-rule mt-4 sm:mt-5 w-24 sm:w-32 mx-auto shadow-lg" />
+            <p className="mt-4 sm:mt-5 max-w-2xl text-[0.8125rem] sm:text-base leading-relaxed !text-white drop-shadow-md font-medium px-1">
               {ui.heroSubtitle}
             </p>
-            <div className="mt-8 flex w-full sm:w-auto flex-col sm:flex-row flex-wrap justify-center gap-3">
+            <div className="mt-6 sm:mt-8 flex w-full max-w-md sm:max-w-none sm:w-auto flex-col sm:flex-row flex-wrap justify-center gap-2.5 sm:gap-3 px-1">
               <a
                 href="#services-catalog"
-                className="btn-base btn-gold w-full sm:w-auto min-w-[200px] inline-flex items-center justify-center gap-2"
+                className="btn-base btn-gold w-full sm:w-auto min-h-11 sm:min-w-[200px] inline-flex items-center justify-center gap-2 text-xs sm:text-sm px-4"
               >
                 <span>{ui.bookFreeConsultationCta}</span>
-                <ArrowRight className={`h-4 w-4 ${isRtl ? "rotate-180" : ""}`} />
+                <ArrowRight className={`h-4 w-4 shrink-0 ${isRtl ? "rotate-180" : ""}`} />
               </a>
               {whatsappUrl ? (
                 <a
                   href={whatsappUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="btn-base btn-outline-light !text-white hover:!text-white w-full sm:w-auto min-w-[200px] inline-flex items-center justify-center gap-2"
+                  className="btn-base btn-outline-light !text-white hover:!text-white w-full sm:w-auto min-h-11 sm:min-w-[200px] inline-flex items-center justify-center gap-2 text-xs sm:text-sm px-4"
                 >
-                  <MessageCircle className="h-4 w-4" />
+                  <MessageCircle className="h-4 w-4 shrink-0" />
                   <span>{ui.chatWithAgentWhatsappCta}</span>
                 </a>
               ) : (
                 <Link
                   to="/contact"
-                  className="btn-base btn-outline-light !text-white hover:!text-white w-full sm:w-auto min-w-[200px] inline-flex items-center justify-center gap-2"
+                  className="btn-base btn-outline-light !text-white hover:!text-white w-full sm:w-auto min-h-11 sm:min-w-[200px] inline-flex items-center justify-center gap-2 text-xs sm:text-sm px-4"
                 >
-                  <Scroll className="h-4 w-4" />
+                  <Scroll className="h-4 w-4 shrink-0" />
                   <span>{ui.formHeadingEmail}</span>
                 </Link>
               )}
             </div>
-            <div className="mt-6 flex flex-col items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-white/30 bg-black/45 px-3 py-1 text-xs font-semibold !text-[#f5c857]">
-                <Landmark className="h-3.5 w-3.5" />
-                <span>{ui[SERVICES_HERO_SLIDES[activeSlide]?.captionKey || "pill1"]}</span>
+            <div className="mt-5 sm:mt-6 flex w-full flex-col items-center gap-2 px-1">
+              <span className="inline-flex max-w-[min(100%,22rem)] items-center justify-center gap-1.5 rounded-full border border-white/30 bg-black/45 px-3 py-1.5 text-[0.68rem] sm:text-xs font-semibold !text-[#f5c857] text-center leading-snug">
+                <Landmark className="h-3.5 w-3.5 shrink-0" />
+                <span className="min-w-0">{ui[SERVICES_HERO_SLIDES[activeSlide]?.captionKey || "pill1"]}</span>
               </span>
-              <div className="flex gap-2 mt-1" role="tablist" aria-label="Diaporama services">
+              <div className="flex flex-wrap items-center justify-center gap-1 mt-1" role="tablist" aria-label="Diaporama services">
                 {SERVICES_HERO_SLIDES.map((slide, i) => (
                   <button
                     key={slide.image}
@@ -266,10 +266,14 @@ export default function ServicesPage() {
                     aria-selected={i === activeSlide}
                     aria-label={`${ui[slide.captionKey]} — ${i + 1}`}
                     onClick={() => setActiveSlide(i)}
-                    className={`h-1.5 rounded-full transition-all cursor-pointer ${
-                      i === activeSlide ? "w-10 bg-[#f5c857]" : "w-4 bg-white/60 hover:bg-white/90"
-                    }`}
-                  />
+                    className="min-h-11 min-w-11 inline-flex items-center justify-center cursor-pointer"
+                  >
+                    <span
+                      className={`block h-1.5 rounded-full transition-all ${
+                        i === activeSlide ? "w-8 sm:w-10 bg-[#f5c857]" : "w-3.5 sm:w-4 bg-white/60"
+                      }`}
+                    />
+                  </button>
                 ))}
               </div>
             </div>
@@ -278,23 +282,23 @@ export default function ServicesPage() {
       </section>
 
       {/* Guarantees strip under diaporama */}
-      <section className="w-full px-4 pt-6 sm:px-6 sm:pt-8 lg:px-8">
-        <div className="mx-auto w-full max-w-[var(--content-max)] grid grid-cols-2 md:grid-cols-4 gap-3">
-          <div className="surface-card p-3 rounded-lg border border-[var(--gold)]/30 flex items-center justify-center gap-2">
-            <Landmark className="w-4 h-4 text-[var(--gold)] shrink-0" />
-            <span className="text-xs font-medium">{ui.pill1}</span>
+      <section className="w-full px-3 pt-5 sm:px-6 sm:pt-8 lg:px-8">
+        <div className="mx-auto w-full max-w-[var(--content-max)] grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3">
+          <div className="surface-card p-2.5 sm:p-3 rounded-lg border border-[var(--gold)]/30 flex items-start sm:items-center gap-2 min-h-[3.25rem]">
+            <Landmark className="w-4 h-4 text-[var(--gold)] shrink-0 mt-0.5 sm:mt-0" />
+            <span className="text-[0.68rem] sm:text-xs font-medium leading-snug">{ui.pill1}</span>
           </div>
-          <div className="surface-card p-3 rounded-lg border border-[var(--gold)]/30 flex items-center justify-center gap-2">
-            <FileCheck className="w-4 h-4 text-[var(--gold)] shrink-0" />
-            <span className="text-xs font-medium">{ui.pill2}</span>
+          <div className="surface-card p-2.5 sm:p-3 rounded-lg border border-[var(--gold)]/30 flex items-start sm:items-center gap-2 min-h-[3.25rem]">
+            <FileCheck className="w-4 h-4 text-[var(--gold)] shrink-0 mt-0.5 sm:mt-0" />
+            <span className="text-[0.68rem] sm:text-xs font-medium leading-snug">{ui.pill2}</span>
           </div>
-          <div className="surface-card p-3 rounded-lg border border-[var(--gold)]/30 flex items-center justify-center gap-2">
-            <ShieldCheck className="w-4 h-4 text-[var(--gold)] shrink-0" />
-            <span className="text-xs font-medium">{ui.pill3}</span>
+          <div className="surface-card p-2.5 sm:p-3 rounded-lg border border-[var(--gold)]/30 flex items-start sm:items-center gap-2 min-h-[3.25rem]">
+            <ShieldCheck className="w-4 h-4 text-[var(--gold)] shrink-0 mt-0.5 sm:mt-0" />
+            <span className="text-[0.68rem] sm:text-xs font-medium leading-snug">{ui.pill3}</span>
           </div>
-          <div className="surface-card p-3 rounded-lg border border-[var(--gold)]/30 flex items-center justify-center gap-2">
-            <Clock className="w-4 h-4 text-[var(--gold)] shrink-0" />
-            <span className="text-xs font-medium">{ui.pill4}</span>
+          <div className="surface-card p-2.5 sm:p-3 rounded-lg border border-[var(--gold)]/30 flex items-start sm:items-center gap-2 min-h-[3.25rem]">
+            <Clock className="w-4 h-4 text-[var(--gold)] shrink-0 mt-0.5 sm:mt-0" />
+            <span className="text-[0.68rem] sm:text-xs font-medium leading-snug">{ui.pill4}</span>
           </div>
         </div>
       </section>
@@ -302,33 +306,35 @@ export default function ServicesPage() {
       {/* Main Content Area */}
       <div id="services-catalog" className="max-w-[var(--content-max)] mx-auto px-4 sm:px-6 lg:px-8 pt-10">
         {/* Search & Filter Controls */}
-        <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 mb-8">
-          <div className="relative flex-1 max-w-md">
+        <div className="flex w-full min-w-0 flex-col lg:flex-row lg:items-center justify-between gap-3 sm:gap-4 mb-8">
+          <div className="relative w-full lg:max-w-md lg:shrink-0">
             <Search className="w-4 h-4 absolute start-3.5 top-1/2 -translate-y-1/2 text-[var(--foreground)]/45" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={ui.searchPlaceholder}
-              className="w-full ps-10 pe-4 py-2.5 rounded-lg border border-[var(--gold)]/35 bg-[var(--card)] text-sm focus:outline-none focus:border-[var(--gold)] transition-colors placeholder:text-[var(--foreground)]/40"
+              className="w-full min-h-11 ps-10 pe-4 py-2.5 rounded-lg border border-[var(--gold)]/35 bg-[var(--card)] text-sm focus:outline-none focus:border-[var(--gold)] transition-colors placeholder:text-[var(--foreground)]/40"
             />
           </div>
 
           {categories.length > 2 && (
-            <div className="flex items-center gap-2 overflow-x-auto pb-1 max-w-full">
-              {categories.map((cat) => (
-                <button
-                  key={cat}
-                  onClick={() => setSelectedCategory(cat)}
-                  className={`px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${
-                    selectedCategory === cat
-                      ? "bg-[var(--gold)] text-[var(--card)] shadow-md font-bold"
-                      : "surface-card border border-[var(--gold)]/30 text-[var(--foreground)]/80 hover:border-[var(--gold)]"
-                  }`}
-                >
-                  {cat === "all" ? ui.allCategories : cat}
-                </button>
-              ))}
+            <div className="w-full min-w-0 overflow-x-auto overscroll-x-contain pb-1 [-webkit-overflow-scrolling:touch]">
+              <div className="flex w-max max-w-none items-center gap-2 pe-1">
+                {categories.map((cat) => (
+                  <button
+                    key={cat}
+                    onClick={() => setSelectedCategory(cat)}
+                    className={`min-h-9 px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all shrink-0 ${
+                      selectedCategory === cat
+                        ? "bg-[var(--gold)] text-[var(--card)] shadow-md font-bold"
+                        : "surface-card border border-[var(--gold)]/30 text-[var(--foreground)]/80 hover:border-[var(--gold)]"
+                    }`}
+                  >
+                    {cat === "all" ? ui.allCategories : cat}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
         </div>

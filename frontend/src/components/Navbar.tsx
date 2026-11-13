@@ -99,7 +99,7 @@ export function Navbar() {
         <Logo />
 
         {/* Desktop Nav */}
-        <nav className="hidden items-center gap-2 lg:gap-3 xl:gap-5 ms-1 lg:ms-2 xl:ms-3 md:flex h-8 whitespace-nowrap shrink-0">
+        <nav className="hidden items-center gap-2 lg:gap-3 xl:gap-5 ms-1 lg:ms-2 xl:ms-3 lg:flex h-8 whitespace-nowrap shrink-0">
           {/* Home */}
           <div className="flex items-center h-8">
             <NavLink
@@ -203,13 +203,13 @@ export function Navbar() {
         </nav>
 
         <div className="ms-auto flex items-center gap-1 sm:gap-2">
-          {/* Compact Search Icon (tablet / small desktop 768px–1279px) */}
+          {/* Compact Search Icon (desktop below xl; phone/tablet use drawer search) */}
           <NavLink
             to="/gallery/trees"
             aria-label={t("nav_search_placeholder")}
             title={t("nav_search_placeholder")}
             className={({ isActive }) =>
-              `hidden md:flex xl:hidden h-[34px] w-[34px] rounded-sm border items-center justify-center transition-colors cursor-pointer ${
+              `hidden lg:flex xl:hidden h-[34px] w-[34px] rounded-sm border items-center justify-center transition-colors cursor-pointer ${
                 isActive
                   ? "border-[var(--gold)] bg-[var(--gold)]/15 text-[var(--gold)]"
                   : "border-[var(--border)] text-[var(--foreground)] hover:border-[var(--gold)] hover:bg-[var(--gold)]/15 hover:text-[var(--gold)]"
@@ -290,7 +290,7 @@ export function Navbar() {
                 className="h-8 sm:h-[34px] flex items-center gap-1 sm:gap-1.5 rounded-sm bg-[#b81428] !text-white px-2 sm:px-3.5 text-[0.62rem] sm:text-[0.65rem] font-bold uppercase tracking-wider sm:tracking-[0.14em] hover:opacity-90 transition-opacity cursor-pointer shadow-sm shrink-0"
               >
                 <User className="h-3.5 w-3.5 shrink-0" />
-                <span className="hidden sm:inline max-w-[90px] truncate">{user.fullName || t("nav_account")}</span>
+                <span className="hidden lg:inline max-w-[90px] truncate">{user.fullName || t("nav_account")}</span>
                 <ChevronDown className="h-3 w-3 shrink-0" />
               </button>
 
@@ -330,24 +330,24 @@ export function Navbar() {
               className="h-8 sm:h-[34px] flex items-center gap-1 sm:gap-1.5 rounded-sm bg-[#b81428] !text-white px-2 sm:px-3.5 text-[0.62rem] sm:text-[0.65rem] font-bold uppercase tracking-wider sm:tracking-[0.14em] hover:opacity-90 transition-opacity shadow-sm shrink-0"
             >
               <User className="h-3.5 w-3.5 shrink-0" />
-              <span className="hidden sm:inline">{t("nav_login")}</span>
+              <span className="hidden lg:inline">{t("nav_login")}</span>
             </Link>
           )}
 
-          {/* Mobile Menu Toggle */}
+          {/* Mobile / tablet Menu Toggle */}
           <button
             aria-label={t("toggle_menu")}
             onClick={() => setOpen((v) => !v)}
-            className="h-8 w-8 sm:h-[34px] sm:w-[34px] flex items-center justify-center rounded-sm border border-[var(--border)] text-[var(--foreground)] md:hidden cursor-pointer shrink-0"
+            className="h-8 w-8 sm:h-[34px] sm:w-[34px] flex items-center justify-center rounded-sm border border-[var(--border)] text-[var(--foreground)] lg:hidden cursor-pointer shrink-0"
           >
             {open ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
           </button>
         </div>
       </div>
 
-      {/* Mobile Drawer */}
+      {/* Mobile / tablet Drawer */}
       {open && (
-        <div className="mx-auto mt-2 w-full max-w-[var(--content-max)] rounded-lg border border-[var(--gold)]/30 bg-[var(--card)] p-4 text-start shadow-xl backdrop-blur-md md:hidden">
+        <div className="mx-auto mt-2 w-full max-w-[var(--content-max)] rounded-lg border border-[var(--gold)]/30 bg-[var(--card)] p-4 text-start shadow-xl backdrop-blur-md lg:hidden">
           <form onSubmit={handleSearchSubmit} className="mb-3 flex items-center gap-2 border border-[var(--border)] bg-[var(--background)] px-3 py-2 rounded-sm">
             <Search className="h-4 w-4 text-[var(--muted-foreground)] shrink-0" />
             <input
