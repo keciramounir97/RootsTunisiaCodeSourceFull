@@ -57,18 +57,15 @@ describe("Footer Settings <-> Footer <-> Contact Page Official Platforms Sync", 
     const footerNav = () =>
       within(footerEl()).queryByRole("navigation", { name: "Réseaux Sociaux" });
 
-    // Default active: WhatsApp, Facebook, Instagram; YouTube is disabled by default
+    // Default active: Facebook, Instagram; WhatsApp/YouTube stay off until configured
     await waitFor(() => {
-      expect(within(contactPane()).getByText("WhatsApp Officiel")).toBeInTheDocument();
       expect(within(contactPane()).getByText("Facebook Officiel")).toBeInTheDocument();
       expect(within(contactPane()).getByText("Instagram Roots")).toBeInTheDocument();
     });
+    expect(within(contactPane()).queryByText("WhatsApp Officiel")).not.toBeInTheDocument();
     expect(within(contactPane()).queryByText("YouTube Officiel")).not.toBeInTheDocument();
 
-    expect(within(footerNav()!).getByLabelText("WhatsApp Officiel")).toHaveAttribute(
-      "href",
-      "https://wa.me/21692225533",
-    );
+    expect(within(footerNav()!).queryByLabelText("WhatsApp Officiel")).not.toBeInTheDocument();
     expect(within(footerNav()!).getByLabelText("Facebook Officiel")).toHaveAttribute(
       "href",
       "https://facebook.com",
@@ -146,11 +143,13 @@ describe("Footer Settings <-> Footer <-> Contact Page Official Platforms Sync", 
     const contactPane = () => screen.getByTestId("contact-pane");
 
     await waitFor(() => {
-      expect(within(contactPane()).getByText("WhatsApp Officiel")).toBeInTheDocument();
+      expect(within(contactPane()).getByText("Facebook Officiel")).toBeInTheDocument();
     });
 
+    fireEvent.click(within(adminPane()).getByLabelText("WhatsApp — Actif"));
     const waInput = within(adminPane()).getByLabelText("URL WhatsApp");
     fireEvent.change(waInput, { target: { value: "+216 22 111 444" } });
+    fireEvent.blur(waInput);
 
     const saveBtn = within(adminPane()).getByRole("button", {
       name: /Save Settings|Enregistrer/i,
@@ -158,6 +157,7 @@ describe("Footer Settings <-> Footer <-> Contact Page Official Platforms Sync", 
     fireEvent.click(saveBtn);
 
     await waitFor(() => {
+      expect(within(contactPane()).getByText("WhatsApp Officiel")).toBeInTheDocument();
       const contactWa = within(contactPane()).getByText("WhatsApp Officiel").closest("a");
       expect(contactWa).toHaveAttribute("href", "https://wa.me/21622111444");
       const footerWa = within(document.querySelector("footer") as HTMLElement).getByLabelText(

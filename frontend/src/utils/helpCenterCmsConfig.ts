@@ -204,10 +204,10 @@ export const DEFAULT_HELP_CENTER_CMS_CONFIG: HelpCenterCmsConfig = {
   contact: {
     cards: {
       phoneLabel: "Téléphone",
-      phoneValue: "+216 92 225 533",
+      phoneValue: "",
       phoneCta: "Appel direct",
       whatsappLabel: "WhatsApp",
-      whatsappValue: "+216 92 225 533",
+      whatsappValue: "",
       whatsappCta: "Chat en direct",
       whatsappPrefillMessage:
         "Bonjour Roots Tunisia, je souhaite des renseignements sur vos recherches généalogiques.",
@@ -572,10 +572,10 @@ const LOCALE_DEFAULTS: Record<string, HelpCenterCmsConfig> = {
     contact: {
       cards: {
         phoneLabel: "Phone",
-        phoneValue: "+216 92 225 533",
+        phoneValue: "",
         phoneCta: "Direct call",
         whatsappLabel: "WhatsApp",
-        whatsappValue: "+216 92 225 533",
+        whatsappValue: "",
         whatsappCta: "Live chat",
         whatsappPrefillMessage:
           "Hello Roots Tunisia, I would like information about your genealogical research services.",
@@ -937,10 +937,10 @@ const LOCALE_DEFAULTS: Record<string, HelpCenterCmsConfig> = {
     contact: {
       cards: {
         phoneLabel: "الهاتف",
-        phoneValue: "+216 92 225 533",
+        phoneValue: "",
         phoneCta: "اتصال مباشر",
         whatsappLabel: "واتساب",
-        whatsappValue: "+216 92 225 533",
+        whatsappValue: "",
         whatsappCta: "محادثة فورية",
         whatsappPrefillMessage:
           "مرحباً جذور تونس، أرغب في الاستفسار حول أبحاث الأنساب والوثائق الأرشيفية.",
@@ -1300,10 +1300,10 @@ const LOCALE_DEFAULTS: Record<string, HelpCenterCmsConfig> = {
     contact: {
       cards: {
         phoneLabel: "Teléfono",
-        phoneValue: "+216 92 225 533",
+        phoneValue: "",
         phoneCta: "Llamada directa",
         whatsappLabel: "WhatsApp",
-        whatsappValue: "+216 92 225 533",
+        whatsappValue: "",
         whatsappCta: "Chat en vivo",
         whatsappPrefillMessage:
           "Hola Roots Tunisia, deseo información sobre sus investigaciones genealógicas.",
@@ -1663,10 +1663,10 @@ const LOCALE_DEFAULTS: Record<string, HelpCenterCmsConfig> = {
     contact: {
       cards: {
         phoneLabel: "Telefono",
-        phoneValue: "+216 92 225 533",
+        phoneValue: "",
         phoneCta: "Chiamata diretta",
         whatsappLabel: "WhatsApp",
-        whatsappValue: "+216 92 225 533",
+        whatsappValue: "",
         whatsappCta: "Chat dal vivo",
         whatsappPrefillMessage:
           "Salve Roots Tunisia, desidero informazioni sulle vostre ricerche genealogiche.",
@@ -2026,10 +2026,10 @@ const LOCALE_DEFAULTS: Record<string, HelpCenterCmsConfig> = {
     contact: {
       cards: {
         phoneLabel: "Telefon",
-        phoneValue: "+216 92 225 533",
+        phoneValue: "",
         phoneCta: "Sejħa diretta",
         whatsappLabel: "WhatsApp",
-        whatsappValue: "+216 92 225 533",
+        whatsappValue: "",
         whatsappCta: "Chat dirett",
         whatsappPrefillMessage:
           "Bongu Roots Tunisia, nixtieq informazzjoni dwar ir-riċerka ġenealoġika tagħkom.",
@@ -2383,6 +2383,9 @@ export function getDefaultHelpCenterConfig(locale = "fr"): HelpCenterCmsConfig {
   return LOCALE_DEFAULTS[clean] || DEFAULT_HELP_CENTER_CMS_CONFIG;
 }
 
+/** Contact card fields admins can intentionally clear; empty must not fall back to defaults. */
+const CLEARABLE_STRING_KEYS = new Set(["phoneValue", "whatsappValue"]);
+
 function resolveLocalizedString(candidate: any, baseVal: string, frVal: string, cleanLocale: string): string {
   if (typeof candidate !== "string") return baseVal;
   const trimmed = candidate.trim();
@@ -2405,7 +2408,17 @@ function resolveLocalizedObject<T extends Record<string, any>>(
     const baseVal = baseObj[key];
     const frVal = frObj?.[key];
     if (typeof baseVal === "string") {
-      out[key] = resolveLocalizedString(sourceObj[key], baseVal, typeof frVal === "string" ? frVal : "", cleanLocale);
+      if (CLEARABLE_STRING_KEYS.has(key) && typeof sourceObj[key] === "string") {
+        // Preserve intentional clears from Contact CMS (do not resurrect defaults).
+        out[key] = sourceObj[key];
+      } else {
+        out[key] = resolveLocalizedString(
+          sourceObj[key],
+          baseVal,
+          typeof frVal === "string" ? frVal : "",
+          cleanLocale
+        );
+      }
     } else if (sourceObj[key] !== undefined) {
       out[key] = sourceObj[key];
     }

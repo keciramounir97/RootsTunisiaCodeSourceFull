@@ -194,12 +194,9 @@ export default function ContactUs() {
     hcConfig.contact.cards.emailValue?.trim() ||
     getText("contact", "details", "email")?.trim() ||
     "contact@rootstunisia.com";
-  const phone =
-    resolvedFooterConfig.phone?.trim() ||
-    hcConfig.contact.cards.phoneValue?.trim() ||
-    getText("contact", "details", "phone")?.trim() ||
-    getText("footer", "config", "phone")?.trim() ||
-    "";
+  // Contact Direct cards follow Contact CMS. Empty admin values must stay empty
+  // (do not resurrect footer/site-content fallbacks after an intentional clear).
+  const phone = String(hcConfig.contact.cards.phoneValue ?? "").trim();
   const phoneHref = phone ? phone.replace(/[^\d+]/g, "") : "";
   const hours =
     hcConfig.contact.cards.hoursValue?.trim() ||
@@ -208,23 +205,15 @@ export default function ContactUs() {
 
   // Social links — unified with Footer Settings
   const whatsappLink = activeSocialLinks.find((link) => link.icon === "whatsapp");
-  const waDisplay =
-    resolvedFooterConfig.whatsapp?.trim() ||
-    hcConfig.contact.cards.whatsappValue?.trim() ||
-    phone ||
-    t("responsive_support");
-  const rawWa = (
-    resolvedFooterConfig.whatsapp ||
-    hcConfig.contact.cards.whatsappValue ||
-    phone ||
-    ""
-  ).replace(/[^\d]/g, "");
+  const waNumber = String(hcConfig.contact.cards.whatsappValue ?? "").trim();
+  const waDisplay = waNumber;
+  const rawWa = waNumber.replace(/[^\d]/g, "");
   const prefillWa =
     hcConfig.contact.cards.whatsappPrefillMessage ||
     t("whatsapp_prefill_message");
-  const whatsappUrl =
-    whatsappLink?.resolvedHref ||
-    (rawWa ? `https://wa.me/${rawWa}?text=${encodeURIComponent(prefillWa)}` : `mailto:${email}`);
+  const whatsappUrl = rawWa
+    ? `https://wa.me/${rawWa}?text=${encodeURIComponent(prefillWa)}`
+    : whatsappLink?.resolvedHref || "";
 
   // Form states
   const topics = hcConfig.contact.form.topics;
@@ -530,30 +519,32 @@ export default function ContactUs() {
                 </a>
               ) : null}
 
-              <a
-                href={whatsappUrl}
-                target={rawWa ? "_blank" : undefined}
-                rel={rawWa ? "noopener noreferrer" : undefined}
-                className="surface-card group p-5 rounded-2xl border border-emerald-500/35 hover:border-emerald-500 transition-all bg-[var(--card)]/95 shadow-md flex flex-col justify-between text-start"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-500 shrink-0">
-                    <MessageCircle className="h-5 w-5" />
+              {whatsappUrl ? (
+                <a
+                  href={whatsappUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="surface-card group p-5 rounded-2xl border border-emerald-500/35 hover:border-emerald-500 transition-all bg-[var(--card)]/95 shadow-md flex flex-col justify-between text-start"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-500 shrink-0">
+                      <MessageCircle className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <p className="text-[0.7rem] uppercase font-bold text-[var(--muted-foreground)]">
+                        {hcConfig.contact.cards.whatsappLabel}
+                      </p>
+                      <p dir="ltr" className="font-display text-sm font-bold text-[var(--foreground)] group-hover:text-emerald-500">
+                        {waDisplay || hcConfig.contact.cards.whatsappLabel}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-[0.7rem] uppercase font-bold text-[var(--muted-foreground)]">
-                      {hcConfig.contact.cards.whatsappLabel}
-                    </p>
-                    <p dir="ltr" className="font-display text-sm font-bold text-[var(--foreground)] group-hover:text-emerald-500">
-                      {waDisplay}
-                    </p>
+                  <div className="mt-3 pt-2 border-t border-emerald-500/15 text-[0.7rem] font-bold text-emerald-600 dark:text-emerald-400 flex items-center justify-between">
+                    <span>{hcConfig.contact.cards.whatsappCta}</span>
+                    <ExternalLink className="h-3 w-3" />
                   </div>
-                </div>
-                <div className="mt-3 pt-2 border-t border-emerald-500/15 text-[0.7rem] font-bold text-emerald-600 dark:text-emerald-400 flex items-center justify-between">
-                  <span>{hcConfig.contact.cards.whatsappCta}</span>
-                  <ExternalLink className="h-3 w-3" />
-                </div>
-              </a>
+                </a>
+              ) : null}
 
               <a
                 href={`mailto:${email}`}
@@ -1061,15 +1052,17 @@ export default function ContactUs() {
                 {hcConfig.faq.bottomCta.subtitle}
               </p>
               <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
-                <a
-                  href={whatsappUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-md transition-all"
-                >
-                  <MessageCircle className="w-4 h-4" />
-                  <span>{hcConfig.faq.bottomCta.whatsappLabel}</span>
-                </a>
+                {whatsappUrl ? (
+                  <a
+                    href={whatsappUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-md transition-all"
+                  >
+                    <MessageCircle className="w-4 h-4" />
+                    <span>{hcConfig.faq.bottomCta.whatsappLabel}</span>
+                  </a>
+                ) : null}
                 <button
                   type="button"
                   onClick={() => handleTabChange("contact")}

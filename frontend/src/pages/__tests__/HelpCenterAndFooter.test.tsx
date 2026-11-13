@@ -9,6 +9,7 @@ import {
   DEFAULT_HELP_CENTER_CMS_CONFIG,
   getDefaultHelpCenterConfig,
   loadHelpCenterCmsConfig,
+  saveHelpCenterCmsConfig,
 } from "../../utils/helpCenterCmsConfig";
 
 const mockGet = vi.fn();
@@ -203,7 +204,33 @@ describe("Help Center (/helpcenter) & Footer 6-Language Translation & RTL", () =
 
     for (const loc of SUPPORTED_LOCALES) {
       localStorage.setItem("locale", loc);
-      const cfg = getDefaultHelpCenterConfig(loc);
+      localStorage.setItem(
+        "RootsTunisia_footer_settings",
+        JSON.stringify({
+          socialLinks: [
+            { id: "wa", icon: "whatsapp", url: "https://wa.me/21692225533", enabled: true },
+            { id: "fb", icon: "facebook", url: "https://facebook.com", enabled: true },
+          ],
+          location: "",
+          email: "contact@rootstunisia.com",
+          phone: "",
+          whatsapp: "",
+        }),
+      );
+      const baseCfg = getDefaultHelpCenterConfig(loc);
+      const cfg = {
+        ...baseCfg,
+        contact: {
+          ...baseCfg.contact,
+          cards: {
+            ...baseCfg.contact.cards,
+            // Seed numbers so contact cards render for i18n assertions
+            phoneValue: "+216 92 225 533",
+            whatsappValue: "+216 92 225 533",
+          },
+        },
+      };
+      await saveHelpCenterCmsConfig(cfg, loc);
 
       const { container, unmount } = render(
         <MemoryRouter initialEntries={["/helpcenter"]}>

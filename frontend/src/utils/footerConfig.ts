@@ -157,7 +157,7 @@ const PLATFORM_LABELS: Record<SocialIconType, Record<string, string>> = {
 
 export const DEFAULT_FOOTER_CONFIG: FooterConfig = {
   socialLinks: [
-    { id: "wa", icon: "whatsapp", url: "https://wa.me/21692225533", enabled: true },
+    { id: "wa", icon: "whatsapp", url: "", enabled: false },
     { id: "fb", icon: "facebook", url: "https://facebook.com", enabled: true },
     { id: "ig", icon: "instagram", url: "https://instagram.com", enabled: true },
     { id: "yt", icon: "youtube", url: "https://youtube.com", enabled: false },
