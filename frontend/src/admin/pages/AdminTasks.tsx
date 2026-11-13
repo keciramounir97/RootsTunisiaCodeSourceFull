@@ -659,6 +659,13 @@ export default function AdminTasks() {
                 onClick={() => setViewTask(null)}
                 title={t("admin.tasks.close", "Close")}
                 aria-label={t("admin.tasks.close", "Close")}
+                className="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {viewTask.image_url && (
               <img
                 src={viewTask.image_url}
                 alt={viewTask.title}
