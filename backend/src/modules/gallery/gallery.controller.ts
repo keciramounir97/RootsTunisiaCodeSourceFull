@@ -1,11 +1,16 @@
 
-import { Controller, Get, Post, Put, Delete, Body, Param, UseGuards, Request, UseInterceptors, UploadedFile, ForbiddenException, ParseIntPipe, ParseFilePipe, MaxFileSizeValidator, FileTypeValidator } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, UseGuards, Request, UseInterceptors, UploadedFile, ForbiddenException, NotFoundException, ParseIntPipe, ParseFilePipe, MaxFileSizeValidator, FileTypeValidator, Res, Header } from '@nestjs/common';
 import { GalleryService } from './gallery.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { CreateGalleryDto, UpdateGalleryDto } from './dto/gallery.dto';
+import { getStoredFilePayload } from '../../common/utils/db-file.util';
+import { resolveStoredFilePath } from '../../common/utils/file.utils';
+import { Response } from 'express';
+import * as fs from 'fs';
+import * as path from 'path';
 
 @Controller()
 export class GalleryController {
@@ -14,6 +19,36 @@ export class GalleryController {
     @Get('gallery')
     async listPublic() {
         return this.galleryService.listPublic();
+    }
+
+    /** Durable public image stream (disk first, then DB blob). */
+    @Get('gallery/:id/image')
+    @Header('Cache-Control', 'public, max-age=604800')
+    async streamPublicImage(@Param('id', ParseIntPipe) id: number, @Res() res: Response) {
+        const item = await this.galleryService.findOne(id);
+        if (!item?.is_public) {
+            throw new NotFoundException('Not found');
+        }
+
+        const stored = getStoredFilePayload(
+            item as any,
+            'image_data',
+            'image_mime_type',
+            'image_path',
+            'image/jpeg',
+            'gallery-image',
+        );
+        if (stored) {
+            return res.type(stored.mimeType).send(stored.data);
+        }
+
+        const filePath = resolveStoredFilePath(item.image_path);
+        if (filePath && fs.existsSync(filePath)) {
+            return res.type(path.extname(filePath).toLowerCase() === '.png' ? 'image/png' : 'image/jpeg')
+                .send(fs.readFileSync(filePath));
+        }
+
+        throw new NotFoundException('Image not found');
     }
 
     @Get('gallery/:id')

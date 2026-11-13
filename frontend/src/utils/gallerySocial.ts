@@ -44,6 +44,8 @@ if (typeof window !== "undefined") {
   }
 }
 
+const FRONTEND_ASSET_RE = /^(?:\/assets\/|\/src\/assets\/|\/heritage\/|\/favicon)/i;
+
 export function resolveAnyMediaUrl(
   url: string | undefined | null,
   apiRoot?: string,
@@ -54,6 +56,10 @@ export function resolveAnyMediaUrl(
   if (/^(https?:)?\/\//i.test(clean) || clean.startsWith("data:") || clean.startsWith("blob:")) {
     return clean;
   }
+  // Vite-bundled / public frontend assets must stay on the SPA origin.
+  if (FRONTEND_ASSET_RE.test(clean) || clean.startsWith("./") || clean.startsWith("../")) {
+    return clean;
+  }
   const root = (apiRoot || getApiRoot()).replace(/\/+$/, "");
   if (clean.startsWith("/uploads/")) {
     return `${root}${clean}`;
@@ -61,10 +67,90 @@ export function resolveAnyMediaUrl(
   if (clean.startsWith("uploads/")) {
     return `${root}/${clean}`;
   }
+  if (clean.startsWith("/api/")) {
+    return `${root}${clean}`;
+  }
   if (clean.startsWith("/")) {
     return `${root}${clean}`;
   }
+  // Bare filenames from gallery seeds historically lived under /uploads or /uploads/gallery.
+  if (/\.(jpe?g|png|gif|webp|avif|svg)(?:[?#].*)?$/i.test(clean)) {
+    return `${root}/uploads/gallery/${clean.replace(/^\/+/, "")}`;
+  }
   return `${root}/uploads/${clean}`;
+}
+
+/** Prefer durable API image stream for numeric gallery rows; fall back to path resolution. */
+export function resolveGalleryItemUrl(
+  item: {
+    id?: string | number | null;
+    image_path?: string | null;
+    imagePath?: string | null;
+    image_url?: string | null;
+    imageUrl?: string | null;
+    url?: string | null;
+    file_path?: string | null;
+  } | null | undefined,
+  apiRoot?: string,
+  fallback: string = ""
+): string {
+  if (!item) return fallback;
+  const root = (apiRoot || getApiRoot()).replace(/\/+$/, "");
+  const numericId = Number(item.id);
+  if (Number.isFinite(numericId) && numericId > 0 && String(item.id).match(/^\d+$/)) {
+    return `${root}/api/gallery/${numericId}/image`;
+  }
+  return resolveAnyMediaUrl(
+    item.image_path || item.imagePath || item.image_url || item.imageUrl || item.file_path || item.url,
+    root,
+    fallback
+  );
+}
+
+/** Alternate candidates when the primary gallery URL fails (legacy paths, API stream, etc.). */
+export function galleryImageFallbackCandidates(
+  primary: string,
+  item?: {
+    id?: string | number | null;
+    image_path?: string | null;
+    imagePath?: string | null;
+    image_url?: string | null;
+    imageUrl?: string | null;
+    url?: string | null;
+    file_path?: string | null;
+  } | null,
+  apiRoot?: string,
+  fallback: string = ""
+): string[] {
+  const root = (apiRoot || getApiRoot()).replace(/\/+$/, "");
+  const out: string[] = [];
+  const push = (value?: string | null) => {
+    const v = String(value || "").trim();
+    if (!v || out.includes(v)) return;
+    out.push(v);
+  };
+
+  push(primary);
+
+  const rawPath = String(
+    item?.image_path || item?.imagePath || item?.image_url || item?.imageUrl || item?.file_path || item?.url || ""
+  ).trim();
+  if (rawPath) {
+    push(resolveAnyMediaUrl(rawPath, root, ""));
+    const base = rawPath.split(/[\\/]/).pop() || "";
+    if (base) {
+      push(`${root}/uploads/gallery/${base}`);
+      push(`${root}/uploads/${base}`);
+    }
+  }
+
+  const numericId = Number(item?.id);
+  if (Number.isFinite(numericId) && numericId > 0 && String(item?.id).match(/^\d+$/)) {
+    push(`${root}/api/gallery/${numericId}/image`);
+  }
+
+  push(fallback);
+  return out.filter(Boolean);
 }
 
 /** Get cached or default social likes (defaults strictly to 0) */

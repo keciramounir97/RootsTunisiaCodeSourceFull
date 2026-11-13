@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { Logo } from "./site/Logo";
 import LanguageMenu from "./LanguageMenu";
@@ -17,7 +17,6 @@ import {
   User,
   LayoutDashboard,
   LogOut,
-  Phone,
   Crown,
   HelpCircle,
 } from "lucide-react";
@@ -34,6 +33,26 @@ export function Navbar() {
   const { t, locale, isRtl } = useTranslation();
   const { theme, toggleTheme } = useTheme();
   const { user, logout } = useAuth();
+
+  useEffect(() => {
+    setOpen(false);
+    setGalleryOpen(false);
+    setUserMenuOpen(false);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    if (!open) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [open]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -337,6 +356,8 @@ export function Navbar() {
           {/* Mobile / tablet Menu Toggle */}
           <button
             aria-label={t("toggle_menu")}
+            aria-expanded={open}
+            aria-controls="mobile-nav-sidebar"
             onClick={() => setOpen((v) => !v)}
             className="h-8 w-8 sm:h-[34px] sm:w-[34px] flex items-center justify-center rounded-sm border border-[var(--border)] text-[var(--foreground)] lg:hidden cursor-pointer shrink-0"
           >
@@ -345,145 +366,184 @@ export function Navbar() {
         </div>
       </div>
 
-      {/* Mobile / tablet Drawer */}
-      {open && (
-        <div className="mx-auto mt-2 w-full max-w-[var(--content-max)] rounded-lg border border-[var(--gold)]/30 bg-[var(--card)] p-4 text-start shadow-xl backdrop-blur-md lg:hidden">
-          <form onSubmit={handleSearchSubmit} className="mb-3 flex items-center gap-2 border border-[var(--border)] bg-[var(--background)] px-3 py-2 rounded-sm">
-            <Search className="h-4 w-4 text-[var(--muted-foreground)] shrink-0" />
-            <input
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={t("nav_search_placeholder")}
-              className="w-full bg-transparent text-xs text-[var(--foreground)] text-start outline-none"
-            />
-          </form>
-
-          <nav className="grid gap-2">
-            <NavLink
-              to="/"
-              end
+      {/* Mobile / tablet retractable sidebar */}
+      <div
+        className={`fixed inset-0 z-[60] lg:hidden ${open ? "pointer-events-auto" : "pointer-events-none"}`}
+        aria-hidden={!open}
+      >
+        <button
+          type="button"
+          aria-label={t("close", "Close")}
+          className={`absolute inset-0 bg-black/55 backdrop-blur-[2px] transition-opacity duration-300 ${
+            open ? "opacity-100" : "opacity-0"
+          }`}
+          onClick={() => setOpen(false)}
+        />
+        <aside
+          id="mobile-nav-sidebar"
+          role="dialog"
+          aria-modal="true"
+          aria-label={t("toggle_menu", "Menu")}
+          className={`absolute top-0 ${isRtl ? "right-0" : "left-0"} flex h-full w-[min(20rem,88vw)] flex-col border-[var(--gold)]/35 bg-[var(--card)] shadow-2xl transition-transform duration-300 ease-out ${
+            isRtl ? "border-s" : "border-e"
+          } ${
+            open
+              ? "translate-x-0"
+              : isRtl
+                ? "translate-x-full"
+                : "-translate-x-full"
+          }`}
+        >
+          <div className="flex items-center justify-between gap-3 border-b border-[var(--gold)]/25 px-4 py-3">
+            <Logo />
+            <button
+              type="button"
+              aria-label={t("close", "Close")}
               onClick={() => setOpen(false)}
-              className={({ isActive }) =>
-                `rounded-sm px-3 py-2 text-xs font-semibold ${
-                  isActive
-                    ? "bg-[var(--gold)]/20 text-[var(--gold)]"
-                    : "text-[var(--foreground)] hover:bg-[var(--gold)]/10"
-                }`
-              }
+              className="flex h-9 w-9 items-center justify-center rounded-sm border border-[var(--border)] text-[var(--foreground)] hover:bg-[var(--gold)]/15 cursor-pointer"
             >
-              {t("nav_home")}
-            </NavLink>
+              <X className="h-4 w-4" />
+            </button>
+          </div>
 
-            <NavLink
-              to="/periods"
-              onClick={() => setOpen(false)}
-              className={({ isActive }) =>
-                `rounded-sm px-3 py-2 text-xs font-semibold ${
-                  isActive
-                    ? "bg-[var(--gold)]/20 text-[var(--gold)]"
-                    : "text-[var(--foreground)] hover:bg-[var(--gold)]/10"
-                }`
-              }
-            >
-              {getTunisiaDropdownText(locale, "nav_periods")}
-            </NavLink>
+          <div className="flex-1 overflow-y-auto overscroll-contain p-4 text-start">
+            <form onSubmit={handleSearchSubmit} className="mb-4 flex items-center gap-2 border border-[var(--border)] bg-[var(--background)] px-3 py-2 rounded-sm">
+              <Search className="h-4 w-4 text-[var(--muted-foreground)] shrink-0" />
+              <input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder={t("nav_search_placeholder")}
+                className="w-full bg-transparent text-xs text-[var(--foreground)] text-start outline-none"
+              />
+            </form>
 
-            <NavLink
-              to="/sources"
-              onClick={() => setOpen(false)}
-              className={({ isActive }) =>
-                `rounded-sm px-3 py-2 text-xs font-semibold ${
-                  isActive
-                    ? "bg-[var(--gold)]/20 text-[var(--gold)]"
-                    : "text-[var(--foreground)] hover:bg-[var(--gold)]/10"
-                }`
-              }
-            >
-              {getTunisiaDropdownText(locale, "nav_sources_and_archives")}
-            </NavLink>
+            <nav className="grid gap-1.5">
+              <NavLink
+                to="/"
+                end
+                onClick={() => setOpen(false)}
+                className={({ isActive }) =>
+                  `rounded-sm px-3 py-2.5 text-xs font-semibold ${
+                    isActive
+                      ? "bg-[var(--gold)]/20 text-[var(--gold)]"
+                      : "text-[var(--foreground)] hover:bg-[var(--gold)]/10"
+                  }`
+                }
+              >
+                {t("nav_home")}
+              </NavLink>
 
-            <NavLink
-              to="/services"
-              onClick={() => setOpen(false)}
-              className={({ isActive }) =>
-                `rounded-sm px-3 py-2 text-xs font-semibold ${
-                  isActive
-                    ? "bg-[var(--gold)]/20 text-[var(--gold)]"
-                    : "text-[var(--foreground)] hover:bg-[var(--gold)]/10"
-                }`
-              }
-            >
-              {getTunisiaDropdownText(locale, "nav_services")}
-            </NavLink>
+              <NavLink
+                to="/periods"
+                onClick={() => setOpen(false)}
+                className={({ isActive }) =>
+                  `rounded-sm px-3 py-2.5 text-xs font-semibold ${
+                    isActive
+                      ? "bg-[var(--gold)]/20 text-[var(--gold)]"
+                      : "text-[var(--foreground)] hover:bg-[var(--gold)]/10"
+                  }`
+                }
+              >
+                {getTunisiaDropdownText(locale, "nav_periods")}
+              </NavLink>
 
-            <div className="py-1">
-              <p className="px-3 text-[0.65rem] font-bold uppercase tracking-wider text-[var(--gold)]">
-                {getTunisiaDropdownText(locale, "nav_gallery")}
-              </p>
-              {galleryLinks.map((l) => (
-                <NavLink
-                  key={l.to}
-                  to={l.to}
-                  onClick={() => setOpen(false)}
-                  className={({ isActive }) =>
-                    `block rounded-sm px-3 py-1.5 text-xs ${
-                      isActive
-                        ? "bg-[var(--gold)]/20 text-[var(--gold)] font-bold"
-                        : "text-[var(--foreground)] hover:bg-[var(--gold)]/10"
-                    }`
-                  }
-                >
-                  {l.label}
-                </NavLink>
-              ))}
-            </div>
+              <NavLink
+                to="/sources"
+                onClick={() => setOpen(false)}
+                className={({ isActive }) =>
+                  `rounded-sm px-3 py-2.5 text-xs font-semibold ${
+                    isActive
+                      ? "bg-[var(--gold)]/20 text-[var(--gold)]"
+                      : "text-[var(--foreground)] hover:bg-[var(--gold)]/10"
+                  }`
+                }
+              >
+                {getTunisiaDropdownText(locale, "nav_sources_and_archives")}
+              </NavLink>
 
-            <NavLink
-              to="/interactive-map"
-              onClick={() => setOpen(false)}
-              className={({ isActive }) =>
-                `rounded-sm px-3 py-2 text-xs font-semibold ${
-                  isActive
-                    ? "bg-[var(--gold)]/20 text-[var(--gold)]"
-                    : "text-[var(--foreground)] hover:bg-[var(--gold)]/10"
-                }`
-              }
-            >
-              {t("nav_interactive_map", "Carte Interactive")}
-            </NavLink>
+              <NavLink
+                to="/services"
+                onClick={() => setOpen(false)}
+                className={({ isActive }) =>
+                  `rounded-sm px-3 py-2.5 text-xs font-semibold ${
+                    isActive
+                      ? "bg-[var(--gold)]/20 text-[var(--gold)]"
+                      : "text-[var(--foreground)] hover:bg-[var(--gold)]/10"
+                  }`
+                }
+              >
+                {getTunisiaDropdownText(locale, "nav_services")}
+              </NavLink>
 
-            <NavLink
-              to="/subscriptions"
-              onClick={() => setOpen(false)}
-              className={({ isActive }) =>
-                `inline-flex items-center gap-2 rounded-sm px-3 py-2 text-xs font-semibold ${
-                  isActive
-                    ? "bg-[var(--gold)]/20 text-[var(--gold)]"
-                    : "text-[var(--gold)] hover:bg-[var(--gold)]/10"
-                }`
-              }
-            >
-              <Crown className="h-3.5 w-3.5 text-[var(--gold)] shrink-0" />
-              <span>{t("nav_subscriptions", "Abonnements & Tarifs")}</span>
-            </NavLink>
+              <div className="py-1">
+                <p className="px-3 pb-1 text-[0.65rem] font-bold uppercase tracking-wider text-[var(--gold)]">
+                  {getTunisiaDropdownText(locale, "nav_gallery")}
+                </p>
+                {galleryLinks.map((l) => (
+                  <NavLink
+                    key={l.to}
+                    to={l.to}
+                    onClick={() => setOpen(false)}
+                    className={({ isActive }) =>
+                      `block rounded-sm px-3 py-2 text-xs ${
+                        isActive
+                          ? "bg-[var(--gold)]/20 text-[var(--gold)] font-bold"
+                          : "text-[var(--foreground)] hover:bg-[var(--gold)]/10"
+                      }`
+                    }
+                  >
+                    {l.label}
+                  </NavLink>
+                ))}
+              </div>
 
-            <NavLink
-              to="/helpcenter"
-              onClick={() => setOpen(false)}
-              className={({ isActive }) =>
-                `inline-flex items-center gap-2 rounded-sm px-3 py-2 text-xs font-semibold ${
-                  isActive || seoPath.startsWith("/helpcenter") || seoPath.startsWith("/contact")
-                    ? "bg-[var(--gold)]/20 text-[var(--gold)]"
-                    : "text-[var(--foreground)] hover:bg-[var(--gold)]/10"
-                }`
-              }
-            >
-              <HelpCircle className="h-3.5 w-3.5 text-[var(--gold)] shrink-0" />
-              <span>{t("nav_help_center", "Centre d'Aide")}</span>
-            </NavLink>
-          </nav>
-        </div>
-      )}
+              <NavLink
+                to="/interactive-map"
+                onClick={() => setOpen(false)}
+                className={({ isActive }) =>
+                  `rounded-sm px-3 py-2.5 text-xs font-semibold ${
+                    isActive
+                      ? "bg-[var(--gold)]/20 text-[var(--gold)]"
+                      : "text-[var(--foreground)] hover:bg-[var(--gold)]/10"
+                  }`
+                }
+              >
+                {t("nav_interactive_map", "Carte Interactive")}
+              </NavLink>
+
+              <NavLink
+                to="/subscriptions"
+                onClick={() => setOpen(false)}
+                className={({ isActive }) =>
+                  `inline-flex items-center gap-2 rounded-sm px-3 py-2.5 text-xs font-semibold ${
+                    isActive
+                      ? "bg-[var(--gold)]/20 text-[var(--gold)]"
+                      : "text-[var(--gold)] hover:bg-[var(--gold)]/10"
+                  }`
+                }
+              >
+                <Crown className="h-3.5 w-3.5 text-[var(--gold)] shrink-0" />
+                <span>{t("nav_subscriptions", "Abonnements & Tarifs")}</span>
+              </NavLink>
+
+              <NavLink
+                to="/helpcenter"
+                onClick={() => setOpen(false)}
+                className={({ isActive }) =>
+                  `inline-flex items-center gap-2 rounded-sm px-3 py-2.5 text-xs font-semibold ${
+                    isActive || seoPath.startsWith("/helpcenter") || seoPath.startsWith("/contact")
+                      ? "bg-[var(--gold)]/20 text-[var(--gold)]"
+                      : "text-[var(--foreground)] hover:bg-[var(--gold)]/10"
+                  }`
+                }
+              >
+                <HelpCircle className="h-3.5 w-3.5 text-[var(--gold)] shrink-0" />
+                <span>{t("nav_help_center", "Centre d'Aide")}</span>
+              </NavLink>
+            </nav>
+          </div>
+        </aside>
+      </div>
     </header>
   );
 }

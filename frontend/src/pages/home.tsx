@@ -52,6 +52,7 @@ import { getApiRoot } from "../api/helpers";
 import { getTreeMetrics } from "../utils/treeMetrics";
 import FamilyCardModal from "../components/FamilyCardModal";
 import ArticleModal from "../components/ArticleModal";
+import ResilientMediaImage from "../components/ResilientMediaImage";
 import { useAuth } from "../admin/components/AuthContext";
 import {
   extractArticleList,
@@ -63,6 +64,7 @@ import {
   getSocialLikes,
   toggleSocialLike,
   resolveAnyMediaUrl,
+  resolveGalleryItemUrl,
   getTrackedUploads,
   fetchBatchSocialCounts,
 } from "../utils/gallerySocial";
@@ -499,7 +501,8 @@ export default function Home() {
             category: it.category || "Regional Heritage",
             governorate: it.governorate || it.location || "Tunis",
             yearStr: it.year || it.yearStr || "c. 1920",
-            imageUrl: resolveAnyMediaUrl(it.image_path || it.imageUrl || it.url, undefined, medina),
+            imageUrl: resolveGalleryItemUrl(it, undefined, medina),
+            image_path: it.image_path || it.imagePath || it.imageUrl || it.url || null,
             description: it.description || it.caption || "",
             likes: social.count,
             isLiked: social.isLiked,
@@ -516,6 +519,7 @@ export default function Home() {
             governorate: img.governorate || "Tunis",
             yearStr: img.year || img.yearStr || "c. 1920",
             imageUrl: resolveAnyMediaUrl(img.file_path || img.imageUrl, undefined, medina),
+            image_path: img.file_path || img.imageUrl || null,
             description: img.description || "",
             likes: social.count,
             isLiked: social.isLiked,
@@ -531,7 +535,8 @@ export default function Home() {
             category: it.category || "Heritage Archives",
             governorate: it.location || it.governorate || "Tunis",
             yearStr: it.year || "Archive",
-            imageUrl: resolveAnyMediaUrl(it.image_path || it.imageUrl || it.url, undefined, medina),
+            imageUrl: resolveGalleryItemUrl(it, undefined, medina),
+            image_path: it.image_path || it.imageUrl || it.url || null,
             description: it.description || "",
             likes: social.count,
             isLiked: social.isLiked,
@@ -1168,10 +1173,12 @@ export default function Home() {
                         onClick={() => setActiveImage(img)}
                         className="relative aspect-[4/3] overflow-hidden bg-[var(--card)] cursor-pointer"
                       >
-                        <img
+                        <ResilientMediaImage
                           src={img.imageUrl}
                           alt={img.title}
                           loading="lazy"
+                          item={img}
+                          fallbackSrc={medina}
                           className="h-full w-full object-cover transition-transform duration-500 group-hover/card:scale-105"
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-transparent opacity-0 group-hover/card:opacity-100 transition-opacity flex items-end p-3">
@@ -1520,9 +1527,12 @@ export default function Home() {
             </button>
 
             <div className="max-h-[60vh] overflow-hidden rounded-lg flex items-center justify-center bg-black/40">
-              <img
+              <ResilientMediaImage
                 src={activeImage.imageUrl}
                 alt={activeImage.title}
+                loading="eager"
+                item={activeImage}
+                fallbackSrc={medina}
                 className="max-h-[60vh] max-w-full object-contain rounded"
               />
             </div>

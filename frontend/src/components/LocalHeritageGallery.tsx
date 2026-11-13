@@ -1,11 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, Layers, X } from "lucide-react";
 import { api } from "../api/client";
-import { getApiRoot } from "../api/helpers";
 import { useTranslation } from "../context/TranslationContext";
+import { resolveGalleryItemUrl } from "../utils/gallerySocial";
+import ResilientMediaImage from "./ResilientMediaImage";
 
 interface GalleryItem {
+  id?: string | number;
   src: string;
+  image_path?: string | null;
   title: string;
   description?: string;
   category: "Gallery";
@@ -16,19 +19,24 @@ export default function LocalHeritageGallery() {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [items, setItems] = useState<GalleryItem[]>([]);
   const [brokenSources, setBrokenSources] = useState<string[]>([]);
-  const apiRoot = useMemo(() => getApiRoot(), []);
 
   useEffect(() => {
     api.get("/gallery").then((res) => {
-      if (!Array.isArray(res.data)) return;
-      setItems(res.data.filter((img: any) => img.file_path || img.image_url).map((img: any) => ({
-        src: img.image_url || `${apiRoot}/uploads/gallery/${String(img.file_path).split("/").pop()}`,
-        title: img.title || img.name || t("gallery_image", "Gallery Image"),
-        description: img.description || "",
-        category: "Gallery" as const,
-      })));
+      const rows = Array.isArray(res.data?.data) ? res.data.data : Array.isArray(res.data) ? res.data : [];
+      setItems(
+        rows
+          .filter((img: any) => img.file_path || img.image_path || img.image_url || img.imageUrl || img.id)
+          .map((img: any) => ({
+            id: img.id,
+            src: resolveGalleryItemUrl(img),
+            image_path: img.image_path || img.file_path || img.image_url || img.imageUrl || null,
+            title: img.title || img.name || t("gallery_image", "Gallery Image"),
+            description: img.description || "",
+            category: "Gallery" as const,
+          })),
+      );
     }).catch(() => setItems([]));
-  }, [apiRoot, t]);
+  }, [t]);
 
   const visibleItems = useMemo(
     () => items.filter((item) => !brokenSources.includes(item.src)),
@@ -65,7 +73,14 @@ export default function LocalHeritageGallery() {
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
           {visibleItems.map((item, index) => (
             <button key={item.src} type="button" className="group relative aspect-square rounded-xl overflow-hidden cursor-pointer border border-[var(--border-color)] shadow-md hover:shadow-xl transition-all duration-500 hover:-translate-y-1 text-left" onClick={() => setSelectedIndex(index)}>
-              <img src={item.src} alt={item.title} loading="lazy" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" onError={() => setBrokenSources((current) => current.includes(item.src) ? current : [...current, item.src])} />
+              <ResilientMediaImage
+                src={item.src}
+                alt={item.title}
+                loading="lazy"
+                item={item}
+                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                onExhausted={() => setBrokenSources((current) => current.includes(item.src) ? current : [...current, item.src])}
+              />
               <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-transparent" />
               <div className="absolute bottom-0 left-0 right-0 p-3 text-white"><p className="text-xs opacity-75">{t("gallery", "Gallery")}</p><p className="text-sm font-bold truncate">{item.title}</p></div>
             </button>
@@ -79,7 +94,7 @@ export default function LocalHeritageGallery() {
           <button onClick={(event) => { event.stopPropagation(); previous(); }} className="roots-modal-nav roots-modal-nav-left" aria-label={t("previous", "Previous")}><ChevronLeft /></button>
           <button onClick={(event) => { event.stopPropagation(); next(); }} className="roots-modal-nav roots-modal-nav-right" aria-label={t("next", "Next")}><ChevronRight /></button>
           <div className="roots-modal roots-modal-image" onClick={(event) => event.stopPropagation()}>
-            <img src={selected.src} alt={selected.title} className="max-h-[76dvh] w-full object-contain rounded-xl" />
+            <ResilientMediaImage src={selected.src} alt={selected.title} loading="eager" item={selected} className="max-h-[76dvh] w-full object-contain rounded-xl" />
             <div className="text-center text-white pt-4"><h3 className="text-xl font-bold">{selected.title}</h3>{selected.description && <p className="opacity-75 text-sm mt-1">{selected.description}</p>}<p className="text-xs uppercase tracking-wider text-[var(--gold-light)] mt-2">{t("gallery", "Gallery")}</p></div>
             <div className="text-center text-white/60 text-sm mt-3">{selectedIndex! + 1} / {visibleItems.length}</div>
           </div>

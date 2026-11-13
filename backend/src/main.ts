@@ -990,22 +990,72 @@ async function seedInitialData(knex: Knex) {
                 fs.mkdirSync(uploadsDir, { recursive: true });
             }
 
+            const galleryUploadsDir = path.join(uploadsDir, 'gallery');
+            if (!fs.existsSync(galleryUploadsDir)) {
+                fs.mkdirSync(galleryUploadsDir, { recursive: true });
+            }
+
+            // Heal legacy root-level /uploads/<file> rows into /uploads/gallery/<file>
+            // so static + DB blob fallback middleware can serve them consistently.
+            try {
+                const legacyRows = await knex('gallery')
+                    .select('id', 'image_path', 'image_data', 'image_mime_type')
+                    .whereNotNull('image_path')
+                    .andWhere('image_path', 'like', '/uploads/%')
+                    .andWhereNot('image_path', 'like', '/uploads/%/%');
+                for (const row of legacyRows) {
+                    const filename = path.basename(String(row.image_path || ''));
+                    if (!filename || filename.includes('..')) continue;
+                    const nextPath = `/uploads/gallery/${filename}`;
+                    const destFile = path.join(galleryUploadsDir, filename);
+                    const srcCandidates = [
+                        path.join(uploadsDir, filename),
+                        path.join(defaultsDir, filename),
+                    ];
+                    if (!fs.existsSync(destFile)) {
+                        for (const src of srcCandidates) {
+                            if (fs.existsSync(src)) {
+                                try { fs.copyFileSync(src, destFile); } catch {}
+                                break;
+                            }
+                        }
+                    }
+                    const patch: any = { image_path: nextPath, updated_at: knex.fn.now() };
+                    if ((!row.image_data || !Buffer.isBuffer(row.image_data) || row.image_data.length === 0) && fs.existsSync(destFile)) {
+                        try {
+                            const buf = fs.readFileSync(destFile);
+                            if (buf.length && buf.length < 5 * 1024 * 1024) {
+                                patch.image_data = buf;
+                                patch.image_mime_type = filename.endsWith('.png') ? 'image/png' : 'image/jpeg';
+                            }
+                        } catch {}
+                    }
+                    await knex('gallery').where('id', row.id).update(patch);
+                }
+            } catch (healErr: any) {
+                console.warn('Gallery path heal warning:', healErr?.message || healErr);
+            }
+
             for (const item of galleryItems) {
                 try {
                     const existing = await knex('gallery').where({ title: item.title }).first();
                     if (!existing) {
-                        const uploadFilePath = path.join(uploadsDir, item.filename);
+                        const uploadFilePath = path.join(galleryUploadsDir, item.filename);
+                        const legacyUploadPath = path.join(uploadsDir, item.filename);
                         const defaultFilePath = path.join(defaultsDir, item.filename);
                         let imageData: Buffer | null = null;
                         const mimeType = item.filename.endsWith('.png') ? 'image/png' : 'image/jpeg';
 
-                        if (fs.existsSync(defaultFilePath) && !fs.existsSync(uploadFilePath)) {
-                            try {
-                                fs.copyFileSync(defaultFilePath, uploadFilePath);
-                            } catch {}
+                        if (!fs.existsSync(uploadFilePath)) {
+                            const copyFrom = [legacyUploadPath, defaultFilePath].find((p) => fs.existsSync(p));
+                            if (copyFrom) {
+                                try { fs.copyFileSync(copyFrom, uploadFilePath); } catch {}
+                            }
                         }
 
-                        const targetFile = fs.existsSync(uploadFilePath) ? uploadFilePath : defaultFilePath;
+                        const targetFile = fs.existsSync(uploadFilePath)
+                            ? uploadFilePath
+                            : (fs.existsSync(legacyUploadPath) ? legacyUploadPath : defaultFilePath);
                         if (fs.existsSync(targetFile)) {
                             try {
                                 imageData = fs.readFileSync(targetFile);
@@ -1016,7 +1066,7 @@ async function seedInitialData(knex: Knex) {
                             title: item.title,
                             description: item.description,
                             category: item.category,
-                            image_path: `/uploads/${item.filename}`,
+                            image_path: `/uploads/gallery/${item.filename}`,
                             location: item.location,
                             year: item.year,
                             is_public: true,
@@ -1159,21 +1209,28 @@ async function bootstrap() {
         const uploadsPath = path.join(process.cwd(), 'uploads');
         app.use('/uploads', require('express').static(uploadsPath));
 
-        // DB-backed upload fallback
+        // DB-backed upload fallback (foldered + legacy root-level /uploads/<file>)
         const uploadFallbackKnex: any = app.get('KnexConnection');
         app.use(async (req: any, res: any, next: () => void) => {
-            if (req.method !== 'GET') return next();
-            const match = String(req.path || '').match(/^\/uploads\/(books|gallery|documents|audios)\/([^/?#]+)$/i);
-            if (!match) return next();
-            const kind = match[1].toLowerCase();
-            const filename = match[2];
+            if (req.method !== 'GET' && req.method !== 'HEAD') return next();
+            const folderMatch = String(req.path || '').match(/^\/uploads\/(books|gallery|documents|audios)\/([^/?#]+)$/i);
+            const rootMatch = !folderMatch
+                ? String(req.path || '').match(/^\/uploads\/([^/?#]+)$/i)
+                : null;
+            if (!folderMatch && !rootMatch) return next();
+            const kind = folderMatch ? folderMatch[1].toLowerCase() : 'gallery';
+            const filename = folderMatch ? folderMatch[2] : rootMatch![1];
+            if (!filename || filename.includes('..')) return next();
             try {
                 if (kind === 'audios') {
                     const row = await uploadFallbackKnex('audios').where('audio_path', 'like', `%/${filename}`).first();
                     const payload = getStoredFilePayload(row, 'audio_data', 'audio_mime_type', 'audio_path', 'application/octet-stream', filename);
                     if (payload) return res.type(payload.mimeType).send(payload.data);
                 } else if (kind === 'gallery') {
-                    const row = await uploadFallbackKnex('gallery').where('image_path', 'like', `%/${filename}`).first();
+                    const row = await uploadFallbackKnex('gallery')
+                        .where('image_path', 'like', `%/${filename}`)
+                        .orWhere('image_path', filename)
+                        .first();
                     const payload = getStoredFilePayload(row, 'image_data', 'image_mime_type', 'image_path', 'application/octet-stream', filename);
                     if (payload) return res.type(payload.mimeType).send(payload.data);
                 } else if (kind === 'documents') {

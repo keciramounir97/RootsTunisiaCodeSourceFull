@@ -26,9 +26,10 @@ import {
   getSocialLikes,
   toggleSocialLike,
   getTrackedUploads,
-  resolveAnyMediaUrl,
+  resolveGalleryItemUrl,
   fetchBatchSocialCounts,
 } from "../utils/gallerySocial";
+import ResilientMediaImage from "../components/ResilientMediaImage";
 
 import carthage from "../assets/slider-carthage.jpg";
 import kairouan from "../assets/slider-kairouan.jpg";
@@ -46,6 +47,7 @@ interface ImageItem {
   governorate?: string;
   yearStr?: string;
   imageUrl: string;
+  image_path?: string | null;
   descriptionKey?: string;
   description: string;
   likes?: number;
@@ -161,7 +163,8 @@ export default function GalleryImages() {
           category: it.category || "Regional Heritage",
           governorate: it.governorate || it.location || "Tunisia",
           yearStr: it.year || "",
-          imageUrl: resolveAnyMediaUrl(it.image_path || it.imageUrl || it.url, undefined, medina),
+          imageUrl: resolveGalleryItemUrl(it, undefined, medina),
+          image_path: it.image_path || it.imagePath || it.imageUrl || it.url || null,
           description: it.description || it.caption || "",
           likes: social.count,
           isLiked: social.isLiked,
@@ -177,7 +180,8 @@ export default function GalleryImages() {
           category: it.category || "Heritage Archives",
           governorate: it.location || it.governorate || "Tunisia",
           yearStr: it.year || "Uploaded",
-          imageUrl: resolveAnyMediaUrl(it.image_path || it.imageUrl || it.url, undefined, medina),
+          imageUrl: resolveGalleryItemUrl(it, undefined, medina),
+          image_path: it.image_path || it.imageUrl || it.url || null,
           description: it.description || "",
           likes: social.count,
           isLiked: social.isLiked,
@@ -371,10 +375,12 @@ export default function GalleryImages() {
                     onClick={() => setActiveImage(img)}
                     className="relative aspect-[4/3] overflow-hidden bg-[var(--card)] cursor-pointer"
                   >
-                    <img
+                    <ResilientMediaImage
                       src={img.imageUrl}
                       alt={img.title}
                       loading="lazy"
+                      item={img}
+                      fallbackSrc={medina}
                       className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-3">
@@ -471,9 +477,12 @@ export default function GalleryImages() {
             </button>
 
             <div className="max-h-[60vh] overflow-hidden rounded-lg flex items-center justify-center bg-black/40">
-              <img
+              <ResilientMediaImage
                 src={activeImage.imageUrl}
                 alt={activeImage.title}
+                loading="eager"
+                item={activeImage}
+                fallbackSrc={medina}
                 className="max-h-[60vh] max-w-full object-contain rounded"
               />
             </div>
