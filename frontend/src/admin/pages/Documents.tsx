@@ -287,19 +287,8 @@ export default function AdminDocuments() {
     }
   };
 
-  const getFileIcon = (fileType?: string) => {
-    switch (fileType?.toLowerCase()) {
-      case "pdf":
-        return "📄";
-      case "doc":
-      case "docx":
-        return "📝";
-      case "xls":
-      case "xlsx":
-        return "📊";
-      default:
-        return "📁";
-    }
+  const getFileIcon = (_fileType?: string) => {
+    return <FileText className="w-8 h-8 text-[var(--gold)]" />;
   };
 
   const cardBg = isDark ? "bg-[#0f1f33]" : "bg-white";

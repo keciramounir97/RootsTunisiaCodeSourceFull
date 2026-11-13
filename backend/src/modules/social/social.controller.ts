@@ -49,10 +49,19 @@ export class SocialController {
     // ========================================================
 
     @Get('admin/stats')
+    @Get('social/admin/stats')
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles('admin', 'super_admin', 1, 3)
     @Header('Cache-Control', 'no-cache, no-store, must-revalidate, max-age=0')
     async getAdminSocialStats() {
+        return this.socialService.getAdminSocialStats();
+    }
+
+    @Get('admin/social-stats')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles('admin', 'super_admin', 1, 3)
+    @Header('Cache-Control', 'no-cache, no-store, must-revalidate, max-age=0')
+    async getAdminSocialStatsAlias() {
         return this.socialService.getAdminSocialStats();
     }
 
@@ -84,6 +93,28 @@ export class SocialController {
         @Body() body: { isApproved: boolean }
     ) {
         return this.socialService.setCommentApproval(id, Boolean(body.isApproved));
+    }
+
+    @Patch('admin/comments/:id')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles('admin', 'super_admin', 1, 3)
+    async adminUpdateComment(
+        @Param('id', ParseIntPipe) id: number,
+        @Body() body: { content?: string; isApproved?: boolean; userName?: string }
+    ) {
+        return this.socialService.updateComment(id, body.content, body.isApproved, body.userName);
+    }
+
+    @Post('admin/comments')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles('admin', 'super_admin', 1, 3)
+    async adminAddComment(
+        @Body() body: { mediaKey: string; content: string; userName?: string; entityType?: string; entityId?: number },
+        @Request() req: any
+    ) {
+        const userName = body.userName || req.user?.fullName || req.user?.full_name || req.user?.email || 'Admin';
+        const userId = Number(req.user?.id || 1);
+        return this.socialService.addComment(body.mediaKey, userId, userName, body.content, body.entityType, body.entityId);
     }
 
     @Delete('admin/comments/:id')

@@ -11,13 +11,18 @@ export interface SocialComment {
 const STORAGE_PREFIX = "roots_social_";
 const UPLOADS_STORAGE_KEY = "roots_custom_uploads_v2";
 
-// One-time client cleanup of legacy hardcoded fake likes (e.g. 24, 18, 25, etc.)
+// One-time client cleanup of legacy hardcoded fake likes and old mock article cache
 if (typeof window !== "undefined") {
   try {
     const keysToRemove: string[] = [];
     for (let i = 0; i < localStorage.length; i++) {
       const k = localStorage.key(i);
-      if (k && k.startsWith(`${STORAGE_PREFIX}likes_`)) {
+      if (!k) continue;
+      if (k.startsWith(`${STORAGE_PREFIX}likes_gallery_article_`) || k.startsWith(`${STORAGE_PREFIX}comments_gallery_article_`)) {
+        keysToRemove.push(k);
+        continue;
+      }
+      if (k.startsWith(`${STORAGE_PREFIX}likes_`)) {
         const val = localStorage.getItem(k);
         if (
           val &&

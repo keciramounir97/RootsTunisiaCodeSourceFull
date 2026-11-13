@@ -117,6 +117,10 @@ const isPublicGetRequest = (config?: InternalAxiosRequestConfig): boolean => {
     "/settings",
     "/api/help",
     "/help",
+    "/api/services",
+    "/services",
+    "/api/faq",
+    "/faq",
     "/api/health",
     "/health",
   ];

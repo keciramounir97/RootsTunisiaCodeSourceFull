@@ -88,9 +88,16 @@ export function resolveEntry(
 ): SiteContentValue | undefined {
   const entry = content.pages?.[page]?.[section]?.[key];
   if (!entry) return undefined;
-  const translated = entry.type === "image" ? undefined : entry.translations?.[locale];
+  if (entry.type === "image") {
+    return isEmpty(entry.value) ? undefined : entry.value;
+  }
+  const normLocale = (locale || "fr").toLowerCase();
+  const translated = entry.translations?.[normLocale];
   if (!isEmpty(translated)) return translated;
-  return isEmpty(entry.value) ? undefined : entry.value;
+  if (normLocale === "fr") {
+    return isEmpty(entry.value) ? undefined : entry.value;
+  }
+  return undefined;
 }
 
 export function useSiteContent() {

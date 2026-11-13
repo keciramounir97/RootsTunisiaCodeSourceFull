@@ -20,12 +20,15 @@ export default function SEO({
   canonical,
   jsonLd,
 }: SEOProps) {
-  const { t, locale } = useTranslation();
+  const { locale } = useTranslation();
   const isAr = locale === "ar";
   useEffect(() => {
-    // 1. Update Title
+    // 1. Update Title (avoid duplicating brand suffix if already included)
     if (title) {
-      document.title = `${title} | ${isAr ? "جذور تونس" : "Roots Tunisia"}`;
+      const hasBrand = /roots\s*tunisia|جذور\s*تونس/i.test(title);
+      document.title = hasBrand
+        ? title
+        : `${title} | ${isAr ? "جذور تونس" : "Roots Tunisia"}`;
     }
 
     // Helper to get or create meta tag
@@ -95,7 +98,7 @@ export default function SEO({
     } else if (scriptEl) {
       scriptEl.remove();
     }
-  }, [title, description, keywords, ogImage, ogType, canonical, jsonLd]);
+  }, [title, description, keywords, ogImage, ogType, canonical, jsonLd, locale, isAr]);
 
   return null;
 }

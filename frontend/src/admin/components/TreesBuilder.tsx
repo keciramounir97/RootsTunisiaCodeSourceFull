@@ -2,9 +2,6 @@
 // @ts-nocheck
 const SOURCE_HOST_LABELS: Array<[string, string]> = [
   ["gallica.bnf.fr", "Gallica (BnF)"],
-  ["familysearch.org", "FamilySearch"],
-  ["geneanet.org", "Geneanet"],
-  ["ancestry.", "Ancestry"],
   ["archives.gov", "National Archives (US)"],
   ["archive.org", "Internet Archive"],
   ["nationalarchives.gov.uk", "National Archives (UK)"],
@@ -57,7 +54,8 @@ export function isDomainOrHostString(str: string): boolean {
 export function maskSourceLabel(
   label: string | undefined,
   url?: string | undefined,
-  kind?: string | undefined
+  kind?: string | undefined,
+  t?: (key: string, fb?: string) => string
 ): string {
   const trimmed = (label || "").trim();
   if (
@@ -68,15 +66,23 @@ export function maskSourceLabel(
   ) {
     const effectiveKind = (kind || "").toLowerCase();
     if (effectiveKind === "image" || effectiveKind === "photo" || effectiveKind === "gallery") {
-      return "Photographie d'Archive Numérisée";
+      return t
+        ? t("legacy.masked_archive_photo", "Photographie d'Archive Numérisée")
+        : "Photographie d'Archive Numérisée";
     }
     if (effectiveKind === "audio") {
-      return "Enregistrement Oral d'Archive";
+      return t
+        ? t("legacy.masked_archive_audio", "Enregistrement Oral d'Archive")
+        : "Enregistrement Oral d'Archive";
     }
     if (effectiveKind === "document" || effectiveKind === "book") {
-      return "Acte & Document d'Archives Officiel";
+      return t
+        ? t("legacy.masked_archive_document", "Acte & Document d'Archives Officiel")
+        : "Acte & Document d'Archives Officiel";
     }
-    return "Source d'Archives Certifiée";
+    return t
+      ? t("legacy.masked_archive_certified", "Source d'Archives Certifiée")
+      : "Source d'Archives Certifiée";
   }
   return trimmed;
 }
@@ -2989,7 +2995,7 @@ export default function TreesBuilder({
           const spouseName = d.spouse ? getP(d.spouse) : (d.spouseName || "");
 
           const rowHtml = (label: string, value: string) =>
-            `<div style="display:flex; justify-content:space-between; align-items:flex-start; gap:16px; padding:2px 0;"><span style="opacity:0.75; font-size:11px; white-space:nowrap;">${esc(label)}:</span><span style="font-weight:600; font-size:11.5px; text-align:right; word-break:break-word;">${esc(value)}</span></div>`;
+            `<div dir="${dir}" style="display:flex; justify-content:space-between; align-items:flex-start; gap:16px; padding:2px 0;"><span style="opacity:0.75; font-size:11px; white-space:nowrap;">${esc(label)}:</span><span style="font-weight:600; font-size:11.5px; text-align:${dir === "rtl" ? "left" : "right"}; word-break:break-word;">${esc(value)}</span></div>`;
           const rows: string[] = [];
           const addRow = (label: string, value: string) => {
             if (!value) return;
@@ -3033,11 +3039,11 @@ export default function TreesBuilder({
               : "";
 
           const tooltipHtml = `
-            <div style="font-weight:700; font-size:13px; font-family:'Cinzel', 'Cormorant Garamond', serif; padding-bottom:4px; margin-bottom:6px; border-bottom:1px solid ${isDark ? "rgba(212,169,86,0.3)" : "rgba(212,169,86,0.4)"}; display:flex; justify-content:space-between; align-items:center; gap:8px;">
+            <div dir="${dir}" style="font-weight:700; font-size:13px; font-family:'Cinzel', 'Cormorant Garamond', serif; padding-bottom:4px; margin-bottom:6px; border-bottom:1px solid ${isDark ? "rgba(212,169,86,0.3)" : "rgba(212,169,86,0.4)"}; display:flex; justify-content:space-between; align-items:center; gap:8px;">
               <span>${name}</span>
               <span style="font-size:11px; opacity:0.75; font-family:sans-serif; font-weight:600;">(${gender})</span>
             </div>
-            <div style="display:flex; flex-direction:column; gap:2px; font-size:11.5px;">
+            <div dir="${dir}" style="display:flex; flex-direction:column; gap:2px; font-size:11.5px;">
               ${infoHtml}
               ${emptyHtml}
               ${detailsHtml}
@@ -3197,8 +3203,8 @@ export default function TreesBuilder({
           })
           .text((d) => {
             const genderCode = normalizeGenderValue(d.gender);
-            if (genderCode === "M") return "M";
-            if (genderCode === "F") return "F";
+            if (genderCode === "M") return t("legacy.gender_short_m", "M");
+            if (genderCode === "F") return t("legacy.gender_short_f", "F");
             return "";
           });
 
@@ -3212,7 +3218,7 @@ export default function TreesBuilder({
           .style("font-family", "Manrope")
           .text((d) => {
             const b = d.birthDate || d.birthYear || "";
-            return b ? `b. ${b}` : "";
+            return b ? `${t("legacy.born_short", "b.")} ${b}` : "";
           });
 
         // DEATH DATE
@@ -3225,7 +3231,7 @@ export default function TreesBuilder({
           .style("font-family", "Manrope")
           .text((d) => {
             const dead = d.deathDate || d.deathYear || "";
-            return dead ? `d. ${dead}` : "";
+            return dead ? `${t("legacy.died_short", "d.")} ${dead}` : "";
           });
 
         // PLACE
@@ -4572,7 +4578,7 @@ export default function TreesBuilder({
             </button>
             <button
               type="button"
-              className="interactive-btn btn-neu ml-2 inline-flex items-center gap-2 !px-4 !py-2 !text-xs cursor-pointer select-none"
+              className="interactive-btn btn-neu ms-2 inline-flex items-center gap-2 !px-4 !py-2 !text-xs cursor-pointer select-none"
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -4584,7 +4590,7 @@ export default function TreesBuilder({
             </button>
             {dataFormat === "gedcomx" ? (
               <span
-                className="neu-chip ml-2 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wide"
+                className="neu-chip ms-2 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wide"
                 title={t("legacy.tree_saved_gedcomx",
                   "This tree is saved in GEDCOM X format.",
                 )}
@@ -4592,7 +4598,7 @@ export default function TreesBuilder({
             ) : null}
             {dataFormat === "gedcom7" ? (
               <span
-                className="neu-chip ml-2 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wide"
+                className="neu-chip ms-2 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wide"
                 title={t("legacy.tree_saved_gedcom7",
                   "This tree is saved in GEDCOM 7.0 format.",
                 )}
@@ -4633,7 +4639,7 @@ export default function TreesBuilder({
                       setGedcomImportOpen(false);
                       importGedcomRef.current?.click();
                     }}
-                    className="neu-menu-item w-full text-left px-3.5 py-2.5 text-sm"
+                    className="neu-menu-item w-full text-start px-3.5 py-2.5 text-sm"
                   >
                     {t("legacy.gedcom_format_551", "GEDCOM 5.5.1")}
                   </button>
@@ -4645,7 +4651,7 @@ export default function TreesBuilder({
                       setGedcomImportOpen(false);
                       importGedcomRef.current?.click();
                     }}
-                    className="neu-menu-item w-full text-left px-3.5 py-2.5 text-sm"
+                    className="neu-menu-item w-full text-start px-3.5 py-2.5 text-sm"
                   >
                     {t("legacy.format_gedcom7", "GEDCOM 7.0")}
                   </button>
@@ -4682,7 +4688,7 @@ export default function TreesBuilder({
                       setGedcomExportOpen(false);
                       exportGedcomFile();
                     }}
-                    className="neu-menu-item w-full text-left px-3.5 py-2.5 text-sm"
+                    className="neu-menu-item w-full text-start px-3.5 py-2.5 text-sm"
                   >
                     {t("legacy.gedcom_format_551", "GEDCOM 5.5.1")}
                   </button>
@@ -4693,7 +4699,7 @@ export default function TreesBuilder({
                       setGedcomExportOpen(false);
                       exportGedcom7File();
                     }}
-                    className="neu-menu-item w-full text-left px-3.5 py-2.5 text-sm"
+                    className="neu-menu-item w-full text-start px-3.5 py-2.5 text-sm"
                   >
                     {t("legacy.format_gedcom7", "GEDCOM 7.0")}
                   </button>
@@ -4729,7 +4735,7 @@ export default function TreesBuilder({
                       setGedcomXImportOpen(false);
                       importGedcomXRef.current?.click();
                     }}
-                    className="neu-menu-item w-full text-left px-3.5 py-2.5 text-sm"
+                    className="neu-menu-item w-full text-start px-3.5 py-2.5 text-sm"
                   >
                     {t("legacy.gedcomx_format_xml", "XML format")}
                   </button>
@@ -4741,7 +4747,7 @@ export default function TreesBuilder({
                       setGedcomXImportOpen(false);
                       importGedcomXRef.current?.click();
                     }}
-                    className="neu-menu-item w-full text-left px-3.5 py-2.5 text-sm"
+                    className="neu-menu-item w-full text-start px-3.5 py-2.5 text-sm"
                   >
                     {t("legacy.gedcomx_format_json", "JSON format")}
                   </button>
@@ -4753,7 +4759,7 @@ export default function TreesBuilder({
                       setGedcomXImportOpen(false);
                       importGedcomXRef.current?.click();
                     }}
-                    className="neu-menu-item w-full text-left px-3.5 py-2.5 text-sm"
+                    className="neu-menu-item w-full text-start px-3.5 py-2.5 text-sm"
                   >
                     {t("legacy.gedcomx_format_gedx", ".gedx file")}
                   </button>
@@ -4785,7 +4791,7 @@ export default function TreesBuilder({
                     type="button"
                     role="menuitem"
                     onClick={() => exportGedcomXFile("xml")}
-                    className="neu-menu-item w-full text-left px-3.5 py-2.5 text-sm"
+                    className="neu-menu-item w-full text-start px-3.5 py-2.5 text-sm"
                   >
                     {t("legacy.gedcomx_format_xml", "XML format")}
                   </button>
@@ -4793,7 +4799,7 @@ export default function TreesBuilder({
                     type="button"
                     role="menuitem"
                     onClick={() => exportGedcomXFile("json")}
-                    className="neu-menu-item w-full text-left px-3.5 py-2.5 text-sm"
+                    className="neu-menu-item w-full text-start px-3.5 py-2.5 text-sm"
                   >
                     {t("legacy.gedcomx_format_json", "JSON format")}
                   </button>
@@ -4801,7 +4807,7 @@ export default function TreesBuilder({
                     type="button"
                     role="menuitem"
                     onClick={() => exportGedcomXFile("gedx")}
-                    className="neu-menu-item w-full text-left px-3.5 py-2.5 text-sm"
+                    className="neu-menu-item w-full text-start px-3.5 py-2.5 text-sm"
                   >
                     {t("legacy.gedcomx_format_gedx", ".gedx file")}
                   </button>
@@ -4861,6 +4867,7 @@ export default function TreesBuilder({
                         onClick={() => {
                           resetAddForm();
                           setPanelTab("add");
+                          setPersonModalOpen(true);
                         }}
                       >
                         {t("legacy.add_person", "Add Person")}
@@ -4890,9 +4897,10 @@ export default function TreesBuilder({
 
             {selectedPerson ? createPortal(
               <div
+                dir={dir}
                 className={`fixed inset-0 z-[2000] flex items-center justify-center p-4 ${
                   isDark ? "bg-black/75" : "bg-[#0d1b2a]/45"
-                } backdrop-blur-sm`}
+                } backdrop-blur-sm text-start`}
                 role="dialog"
                 aria-modal="true"
                 aria-label={t("legacy.person_card", "Person card")}
@@ -4947,7 +4955,7 @@ export default function TreesBuilder({
                 <div className="flex-1 overflow-y-auto custom-scrollbar px-5 py-5 sm:px-7">
                 {!readOnly ? (
                   <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-stone-600 dark:text-stone-300">
-                    <span className="mr-1">{t("legacy.link_with", "Link with:")}</span>
+                    <span className="me-1">{t("legacy.link_with", "Link with:")}</span>
                     <button
                       type="button"
                       onClick={() => openMediaLinkPanel("audio")}
@@ -5127,12 +5135,12 @@ export default function TreesBuilder({
                           : "bg-teal-500/15 text-teal-600 dark:text-teal-400 border-teal-500/30";
 
                         const badgeLabel = isImg
-                          ? "IMAGE"
+                          ? t("legacy.source_badge_image", "IMAGE")
                           : isAudio
-                          ? "AUDIO"
+                          ? t("legacy.source_badge_audio", "AUDIO")
                           : isDoc
-                          ? "DOCUMENT"
-                          : "EXTERNAL LINK";
+                          ? t("legacy.source_badge_document", "DOCUMENT")
+                          : t("legacy.source_badge_external_link", "EXTERNAL LINK");
 
                         return (
                           <div
@@ -5150,7 +5158,7 @@ export default function TreesBuilder({
                                     if (l.kind === "external" || (/^https?:\/\//i.test(l.url) && !/\.(png|jpe?g|gif|webp|pdf|mp3|wav)$/i.test(l.url))) {
                                       openPersonSourceLink(l.url);
                                     } else {
-                                      setPreviewSource({ url: l.url, label: maskSourceLabel(l.label, l.url, l.kind), kind: l.kind });
+                                      setPreviewSource({ url: l.url, label: maskSourceLabel(l.label, l.url, l.kind, t), kind: l.kind });
                                     }
                                   }}
                                   className="inline-flex items-center gap-1 rounded-lg bg-[#0d9488]/15 px-2.5 py-1 text-xs font-semibold text-[#0d9488] dark:text-[#5eead4] hover:bg-[#0d9488]/25 transition"
@@ -5180,8 +5188,8 @@ export default function TreesBuilder({
                               ) : (
                                 <Link2 className="h-4 w-4 shrink-0 text-[#0d9488]" />
                               )}
-                              <span className="font-semibold break-words text-[#162238] dark:text-white" title={maskSourceLabel(l.label, l.url, l.kind)}>
-                                {maskSourceLabel(l.label, l.url, l.kind)}
+                              <span className="font-semibold break-words text-[#162238] dark:text-white" title={maskSourceLabel(l.label, l.url, l.kind, t)}>
+                                {maskSourceLabel(l.label, l.url, l.kind, t)}
                               </span>
                             </div>
 
@@ -5333,7 +5341,8 @@ export default function TreesBuilder({
 
             {previewSource ? createPortal(
               <div
-                className={`fixed inset-0 z-[2500] flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-200`}
+                dir={dir}
+                className={`fixed inset-0 z-[2500] flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-200 text-start`}
                 role="dialog"
                 aria-modal="true"
                 onClick={() => setPreviewSource(null)}
@@ -5348,16 +5357,18 @@ export default function TreesBuilder({
                   >
                     <div className="min-w-0 flex-1">
                       <h3 className={`font-cinzel font-bold text-lg truncate text-[#0c4a6e] dark:text-[#0d9488]`}>
-                        {maskSourceLabel(previewSource.label, previewSource.url, previewSource.kind)}
+                        {maskSourceLabel(previewSource.label, previewSource.url, previewSource.kind, t)}
                       </h3>
                       <div className="flex items-center gap-1.5 mt-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
                         <ShieldCheck className="w-3.5 h-3.5 shrink-0" />
-                        <span>Source d'Archives Certifiée • Fonds Numérisé</span>
+                        <span>{t("legacy.certified_archive_digitized_fund", "Source d'Archives Certifiée • Fonds Numérisé")}</span>
                       </div>
                     </div>
                     <button
                       type="button"
                       onClick={() => setPreviewSource(null)}
+                      title={t("common.close", "Fermer")}
+                      aria-label={t("common.close", "Fermer")}
                       className="p-1.5 rounded-lg text-stone-400 hover:bg-stone-500/10 hover:text-red-500 transition-colors"
                     >
                       <X className="w-5 h-5" />
@@ -5406,7 +5417,7 @@ export default function TreesBuilder({
                       className="interactive-btn btn-neu btn-neu--primary px-4 py-2 text-xs flex items-center gap-1.5 cursor-pointer"
                     >
                       <Download className="w-3.5 h-3.5" />
-                      Télécharger / Ouvrir
+                      {t("legacy.download_or_open", "Télécharger / Ouvrir")}
                     </button>
                     <button
                       type="button"
@@ -5420,7 +5431,8 @@ export default function TreesBuilder({
             ) : null}
             {personModalOpen && !readOnly ? createPortal(
             <div
-              className="fixed inset-0 z-[2500] flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-200"
+              dir={dir}
+              className="fixed inset-0 z-[2500] flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-200 text-start"
               role="dialog"
               aria-modal="true"
               onClick={() => setPersonModalOpen(false)}
@@ -5444,6 +5456,8 @@ export default function TreesBuilder({
                   <button
                     type="button"
                     onClick={() => setPersonModalOpen(false)}
+                    title={t("common.close", "Fermer")}
+                    aria-label={t("common.close", "Fermer")}
                     className="p-1.5 rounded-lg text-stone-400 hover:bg-stone-500/10 hover:text-red-500 transition-colors"
                   >
                     <X className="w-5 h-5" />
@@ -5494,7 +5508,8 @@ export default function TreesBuilder({
                           onChange={(e) => setRawIndiDraft(e.target.value)}
                           placeholder={`0 @I1@ INDI\n1 NAME Prénom /Nom/\n1 SEX M\n1 BIRT\n2 DATE 1950\n2 PLAC Tunis\n1 DEAT\n2 DATE 2010\n1 NOTE Recherche historique`}
                           rows={12}
-                          className={`w-full p-4 font-mono text-xs rounded-xl border ${border} ${inputBg} ${inputText} focus:ring-2 focus:ring-[#0d9488]/40 resize-none`}
+                          dir="ltr"
+                          className={`w-full p-4 font-mono text-xs rounded-xl border ${border} ${inputBg} ${inputText} focus:ring-2 focus:ring-[#0d9488]/40 resize-none text-left`}
                         />
                       </div>
 
@@ -5528,10 +5543,10 @@ export default function TreesBuilder({
                                 setRawIndiDraft("");
                                 notifyPerson(t("legacy.person_added", "Individu(s) ajouté(s) via GEDCOM / GEDCOM X avec succès!"));
                               } else {
-                                notifyError("No valid individual records found in the provided snippet.");
+                                notifyError(t("no_valid_gedcom_records", "No valid individual records found in the provided snippet."));
                               }
                             } catch (err) {
-                              notifyError("Invalid GEDCOM / GEDCOM X syntax.");
+                              notifyError(t("invalid_gedcom_syntax", "Invalid GEDCOM / GEDCOM X syntax."));
                             }
                           }}
                           className="interactive-btn btn-neu btn-neu--primary !px-8 !py-2.5 !text-sm"
@@ -5801,7 +5816,7 @@ export default function TreesBuilder({
                         <button
                           type="button"
                           onClick={() => deletePerson(addForm.id)}
-                          className="mr-auto rounded-lg px-4 py-2 text-sm font-bold uppercase tracking-wider text-red-600 transition hover:bg-red-500/10 dark:text-red-400"
+                          className="me-auto rounded-lg px-4 py-2 text-sm font-bold uppercase tracking-wider text-red-600 transition hover:bg-red-500/10 dark:text-red-400"
                         >
                           {t("legacy.delete", "Delete")}
                         </button>

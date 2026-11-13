@@ -14,6 +14,10 @@ import {
   Moon,
   Globe,
   Archive,
+  SearchX,
+  RotateCcw,
+  Compass,
+  AlertCircle,
 } from "lucide-react";
 import { PageHero, Section } from "../components/site/Primitives";
 import kairouan from "../assets/slider-kairouan.jpg";
@@ -22,6 +26,13 @@ import { useTranslation } from "../context/TranslationContext";
 import { useSiteContent } from "../hooks/useSiteContent";
 import SiteCustomBlocks from "../components/cms/SiteCustomBlocks";
 import { api } from "../api/client";
+import { SourceCard } from "../components/SourceCard";
+import {
+  DEFAULT_SOURCES_HERO_BY_LOCALE,
+  loadSourcesMultiLocaleStore,
+  resolveLocalizedLocation,
+  resolveLocalizedSourceCard,
+} from "../utils/sourcesCmsConfig";
 
 export interface ExternalArchiveItem {
   id: string;
@@ -32,6 +43,7 @@ export interface ExternalArchiveItem {
   description: string;
   link: string;
   tags: string[];
+  translations?: Record<string, { title?: string; description?: string }>;
 }
 
 export const ARCHIVES_DIRECTORY: ExternalArchiveItem[] = [
@@ -374,13 +386,20 @@ const LOCATION_ICONS: Record<string, any> = {
 };
 
 export default function SourcesAndArchives() {
-  const { t, isRtl } = useTranslation();
+  const { t, locale, isRtl } = useTranslation();
   const { getText, getImage } = useSiteContent();
 
   const [activeCategory, setActiveCategory] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [dbCards, setDbCards] = useState<ExternalArchiveItem[]>([]);
   const [dbLocations, setDbLocations] = useState<Array<{ key: string; label: string; icon?: string }>>([]);
+  const [sourcesStore, setSourcesStore] = useState(() => loadSourcesMultiLocaleStore());
+
+  useEffect(() => {
+    const onStoreUpdate = () => setSourcesStore(loadSourcesMultiLocaleStore());
+    window.addEventListener("roots_sources_cms_updated", onStoreUpdate);
+    return () => window.removeEventListener("roots_sources_cms_updated", onStoreUpdate);
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -411,6 +430,7 @@ export default function SourcesAndArchives() {
               tags: Array.isArray(c.tags)
                 ? c.tags
                 : (typeof c.tags === "string" ? c.tags.split(",").map((s: string) => s.trim()).filter(Boolean) : []),
+              translations: c.translations || {},
             }));
             setDbCards(mapped);
           }
@@ -425,36 +445,189 @@ export default function SourcesAndArchives() {
     };
   }, []);
 
+  const cleanLocale = (locale || "fr").toLowerCase();
+  const localeHeroOverride = sourcesStore.heroByLocale?.[cleanLocale];
+  const localeHeroDefault = DEFAULT_SOURCES_HERO_BY_LOCALE[cleanLocale] || DEFAULT_SOURCES_HERO_BY_LOCALE.fr;
+
+  const SOURCES_UI_BY_LOCALE: Record<
+    string,
+    {
+      seoTitle: string;
+      seoDesc: string;
+      exploreTreesCta: string;
+      allFunds: string;
+      searchPlaceholder: string;
+      clearSearch: string;
+      resultsLabel: string;
+      archiveSingular: string;
+      archivePlural: string;
+      noResultsBadge: string;
+      noResultsTitle: string;
+      noResultsForQuery: (q: string) => string;
+      noResultsInCategory: string;
+      noResultsHint: string;
+      resetFilters: string;
+      openMapCta: string;
+    }
+  > = {
+    fr: {
+      seoTitle: "Sources et Archives de Tunisie — Répertoire Officiel",
+      seoDesc:
+        "Consultez les dépôts et portails d'archives officiels pour la généalogie tunisienne : Archives Nationales de Tunisie, CADN Nantes, ANOM, Italie, Malte, Grande-Bretagne, fonds ottomans et juifs.",
+      exploreTreesCta: "Consulter les Arbres Familles",
+      allFunds: "Tous les fonds",
+      searchPlaceholder:
+        "Rechercher par nom d'archive, pays ou mot-clé (ex: cadis, naturalisation, sicile, tirailleurs, habous)...",
+      clearSearch: "Effacer",
+      resultsLabel: "Résultats :",
+      archiveSingular: "archive",
+      archivePlural: "archives",
+      noResultsBadge: "Recherche Infructueuse",
+      noResultsTitle: "Aucune archive trouvée",
+      noResultsForQuery: (q) => `Aucun fonds documentaire ne correspond au terme « ${q} » dans cette catégorie.`,
+      noResultsInCategory: "Aucune pièce d'archive n'est répertoriée dans cette sélection.",
+      noResultsHint: "Vous pouvez réinitialiser vos filtres ou élargir vos termes de recherche.",
+      resetFilters: "Réinitialiser les filtres",
+      openMapCta: "Consulter la Carte Interactive",
+    },
+    en: {
+      seoTitle: "Tunisian Sources & Archives — Official Directory",
+      seoDesc:
+        "Browse official archival repositories and portals for Tunisian genealogy: National Archives of Tunisia, CADN Nantes, ANOM, Italy, Malta, UK, Ottoman and Jewish collections.",
+      exploreTreesCta: "Explore Family Trees",
+      allFunds: "All Holdings",
+      searchPlaceholder:
+        "Search by archive name, country or keyword (e.g., qadis, naturalization, Sicily, tirailleurs, habous)...",
+      clearSearch: "Clear",
+      resultsLabel: "Results:",
+      archiveSingular: "archive",
+      archivePlural: "archives",
+      noResultsBadge: "No Matches Found",
+      noResultsTitle: "No archives found",
+      noResultsForQuery: (q) => `No archival holdings match the term "${q}" in this category.`,
+      noResultsInCategory: "No archival records are listed in this selection.",
+      noResultsHint: "You can reset your filters or broaden your search terms.",
+      resetFilters: "Reset Filters",
+      openMapCta: "Explore Interactive Map",
+    },
+    ar: {
+      seoTitle: "المصادر والأرشيفات التونسية — الدليل الرسمي",
+      seoDesc:
+        "تصفّح دور الأرشيف والبوابات الوثائقية الرسمية للأنساب التونسية: الأرشيف الوطني التونسي، نانت، إيكس أون بروفانس، إيطاليا، مالطا، بريطانيا، والأرصدة العثمانية واليهودية.",
+      exploreTreesCta: "تصفّح شجرات العائلات",
+      allFunds: "جميع الأرصدة",
+      searchPlaceholder:
+        "ابحث باسم الأرشيف أو البلد أو الكلمة المفتاحية (مثل: القضاة، التجنيس، صقلية، الأحباس، الدفاتر)...",
+      clearSearch: "مسح",
+      resultsLabel: "النتائج :",
+      archiveSingular: "أرشيف",
+      archivePlural: "أرشيفات",
+      noResultsBadge: "بحث دون نتائج",
+      noResultsTitle: "لم يتم العثور على أي أرشيف",
+      noResultsForQuery: (q) => `لا يوجد أي رصيد وثائقي يطابق عبارة « ${q} » في هذه الفئة.`,
+      noResultsInCategory: "لا توجد أي وثيقة أرشيفية مسجلة في هذا التصنيف.",
+      noResultsHint: "يمكنك إعادة ضبط الفلاتر أو توسيع كلمات البحث.",
+      resetFilters: "إعادة ضبط الفلاتر",
+      openMapCta: "تصفّح الخريطة التفاعلية",
+    },
+    es: {
+      seoTitle: "Fuentes y Archivos de Túnez — Directorio Oficial",
+      seoDesc:
+        "Consulte los depósitos y portales de archivos oficiales para la genealogía tunecina: Archivos Nacionales de Túnez, CADN Nantes, ANOM, Italia, Malta, Reino Unido, fondos otomanos y judíos.",
+      exploreTreesCta: "Consultar Árboles Familiares",
+      allFunds: "Todos los fondos",
+      searchPlaceholder:
+        "Buscar por nombre de archivo, país o palabra clave (ej: cadíes, naturalización, Sicilia, tiradores, habices)...",
+      clearSearch: "Borrar",
+      resultsLabel: "Resultados:",
+      archiveSingular: "archivo",
+      archivePlural: "archivos",
+      noResultsBadge: "Búsqueda sin resultados",
+      noResultsTitle: "No se encontraron archivos",
+      noResultsForQuery: (q) => `Ningún fondo documental coincide con el término « ${q} » en esta categoría.`,
+      noResultsInCategory: "No hay piezas de archivo registradas en esta selección.",
+      noResultsHint: "Puede restablecer sus filtros o ampliar sus términos de búsqueda.",
+      resetFilters: "Restablecer filtros",
+      openMapCta: "Consultar el Mapa Interactivo",
+    },
+    it: {
+      seoTitle: "Fonti e Archivi della Tunisia — Repertorio Ufficiale",
+      seoDesc:
+        "Consulta i depositi e i portali d'archivio ufficiali per la genealogia tunisina: Archivi Nazionali della Tunisia, CADN Nantes, ANOM, Italia, Malta, Regno Unito, fondi ottomani ed ebraici.",
+      exploreTreesCta: "Esplora gli Alberi Genealogici",
+      allFunds: "Tutti i fondi",
+      searchPlaceholder:
+        "Cerca per nome d'archivio, paese o parola chiave (es: cadì, naturalizzazione, Sicilia, tirailleurs, habous)...",
+      clearSearch: "Cancella",
+      resultsLabel: "Risultati:",
+      archiveSingular: "archivio",
+      archivePlural: "archivi",
+      noResultsBadge: "Ricerca senza risultati",
+      noResultsTitle: "Nessun archivio trovato",
+      noResultsForQuery: (q) => `Nessun fondo documentario corrisponde al termine « ${q} » in questa categoria.`,
+      noResultsInCategory: "Nessun documento d'archivio è elencato in questa selezione.",
+      noResultsHint: "Puoi reimpostare i filtri o ampliare i termini di ricerca.",
+      resetFilters: "Reimposta filtri",
+      openMapCta: "Consulta la Mappa Interattiva",
+    },
+    mt: {
+      seoTitle: "Sorsi u Arkivji tat-Tuneżija — Direttorju Uffiċjali",
+      seoDesc:
+        "Ikkonsulta d-depożiti u l-portali uffiċjali tal-arkivji għall-ġenealoġija Tuneżina: l-Arkivji Nazzjonali tat-Tuneżija, CADN Nantes, ANOM, l-Italja, Malta, ir-Renju Unit, u fondi Ottomani u Lhud.",
+      exploreTreesCta: "Esplora s-Siġar tal-Familja",
+      allFunds: "Il-fondi kollha",
+      searchPlaceholder:
+        "Fittex skont l-isem tal-arkivju, pajjiż jew kelma ewlenija (eż: qadis, naturalizzazzjoni, Sqallija, habous)...",
+      clearSearch: "Ħassar",
+      resultsLabel: "Riżultati:",
+      archiveSingular: "arkivju",
+      archivePlural: "arkivji",
+      noResultsBadge: "Tfittxija bla riżultat",
+      noResultsTitle: "Ma nstab l-ebda arkivju",
+      noResultsForQuery: (q) => `L-ebda fond dokumentarju ma jaqbel mat-terminu « ${q} » f'din il-kategorija.`,
+      noResultsInCategory: "L-ebda dokument tal-arkivju mhu elenkat f'din l-għażla.",
+      noResultsHint: "Tista' tirrisettja l-filtri tiegħek jew twessa' t-termini tat-tfittxija.",
+      resetFilters: "Irrisettja l-filtri",
+      openMapCta: "Ikkonsulta l-Mappa Interattiva",
+    },
+  };
+
+  const ui = SOURCES_UI_BY_LOCALE[cleanLocale] || SOURCES_UI_BY_LOCALE.fr;
+
   const heroEyebrow =
-    getText("sources", "hero", "eyebrow") ??
-    t("sources_and_archives_nav", "RÉPERTOIRE DES INSTITUTIONS & DÉPÔTS");
+    localeHeroOverride?.eyebrow ||
+    (cleanLocale === "fr" ? getText("sources", "hero", "eyebrow") : "") ||
+    localeHeroDefault.eyebrow;
   const heroTitle =
-    getText("sources", "hero", "title") ??
-    t("tunisian_sources_repositories", "Sources & Archives pour la Tunisie");
+    localeHeroOverride?.title ||
+    (cleanLocale === "fr" ? getText("sources", "hero", "title") : "") ||
+    localeHeroDefault.title;
   const heroSubtitle =
-    getText("sources", "hero", "subtitle") ??
-    t(
-      "tunisian_sources_repositories_desc",
-      "Portails officiels, bases nominatives et dépôts d'archives nationaux et internationaux indispensables pour retracer une lignée en Tunisie."
-    );
+    localeHeroOverride?.subtitle ||
+    (cleanLocale === "fr" ? getText("sources", "hero", "subtitle") : "") ||
+    localeHeroDefault.subtitle;
   const heroImg =
-    getImage("sources", "hero", "image") ??
-    getImage("research", "hero", "image") ??
+    localeHeroOverride?.image ||
+    getImage("sources", "hero", "image") ||
+    getImage("research", "hero", "image") ||
     kairouan;
 
   const baseLocations = useMemo(() => {
-    if (dbLocations.length > 0) return dbLocations;
-    return [
-      { key: "tunisia", label: "Tunisie", icon: "Landmark" },
-      { key: "france", label: "France", icon: "Building2" },
-      { key: "italy", label: "Italie & Sicile", icon: "Ship" },
-      { key: "malta", label: "Malte", icon: "Shield" },
-      { key: "uk", label: "Royaume-Uni", icon: "Crown" },
-      { key: "jewish", label: "Fonds Juifs", icon: "Scroll" },
-      { key: "ottoman", label: "Ottoman & Islamique", icon: "Moon" },
-      { key: "maghreb", label: "Algérie & Maghreb", icon: "Globe" },
-    ];
-  }, [dbLocations]);
+    const rawLocs =
+      dbLocations.length > 0
+        ? dbLocations
+        : [
+            { key: "tunisia", label: "Tunisie", icon: "Landmark" },
+            { key: "france", label: "France", icon: "Building2" },
+            { key: "italy", label: "Italie & Sicile", icon: "Ship" },
+            { key: "malta", label: "Malte", icon: "Shield" },
+            { key: "uk", label: "Royaume-Uni", icon: "Crown" },
+            { key: "jewish", label: "Fonds Juifs", icon: "Scroll" },
+            { key: "ottoman", label: "Ottoman & Islamique", icon: "Moon" },
+            { key: "maghreb", label: "Algérie & Maghreb", icon: "Globe" },
+          ];
+    return rawLocs.map((loc) => resolveLocalizedLocation(loc, cleanLocale, sourcesStore));
+  }, [dbLocations, cleanLocale, sourcesStore]);
 
   const locationMap = useMemo(() => {
     return Object.fromEntries(baseLocations.map((l) => [l.key, l.label]));
@@ -462,17 +635,20 @@ export default function SourcesAndArchives() {
 
   const allArchives = useMemo(() => {
     const rawList = dbCards.length > 0 ? dbCards : ARCHIVES_DIRECTORY;
-    return rawList.map((item) => ({
-      ...item,
-      categoryLabel: locationMap[item.category] || item.categoryLabel || item.category,
-    }));
-  }, [dbCards, locationMap]);
+    return rawList.map((item) => {
+      const localized = resolveLocalizedSourceCard(item, cleanLocale, sourcesStore);
+      return {
+        ...localized,
+        categoryLabel: locationMap[localized.category] || localized.categoryLabel || localized.category,
+      };
+    });
+  }, [dbCards, locationMap, cleanLocale, sourcesStore]);
 
   const categories = useMemo(() => {
     return [
       {
         key: "all",
-        label: t("tab_all_funds", "Tous les fonds"),
+        label: ui.allFunds,
         count: allArchives.length,
         Icon: FolderArchive,
       },
@@ -483,7 +659,7 @@ export default function SourcesAndArchives() {
         Icon: (loc.icon && LOCATION_ICONS[loc.icon]) || FolderArchive,
       })),
     ];
-  }, [baseLocations, allArchives, t]);
+  }, [baseLocations, allArchives, ui.allFunds]);
 
   const query = searchQuery.trim().toLowerCase();
 
@@ -502,11 +678,8 @@ export default function SourcesAndArchives() {
   return (
     <div dir={isRtl ? "rtl" : "ltr"} className="bg-[var(--background)] text-[var(--foreground)] min-h-screen">
       <SEO
-        title={t("seo_sources_title", "Sources et Archives de Tunisie — Répertoire Officiel")}
-        description={t(
-          "seo_sources_desc",
-          "Consultez les dépôts et portails d'archives officiels pour la généalogie tunisienne : Archives Nationales de Tunisie, CADN Nantes, ANOM, Italie, Malte, Grande-Bretagne, fonds ottomans et juifs."
-        )}
+        title={ui.seoTitle}
+        description={ui.seoDesc}
         keywords={[
           "Archives Nationales de Tunisie",
           "CADN Nantes Tunisie",
@@ -527,34 +700,31 @@ export default function SourcesAndArchives() {
         image={heroImg}
       >
         <Link to="/gallery/trees" className="btn-base btn-gold w-full sm:w-auto min-w-[200px]">
-          {t("explore_family_trees", "Consulter les Arbres Familles")}
+          {ui.exploreTreesCta}
         </Link>
       </PageHero>
 
       {/* Fused Directory Search & Category Filter Console */}
       <section className="w-full px-4 pt-6 sm:px-6 sm:pt-8 lg:px-8">
         <div className="mx-auto w-full max-w-[var(--content-max)]">
-          <div className="surface-card rounded-2xl border border-[var(--gold)]/35 bg-[var(--card)]/95 shadow-lg backdrop-blur-sm overflow-hidden">
+          <div className="surface-card rounded-2xl border border-stone-200 dark:border-[var(--gold)]/35 bg-white dark:bg-[var(--card)]/95 shadow-lg shadow-amber-950/5 dark:shadow-black/30 backdrop-blur-sm overflow-hidden">
             {/* Top Bar: Search Input & Live Results Counter */}
-            <div className="p-4 sm:p-5 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3.5">
+            <div className="p-4 sm:p-5 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3.5 bg-white dark:bg-transparent">
               <div className="relative flex-1">
-                <Search className="absolute start-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--gold)] pointer-events-none" />
+                <Search className="absolute start-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-amber-700 dark:text-[var(--gold)] pointer-events-none" />
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder={t(
-                    "search_archives_placeholder",
-                    "Rechercher par nom d'archive, pays ou mot-clé (ex: cadis, naturalisation, sicile, tirailleurs, habous)..."
-                  )}
-                  className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] ps-10 pe-9 py-2.5 text-xs sm:text-sm text-[var(--foreground)] outline-none transition focus:border-[var(--gold)] focus:ring-2 focus:ring-[var(--gold)]/30 font-medium"
+                  placeholder={ui.searchPlaceholder}
+                  className="w-full rounded-xl border border-stone-300 dark:border-[var(--border)] bg-stone-50/90 dark:bg-[var(--background)] ps-10 pe-9 py-2.5 text-xs sm:text-sm text-stone-900 dark:text-[var(--foreground)] placeholder:text-stone-400 dark:placeholder:text-[var(--muted-foreground)] outline-none transition focus:border-amber-600 dark:focus:border-[var(--gold)] focus:ring-2 focus:ring-amber-500/20 dark:focus:ring-[var(--gold)]/30 font-medium"
                 />
                 {searchQuery && (
                   <button
                     type="button"
                     onClick={() => setSearchQuery("")}
-                    className="absolute end-3 top-1/2 -translate-y-1/2 text-[var(--muted-foreground)] hover:text-[var(--foreground)] cursor-pointer p-1"
-                    title={t("clear_search", "Effacer")}
+                    className="absolute end-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-700 dark:text-[var(--muted-foreground)] dark:hover:text-[var(--foreground)] cursor-pointer p-1"
+                    title={ui.clearSearch}
                   >
                     <X className="w-3.5 h-3.5" />
                   </button>
@@ -562,19 +732,19 @@ export default function SourcesAndArchives() {
               </div>
 
               {/* Results count badge */}
-              <div className="shrink-0 flex items-center justify-end sm:justify-start gap-2 text-xs font-mono text-[var(--muted-foreground)]">
-                <span>Résultats :</span>
-                <strong className="text-[var(--gold)] font-bold px-3 py-1.5 rounded-lg bg-[var(--gold)]/10 border border-[var(--gold)]/30">
-                  {filteredArchives.length} archive{filteredArchives.length > 1 ? "s" : ""}
+              <div className="shrink-0 flex items-center justify-end sm:justify-start gap-2 text-xs font-mono text-stone-600 dark:text-[var(--muted-foreground)]">
+                <span>{ui.resultsLabel}</span>
+                <strong className="text-amber-900 dark:text-[var(--gold)] font-bold px-3 py-1.5 rounded-lg bg-amber-500/10 dark:bg-[var(--gold)]/10 border border-amber-600/30 dark:border-[var(--gold)]/30">
+                  {filteredArchives.length} {filteredArchives.length > 1 ? ui.archivePlural : ui.archiveSingular}
                 </strong>
               </div>
             </div>
 
             {/* Seamless Inner Divider */}
-            <div className="border-t border-[var(--gold)]/20" />
+            <div className="border-t border-stone-200 dark:border-[var(--gold)]/20" />
 
-            {/* Bottom Bar: Fused Category Filter Pills with Vector Icons (No Emojis) */}
-            <div className="px-4 py-3 sm:px-5 sm:py-3.5 bg-[var(--gold)]/[0.03] flex items-center gap-2 overflow-x-auto scrollbar-thin">
+            {/* Bottom Bar: Fused Category Filter Pills with Vector Icons (Dark and White mode perfected) */}
+            <div className="px-3 sm:px-4 py-2.5 sm:py-3 bg-stone-100/90 dark:bg-black/30 border-t border-stone-200/80 dark:border-[var(--gold)]/20 flex items-center gap-2 overflow-x-auto scrollbar-thin">
               {categories.map((cat) => {
                 const IconComponent = cat.Icon;
                 const isActive = activeCategory === cat.key;
@@ -583,19 +753,25 @@ export default function SourcesAndArchives() {
                     key={cat.key}
                     type="button"
                     onClick={() => setActiveCategory(cat.key)}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-serif whitespace-nowrap transition-all cursor-pointer inline-flex items-center gap-1.5 shrink-0 border ${
+                    className={`group px-3.5 py-2 rounded-xl text-xs font-medium whitespace-nowrap transition-all duration-200 cursor-pointer inline-flex items-center gap-2 shrink-0 border ${
                       isActive
-                        ? "bg-[var(--gold)] text-[#1f160f] font-bold border-[var(--gold)] shadow-sm"
-                        : "bg-[var(--card)] text-[var(--foreground)]/80 hover:bg-[var(--gold)]/15 border-[var(--border)] hover:border-[var(--gold)]/40"
+                        ? "bg-[#925503] text-white border-[#7d4801] dark:bg-[var(--gold)] dark:text-[#18110b] dark:border-[var(--gold)] shadow-md shadow-amber-900/15 font-bold scale-[1.02]"
+                        : "bg-white text-stone-700 border-stone-300/90 hover:border-amber-600/50 hover:bg-amber-50/80 hover:text-amber-900 dark:bg-[var(--card)]/90 dark:text-[var(--foreground)]/80 dark:border-[var(--gold)]/25 dark:hover:border-[var(--gold)] dark:hover:bg-[var(--gold)]/15 dark:hover:text-[var(--gold)] shadow-xs"
                     }`}
                   >
-                    <IconComponent className={`w-3.5 h-3.5 shrink-0 ${isActive ? "text-[#1f160f]" : "text-[var(--gold)]"}`} />
+                    <IconComponent
+                      className={`w-3.5 h-3.5 shrink-0 transition-colors ${
+                        isActive
+                          ? "text-amber-100 dark:text-[#18110b]"
+                          : "text-amber-700 dark:text-[var(--gold)] group-hover:scale-110"
+                      }`}
+                    />
                     <span>{cat.label}</span>
                     <span
-                      className={`text-[10px] font-mono px-1.5 py-0.2 rounded-full ${
+                      className={`text-[10px] font-mono px-2 py-0.5 rounded-full transition-colors ${
                         isActive
-                          ? "bg-black/20 text-black font-extrabold"
-                          : "bg-[var(--background)] text-[var(--muted-foreground)] border border-[var(--border)]"
+                          ? "bg-black/25 text-white dark:bg-black/20 dark:text-[#18110b] font-extrabold"
+                          : "bg-stone-100 text-stone-600 border border-stone-200 dark:bg-[var(--background)] dark:text-[var(--muted-foreground)] dark:border-[var(--gold)]/25 group-hover:bg-amber-100 group-hover:text-amber-900 dark:group-hover:border-[var(--gold)]/50 dark:group-hover:text-[var(--gold)] font-bold"
                       }`}
                     >
                       {cat.count}
@@ -611,81 +787,47 @@ export default function SourcesAndArchives() {
       {/* Archives Cards Grid */}
       <Section className="!pt-6">
         {filteredArchives.length === 0 ? (
-          <div className="surface-card frame-gold p-12 text-center rounded-xl space-y-4 max-w-xl mx-auto my-8">
-            <Landmark className="w-12 h-12 text-[var(--gold)] mx-auto opacity-70" />
-            <h3 className="text-xl font-serif font-bold text-[var(--foreground)]">
-              {t("no_records_found", "Aucune archive trouvée")}
-            </h3>
-            <p className="text-sm text-[var(--muted-foreground)] leading-relaxed">
-              Aucun résultat ne correspond à votre recherche « {searchQuery} ». Essayez avec un autre mot-clé ou réinitialisez les filtres.
+          <div className="surface-card frame-gold p-10 sm:p-12 text-center rounded-2xl space-y-4 max-w-xl mx-auto my-8 border border-amber-600/30 dark:border-[var(--gold)]/35 bg-white dark:bg-[var(--card)] shadow-lg shadow-amber-900/5 dark:shadow-black/30">
+            <div className="w-16 h-16 rounded-2xl bg-amber-500/10 dark:bg-[var(--gold)]/15 border border-amber-500/25 dark:border-[var(--gold)]/30 flex items-center justify-center text-amber-700 dark:text-[var(--gold)] mx-auto">
+              <SearchX className="w-8 h-8" />
+            </div>
+            <div>
+              <span className="text-[10px] font-mono uppercase tracking-widest text-amber-700 dark:text-[var(--gold)] font-bold px-2.5 py-1 rounded-full bg-amber-500/10 dark:bg-[var(--gold)]/15 border border-amber-500/25 dark:border-[var(--gold)]/30 inline-block mb-2">
+                {ui.noResultsBadge}
+              </span>
+              <h3 className="text-xl sm:text-2xl font-cinzel font-bold text-stone-900 dark:text-[var(--foreground)]">
+                {ui.noResultsTitle}
+              </h3>
+            </div>
+            <p className="text-xs sm:text-sm text-stone-600 dark:text-[var(--muted-foreground)] leading-relaxed max-w-md mx-auto">
+              {searchQuery ? ui.noResultsForQuery(searchQuery) : ui.noResultsInCategory}{" "}
+              {ui.noResultsHint}
             </p>
-            <div className="pt-2">
+            <div className="pt-2 flex flex-wrap items-center justify-center gap-3">
               <button
                 type="button"
                 onClick={() => {
                   setSearchQuery("");
                   setActiveCategory("all");
                 }}
-                className="btn-base btn-gold text-xs py-2 px-5"
+                className="btn-base btn-gold text-xs py-2.5 px-6 font-bold shadow-md cursor-pointer flex items-center gap-2"
               >
-                Réinitialiser les filtres
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span>{ui.resetFilters}</span>
               </button>
+              <Link
+                to="/interactive-map"
+                className="btn-base btn-outline text-xs py-2.5 px-5 font-semibold flex items-center gap-2 cursor-pointer"
+              >
+                <Compass className="w-3.5 h-3.5 text-[var(--gold)]" />
+                <span>{ui.openMapCta}</span>
+              </Link>
             </div>
           </div>
         ) : (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 items-stretch">
             {filteredArchives.map((archive) => (
-              <article
-                key={archive.id}
-                className="surface-card frame-gold group flex h-full flex-col justify-between p-6 sm:p-7 rounded-xl shadow-md bg-[var(--card)]/95 backdrop-blur-sm text-start transition-all hover:border-[var(--gold)] hover:-translate-y-1"
-              >
-                <div className="space-y-4">
-                  {/* Category & Badge Header */}
-                  <div className="flex items-center justify-between border-b border-[var(--gold)]/20 pb-3">
-                    <span className="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded bg-[var(--gold)]/10 text-[var(--gold)] border border-[var(--gold)]/30 font-bold">
-                      {archive.badge}
-                    </span>
-                    <span className="text-[11px] font-semibold text-[var(--muted-foreground)]">
-                      {archive.categoryLabel}
-                    </span>
-                  </div>
-
-                  {/* Title */}
-                  <h3 className="font-display text-lg sm:text-xl font-bold text-[var(--foreground)] group-hover:text-[var(--gold)] transition-colors leading-snug">
-                    {archive.name}
-                  </h3>
-
-                  {/* Description */}
-                  <p className="text-xs sm:text-sm text-[var(--muted-foreground)] leading-relaxed">
-                    {archive.description}
-                  </p>
-
-                  {/* Document Tags */}
-                  <div className="flex flex-wrap gap-1.5 pt-1">
-                    {archive.tags.map((tag, idx) => (
-                      <span
-                        key={idx}
-                        className="text-[10px] font-mono px-2 py-0.5 rounded bg-[var(--background)] text-[var(--foreground)]/80 border border-[var(--border)]"
-                      >
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-
-                {/* External Action Button */}
-                <div className="mt-6 pt-4 border-t border-[var(--gold)]/15 flex items-center justify-between gap-3">
-                  <a
-                    href={archive.link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="btn-base btn-gold text-xs py-2 px-4 inline-flex items-center justify-center gap-2 shadow-sm hover:scale-[1.02] transition-transform w-full font-bold cursor-pointer"
-                  >
-                    <span>Visiter l'Archive</span>
-                    <ExternalLink className="h-3.5 w-3.5" />
-                  </a>
-                </div>
-              </article>
+              <SourceCard key={archive.id} archive={archive} />
             ))}
           </div>
         )}

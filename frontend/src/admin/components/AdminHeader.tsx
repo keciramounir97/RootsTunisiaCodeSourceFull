@@ -12,8 +12,8 @@ export default function AdminHeader({
   sidebarOpen: boolean;
   onToggleSidebar: () => void;
 }) {
-  const { t, dir } = useTranslation();
-  const isRtl = dir === "rtl";
+  const { t, dir, isRtl: contextIsRtl } = useTranslation();
+  const isRtl = Boolean(contextIsRtl || dir === "rtl");
   const { user, logout } = useAuth();
   const [search, setSearch] = useState("");
   const navigate = useNavigate();
@@ -26,6 +26,7 @@ export default function AdminHeader({
 
   return (
     <header
+      dir={isRtl ? "rtl" : "ltr"}
       className={`fixed top-0 z-30 flex h-16 items-center justify-between border-b border-[var(--gold)]/30 bg-[var(--card)]/95 px-4 backdrop-blur shadow-sm transition-all duration-300 sm:px-6 ${
         isRtl
           ? `left-0 ${sidebarOpen ? "lg:right-64" : "right-0"}`
@@ -35,14 +36,14 @@ export default function AdminHeader({
       <div className="flex items-center gap-3">
         <button
           onClick={onToggleSidebar}
-          aria-label={t("toggle_sidebar", "Toggle sidebar")}
-          title={sidebarOpen ? t("close_sidebar", "Close Sidebar") : t("open_sidebar", "Open Sidebar")}
+          aria-label={t("toggle_sidebar", "Basculer le menu latéral")}
+          title={sidebarOpen ? t("close_sidebar", "Fermer le menu latéral") : t("open_sidebar", "Ouvrir le menu latéral")}
           className="rounded p-2 text-[var(--foreground)] hover:bg-[var(--gold)]/15 transition-colors cursor-pointer"
         >
           {sidebarOpen ? (
             <PanelLeftClose className={`h-5 w-5 text-[var(--gold)] ${isRtl ? "rotate-180" : ""}`} />
           ) : (
-            <PanelLeft className={`h-5 w-5 ${isRtl ? "rotate-180" : ""}`} />
+            <PanelLeft className={`h-5 w-5 text-[var(--gold)] ${isRtl ? "rotate-180" : ""}`} />
           )}
         </button>
       </div>
@@ -53,7 +54,7 @@ export default function AdminHeader({
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder={t("nav_search_placeholder", "Search records or trees…")}
+            placeholder={t("nav_search_placeholder", "Rechercher des archives…")}
             className="w-full bg-transparent text-xs text-[var(--foreground)] outline-none placeholder:text-[var(--muted-foreground)]"
           />
         </form>
@@ -65,8 +66,8 @@ export default function AdminHeader({
           target="_blank"
           className="hidden md:inline-flex items-center gap-1 text-xs font-bold uppercase tracking-[0.14em] text-[var(--gold)] hover:underline"
         >
-          <span>{t("view_public_site", "View Public Site")}</span>
-          <ExternalLink className="h-3 w-3" />
+          <span>{t("view_public_site", "Voir le Site Public")}</span>
+          <ExternalLink className={`h-3 w-3 ${isRtl ? "-scale-x-100" : ""}`} />
         </Link>
 
         <LanguageMenu />
@@ -77,7 +78,8 @@ export default function AdminHeader({
           </div>
           <button
             onClick={() => logout()}
-            title={t("nav_signout", "Sign Out")}
+            aria-label={t("nav_signout", "Déconnexion")}
+            title={t("nav_signout", "Déconnexion")}
             className="p-1.5 text-[var(--muted-foreground)] hover:text-red-500 rounded hover:bg-red-500/10 cursor-pointer transition-colors"
           >
             <LogOut className={`h-4 w-4 ${isRtl ? "rotate-180" : ""}`} />

@@ -22,6 +22,10 @@ export interface User {
   roleName?: string;
   status: string;
   permissions?: string[];
+  tier_id?: number;
+  tier?: string | number;
+  subscription_status?: string;
+  subscription_plan?: string;
 }
 
 interface AuthContextType {
@@ -37,7 +41,7 @@ interface AuthContextType {
   refreshMe: () => Promise<User | null>;
 }
 
-const AuthContext = createContext<AuthContextType | null>(null);
+export const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);

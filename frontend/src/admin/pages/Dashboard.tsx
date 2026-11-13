@@ -110,7 +110,7 @@ export default function Dashboard() {
   };
 
   useEffect(() => {
-    let mounted = true;
+    let cancelled = false;
 
     (async () => {
       try {
@@ -118,7 +118,7 @@ export default function Dashboard() {
         setError("");
 
         api.get("/my/quotas").then((res) => {
-          if (mounted) setQuotas(res.data?.data || res.data);
+          if (!cancelled) setQuotas(res.data?.data || res.data);
         }).catch(() => {});
 
         if (isAdmin) {
@@ -127,26 +127,30 @@ export default function Dashboard() {
             fetchRecentActivity(),
           ]);
 
-          if (!mounted) return;
+          const rawS = statsRes.status === "fulfilled" ? statsRes.value : null;
+          const s = rawS?.data && typeof rawS.data === "object" && !Array.isArray(rawS.data) ? rawS.data : rawS;
+          const rawA = activityRes.status === "fulfilled" ? activityRes.value : [];
+          const a = Array.isArray(rawA) ? rawA : (Array.isArray(rawA?.data) ? rawA.data : []);
 
-          const s = statsRes.status === "fulfilled" ? statsRes.value : null;
-          const a = activityRes.status === "fulfilled" ? activityRes.value : [];
-
-          setStats((prev) => ({
-            ...prev,
-            users: Number(s?.users ?? 0),
-            trees: Number(s?.trees ?? 0),
-            people: Number(s?.people ?? 0),
-            gallery: Number(s?.gallery ?? 0),
-            books: Number(s?.books ?? s?.libraryItems ?? 0),
-            events: Number(s?.events ?? s?.activity ?? 0),
-            publicTrees: Number(s?.publicTrees ?? s?.trees ?? 0),
-            myTrees: Number(s?.trees ?? 0),
-            myPeople: Number(s?.people ?? 0),
-            myGallery: Number(s?.gallery ?? 0),
-            publicBooks: Number(s?.books ?? s?.libraryItems ?? 0),
-          }));
-          setActivity(Array.isArray(a) ? a : []);
+          if (s) {
+            setStats((prev) => ({
+              ...prev,
+              users: Number(s?.users ?? prev.users ?? 0),
+              trees: Number(s?.trees ?? prev.trees ?? 0),
+              people: Number(s?.people ?? s?.persons ?? prev.people ?? 0),
+              gallery: Number(s?.gallery ?? prev.gallery ?? 0),
+              books: Number(s?.books ?? s?.libraryItems ?? prev.books ?? 0),
+              events: Number(s?.events ?? s?.activity ?? prev.events ?? 0),
+              publicTrees: Number(s?.publicTrees ?? s?.trees ?? prev.publicTrees ?? 0),
+              myTrees: Number(s?.trees ?? prev.myTrees ?? 0),
+              myPeople: Number(s?.people ?? s?.persons ?? prev.myPeople ?? 0),
+              myGallery: Number(s?.gallery ?? prev.myGallery ?? 0),
+              publicBooks: Number(s?.books ?? s?.libraryItems ?? prev.publicBooks ?? 0),
+            }));
+          }
+          if (Array.isArray(a)) {
+            setActivity(a);
+          }
         } else {
           // Regular User: Attempt high-performance real-time /my/stats
           let userStatsData: any = null;
@@ -158,31 +162,32 @@ export default function Dashboard() {
           }
 
           if (userStatsData) {
-            if (!mounted) return;
-            setStats((prev) => ({
-              ...prev,
-              myTrees: Number(userStatsData.myTrees ?? 0),
-              myPeople: Number(userStatsData.myPeople ?? 0),
-              myGallery: Number(userStatsData.myGallery ?? 0),
-              publicTrees: Number(userStatsData.publicTrees ?? 0),
-              publicBooks: Number(userStatsData.publicBooks ?? userStatsData.libraryItems ?? 0),
-              events: Number(userStatsData.events ?? 0),
-            }));
+            if (!cancelled) {
+              setStats((prev) => ({
+                ...prev,
+                myTrees: Number(userStatsData.myTrees ?? prev.myTrees ?? 0),
+                myPeople: Number(userStatsData.myPeople ?? prev.myPeople ?? 0),
+                myGallery: Number(userStatsData.myGallery ?? prev.myGallery ?? 0),
+                publicTrees: Number(userStatsData.publicTrees ?? prev.publicTrees ?? 0),
+                publicBooks: Number(userStatsData.publicBooks ?? userStatsData.libraryItems ?? prev.publicBooks ?? 0),
+                events: Number(userStatsData.events ?? prev.events ?? 0),
+              }));
+            }
 
             try {
               const { data: myAct } = await api.get("/my/activity", { params: { limit: 50 } });
-              if (mounted) {
+              if (!cancelled) {
                 if (Array.isArray(myAct) && myAct.length > 0) {
                   setActivity(myAct);
                 } else {
                   const { data: pubAct } = await api.get("/activity", { params: { limit: 50 } });
-                  if (mounted && Array.isArray(pubAct)) setActivity(pubAct);
+                  if (!cancelled && Array.isArray(pubAct)) setActivity(pubAct);
                 }
               }
             } catch {
               try {
                 const { data: pubAct } = await api.get("/activity", { params: { limit: 50 } });
-                if (mounted && Array.isArray(pubAct)) setActivity(pubAct);
+                if (!cancelled && Array.isArray(pubAct)) setActivity(pubAct);
               } catch {}
             }
           } else {
@@ -193,56 +198,58 @@ export default function Dashboard() {
               api.get("/activity", { params: { limit: 50 } }),
             ]);
 
-            if (!mounted) return;
+            if (!cancelled) {
+              const myTrees = myTreesRes.status === "fulfilled" && Array.isArray(myTreesRes.value?.data) ? myTreesRes.value.data.length : 0;
+              const publicTrees = publicTreesRes.status === "fulfilled" && Array.isArray(publicTreesRes.value?.data) ? publicTreesRes.value.data.length : 0;
+              const publicBooks = publicBooksRes.status === "fulfilled" && Array.isArray(publicBooksRes.value?.data) ? publicBooksRes.value.data.length : 0;
+              const myAct = myActRes.status === "fulfilled" && Array.isArray(myActRes.value?.data) ? myActRes.value.data : [];
 
-            const myTrees = myTreesRes.status === "fulfilled" && Array.isArray(myTreesRes.value?.data) ? myTreesRes.value.data.length : 0;
-            const publicTrees = publicTreesRes.status === "fulfilled" && Array.isArray(publicTreesRes.value?.data) ? publicTreesRes.value.data.length : 0;
-            const publicBooks = publicBooksRes.status === "fulfilled" && Array.isArray(publicBooksRes.value?.data) ? publicBooksRes.value.data.length : 0;
-            const myAct = myActRes.status === "fulfilled" && Array.isArray(myActRes.value?.data) ? myActRes.value.data : [];
-
-            setStats((prev) => ({
-              ...prev,
-              myTrees,
-              publicTrees,
-              publicBooks,
-              events: myAct.length,
-            }));
-            setActivity(myAct);
+              setStats((prev) => ({
+                ...prev,
+                myTrees,
+                publicTrees,
+                publicBooks,
+                events: myAct.length,
+              }));
+              setActivity(myAct);
+            }
           }
         }
       } catch (err: any) {
-        if (!mounted) return;
-        console.error("Dashboard error:", err);
-        setError(t("dashboard_load_failed", "Failed to load dashboard data."));
+        if (!cancelled) {
+          console.error("Dashboard error:", err);
+          setError(t("dashboard_load_failed", "Failed to load dashboard data."));
+        }
       } finally {
-        if (!mounted) return;
-        setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
     })();
 
     return () => {
-      mounted = false;
+      cancelled = true;
     };
-  }, [isAdmin, t]);
+  }, [isAdmin, isSuperAdmin, user?.id, user?.role, t]);
 
   const cards = useMemo(
     () =>
       isAdmin
         ? [
-            { title: t("total_users", "Members"), value: stats.users, helper: t("registered_users", "registered users"), Icon: Users, tone: "brown" },
-            { title: t("family_trees", "Family Trees"), value: stats.trees, helper: t("lineage_workspaces", "lineage workspaces"), Icon: Network, tone: "olive" },
-            { title: t("total_people", "People"), value: stats.people, helper: t("indexed_relatives", "indexed relatives"), Icon: UserRound, tone: "gold" },
-            { title: t("curate_collections", "Gallery"), value: stats.gallery, helper: t("gallery_photos", "heritage photos & scans"), Icon: Image, tone: "olive" },
-            { title: t("total_books", "Library Items"), value: stats.books, helper: t("books_and_records", "books and records"), Icon: BookOpen, tone: "brown" },
-            { title: t("my_activity", "Activity"), value: stats.events, helper: t("platform_events", "recorded platform updates"), Icon: Activity, tone: "gold" },
+            { title: t("total_users", "Membres & Utilisateurs"), value: stats.users, helper: t("registered_users", "utilisateurs inscrits"), Icon: Users, tone: "brown" },
+            { title: t("family_trees", "Arbres Généalogiques"), value: stats.trees, helper: t("lineage_workspaces", "espaces généalogiques"), Icon: Network, tone: "olive" },
+            { title: t("total_people", "Individus Répertoriés"), value: stats.people, helper: t("indexed_relatives", "ancêtres & proches indexés"), Icon: UserRound, tone: "gold" },
+            { title: t("curate_collections", "Galerie & Médias"), value: stats.gallery, helper: t("gallery_photos", "photos & scans d'archives"), Icon: Image, tone: "olive" },
+            { title: t("total_books", "Ouvrages & Archives"), value: stats.books, helper: t("books_and_records", "livres et documents historiques"), Icon: BookOpen, tone: "brown" },
+            { title: t("my_activity", "Activité Plateforme"), value: stats.events, helper: t("platform_events", "mises à jour enregistrées"), Icon: Activity, tone: "gold" },
           ]
         : [
-            { title: t("my_trees", "My Trees"), value: stats.myTrees, helper: t("private_workspace", "your workspace"), Icon: Network, tone: "brown" },
-            { title: t("total_people", "People"), value: stats.myPeople, helper: t("indexed_relatives", "relatives in your trees"), Icon: UserRound, tone: "gold" },
-            { title: t("public_trees", "Public Trees"), value: stats.publicTrees, helper: t("shared_lineages", "shared lineages"), Icon: Users, tone: "olive" },
-            { title: t("public_books", "Library Items"), value: stats.publicBooks, helper: t("research_materials", "research materials"), Icon: BookOpen, tone: "gold" },
-            { title: t("curate_collections", "Gallery"), value: stats.myGallery, helper: t("uploaded_media", "your uploaded photos"), Icon: Image, tone: "olive" },
-            { title: t("my_activity", "Activity"), value: stats.events, helper: t("recent_updates", "recent updates"), Icon: Activity, tone: "brown" },
+            { title: t("my_trees", "Mes Arbres"), value: stats.myTrees, helper: t("private_workspace", "votre espace généalogique"), Icon: Network, tone: "brown" },
+            { title: t("total_people", "Individus Répertoriés"), value: stats.myPeople, helper: t("indexed_relatives", "proches dans vos arbres"), Icon: UserRound, tone: "gold" },
+            { title: t("public_trees", "Arbres Publics"), value: stats.publicTrees, helper: t("shared_lineages", "lignées partagées"), Icon: Users, tone: "olive" },
+            { title: t("public_books", "Ouvrages Publics"), value: stats.publicBooks, helper: t("research_materials", "documents de recherche"), Icon: BookOpen, tone: "gold" },
+            { title: t("curate_collections", "Galerie & Médias"), value: stats.myGallery, helper: t("uploaded_media", "vos photos téléversées"), Icon: Image, tone: "olive" },
+            { title: t("my_activity", "Activité Plateforme"), value: stats.events, helper: t("recent_updates", "mises à jour récentes"), Icon: Activity, tone: "brown" },
           ],
     [stats, t, isAdmin]
   );
@@ -310,17 +317,23 @@ export default function Dashboard() {
         <div>
           <p className="roots-eyebrow">
             <Shield className="w-4 h-4" />
-            {t("tunisia_control_panel", "Roots Tunisia Control Panel")}
+            {isSuperAdmin
+              ? t("super_admin_workspace", "Espace Super Administrateur — Roots Tunisia")
+              : t("tunisia_control_panel", "Espace d'Administration — Roots Tunisia")}
           </p>
           <h1>
-            {t("easy_panel_title", "Your Tunisia heritage, organized")}
+            {isSuperAdmin
+              ? t("super_admin_dashboard", "Tableau de Bord — Super Administrateur")
+              : (isAdmin
+                  ? t("admin_dashboard_title", "Tableau de Bord — Gestion de la Plateforme")
+                  : t("easy_panel_title", "Tableau de Bord — Votre Patrimoine Familial"))}
           </h1>
           <p>
             {isAdmin
               ? (isSuperAdmin
-                  ? "Super Admin Workspace — Full control over lineages, archives, media assets, platform statistics, and users."
-                  : t("easy_panel_admin_desc", "Manage the community, curate family records, and keep North African lineage data organized from one clear panel."))
-              : t("easy_panel_user_desc", "Build your family tree, collect archive sources, and preserve your Tunisia family history.")}
+                  ? "Espace Super Admin — Contrôle total sur les lignées, les archives, la galerie, les statistiques de la plateforme et les utilisateurs."
+                  : t("easy_panel_admin_desc", "Gérez la communauté, préservez les registres familiaux et organisez les données généalogiques."))
+              : t("easy_panel_user_desc", "Créez votre arbre généalogique, explorez les archives et préservez l'histoire de votre famille tunisienne.")}
           </p>
         </div>
         <div className="easy-hero-actions">
@@ -355,9 +368,9 @@ export default function Dashboard() {
                 </h3>
               </div>
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                {t("trees", "Trees")}: <b>{quotas.limits?.trees?.used ?? stats.myTrees ?? 0} / {quotas.limits?.trees?.max === -1 ? "∞" : (quotas.limits?.trees?.max ?? "∞")}</b> ·{" "}
-                {t("individuals", "Individuals")}: <b>{quotas.limits?.individuals?.used ?? (isAdmin ? stats.people : stats.myPeople) ?? 0} / {quotas.limits?.individuals?.max === -1 ? "∞" : (quotas.limits?.individuals?.max ?? "∞")}</b> ·{" "}
-                {t("gallery", "Gallery")}: <b>{quotas.limits?.gallery?.used ?? (isAdmin ? stats.gallery : stats.myGallery) ?? 0} / {quotas.limits?.gallery?.max === -1 ? "∞" : (quotas.limits?.gallery?.max ?? "∞")}</b>
+                {t("trees", "Trees")}: <b>{(quotas.limits?.trees?.used > 0 ? quotas.limits.trees.used : (isAdmin ? stats.trees : stats.myTrees)) ?? 0} / {quotas.limits?.trees?.max === -1 ? "∞" : (quotas.limits?.trees?.max ?? "∞")}</b> ·{" "}
+                {t("individuals", "Individuals")}: <b>{(quotas.limits?.individuals?.used > 0 ? quotas.limits.individuals.used : (isAdmin ? stats.people : stats.myPeople)) ?? 0} / {quotas.limits?.individuals?.max === -1 ? "∞" : (quotas.limits?.individuals?.max ?? "∞")}</b> ·{" "}
+                {t("gallery", "Gallery")}: <b>{(quotas.limits?.gallery?.used > 0 ? quotas.limits.gallery.used : (isAdmin ? stats.gallery : stats.myGallery)) ?? 0} / {quotas.limits?.gallery?.max === -1 ? "∞" : (quotas.limits?.gallery?.max ?? "∞")}</b>
               </p>
             </div>
           </div>

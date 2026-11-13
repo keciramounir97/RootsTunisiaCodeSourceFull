@@ -1288,12 +1288,17 @@ async function bootstrap() {
         });
 
         // Rate Limiters - Tiered for security and fair use
+        const isLocalDevRequest = (req: any) => {
+            if (process.env.NODE_ENV !== 'production') return true;
+            const ip = String(req.ip || req.socket?.remoteAddress || '');
+            return ip === '127.0.0.1' || ip === '::1' || ip.includes('127.0.0.1') || ip === 'localhost';
+        };
         const globalLimiter = rateLimit({
             windowMs: 15 * 60 * 1000,
             max: process.env.NODE_ENV === 'production' ? 1000 : 5000,
             standardHeaders: true,
             legacyHeaders: false,
-            skip: (req) => req.method === 'OPTIONS',
+            skip: (req) => req.method === 'OPTIONS' || isLocalDevRequest(req),
             message: { statusCode: 429, message: 'Too many requests, please try again later.' },
         });
         app.use('/api/', globalLimiter);
@@ -1303,7 +1308,7 @@ async function bootstrap() {
             max: 15,
             standardHeaders: true,
             legacyHeaders: false,
-            skip: (req) => req.method === 'OPTIONS',
+            skip: (req) => req.method === 'OPTIONS' || isLocalDevRequest(req),
             message: { statusCode: 429, message: 'Too many login attempts. Please wait 15 minutes before trying again.' },
         });
         app.use('/api/auth/login', authLimiter);
@@ -1313,7 +1318,7 @@ async function bootstrap() {
             max: 10,
             standardHeaders: true,
             legacyHeaders: false,
-            skip: (req) => req.method === 'OPTIONS',
+            skip: (req) => req.method === 'OPTIONS' || isLocalDevRequest(req),
             message: { statusCode: 429, message: 'Too many registration requests from this network. Please try again later.' },
         });
         app.use('/api/auth/signup', signupLimiter);
@@ -1323,7 +1328,7 @@ async function bootstrap() {
             max: 5,
             standardHeaders: true,
             legacyHeaders: false,
-            skip: (req) => req.method === 'OPTIONS',
+            skip: (req) => req.method === 'OPTIONS' || isLocalDevRequest(req),
             message: { statusCode: 429, message: 'Too many password reset attempts. Please check your inbox or wait 15 minutes.' },
         });
         app.use('/api/auth/reset', resetLimiter);
@@ -1333,7 +1338,7 @@ async function bootstrap() {
             max: 10,
             standardHeaders: true,
             legacyHeaders: false,
-            skip: (req) => req.method === 'OPTIONS',
+            skip: (req) => req.method === 'OPTIONS' || isLocalDevRequest(req),
             message: { statusCode: 429, message: 'Too many contact messages sent. Please wait before sending another inquiry.' },
         });
         app.use('/api/contact', contactLimiter);
@@ -1343,7 +1348,7 @@ async function bootstrap() {
             max: 10,
             standardHeaders: true,
             legacyHeaders: false,
-            skip: (req) => req.method === 'OPTIONS',
+            skip: (req) => req.method === 'OPTIONS' || isLocalDevRequest(req),
             message: { statusCode: 429, message: 'Too many subscription requests. Please try again later.' },
         });
         app.use('/api/newsletter/subscribe', newsletterLimiter);

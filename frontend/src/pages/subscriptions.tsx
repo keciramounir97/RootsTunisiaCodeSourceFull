@@ -1,9 +1,8 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import {
   Check,
   ShieldCheck,
   Zap,
-  HelpCircle,
   ChevronDown,
   FileCheck,
   X,
@@ -17,19 +16,28 @@ import {
   FolderTree,
   Sliders,
   Sparkles,
-  ScrollText,
-  Search,
-  Download,
-  Languages,
+  Compass,
+  ArrowRight,
+  HelpCircle,
+  Lock,
 } from "lucide-react";
 import { useTranslation } from "../context/TranslationContext";
 import { useAuth } from "../admin/components/AuthContext";
 import { useCurrency } from "../context/CurrencyContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { PageHero, Section, SectionHeading } from "../components/site/Primitives";
 import medina from "../assets/medina-tunis.jpg";
 import SEO from "../components/SEO";
 import { api } from "../api/client";
+import {
+  cleanSubscriptionLocale,
+  DEFAULT_LOCALIZED_TIER_SERVICES,
+  localizeCurrencyName,
+  localizeTierBadge,
+  localizeTierDescription,
+  localizeTierFeature,
+  localizeTierName,
+} from "../utils/subscriptionTranslations";
 
 type ComparisonCell = string | boolean;
 
@@ -91,26 +99,26 @@ type DisplayTier = {
 const DEFAULT_TIER_SERVICES: Record<number, string[]> = {
   1: [
     "Visualisation interactive d’arbres généalogiques (2D/3D)",
-    "Inventaires & guides des 19 grands fonds d’archives tunisiens",
-    "Importation et exportation GEDCOM 5.5.1 standard",
-    "Fiches d’individus, repères chronologiques et patronymes",
-    "Accès libre à la communauté et aux récits d’archives",
+    "Inventaires des 19 grands fonds d’archives tunisiens",
+    "Importation et exportation GEDCOM standard",
+    "Fiches d’individus et repères chronologiques",
+    "Accès libre à la communauté et aux récits d’histoire",
   ],
   2: [
-    "Tout ce qui est inclus dans Découverte Patrimoine",
+    "Tout ce qui est inclus dans Découverte",
     "Consultation & téléchargement HD des actes d’état civil numérisés",
     "Index nominatif des décrets de naturalisation (1924–1927)",
-    "Croisement multi-communautés (italienne, maltaise, juive, tunisienne)",
-    "Exports PDF haute résolution pour livrets et tirages d’art",
-    "Support prioritaire par e-mail avec réponse sous 24h",
+    "Registres paroissiaux & consulaires (italiens, maltais, français)",
+    "Exports PDF haute résolution pour livrets de famille",
+    "Support prioritaire par email sous 24h",
   ],
   3: [
-    "Tout ce qui est inclus dans Chercheur & Actes",
-    "Demande de recherche ciblée auprès des dépôts d’archives tunisiens",
-    "Aide au déchiffrage & transcription (arabe, ottoman, italien, maltais)",
-    "Validation et certification de filiation avec référent généalogiste",
-    "Accès prioritaire en avant-première aux nouveaux fonds indexés",
-    "Assistance directe et personnalisée par WhatsApp & messagerie dédiée",
+    "Tout ce qui est inclus dans Chercheur d’Actes",
+    "Demande de recherche ciblée auprès des dépôts d’archives",
+    "Aide au déchiffrage & transcription (arabe, ottoman, italien)",
+    "Validation de filiation avec référent généalogiste",
+    "Accès prioritaire aux nouveaux registres indexés",
+    "Assistance directe par WhatsApp & messagerie dédiée",
   ],
 };
 
@@ -120,7 +128,7 @@ const FALLBACK_API_TIERS: ApiTier[] = [
     name: "Découverte Patrimoine",
     price: 0,
     badge: "Accès Gratuit",
-    description: "Visualisation d’arbres généalogiques, consultation des répertoires de fonds d’archives et import/export GEDCOM.",
+    description: "Visualisation d’arbres, répertoires des fonds d’archives et import/export GEDCOM.",
     features: DEFAULT_TIER_SERVICES[1],
     max_trees: 50,
     max_individuals: 1000,
@@ -135,8 +143,8 @@ const FALLBACK_API_TIERS: ApiTier[] = [
     id: 2,
     name: "Chercheur & Actes",
     price: 1.99,
-    badge: "Le Plus Populaire — Actes & Registres",
-    description: "Accès complet aux actes d’état civil, registres paroissiaux, sijillats notariés et décrets de naturalisation (1924–1927).",
+    badge: "Recommandé — Actes & Registres",
+    description: "Accès complet aux actes d’état civil numérisés, registres paroissiaux et décrets de naturalisation (1924–1927).",
     features: DEFAULT_TIER_SERVICES[2],
     max_trees: 300,
     max_individuals: 6000,
@@ -149,10 +157,10 @@ const FALLBACK_API_TIERS: ApiTier[] = [
   },
   {
     id: 3,
-    name: "Historien & Généalogie Pro",
+    name: "Historien Pro",
     price: 3.99,
-    badge: "Recherche Avancée & Assistance Dédiée",
-    description: "Assistance aux recherches ciblées, déchiffrage de manuscrits (arabe, ottoman, italien) et accès prioritaire aux nouveaux fonds.",
+    badge: "Recherche Avancée & Expert",
+    description: "Assistance aux recherches ciblées en dépôts, déchiffrage paléographique et suivi personnalisé.",
     features: DEFAULT_TIER_SERVICES[3],
     max_trees: 3000,
     max_individuals: 30000,
@@ -183,31 +191,47 @@ function safeNumber(value: unknown, fallback = 0): number {
 }
 
 function limitsFromApi(tier: ApiTier, fallback: ApiTier): TierLimits {
+  const nested = (tier as any)?.limits || {};
   return {
-    trees: safeNumber(tier.max_trees, fallback.max_trees ?? 50),
-    individuals: safeNumber(tier.max_individuals, fallback.max_individuals ?? 1000),
-    sources: safeNumber(tier.max_sources, fallback.max_sources ?? 100),
-    notes: safeNumber(tier.max_notes, fallback.max_notes ?? 100),
-    tasks: safeNumber(tier.max_tasks, fallback.max_tasks ?? 100),
-    gallery: safeNumber(tier.max_gallery, fallback.max_gallery ?? 100),
-    audios: safeNumber(tier.max_audios, fallback.max_audios ?? 100),
-    documents: safeNumber(tier.max_documents, fallback.max_documents ?? 100),
+    trees: safeNumber(tier.max_trees ?? nested.trees, fallback.max_trees ?? 50),
+    individuals: safeNumber(tier.max_individuals ?? nested.individuals, fallback.max_individuals ?? 1000),
+    sources: safeNumber(tier.max_sources ?? nested.sources ?? nested.savedSources, fallback.max_sources ?? 100),
+    notes: safeNumber(tier.max_notes ?? nested.notes ?? nested.researchNotes, fallback.max_notes ?? 100),
+    tasks: safeNumber(tier.max_tasks ?? nested.tasks ?? nested.researchTasks, fallback.max_tasks ?? 100),
+    gallery: safeNumber(tier.max_gallery ?? nested.gallery ?? nested.galleryImages, fallback.max_gallery ?? 100),
+    audios: safeNumber(tier.max_audios ?? nested.audios ?? nested.audioFiles, fallback.max_audios ?? 100),
+    documents: safeNumber(tier.max_documents ?? nested.documents, fallback.max_documents ?? 100),
   };
 }
 
 export default function Subscriptions() {
-  const { t, isRtl } = useTranslation();
+  const { t, locale, isRtl } = useTranslation();
   const { user } = useAuth();
   const navigate = useNavigate();
   const { currencies, selectedCurrency, setCurrencyCode, convertPrice } = useCurrency();
+  const cleanLoc = cleanSubscriptionLocale(locale);
 
   const [billingCycle, setBillingCycle] = useState<"monthly" | "annual">("monthly");
-  const [openFaq, setOpenFaq] = useState<number | null>(0);
   const [apiTiers, setApiTiers] = useState<ApiTier[]>(FALLBACK_API_TIERS);
   const [quotaModalOpen, setQuotaModalOpen] = useState(false);
   const [selectedQuotaTierId, setSelectedQuotaTierId] = useState<number>(2);
+  const [currencyDropdownOpen, setCurrencyDropdownOpen] = useState(false);
+  const currencyMenuRef = useRef<HTMLDivElement>(null);
 
   const currentTierId = Number(user?.tier_id ?? 1);
+
+  // Close currency dropdown on outside click
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (currencyMenuRef.current && !currencyMenuRef.current.contains(event.target as Node)) {
+        setCurrencyDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -219,9 +243,7 @@ export default function Subscriptions() {
         const list = (raw as ApiTier[]).filter((tier) => tier && tier.is_active !== false);
         if (list.length > 0) setApiTiers(list);
       })
-      .catch(() => {
-        // Keep hardcoded FALLBACK if API fails
-      });
+      .catch(() => {});
     return () => {
       cancelled = true;
     };
@@ -232,35 +254,47 @@ export default function Subscriptions() {
     const source = apiTiers.length > 0 ? apiTiers : FALLBACK_API_TIERS;
 
     return source.map((apiTier, index) => {
-      const fallback = FALLBACK_API_TIERS.find((f) => f.id === apiTier.id) || FALLBACK_API_TIERS[index] || FALLBACK_API_TIERS[0];
+      const fallback =
+        FALLBACK_API_TIERS.find((f) => f.id === apiTier.id) ||
+        FALLBACK_API_TIERS[index] ||
+        FALLBACK_API_TIERS[0];
       const monthlyUSD = safeNumber(apiTier.price, safeNumber(fallback.price, 0));
       const priceUSD = isAnnual && monthlyUSD > 0 ? monthlyUSD * 10 : monthlyUSD;
       const converted = convertPrice(priceUSD);
       const id = Number(apiTier.id) || fallback.id || index + 1;
       const limits = limitsFromApi(apiTier, fallback);
-      const badge =
+      const rawBadge =
         apiTier.badge ||
         apiTier.tagline ||
         (id === 2
-          ? t("most_popular", "Le Plus Populaire — Actes & Registres")
+          ? t("most_popular", "Recommandé — Actes & Registres")
           : id === 3
-            ? t("ultimate_research", "Recherche Avancée & Assistance Dédiée")
+            ? t("ultimate_research", "Recherche Avancée & Expert")
             : t("tier_free_badge", "Accès Gratuit"));
+      const localizedBadge = localizeTierBadge(rawBadge, id, cleanLoc);
 
-      let services: string[] = DEFAULT_TIER_SERVICES[id] || [];
+      let rawServices: string[] = [];
       if (Array.isArray(apiTier.features) && apiTier.features.length > 0) {
-        services = apiTier.features;
+        rawServices = apiTier.features;
       } else if (typeof apiTier.features === "string" && apiTier.features.trim()) {
         try {
           const parsed = JSON.parse(apiTier.features);
-          if (Array.isArray(parsed) && parsed.length > 0) services = parsed;
+          if (Array.isArray(parsed) && parsed.length > 0) rawServices = parsed;
         } catch {}
       }
+
+      const services =
+        rawServices.length > 0
+          ? rawServices.map((item) => localizeTierFeature(String(item || ""), cleanLoc)).filter(Boolean)
+          : DEFAULT_LOCALIZED_TIER_SERVICES[id]?.[cleanLoc] || DEFAULT_TIER_SERVICES[id] || [];
+
+      const rawName = apiTier.name || fallback.name;
+      const rawDescription = apiTier.description || fallback.description || "";
 
       return {
         id,
         slug: SLUG_BY_ID[id] || `tier-${id}`,
-        name: apiTier.name || fallback.name || `Tier ${id}`,
+        name: localizeTierName(rawName, id, cleanLoc),
         nameKey: NAME_KEY_BY_ID[id] || `tier_${id}_name`,
         priceUSD,
         priceDisplay: converted.formatted,
@@ -269,23 +303,23 @@ export default function Subscriptions() {
         period: isAnnual ? t("per_year", "/ an") : t("per_month", "/ mois"),
         limits,
         highlight: id === 2,
-        badge,
-        description: apiTier.description || fallback.description || "",
+        badge: localizedBadge,
+        description: localizeTierDescription(rawDescription, id, cleanLoc),
         services,
-        isCurrent: id === 1 ? !user || currentTierId === 1 : Boolean(user && currentTierId === id),
+        isCurrent: Boolean(user && (currentTierId === id || (id === 1 && !user.tier_id))),
       };
     });
-  }, [apiTiers, billingCycle, convertPrice, user, currentTierId, t]);
+  }, [apiTiers, billingCycle, convertPrice, user, currentTierId, t, cleanLoc]);
 
   const quotaLabels = [
-    { key: "trees", label: t("max_trees", "Arbres généalogiques"), icon: FolderTree },
-    { key: "individuals", label: t("max_individuals", "Personnes et individus enregistrés"), icon: Users },
-    { key: "sources", label: t("max_saved_sources", "Sources et références documentaires"), icon: BookOpen },
-    { key: "notes", label: t("max_research_notes", "Notes et mémos de recherche"), icon: FileText },
-    { key: "tasks", label: t("max_research_tasks", "Tâches et objectifs généalogiques"), icon: Zap },
-    { key: "gallery", label: t("max_gallery_images", "Photographies et portraits historiques"), icon: ImageIcon },
-    { key: "audios", label: t("max_audio_files", "Récits oraux et témoignages audio"), icon: Radio },
-    { key: "documents", label: t("max_documents", "Actes d’archives et pièces justificatives"), icon: FileCheck },
+    { key: "trees", label: t("sub_quota_trees", "Arbres généalogiques"), icon: FolderTree },
+    { key: "individuals", label: t("sub_quota_individuals", "Individus enregistrés"), icon: Users },
+    { key: "sources", label: t("sub_quota_sources", "Sources & références documentaires"), icon: BookOpen },
+    { key: "notes", label: t("sub_quota_notes", "Notes de recherche"), icon: FileText },
+    { key: "tasks", label: t("sub_quota_tasks", "Objectifs généalogiques"), icon: Zap },
+    { key: "gallery", label: t("sub_quota_gallery", "Photographies & portraits"), icon: ImageIcon },
+    { key: "audios", label: t("sub_quota_audios", "Témoignages & récits oraux"), icon: Radio },
+    { key: "documents", label: t("sub_quota_documents", "Actes d’archives & justificatifs"), icon: FileCheck },
   ];
 
   const byId = (id: number) => tiers.find((tier) => tier.id === id);
@@ -293,10 +327,10 @@ export default function Subscriptions() {
 
   const comparisonRows: ComparisonRow[] = [
     {
-      feature: t("comp_service_nature", "Nature de la promesse"),
-      basic: "Découverte & visualiseur d'arbres",
-      premium: "Accès actes d'état civil & décrets",
-      historian: "Recherche sur commande & déchiffrage",
+      feature: t("comp_service_nature", "Profil de recherche"),
+      basic: t("sub_comp_val_profile_1", "Découverte & arbres"),
+      premium: t("sub_comp_val_profile_2", "Actes d'état civil & décrets"),
+      historian: t("sub_comp_val_profile_3", "Recherche ciblée & déchiffrage"),
     },
     {
       feature: t("comp_civil_records", "Consultation des actes originaux numérisés"),
@@ -305,65 +339,34 @@ export default function Subscriptions() {
       historian: true,
     },
     {
-      feature: t("comp_naturalizations", "Décrets de naturalisation (1924–1927) & recensements"),
-      basic: "Inventaire descriptif",
-      premium: "Index nominatif complet",
-      historian: "Index intégral + assistance filiation",
+      feature: t("comp_naturalizations", "Index des naturalisations (1924–1927) & recensements"),
+      basic: t("sub_comp_val_nat_1", "Inventaire descriptif"),
+      premium: t("sub_comp_val_nat_2", "Index nominatif complet"),
+      historian: t("sub_comp_val_nat_3", "Index intégral + assistance filiation"),
     },
     {
-      feature: t("comp_hd_downloads", "Téléchargement d'actes et de sources en haute résolution"),
+      feature: t("comp_hd_downloads", "Téléchargement d'actes en haute résolution"),
       basic: false,
       premium: true,
       historian: true,
     },
     {
-      feature: t("comp_translation_service", "Assistance transcription & déchiffrage (arabe, ottoman, italien)"),
+      feature: t("comp_translation_service", "Aide au déchiffrage & paléographie (arabe, ottoman, italien)"),
       basic: false,
       premium: false,
       historian: true,
     },
     {
-      feature: t("comp_gedcom", "Importation et exportation GEDCOM 5.5.1"),
+      feature: t("comp_gedcom", "Importation & exportation GEDCOM standard"),
       basic: true,
       premium: true,
       historian: true,
     },
     {
-      feature: t("comp_support", "Accompagnement et support"),
-      basic: "Communauté & guides",
-      premium: "E-mail prioritaire 24h",
-      historian: "WhatsApp & référent généalogiste",
-    },
-  ];
-
-  const faqs = [
-    {
-      qKey: "faq_q1",
-      defaultQ: "Qu'est-ce qui différencie Roots Tunisia des sites d'arbres gratuits comme Geneanet ou FamilySearch ?",
-      aKey: "faq_a1",
-      defaultA:
-        "Contrairement aux simples logiciels de construction d'arbres, Roots Tunisia mutualise et indexe directement les sources exclusives de Tunisie : état civil des municipalités, registres consulaires (CADN/ANOM), sijillats notariés, décrets de naturalisation (1924–1927) et archives ottomanes. Vous ne payez pas pour stocker un arbre, mais pour accéder à des actes et des transcriptions réelles introuvables ailleurs.",
-    },
-    {
-      qKey: "faq_q2",
-      defaultQ: "Comment sont fixés les prix de 1,99 $ et 3,99 $ et quelles devises sont acceptées ?",
-      aKey: "faq_a2",
-      defaultA:
-        "Nos tarifs ont été fixés pour rester extrêmement accessibles à tous les chercheurs de la diaspora et de Tunisie : 0 $ en accès libre, 1,99 $/mois pour l'accès complet aux actes numérisés, et 3,99 $/mois pour l'accompagnement d'un historien. Les prix sont convertis en temps réel dans votre devise (TND, EUR, USD, CAD, GBP, SAR).",
-    },
-    {
-      qKey: "faq_q3",
-      defaultQ: "Comment puis-je demander une recherche ciblée d'acte en Tunisie ?",
-      aKey: "faq_a3",
-      defaultA:
-        "Avec l'abonnement Historien Pro (3,99 $), vous pouvez soumettre une demande ciblée (par exemple un acte de mariage ou de décès dans une commune spécifique) et bénéficier de l'aide de notre réseau de transcripteurs pour déchiffrer les actes manuscrits arabes ou italiens.",
-    },
-    {
-      qKey: "faq_q4",
-      defaultQ: "Puis-je changer ou annuler mon abonnement à tout moment ?",
-      aKey: "faq_a4",
-      defaultA:
-        "Oui, sans aucun engagement. Vous pouvez upgrader, downgrader ou résilier votre abonnement en un clic depuis votre espace utilisateur. Vos arbres et données généalogiques restent toujours consultables en toute sécurité.",
+      feature: t("comp_support", "Accompagnement & support"),
+      basic: t("sub_comp_val_sup_1", "Communauté & guides"),
+      premium: t("sub_comp_val_sup_2", "Email prioritaire 24h"),
+      historian: t("sub_comp_val_sup_3", "WhatsApp & référent généalogiste"),
     },
   ];
 
@@ -387,83 +390,158 @@ export default function Subscriptions() {
   const safeCurrencyCode = String(selectedCurrency?.code || "USD");
 
   return (
-    <div dir={isRtl ? "rtl" : "ltr"} className="bg-[var(--background)] text-[var(--foreground)] min-h-screen">
+    <div dir={isRtl ? "rtl" : "ltr"} className="bg-[var(--background)] text-[var(--foreground)] min-h-screen pb-16">
       <SEO
-        title={t("seo_subscriptions_title", "Tarifs & Services Généalogiques — Roots Tunisia")}
-        description="Accédez aux actes d'état civil numérisés, décrets de naturalisation et assistance de recherche généalogique en Tunisie à partir de 1,99 $ / mois."
-        keywords={["Roots Tunisia pricing", "tarifs généalogie tunisie", "actes état civil tunisie", "naturalisation 1924 1927"]}
+        title={t("seo_subscriptions_title", "Tarifs & Formules d'Accès aux Actes — Roots Tunisia")}
+        description={t(
+          "seo_subscriptions_desc",
+          "Accédez aux actes d'état civil numérisés, registres paroissiaux et décrets de naturalisation en Tunisie à partir de 1,99 $ / mois."
+        )}
+        keywords={t(
+          "seo_subscriptions_keywords",
+          "Roots Tunisia tarifs, abonnements généalogie Tunisie, actes état civil Tunisie, décrets naturalisation 1924 1927, archives tunisiennes"
+        )
+          .split(",")
+          .map((k) => k.trim())
+          .filter(Boolean)}
       />
 
+      {/* Page Hero */}
       <PageHero
-        eyebrow={t("subscriptions_eyebrow", "Services & Abonnements Généalogiques")}
-        title={t("subscriptions_hero_title", "Accédez aux Actes & Retracez vos Lignées en Tunisie")}
-        subtitle={t("subscriptions_hero_subtitle", "Un modèle clair centré sur la valeur : consultez les actes numérisés, décrets de naturalisation et registres notariés réels à prix accessible.")}
+        eyebrow={t("subscriptions_hero_eyebrow", "Formules d'Accès aux Archives")}
+        title={t("subscriptions_hero_title", "Consultez les Actes Numérisés & Retracez vos Lignées")}
+        subtitle={t(
+          "subscriptions_hero_sub",
+          "Un modèle transparent centré sur la valeur : 0 DT pour débuter en exploration libre, 1,99 $ / mois pour les actes d'état civil, 3,99 $ pour l'aide d'un historien."
+        )}
         image={medina}
       />
 
       <Section>
-        {/* Header Bar */}
-        <div className="surface-card frame-gold p-6 sm:p-8 rounded-2xl shadow-xl max-w-5xl mx-auto -mt-16 sm:-mt-20 relative z-20 bg-[var(--card)]/95 backdrop-blur-md">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="flex items-center gap-4 text-start w-full md:w-auto">
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[var(--gold)]/15 text-[var(--gold)] ring-1 ring-[var(--gold)]/40 shadow-inner">
-                <Crown className="h-7 w-7" />
+        {/* Floating Controls Toolbar */}
+        <div className="surface-card frame-gold p-4 sm:p-5 rounded-2xl shadow-xl max-w-4xl mx-auto -mt-16 sm:-mt-20 relative z-20 bg-[var(--card)]/95 backdrop-blur-md border border-[var(--gold)]/35">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-3 text-start w-full sm:w-auto">
+              <div className="w-10 h-10 rounded-xl bg-[var(--gold)]/15 text-[var(--gold)] border border-[var(--gold)]/30 flex items-center justify-center shrink-0">
+                <Crown className="w-5 h-5" />
               </div>
               <div>
-                <h2 className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-[var(--foreground)]">
-                  {t("subscription_plans", "Abonnements & Accès aux Actes")}
-                </h2>
-                <p className="mt-1 text-xs sm:text-sm text-[var(--muted-foreground)]">
-                  {t("subscription_value_sub", "Freemium à 0 $, Chercheur d’actes à 1,99 $ et Historien Pro à 3,99 $ / mois.")}
+                <p className="font-cinzel text-sm sm:text-base font-bold text-[var(--foreground)] leading-tight">
+                  {t("subscriptions_toolbar_title", "Abonnements & Accès aux Actes")}
+                </p>
+                <p className="text-[0.72rem] text-[var(--muted-foreground)]">
+                  {t("subscriptions_toolbar_sub", "Sans engagement · Annulation en 1 clic · Tarifs clairs")}
                 </p>
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-3 w-full md:w-auto justify-start md:justify-end">
-              <div className="flex items-center gap-2 p-1.5 rounded-xl border border-[var(--gold)]/35 bg-[var(--background)] shadow-sm">
-                <Coins className="h-4 w-4 text-[var(--gold)] shrink-0 ms-1" />
-                <span className="text-[0.68rem] font-bold text-[var(--muted-foreground)] uppercase">
-                  {t("currency", "Devise")}:
-                </span>
-                <select
-                  value={safeCurrencyCode}
-                  onChange={(e) => setCurrencyCode(e.target.value)}
-                  className="bg-transparent text-xs font-bold font-mono text-[var(--foreground)] outline-none cursor-pointer pe-2"
+            <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto justify-start sm:justify-end">
+              {/* Redesigned Currency Selector */}
+              <div ref={currencyMenuRef} className="relative">
+                <button
+                  type="button"
+                  onClick={() => setCurrencyDropdownOpen((prev) => !prev)}
+                  aria-expanded={currencyDropdownOpen}
+                  aria-haspopup="listbox"
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-[var(--gold)]/40 hover:border-[var(--gold)] bg-[var(--background)] hover:bg-[var(--gold)]/10 text-xs transition-all shadow-xs cursor-pointer group"
                 >
-                  {currencies
-                    .filter((c) => String(c?.code || "").trim())
-                    .map((c) => (
-                      <option key={c.code} value={c.code} className="bg-[var(--card)] text-[var(--foreground)]">
-                        {c.code} ({c.symbol}) — {c.name}
-                      </option>
-                    ))}
-                </select>
+                  <Coins className="h-4 w-4 text-[var(--gold)] shrink-0" />
+                  <span className="text-[0.68rem] font-bold text-[var(--muted-foreground)] uppercase">
+                    {t("sub_currency_label", "Devise :")}
+                  </span>
+                  <span
+                    dir="ltr"
+                    className="font-mono font-bold text-[var(--foreground)] px-2 py-0.5 rounded bg-[var(--gold)]/15 border border-[var(--gold)]/30 flex items-center gap-1"
+                  >
+                    <span>{safeCurrencyCode}</span>
+                    <span className="text-[var(--gold)]">({selectedCurrency?.symbol || "$"})</span>
+                  </span>
+                  <ChevronDown
+                    className={`w-3.5 h-3.5 text-[var(--gold)] transition-transform duration-200 ${
+                      currencyDropdownOpen ? "rotate-180" : ""
+                    }`}
+                  />
+                </button>
+
+                {/* Themed Currency Dropdown Menu */}
+                {currencyDropdownOpen && (
+                  <div
+                    role="listbox"
+                    className="absolute end-0 text-start mt-2 w-56 rounded-2xl bg-[var(--card)] border-2 border-[var(--gold)]/40 shadow-2xl p-2 z-50 backdrop-blur-md animate-in fade-in slide-in-from-top-2 duration-150"
+                  >
+                    <div className="px-2.5 py-1.5 text-[10px] font-mono font-bold uppercase tracking-wider text-[var(--gold)] border-b border-[var(--gold)]/20 mb-1">
+                      {t("sub_select_currency", "Sélectionnez votre devise")}
+                    </div>
+                    <div className="space-y-1 max-h-60 overflow-y-auto no-scrollbar">
+                      {currencies
+                        .filter((c) => String(c?.code || "").trim())
+                        .map((c) => {
+                          const isSelected = c.code === safeCurrencyCode;
+                          return (
+                            <button
+                              key={c.code}
+                              type="button"
+                              role="option"
+                              aria-selected={isSelected}
+                              onClick={() => {
+                                setCurrencyCode(c.code);
+                                setCurrencyDropdownOpen(false);
+                              }}
+                              className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                                isSelected
+                                  ? "bg-[var(--gold)] text-[#1a1410] font-bold shadow-xs"
+                                  : "text-[var(--foreground)] hover:bg-[var(--gold)]/15 hover:text-[var(--gold)]"
+                              }`}
+                            >
+                              <div className="flex items-center gap-2">
+                                <span dir="ltr" className="font-mono font-bold">
+                                  {c.code}
+                                </span>
+                                <span className="text-[11px] opacity-80 truncate max-w-[110px]">
+                                  {localizeCurrencyName(c.code, c.name, cleanLoc)}
+                                </span>
+                              </div>
+                              <span
+                                dir="ltr"
+                                className={`font-mono text-xs font-extrabold ${
+                                  isSelected ? "text-[#1a1410]" : "text-[var(--gold)]"
+                                }`}
+                              >
+                                {c.symbol}
+                              </span>
+                            </button>
+                          );
+                        })}
+                    </div>
+                  </div>
+                )}
               </div>
 
-              <div className="flex items-center rounded-xl border border-[var(--gold)]/35 bg-[var(--background)] p-1 text-xs font-bold">
+              {/* Monthly / Annual Toggle */}
+              <div className="flex items-center rounded-xl border border-[var(--gold)]/40 bg-[var(--background)] p-1 text-xs font-bold shadow-xs">
                 <button
                   type="button"
                   onClick={() => setBillingCycle("monthly")}
-                  className={`rounded-lg px-3 py-1.5 transition-all cursor-pointer ${
+                  className={`rounded-lg px-3.5 py-1.5 transition-all cursor-pointer font-cinzel ${
                     billingCycle === "monthly"
-                      ? "bg-[var(--gold)] text-[#1f160f] shadow-sm"
-                      : "text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
+                      ? "bg-gradient-to-r from-[var(--gold)] to-[#e8c47a] text-[#1a1410] font-bold shadow-sm"
+                      : "text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-[var(--gold)]/10"
                   }`}
                 >
-                  {t("monthly", "Mensuel")}
+                  {t("sub_billing_monthly", "Mensuel")}
                 </button>
                 <button
                   type="button"
                   onClick={() => setBillingCycle("annual")}
-                  className={`rounded-lg px-3 py-1.5 transition-all flex items-center gap-1.5 cursor-pointer ${
+                  className={`rounded-lg px-3.5 py-1.5 transition-all flex items-center gap-1.5 cursor-pointer font-cinzel ${
                     billingCycle === "annual"
-                      ? "bg-[var(--gold)] text-[#1f160f] shadow-sm"
-                      : "text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
+                      ? "bg-gradient-to-r from-[var(--gold)] to-[#e8c47a] text-[#1a1410] font-bold shadow-sm"
+                      : "text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-[var(--gold)]/10"
                   }`}
                 >
-                  <span>{t("annual", "Annuel")}</span>
-                  <span className="rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 px-1.5 py-0.2 text-[0.62rem] font-extrabold border border-emerald-500/30">
-                    -17%
+                  <span>{t("sub_billing_annual", "Annuel")}</span>
+                  <span className="rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 text-[0.62rem] font-mono font-extrabold border border-emerald-500/35">
+                    {t("sub_annual_discount", "-17% (2 mois offerts)")}
                   </span>
                 </button>
               </div>
@@ -471,112 +549,213 @@ export default function Subscriptions() {
           </div>
         </div>
 
-        {/* 3 Main Tier Cards */}
-        <div className="mt-12 sm:mt-16 grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 items-stretch w-full max-w-[var(--content-max)] mx-auto">
+        {/* 3 Main Tier Cards with Redesigned Hierarchy & Action Buttons */}
+        <div className="mt-12 sm:mt-14 pt-4 sm:pt-6 grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 items-stretch w-full max-w-[var(--content-max)] mx-auto">
           {tiers.map((tier) => {
             const isBasic = tier.id === 1;
+            const isFeatured = tier.id === 2;
+            const isHistorian = tier.id === 3;
 
             return (
               <div
                 key={tier.id}
-                className={`surface-card frame-gold p-6 sm:p-7 rounded-2xl shadow-xl flex flex-col justify-between relative transition-all duration-300 text-start ${
-                  tier.isCurrent
-                    ? "border-[var(--gold)] ring-2 ring-[var(--gold)]/40 bg-[var(--card)]"
-                    : "border-[var(--gold)]/35 hover:-translate-y-1.5 hover:shadow-2xl bg-[var(--card)]"
+                className={`surface-card p-6 sm:p-7 pt-8 sm:pt-9 rounded-3xl shadow-xl flex flex-col justify-between relative transition-all duration-300 text-start overflow-visible ${
+                  isFeatured
+                    ? "frame-gold border-2 border-[var(--gold)] ring-4 ring-[var(--gold)]/25 bg-gradient-to-b from-[var(--card)] via-[var(--card)] to-[var(--gold)]/5 hover:-translate-y-2 shadow-2xl"
+                    : isHistorian
+                      ? "border-2 border-[var(--gold)]/40 hover:border-[var(--gold)] bg-[var(--card)] hover:-translate-y-1 shadow-lg"
+                      : "border border-[var(--gold)]/30 hover:border-[var(--gold)]/60 bg-[var(--card)] hover:-translate-y-1 shadow-md"
                 }`}
               >
-                {tier.isCurrent && (
-                  <span className="absolute -top-3.5 start-6 px-3.5 py-1 rounded-full text-[0.68rem] font-extrabold uppercase tracking-wide bg-[var(--gold)] text-[#1f160f] shadow-md border border-[#1f160f]/20">
-                    {t("current_active_plan", "Votre Formule Actuelle")}
-                  </span>
+                {/* Featured / Recommended Top Badge */}
+                {isFeatured && !tier.isCurrent && (
+                  <div className="absolute -top-4.5 left-1/2 -translate-x-1/2 px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-wider bg-[#140f0a] text-[#fcd34d] shadow-2xl border-2 border-[var(--gold)] flex items-center gap-2 whitespace-nowrap z-20 ring-4 ring-[var(--gold)]/30">
+                    <Sparkles className="w-4 h-4 fill-[#fcd34d] text-[#fcd34d] shrink-0" />
+                    <span className="font-extrabold tracking-wider">
+                      {t("sub_featured_top_badge", "RECOMMANDÉ · ACTES & ÉTAT CIVIL")}
+                    </span>
+                  </div>
                 )}
-                {!tier.isCurrent && tier.badge && (
-                  <span className="absolute -top-3.5 start-6 px-3 py-1 rounded-full text-[0.65rem] font-bold uppercase tracking-wider bg-[var(--gold)]/20 text-[var(--gold)] border border-[var(--gold)]/40 backdrop-blur-sm shadow-sm">
-                    {tier.badge}
+
+                {/* Historian Pro Badge */}
+                {isHistorian && !tier.isCurrent && (
+                  <div className="absolute -top-4.5 start-6 px-4 py-1.5 rounded-full text-[11px] font-mono font-bold uppercase tracking-wider bg-[#1a1410] text-[#fce79f] border-2 border-[var(--gold)]/70 shadow-xl flex items-center gap-1.5 z-20 ring-2 ring-[var(--gold)]/10">
+                    <ShieldCheck className="w-3.5 h-3.5 text-[var(--gold)] shrink-0" />
+                    <span>{t("sub_historian_top_badge", "RECHERCHE AVANCÉE & EXPERT")}</span>
+                  </div>
+                )}
+
+                {/* Current Active Plan Badge */}
+                {tier.isCurrent && (
+                  <span className="absolute -top-4.5 start-6 px-4 py-1.5 rounded-full text-[11px] font-extrabold uppercase tracking-wide bg-[var(--gold)] text-[#1f160f] shadow-xl border border-[#1f160f]/20 flex items-center gap-1.5 z-20">
+                    <Check className="w-3.5 h-3.5 stroke-[3] shrink-0" />
+                    <span>{t("sub_current_plan_badge", "Votre Formule Actuelle")}</span>
                   </span>
                 )}
 
                 <div>
-                  <h3 className="font-display text-2xl font-bold text-[var(--foreground)] mt-2">
-                    {tier.name}
-                  </h3>
+                  {/* Tier Header with Icon & Name */}
+                  <div className="flex items-center justify-between border-b border-[var(--gold)]/20 pb-4 pt-1">
+                    <div className="flex items-center gap-2.5">
+                      <div
+                        className={`w-11 h-11 rounded-2xl flex items-center justify-center border transition-transform ${
+                          isFeatured
+                            ? "bg-[var(--gold)]/20 text-[var(--gold)] border-[var(--gold)]/60 shadow-md"
+                            : isHistorian
+                              ? "bg-[var(--gold)]/15 text-[var(--gold)] border-[var(--gold)]/30"
+                              : "bg-[var(--gold)]/10 text-[var(--gold)] border-[var(--gold)]/25"
+                        }`}
+                      >
+                        {isFeatured ? (
+                          <Crown className="w-5 h-5" />
+                        ) : isHistorian ? (
+                          <ShieldCheck className="w-5 h-5" />
+                        ) : (
+                          <Compass className="w-5 h-5" />
+                        )}
+                      </div>
+                      <div>
+                        <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[var(--gold)]">
+                          {isFeatured
+                            ? t("sub_tier_2_eyebrow", "Dépôts & Sijillats")
+                            : isHistorian
+                              ? t("sub_tier_3_eyebrow", "Assistance Paléographique")
+                              : t("sub_tier_1_eyebrow", "Exploration Libre")}
+                        </span>
+                        <h3 className="font-cinzel text-xl sm:text-2xl font-bold text-[var(--foreground)]">
+                          {tier.name}
+                        </h3>
+                      </div>
+                    </div>
 
-                  {tier.description ? (
-                    <p className="mt-1.5 text-xs text-[var(--muted-foreground)] leading-relaxed min-h-[36px]">
-                      {tier.description}
-                    </p>
-                  ) : null}
+                    <span
+                      className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full border ${
+                        isFeatured
+                          ? "bg-[var(--gold)] text-[#1a1410] border-[var(--gold)]"
+                          : "bg-[var(--gold)]/10 text-[var(--gold)] border-[var(--gold)]/25"
+                      }`}
+                    >
+                      {isBasic
+                        ? t("sub_tier_1_pill", "Gratuit")
+                        : isFeatured
+                          ? t("sub_tier_2_pill", "Le Choix Idéal")
+                          : t("sub_tier_3_pill", "Expert")}
+                    </span>
+                  </div>
 
-                  <div className="flex items-baseline gap-1.5 my-4 border-b border-[var(--gold)]/20 pb-4">
-                    <span className="font-display text-3xl sm:text-4xl font-extrabold text-[var(--gold)]">
-                      {tier.priceDisplay}
-                    </span>
-                    <span className="text-xs text-[var(--muted-foreground)] font-semibold">
-                      {tier.period}
-                    </span>
+                  {/* Pricing Display */}
+                  <div className="my-5 border-b border-[var(--gold)]/20 pb-4">
+                    <div className="flex items-baseline gap-2">
+                      <span
+                        dir="ltr"
+                        className={`font-cinzel tracking-tight font-black ${
+                          isFeatured
+                            ? "text-4xl sm:text-5xl text-[var(--gold)]"
+                            : "text-3xl sm:text-4xl text-[var(--gold)]"
+                        }`}
+                      >
+                        {tier.priceDisplay}
+                      </span>
+                      <span className="text-xs text-[var(--muted-foreground)] font-semibold">
+                        {isBasic ? t("sub_period_forever", "/ pour toujours") : tier.period}
+                      </span>
+                    </div>
+
+                    {tier.description ? (
+                      <p className="mt-2 text-xs text-[var(--muted-foreground)] leading-relaxed">
+                        {tier.description}
+                      </p>
+                    ) : null}
                   </div>
 
                   {/* Real Genealogical Services List */}
                   <div className="space-y-2.5 text-xs sm:text-sm text-[var(--foreground)] py-2">
-                    <div className="text-[0.7rem] font-bold uppercase tracking-wider text-[var(--gold)] pb-1">
-                      {isBasic ? "Services inclus sans frais :" : "Ce que vous obtenez :"}
+                    <div className="text-[0.68rem] font-bold uppercase tracking-wider text-[var(--gold)] pb-1 flex items-center gap-1.5">
+                      <Sparkles className="w-3 h-3 text-[var(--gold)]" />
+                      <span>
+                        {isBasic
+                          ? t("sub_included_free", "Inclus sans frais :")
+                          : t("sub_included_paid", "Prestations & Privilèges inclus :")}
+                      </span>
                     </div>
                     {tier.services.map((serviceText, sIdx) => (
                       <div key={sIdx} className="flex items-start gap-2.5">
                         <Check className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5 stroke-[2.5]" />
-                        <span className="text-[var(--foreground)] font-medium leading-snug">
+                        <span className="text-[var(--foreground)] font-medium leading-snug text-xs">
                           {serviceText}
                         </span>
                       </div>
                     ))}
                   </div>
 
-                  {/* Technical Quotas Button (Opens Modal) */}
+                  {/* Discrete Technical Quotas Trigger */}
                   <button
                     type="button"
                     onClick={() => {
                       setSelectedQuotaTierId(tier.id);
                       setQuotaModalOpen(true);
                     }}
-                    className="mt-4 pt-3 border-t border-[var(--gold)]/20 text-xs font-semibold text-[var(--gold)] hover:text-amber-500 flex items-center justify-between w-full cursor-pointer transition-colors group"
+                    className="mt-4 pt-3 border-t border-[var(--gold)]/15 text-[0.72rem] font-semibold text-[var(--gold)] hover:underline flex items-center justify-between w-full cursor-pointer transition-colors"
                   >
                     <span className="flex items-center gap-1.5">
-                      <Sliders className="h-3.5 w-3.5 group-hover:rotate-45 transition-transform" />
-                      <span>{t("view_full_quotas", "Voir tous les quotas & limites techniques")}</span>
+                      <Sliders className="h-3.5 w-3.5 text-[var(--gold)]" />
+                      <span>{t("sub_quotas_trigger", "Quotas & stockage inclus")}</span>
                     </span>
-                    <span className="text-[10px] font-mono opacity-80 underline">
-                      Détails →
+                    <span className="font-mono text-[0.65rem] opacity-80 inline-flex items-center gap-1">
+                      <span>{t("sub_view_details", "Voir détails")}</span>
+                      <ArrowRight className={`w-3 h-3 ${isRtl ? "rotate-180" : ""}`} />
                     </span>
                   </button>
                 </div>
 
+                {/* Redesigned Themed Action Buttons */}
                 <div className="pt-6 mt-4 border-t border-[var(--gold)]/20">
                   {tier.isCurrent ? (
                     <button
                       type="button"
                       disabled
-                      className="w-full py-3 rounded-xl bg-black/10 dark:bg-white/10 border border-[var(--border)] text-[var(--muted-foreground)] font-bold text-xs sm:text-sm cursor-default text-center shadow-inner"
+                      className="w-full py-3 px-4 rounded-xl bg-emerald-500/15 border-2 border-emerald-500/40 text-emerald-600 dark:text-emerald-400 font-cinzel font-bold text-xs sm:text-sm flex items-center justify-center gap-2 cursor-default shadow-xs"
                     >
-                      {t("active_plan_btn", "Formule Active")}
+                      <Check className="w-4 h-4 stroke-[3]" />
+                      <span>{t("sub_btn_current", "Votre Formule Actuelle (Active)")}</span>
                     </button>
                   ) : isBasic ? (
                     <button
                       type="button"
                       onClick={() => handleSelectTier(tier)}
-                      className="w-full py-3 rounded-xl border-2 border-[var(--gold)]/40 hover:border-[var(--gold)] bg-[var(--background)] hover:bg-[var(--gold)]/10 text-[var(--foreground)] text-xs sm:text-sm font-bold text-center cursor-pointer transition-colors shadow-sm"
+                      className="w-full py-3 px-4 rounded-xl border-2 border-[var(--gold)]/50 hover:border-[var(--gold)] bg-[var(--background)] hover:bg-[var(--gold)]/15 text-[var(--foreground)] font-cinzel font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all shadow-xs hover:shadow cursor-pointer group/btn"
                     >
-                      {t("start_free", "Démarrer Gratuitement")}
+                      <Compass className="w-4 h-4 text-[var(--gold)] group-hover/btn:rotate-45 transition-transform" />
+                      <span>{t("sub_btn_basic", "Commencer Gratuitement")}</span>
+                      <ArrowRight className={`w-4 h-4 text-[var(--gold)] ${isRtl ? "rotate-180" : ""}`} />
+                    </button>
+                  ) : isFeatured ? (
+                    <button
+                      type="button"
+                      onClick={() => handleSelectTier(tier)}
+                      className="w-full py-3.5 px-4 rounded-xl font-cinzel font-black text-xs sm:text-sm flex items-center justify-center gap-2.5 shadow-xl hover:shadow-2xl transition-all bg-gradient-to-r from-[var(--gold)] via-[#e8c47a] to-[var(--gold)] hover:brightness-110 text-[#1a1410] border border-[#1a1410]/20 hover:scale-[1.02] cursor-pointer group/btn"
+                    >
+                      <Crown className="w-4 h-4 fill-[#1a1410] text-[#1a1410] shrink-0" />
+                      <span>{t("sub_btn_featured", "Activer la Formule Chercheur")}</span>
+                      <ArrowRight
+                        className={`w-4 h-4 text-[#1a1410] group-hover/btn:translate-x-1 transition-transform ${
+                          isRtl ? "rotate-180 group-hover/btn:-translate-x-1" : ""
+                        }`}
+                      />
                     </button>
                   ) : (
                     <button
                       type="button"
                       onClick={() => handleSelectTier(tier)}
-                      className="w-full py-3 rounded-xl bg-gradient-to-r from-[var(--gold)] to-amber-600 hover:from-amber-500 hover:to-[var(--gold)] text-[#1f160f] text-xs sm:text-sm font-bold flex items-center justify-center gap-2 cursor-pointer shadow-lg hover:scale-[1.02] transition-all"
+                      className="w-full py-3 px-4 rounded-xl font-cinzel font-bold text-xs sm:text-sm flex items-center justify-center gap-2.5 shadow-lg transition-all bg-[var(--foreground)] text-[var(--background)] hover:bg-[var(--gold)] hover:text-[#1a1410] border-2 border-[var(--gold)] cursor-pointer hover:scale-[1.01] group/btn"
                     >
-                      <Crown className="w-4 h-4 shrink-0 text-[#1f160f]" />
-                      <span>
-                        {t("upgrade_to", "Choisir")} {tier.name}
-                      </span>
+                      <ShieldCheck className="w-4 h-4 text-[var(--gold)] group-hover/btn:text-[#1a1410] shrink-0 transition-colors" />
+                      <span>{t("sub_btn_historian", "Choisir la Formule Historien Pro")}</span>
+                      <ArrowRight
+                        className={`w-4 h-4 shrink-0 group-hover/btn:translate-x-1 transition-transform ${
+                          isRtl ? "rotate-180 group-hover/btn:-translate-x-1" : ""
+                        }`}
+                      />
                     </button>
                   )}
                 </div>
@@ -585,218 +764,92 @@ export default function Subscriptions() {
           })}
         </div>
 
-        {/* Global Modal Trigger Link */}
-        <div className="mt-8 text-center">
-          <button
-            type="button"
-            onClick={() => setQuotaModalOpen(true)}
-            className="inline-flex items-center gap-2 text-xs sm:text-sm font-bold text-[var(--gold)] hover:underline cursor-pointer"
-          >
-            <Sliders className="h-4 w-4" />
-            <span>{t("view_all_quotas_modal_btn", "Consulter le tableau complet des quotas de stockage par niveau")}</span>
-          </button>
-        </div>
-
-        <div className="mt-10 text-center text-xs text-[var(--muted-foreground)] flex items-center justify-center gap-2 max-w-xl mx-auto">
-          <ShieldCheck className="h-4 w-4 text-[var(--gold)] shrink-0" />
-          <span>
-            {t(
-              "subscriptions_guarantee",
-              "Paiement sécurisé · Aucun engagement de durée · Annulation en 1 clic · Tarifs justes et transparents",
-            )}
-          </span>
-        </div>
-
-        {/* On-Demand Archival Services & Upsells (Paiement à l'Acte) */}
-        <div className="mt-20">
-          <SectionHeading
-            center={true}
-            eyebrow={t("services_ondemand_badge", "Services Sur Mesure & Recherche à la Carte")}
-            title={t("services_ondemand_title", "Besoin d'aide pour un acte ou un document ancien ?")}
-            intro={t(
-              "services_ondemand_subtitle",
-              "Nos historiens et paléographes interviennent directement pour déchiffrer, traduire ou rechercher des actes non numérisés en Tunisie."
-            )}
-          />
-
-          <div className="mt-10 grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto text-start">
-            {/* Service 1: Transcription */}
-            <div className="surface-card frame-gold p-6 rounded-2xl shadow-md flex flex-col justify-between hover:-translate-y-1 transition-all border-t-4 border-t-amber-500">
-              <div className="space-y-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400">
-                  <Languages className="h-6 w-6" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-display font-bold text-[var(--foreground)]">
-                    {t("service_transcription_title", "Déchiffrage & Transcription")}
-                  </h3>
-                  <p className="mt-1 font-mono text-xl font-extrabold text-[var(--gold)]">
-                    {t("service_transcription_price", "25 € / 25 $ (80 TND)")}
-                    <span className="text-xs font-normal text-[var(--muted-foreground)]"> / acte</span>
-                  </p>
-                </div>
-                <p className="text-xs sm:text-sm text-[var(--muted-foreground)] leading-relaxed">
-                  {t(
-                    "service_transcription_desc",
-                    "Transcription et traduction certifiée de manuscrits anciens en arabe maghrébin, turc ottoman, italien ancien ou latin d'église."
-                  )}
-                </p>
-                <ul className="space-y-2 text-xs text-[var(--foreground)]/90 pt-2 border-t border-[var(--border)]">
-                  <li className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-[var(--gold)] shrink-0" />
-                    <span>Transcription intégrale mot à mot</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-[var(--gold)] shrink-0" />
-                    <span>Traduction en français ou anglais</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-[var(--gold)] shrink-0" />
-                    <span>Notes onomastiques sur les patronymes</span>
-                  </li>
-                </ul>
-              </div>
-              <div className="pt-6 mt-6 border-t border-[var(--border)]">
-                <a
-                  href={`https://wa.me/21671234567?text=${encodeURIComponent("Bonjour Roots Tunisia, je souhaite commander une transcription/déchiffrage d'acte ancien.")}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn-base btn-gold w-full text-center flex items-center justify-center gap-2 text-xs font-bold py-2.5"
-                >
-                  <Sparkles className="h-3.5 w-3.5" />
-                  <span>{t("service_order_cta", "Commander ce service")}</span>
-                </a>
-              </div>
+        {/* 3-Point Reassurance Trust Strip */}
+        <div className="mt-12 max-w-4xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="surface-card frame-gold p-4 rounded-2xl bg-[var(--card)]/80 border border-[var(--gold)]/25 text-center flex flex-col items-center gap-2">
+            <div className="w-8 h-8 rounded-full bg-[var(--gold)]/15 text-[var(--gold)] flex items-center justify-center">
+              <Lock className="w-4 h-4" />
             </div>
+            <strong className="text-xs font-bold text-[var(--foreground)]">
+              {t("sub_trust_1_title", "Paiement 100% Sécurisé")}
+            </strong>
+            <span className="text-[11px] text-[var(--muted-foreground)] leading-tight">
+              {t("sub_trust_1_desc", "Chiffrement bancaire SSL 256-bit et passerelles certifiées")}
+            </span>
+          </div>
 
-            {/* Service 2: In Situ Research */}
-            <div className="surface-card frame-gold p-6 rounded-2xl shadow-md flex flex-col justify-between hover:-translate-y-1 transition-all border-t-4 border-t-[var(--gold)]">
-              <div className="space-y-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--gold)]/15 text-[var(--gold)]">
-                  <Search className="h-6 w-6" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-display font-bold text-[var(--foreground)]">
-                    {t("service_insitu_title", "Recherche In Situ aux Archives")}
-                  </h3>
-                  <p className="mt-1 font-mono text-xl font-extrabold text-[var(--gold)]">
-                    {t("service_insitu_price", "49 € / 49 $ (160 TND)")}
-                    <span className="text-xs font-normal text-[var(--muted-foreground)]"> / dossier</span>
-                  </p>
-                </div>
-                <p className="text-xs sm:text-sm text-[var(--muted-foreground)] leading-relaxed">
-                  {t(
-                    "service_insitu_desc",
-                    "Mandat d'un chercheur à Tunis (dépôt de la Kasbah, dépôts municipaux) pour retrouver, vérifier et photographier une cote physique."
-                  )}
-                </p>
-                <ul className="space-y-2 text-xs text-[var(--foreground)]/90 pt-2 border-t border-[var(--border)]">
-                  <li className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-[var(--gold)] shrink-0" />
-                    <span>Déplacement physique aux dépôts</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-[var(--gold)] shrink-0" />
-                    <span>Photographies HD des folios originaux</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-[var(--gold)] shrink-0" />
-                    <span>Rapport de recherche avec cotes exactes</span>
-                  </li>
-                </ul>
-              </div>
-              <div className="pt-6 mt-6 border-t border-[var(--border)]">
-                <a
-                  href={`https://wa.me/21671234567?text=${encodeURIComponent("Bonjour Roots Tunisia, je souhaite mandater un chercheur pour une recherche in situ aux archives.")}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn-base btn-gold w-full text-center flex items-center justify-center gap-2 text-xs font-bold py-2.5"
-                >
-                  <Search className="h-3.5 w-3.5" />
-                  <span>{t("service_order_cta", "Commander ce service")}</span>
-                </a>
-              </div>
+          <div className="surface-card frame-gold p-4 rounded-2xl bg-[var(--card)]/80 border border-[var(--gold)]/25 text-center flex flex-col items-center gap-2">
+            <div className="w-8 h-8 rounded-full bg-[var(--gold)]/15 text-[var(--gold)] flex items-center justify-center">
+              <Zap className="w-4 h-4" />
             </div>
+            <strong className="text-xs font-bold text-[var(--foreground)]">
+              {t("sub_trust_2_title", "Sans Aucun Engagement")}
+            </strong>
+            <span className="text-[11px] text-[var(--muted-foreground)] leading-tight">
+              {t("sub_trust_2_desc", "Annulez ou changez de formule en 1 clic à tout moment")}
+            </span>
+          </div>
 
-            {/* Service 3: Certified Lineage Dossier */}
-            <div className="surface-card frame-gold p-6 rounded-2xl shadow-md flex flex-col justify-between hover:-translate-y-1 transition-all border-t-4 border-t-emerald-600">
-              <div className="space-y-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
-                  <ScrollText className="h-6 w-6" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-display font-bold text-[var(--foreground)]">
-                    {t("service_notary_title", "Validation de Filiation Notariée")}
-                  </h3>
-                  <p className="mt-1 font-mono text-xl font-extrabold text-[var(--gold)]">
-                    {t("service_notary_price", "99 € / 99 $ (320 TND)")}
-                    <span className="text-xs font-normal text-[var(--muted-foreground)]"> / lignée</span>
-                  </p>
-                </div>
-                <p className="text-xs sm:text-sm text-[var(--muted-foreground)] leading-relaxed">
-                  {t(
-                    "service_notary_desc",
-                    "Constitution d'un dossier complet de filiation avec sceaux archivistiques et chaînes de transmission pour vos démarches officielles."
-                  )}
-                </p>
-                <ul className="space-y-2 text-xs text-[var(--foreground)]/90 pt-2 border-t border-[var(--border)]">
-                  <li className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-[var(--gold)] shrink-0" />
-                    <span>Dossier complet de preuves juridiques</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-[var(--gold)] shrink-0" />
-                    <span>Validation paléographique de la chaîne</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-[var(--gold)] shrink-0" />
-                    <span>Livret de transmission patrimoniale relié</span>
-                  </li>
-                </ul>
-              </div>
-              <div className="pt-6 mt-6 border-t border-[var(--border)]">
-                <a
-                  href={`https://wa.me/21671234567?text=${encodeURIComponent("Bonjour Roots Tunisia, je souhaite commander une validation de filiation notariée.")}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn-base bg-emerald-700 hover:bg-emerald-800 text-white w-full text-center flex items-center justify-center gap-2 text-xs font-bold py-2.5 transition shadow"
-                >
-                  <ScrollText className="h-3.5 w-3.5" />
-                  <span>{t("service_order_cta", "Commander ce service")}</span>
-                </a>
-              </div>
+          <div className="surface-card frame-gold p-4 rounded-2xl bg-[var(--card)]/80 border border-[var(--gold)]/25 text-center flex flex-col items-center gap-2">
+            <div className="w-8 h-8 rounded-full bg-[var(--gold)]/15 text-[var(--gold)] flex items-center justify-center">
+              <FileCheck className="w-4 h-4" />
             </div>
+            <strong className="text-xs font-bold text-[var(--foreground)]">
+              {t("sub_trust_3_title", "Archives Authentifiées")}
+            </strong>
+            <span className="text-[11px] text-[var(--muted-foreground)] leading-tight">
+              {t("sub_trust_3_desc", "Registres, sijillats et décrets numérisés certifiés conformes")}
+            </span>
           </div>
         </div>
 
-        {/* Detailed Service Comparison Table */}
-        <div className="mt-20">
+        {/* Focused Comparison Table */}
+        <div className="mt-16">
           <SectionHeading
             center={true}
-            eyebrow={t("comparison_eyebrow", "Transparence Totale")}
-            title={t("compare_all_features", "Comparatif Détaillé des Services")}
-            intro={t("compare_intro", "Retrouvez les accès et prestations inclus selon vos besoins de recherche.")}
+            eyebrow={t("sub_comp_eyebrow", "Transparence Totale")}
+            title={t("sub_comp_title", "Comparatif Détaillé des Formules")}
+            intro={t(
+              "sub_comp_intro",
+              "Retrouvez l'ensemble des accès et prestations inclus selon vos besoins de recherche généalogique."
+            )}
           />
 
-          <div className="surface-card frame-gold mt-10 rounded-2xl overflow-hidden shadow-xl max-w-5xl mx-auto">
+          <div className="surface-card frame-gold mt-8 rounded-2xl overflow-hidden shadow-xl max-w-5xl mx-auto border border-[var(--gold)]/35">
             <div className="overflow-x-auto">
               <table className="w-full text-start text-xs sm:text-sm">
                 <thead>
                   <tr className="border-b border-[var(--gold)]/30 bg-[var(--gold)]/10 text-[var(--foreground)]">
-                    <th className="py-4 px-6 text-start font-bold uppercase tracking-wider text-xs">
-                      {t("feature", "Prestation & Accès")}
+                    <th className="py-4 px-6 text-start font-bold uppercase tracking-wider text-xs font-cinzel">
+                      {t("sub_comp_col_features", "Prestations & Dépouillements")}
                     </th>
                     <th className="py-4 px-4 text-center font-bold text-xs">
-                      {byId(1)?.name || "Découverte"}
-                      <div className="text-[10px] text-[var(--muted-foreground)] font-normal">0,00 $</div>
+                      <div className="font-cinzel text-sm">
+                        {byId(1)?.name || localizeTierName(undefined, 1, cleanLoc)}
+                      </div>
+                      <div
+                        dir="ltr"
+                        className="text-[10px] text-[var(--muted-foreground)] font-mono font-normal inline-block"
+                      >
+                        {byId(1)?.priceDisplay || convertPrice(0).formatted}
+                      </div>
                     </th>
-                    <th className="py-4 px-4 text-center font-bold text-xs text-[var(--gold)]">
-                      {byId(2)?.name || "Chercheur & Actes"}
-                      <div className="text-[10px] text-[var(--gold)] font-normal">1,99 $ / mois</div>
+                    <th className="py-4 px-4 text-center font-bold text-xs bg-[var(--gold)]/20 border-x-2 border-t-2 border-[var(--gold)] text-[var(--gold)]">
+                      <div className="font-cinzel text-sm font-extrabold flex items-center justify-center gap-1">
+                        <Crown className="w-3.5 h-3.5 fill-[var(--gold)] text-[var(--gold)]" />
+                        <span>{byId(2)?.name || localizeTierName(undefined, 2, cleanLoc)}</span>
+                      </div>
+                      <div className="text-[10px] text-[var(--gold)] font-mono font-bold">
+                        <span dir="ltr">{byId(2)?.priceDisplay}</span> {byId(2)?.period}
+                      </div>
                     </th>
                     <th className="py-4 px-4 text-center font-bold text-xs">
-                      {byId(3)?.name || "Historien Pro"}
-                      <div className="text-[10px] text-[var(--muted-foreground)] font-normal">3,99 $ / mois</div>
+                      <div className="font-cinzel text-sm">
+                        {byId(3)?.name || localizeTierName(undefined, 3, cleanLoc)}
+                      </div>
+                      <div className="text-[10px] text-[var(--muted-foreground)] font-mono font-normal">
+                        <span dir="ltr">{byId(3)?.priceDisplay}</span> {byId(3)?.period}
+                      </div>
                     </th>
                   </tr>
                 </thead>
@@ -807,25 +860,43 @@ export default function Subscriptions() {
                         {row.feature}
                       </td>
 
-                      {[row.basic, row.premium, row.historian].map((val, cellIdx) => (
-                        <td key={cellIdx} className="py-3.5 px-4 text-center">
-                          {typeof val === "boolean" ? (
-                            val ? (
-                              <Check className="h-5 w-5 text-emerald-500 mx-auto" />
+                      {[row.basic, row.premium, row.historian].map((val, cellIdx) => {
+                        const isFeaturedCol = cellIdx === 1;
+                        return (
+                          <td
+                            key={cellIdx}
+                            className={`py-3.5 px-4 text-center ${
+                              isFeaturedCol
+                                ? "bg-[var(--gold)]/5 border-x-2 border-[var(--gold)]/25 font-semibold"
+                                : ""
+                            }`}
+                          >
+                            {typeof val === "boolean" ? (
+                              val ? (
+                                <Check
+                                  aria-label={t("sub_comp_included_aria", "Inclus")}
+                                  className="h-4 w-4 text-emerald-500 mx-auto stroke-[2.5]"
+                                />
+                              ) : (
+                                <X
+                                  aria-label={t("sub_comp_not_included_aria", "Non inclus")}
+                                  className="h-3.5 w-3.5 text-rose-400/50 mx-auto"
+                                />
+                              )
                             ) : (
-                              <X className="h-4 w-4 text-rose-400 mx-auto opacity-60" />
-                            )
-                          ) : (
-                            <span
-                              className={`font-semibold ${
-                                cellIdx === 1 ? "text-[var(--gold)] font-bold" : "text-[var(--foreground)]"
-                              }`}
-                            >
-                              {val}
-                            </span>
-                          )}
-                        </td>
-                      ))}
+                              <span
+                                className={`text-xs ${
+                                  isFeaturedCol
+                                    ? "text-[var(--gold)] font-bold"
+                                    : "text-[var(--foreground)] font-medium"
+                                }`}
+                              >
+                                {val}
+                              </span>
+                            )}
+                          </td>
+                        );
+                      })}
                     </tr>
                   ))}
                 </tbody>
@@ -834,52 +905,34 @@ export default function Subscriptions() {
           </div>
         </div>
 
-        {/* FAQ Section */}
-        <div className="mt-20 max-w-4xl mx-auto">
-          <SectionHeading
-            center={true}
-            eyebrow={t("faq_eyebrow", "Questions Fréquentes")}
-            title={t("frequently_asked_questions", "Comprendre nos abonnements et notre méthodologie")}
-            intro={t("faq_intro", "Des réponses directes et sans détours sur les sources, les tarifs et l’accès aux actes.")}
-          />
-
-          <div className="mt-10 space-y-3.5">
-            {faqs.map((faq, idx) => {
-              const isOpen = openFaq === idx;
-              return (
-                <div
-                  key={idx}
-                  className="surface-card frame-gold rounded-xl border border-[var(--gold)]/30 overflow-hidden shadow-sm transition-all"
-                >
-                  <button
-                    type="button"
-                    onClick={() => setOpenFaq(isOpen ? null : idx)}
-                    className="w-full p-5 text-start font-bold flex items-center justify-between gap-4 cursor-pointer hover:bg-[var(--gold)]/5 transition-colors text-xs sm:text-sm"
-                  >
-                    <span className="flex items-center gap-2.5 text-[var(--foreground)]">
-                      <HelpCircle className="h-4 w-4 text-[var(--gold)] shrink-0" />
-                      <span>{t(faq.qKey, faq.defaultQ)}</span>
-                    </span>
-                    <ChevronDown
-                      className={`h-4 w-4 text-[var(--gold)] shrink-0 transition-transform duration-300 ${
-                        isOpen ? "rotate-180" : ""
-                      }`}
-                    />
-                  </button>
-                  {isOpen && (
-                    <div className="px-5 pb-5 pt-1 text-xs sm:text-sm text-[var(--muted-foreground)] leading-relaxed border-t border-[var(--gold)]/10">
-                      {t(faq.aKey, faq.defaultA)}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+        {/* Assistance & Help Center CTA */}
+        <div className="surface-card frame-gold mt-12 p-6 sm:p-8 rounded-2xl bg-[var(--card)]/90 border border-[var(--gold)]/30 text-center max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-6 shadow-lg">
+          <div className="text-start">
+            <h4 className="font-cinzel text-lg sm:text-xl font-bold text-[var(--foreground)]">
+              {t("sub_cta_title", "Une question avant de vous abonner ?")}
+            </h4>
+            <p className="text-xs sm:text-sm text-[var(--muted-foreground)] mt-1 max-w-xl">
+              {t(
+                "sub_cta_desc",
+                "Consultez notre Centre d'Aide, retrouvez les réponses aux questions fréquentes sur nos tarifs, ou contactez directement nos généalogistes."
+              )}
+            </p>
+          </div>
+          <div className="flex items-center gap-3 shrink-0 w-full sm:w-auto">
+            <Link
+              to="/helpcenter"
+              className="btn-base btn-gold text-xs py-2.5 px-5 font-bold flex items-center justify-center gap-2 w-full sm:w-auto shadow-sm"
+            >
+              <HelpCircle className="w-4 h-4" />
+              <span>{t("sub_cta_btn", "Centre d'Aide & FAQ")}</span>
+              <ArrowRight className={`w-3.5 h-3.5 ${isRtl ? "rotate-180" : ""}`} />
+            </Link>
           </div>
         </div>
       </Section>
 
       {/* ========================================================================= */}
-      {/* QUOTAS MODAL (Technical Storage & Capacity Limits)                         */}
+      {/* TECHNICAL QUOTAS MODAL                                                    */}
       {/* ========================================================================= */}
       {quotaModalOpen && (
         <div
@@ -889,111 +942,85 @@ export default function Subscriptions() {
           onClick={() => setQuotaModalOpen(false)}
         >
           <div
-            className="surface-card frame-gold relative w-full max-w-2xl rounded-2xl bg-[var(--card)] p-6 sm:p-7 shadow-2xl border border-[var(--gold)]/40 overflow-hidden text-start max-h-[90vh] flex flex-col"
+            className="surface-card frame-gold relative w-full max-w-xl rounded-2xl bg-[var(--card)] p-6 sm:p-7 shadow-2xl border-2 border-[var(--gold)]/40 overflow-hidden text-start max-h-[90vh] flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Modal Header */}
             <div className="flex items-center justify-between pb-4 border-b border-[var(--gold)]/20">
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--gold)]/15 text-[var(--gold)]">
-                  <Sliders className="h-5 w-5" />
+                <div className="w-10 h-10 rounded-xl bg-[var(--gold)]/15 text-[var(--gold)] border border-[var(--gold)]/30 flex items-center justify-center">
+                  <Sliders className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-[var(--foreground)] font-display">
-                    {t("quotas_modal_title", "Quotas Techniques & Limites de Stockage")}
+                  <h3 className="font-cinzel text-base sm:text-lg font-bold text-[var(--foreground)]">
+                    {t("sub_quotas_modal_title", "Quotas de Stockage & Limites Techniques")}
                   </h3>
-                  <p className="text-xs text-[var(--muted-foreground)]">
-                    {t("quotas_modal_sub", "Capacités techniques allouées à votre compte selon votre formule :")}
+                  <p className="text-[0.7rem] text-[var(--muted-foreground)]">
+                    {t("sub_quotas_modal_sub", "Capacités d'hébergement allouées à votre compte")}
                   </p>
                 </div>
               </div>
               <button
                 type="button"
+                aria-label={t("sub_modal_close_icon", "Masquer")}
                 onClick={() => setQuotaModalOpen(false)}
-                className="rounded-lg p-2 text-[var(--muted-foreground)] hover:bg-[var(--gold)]/10 hover:text-[var(--gold)] transition-colors cursor-pointer"
-                aria-label="Fermer"
+                className="p-1.5 rounded-lg text-[var(--foreground)]/60 hover:text-[var(--foreground)] hover:bg-[var(--gold)]/10 cursor-pointer"
               >
-                <X className="h-5 w-5" />
+                <X className="w-5 h-5" />
               </button>
             </div>
 
-            {/* Tier Selector in Modal */}
-            <div className="flex items-center gap-2 py-4 border-b border-[var(--border)] overflow-x-auto">
+            {/* Tier Selector Pills */}
+            <div className="flex items-center gap-2 my-4">
               {tiers.map((tItem) => (
                 <button
                   key={tItem.id}
                   type="button"
                   onClick={() => setSelectedQuotaTierId(tItem.id)}
-                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
-                    selectedQuotaTierId === tItem.id
-                      ? "bg-[var(--gold)] text-[#1f160f] shadow-md"
-                      : "bg-[var(--background)] border border-[var(--border)] text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
+                  className={`flex-1 py-1.5 px-2 rounded-xl text-xs font-bold transition-all text-center cursor-pointer ${
+                    activeModalTier.id === tItem.id
+                      ? "bg-gradient-to-r from-[var(--gold)] to-[#e8c47a] text-[#1a1410] font-bold shadow"
+                      : "bg-[var(--background)] border border-[var(--gold)]/25 text-[var(--foreground)]/80 hover:border-[var(--gold)]"
                   }`}
                 >
-                  {tItem.name} ({tItem.priceDisplay})
+                  {tItem.name}
                 </button>
               ))}
             </div>
 
-            {/* Quota Details List */}
-            <div className="flex-1 overflow-y-auto py-4 space-y-3">
-              <div className="rounded-xl bg-[var(--gold)]/10 border border-[var(--gold)]/30 p-3 text-xs text-[var(--foreground)]">
-                <span className="font-bold text-[var(--gold)]">{activeModalTier.name} :</span>{" "}
-                Ces quotas sont configurés et garantis pour chaque utilisateur. Ils n'entravent jamais la consultation des actes publics.
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-                {quotaLabels.map((item) => {
-                  const Icon = item.icon;
-                  const limit = activeModalTier.limits[item.key as keyof typeof activeModalTier.limits];
-                  return (
-                    <div
-                      key={item.key}
-                      className="p-3.5 rounded-xl border border-[var(--border)] bg-[var(--background)]/80 flex items-center justify-between gap-3 shadow-xs"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--gold)]/15 text-[var(--gold)]">
-                          <Icon className="h-4 w-4" />
-                        </div>
-                        <span className="text-xs font-semibold text-[var(--foreground)]">
-                          {item.label}
-                        </span>
-                      </div>
-                      <span className="font-mono text-sm font-extrabold text-[var(--gold)] shrink-0 px-2 py-0.5 rounded bg-[var(--card)] border border-[var(--gold)]/30">
-                        {limit}
-                      </span>
+            {/* Quota Grid */}
+            <div className="overflow-y-auto space-y-2 pe-1 text-xs">
+              {quotaLabels.map((item) => {
+                const IconComp = item.icon;
+                const limitValue = (activeModalTier.limits as any)?.[item.key] ?? 0;
+                return (
+                  <div
+                    key={item.key}
+                    className="flex items-center justify-between p-2.5 rounded-xl bg-[var(--background)] border border-[var(--gold)]/15"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <IconComp className="w-4 h-4 text-[var(--gold)] shrink-0" />
+                      <span className="font-medium text-[var(--foreground)]">{item.label}</span>
                     </div>
-                  );
-                })}
-              </div>
+                    <span className="font-mono font-bold text-[var(--gold)]">
+                      {limitValue >= 999999 ? (
+                        t("comp_val_unlimited", "Illimité")
+                      ) : (
+                        <span dir="ltr">{limitValue.toLocaleString()}</span>
+                      )}
+                    </span>
+                  </div>
+                );
+              })}
             </div>
 
-            {/* Modal Footer */}
-            <div className="pt-4 border-t border-[var(--gold)]/20 flex flex-col sm:flex-row items-center justify-between gap-3">
-              <span className="text-xs text-[var(--muted-foreground)]">
-                Formule sélectionnée : <b className="text-[var(--foreground)]">{activeModalTier.name}</b> ({activeModalTier.priceDisplay} {activeModalTier.period})
-              </span>
-              <div className="flex items-center gap-2 w-full sm:w-auto">
-                <button
-                  type="button"
-                  onClick={() => setQuotaModalOpen(false)}
-                  className="px-4 py-2 rounded-xl border border-[var(--border)] text-xs font-semibold hover:bg-[var(--gold)]/10 transition cursor-pointer w-full sm:w-auto"
-                >
-                  Fermer
-                </button>
-                {!activeModalTier.isCurrent && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setQuotaModalOpen(false);
-                      handleSelectTier(activeModalTier);
-                    }}
-                    className="px-4 py-2 rounded-xl bg-[var(--gold)] text-[#1f160f] text-xs font-bold shadow-md hover:bg-amber-500 transition cursor-pointer w-full sm:w-auto"
-                  >
-                    Choisir cette formule
-                  </button>
-                )}
-              </div>
+            <div className="pt-4 mt-4 border-t border-[var(--gold)]/20 text-center">
+              <button
+                type="button"
+                onClick={() => setQuotaModalOpen(false)}
+                className="btn-base btn-gold px-6 py-2 rounded-xl text-xs font-bold cursor-pointer"
+              >
+                {t("sub_modal_close", "Fermer")}
+              </button>
             </div>
           </div>
         </div>

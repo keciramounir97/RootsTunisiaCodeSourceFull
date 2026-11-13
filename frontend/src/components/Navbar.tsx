@@ -18,11 +18,12 @@ import {
   LayoutDashboard,
   LogOut,
   Phone,
+  Crown,
+  HelpCircle,
 } from "lucide-react";
 
 export function Navbar() {
   const [open, setOpen] = useState(false);
-  const [exploreOpen, setExploreOpen] = useState(false);
   const [galleryOpen, setGalleryOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -44,25 +45,7 @@ export function Navbar() {
   };
 
   const navClass =
-    "inline-flex items-center justify-center text-xs font-semibold uppercase tracking-[0.14em] text-[var(--muted-foreground)] transition-colors hover:text-[var(--gold)] h-8 leading-none select-none py-0 m-0 border-0 bg-transparent";
-
-  const exploreLinks = [
-    {
-      to: "/periods",
-      label: getTunisiaDropdownText(locale, "nav_periods"),
-      hint: getTunisiaDropdownText(locale, "nav_periods_hint"),
-    },
-    {
-      to: "/sources",
-      label: getTunisiaDropdownText(locale, "nav_sources_and_archives"),
-      hint: getTunisiaDropdownText(locale, "nav_sources_and_archives_hint"),
-    },
-    {
-      to: "/subscriptions",
-      label: getTunisiaDropdownText(locale, "nav_subscriptions"),
-      hint: getTunisiaDropdownText(locale, "nav_subscriptions_hint"),
-    },
-  ];
+    "inline-flex items-center justify-center text-[0.72rem] xl:text-xs font-semibold uppercase tracking-[0.08em] xl:tracking-[0.14em] text-[var(--muted-foreground)] transition-colors hover:text-[var(--gold)] h-8 leading-none select-none py-0 m-0 border-0 bg-transparent";
 
   const galleryLinks = [
     {
@@ -97,9 +80,6 @@ export function Navbar() {
     },
   ];
 
-  const isExploreActive = ["/periods", "/sources", "/archives", "/subscriptions"].includes(
-    seoPath
-  );
   const isGalleryActive = [
     "/gallery/trees",
     "/gallery/images",
@@ -115,11 +95,11 @@ export function Navbar() {
       dir={isRtl ? "rtl" : "ltr"}
       className="sticky top-0 z-40 px-2 pt-2 sm:px-3 lg:px-5 xl:px-8 sm:pt-3.5"
     >
-      <div className="mx-auto flex w-full max-w-[var(--content-max)] items-center gap-1.5 sm:gap-2.5 lg:gap-4 xl:gap-6 rounded-lg border border-[var(--gold)]/35 bg-[var(--card)]/95 px-2.5 py-2 sm:px-3.5 lg:px-5 xl:px-6 sm:py-3 shadow-xl backdrop-blur-md">
+      <div className="mx-auto flex w-full max-w-[var(--content-max)] items-center gap-1.5 sm:gap-2 lg:gap-3.5 xl:gap-5 rounded-lg border border-[var(--gold)]/35 bg-[var(--card)]/95 px-2.5 py-2 sm:px-3.5 lg:px-4 xl:px-6 sm:py-3 shadow-xl backdrop-blur-md">
         <Logo />
 
         {/* Desktop Nav */}
-        <nav className="hidden items-center gap-2.5 lg:gap-4 xl:gap-7 ms-1 lg:ms-2 xl:ms-4 md:flex h-8 whitespace-nowrap shrink-0">
+        <nav className="hidden items-center gap-2 lg:gap-3 xl:gap-5 ms-1 lg:ms-2 xl:ms-3 md:flex h-8 whitespace-nowrap shrink-0">
           {/* Home */}
           <div className="flex items-center h-8">
             <NavLink
@@ -133,37 +113,40 @@ export function Navbar() {
             </NavLink>
           </div>
 
-          {/* Explore Dropdown */}
-          <div
-            className="relative flex items-center h-8"
-            onMouseEnter={() => setExploreOpen(true)}
-            onMouseLeave={() => setExploreOpen(false)}
-          >
-            <button
-              type="button"
-              className={`${navClass} gap-1.5 cursor-pointer ${
-                isExploreActive ? "!text-[var(--gold)]" : ""
-              }`}
+          {/* Periods */}
+          <div className="flex items-center h-8">
+            <NavLink
+              to="/periods"
+              className={({ isActive }) =>
+                `${navClass} ${isActive || seoPath.startsWith("/periods") ? "!text-[var(--gold)]" : ""}`
+              }
             >
-              <span>{getTunisiaDropdownText(locale, "nav_explore")}</span>
-              <ChevronDown className="h-3 w-3 shrink-0" />
-            </button>
-            {exploreOpen && (
-              <div className="absolute start-0 top-full w-56 pt-2 z-50 text-start">
-                <div className="surface-card overflow-hidden p-1.5 shadow-xl border border-[var(--gold)]/40 rounded-sm">
-                  {exploreLinks.map((l) => (
-                    <Link
-                      key={l.to}
-                      to={l.to}
-                      onClick={() => setExploreOpen(false)}
-                      className="block rounded-sm px-3 py-2 text-xs font-semibold tracking-wide text-[var(--foreground)] text-start transition-colors hover:bg-[var(--gold)]/15 hover:text-[var(--gold)]"
-                    >
-                      {l.label}
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            )}
+              <span>{getTunisiaDropdownText(locale, "nav_periods")}</span>
+            </NavLink>
+          </div>
+
+          {/* Sources & Archives */}
+          <div className="flex items-center h-8">
+            <NavLink
+              to="/sources"
+              className={({ isActive }) =>
+                `${navClass} ${isActive || seoPath.startsWith("/sources") || seoPath.startsWith("/archives") ? "!text-[var(--gold)]" : ""}`
+              }
+            >
+              <span>{getTunisiaDropdownText(locale, "nav_sources_and_archives")}</span>
+            </NavLink>
+          </div>
+
+          {/* Services */}
+          <div className="flex items-center h-8">
+            <NavLink
+              to="/services"
+              className={({ isActive }) =>
+                `${navClass} ${isActive || seoPath.startsWith("/services") ? "!text-[var(--gold)]" : ""}`
+              }
+            >
+              <span>{getTunisiaDropdownText(locale, "nav_services")}</span>
+            </NavLink>
           </div>
 
           {/* Gallery Dropdown */}
@@ -174,7 +157,7 @@ export function Navbar() {
           >
             <button
               type="button"
-              className={`${navClass} gap-1.5 cursor-pointer ${
+              className={`${navClass} gap-1 cursor-pointer ${
                 isGalleryActive ? "!text-[var(--gold)]" : ""
               }`}
             >
@@ -206,15 +189,15 @@ export function Navbar() {
             )}
           </div>
 
-          {/* About */}
+          {/* Interactive Map */}
           <div className="flex items-center h-8">
             <NavLink
-              to="/about"
+              to="/interactive-map"
               className={({ isActive }) =>
                 `${navClass} ${isActive ? "!text-[var(--gold)]" : ""}`
               }
             >
-              <span>{t("nav_about")}</span>
+              <span>{t("nav_interactive_map", "Carte Interactive")}</span>
             </NavLink>
           </div>
         </nav>
@@ -250,20 +233,36 @@ export function Navbar() {
             />
           </form>
 
-          {/* Contact Icon Button */}
+          {/* Subscriptions Crown Icon Button */}
           <NavLink
-            to="/contact"
-            aria-label={t("nav_contact")}
-            title={t("nav_contact")}
+            to="/subscriptions"
+            aria-label={t("nav_subscriptions", "Abonnements & Formules")}
+            title={t("nav_subscriptions", "Abonnements & Formules")}
             className={({ isActive }) =>
               `h-8 w-8 sm:h-[34px] sm:w-[34px] rounded-sm border flex items-center justify-center transition-colors cursor-pointer ${
                 isActive
+                  ? "border-[var(--gold)] bg-[var(--gold)]/20 text-[var(--gold)]"
+                  : "border-[var(--border)] text-[var(--gold)] hover:border-[var(--gold)] hover:bg-[var(--gold)]/15"
+              }`
+            }
+          >
+            <Crown className="h-4 w-4 text-[var(--gold)]" />
+          </NavLink>
+
+          {/* Help Center Icon Button */}
+          <NavLink
+            to="/helpcenter"
+            aria-label={t("nav_help_center", "Centre d'Aide (Help Center)")}
+            title={t("nav_help_center", "Centre d'Aide (Help Center)")}
+            className={({ isActive }) =>
+              `h-8 w-8 sm:h-[34px] sm:w-[34px] rounded-sm border flex items-center justify-center transition-colors cursor-pointer ${
+                isActive || seoPath.startsWith("/helpcenter") || seoPath.startsWith("/contact")
                   ? "border-[var(--gold)] bg-[var(--gold)]/20 text-[var(--gold)]"
                   : "border-[var(--border)] text-[var(--foreground)] hover:border-[var(--gold)] hover:bg-[var(--gold)]/15 hover:text-[var(--gold)]"
               }`
             }
           >
-            <Phone className="h-4 w-4" />
+            <HelpCircle className="h-4 w-4" />
           </NavLink>
 
           {/* Language Switcher */}
@@ -375,27 +374,47 @@ export function Navbar() {
               {t("nav_home")}
             </NavLink>
 
-            <div className="py-1">
-              <p className="px-3 text-[0.65rem] font-bold uppercase tracking-wider text-[var(--gold)]">
-                {getTunisiaDropdownText(locale, "nav_explore")}
-              </p>
-              {exploreLinks.map((l) => (
-                <NavLink
-                  key={l.to}
-                  to={l.to}
-                  onClick={() => setOpen(false)}
-                  className={({ isActive }) =>
-                    `block rounded-sm px-3 py-1.5 text-xs ${
-                      isActive
-                        ? "bg-[var(--gold)]/20 text-[var(--gold)] font-bold"
-                        : "text-[var(--foreground)] hover:bg-[var(--gold)]/10"
-                    }`
-                  }
-                >
-                  {l.label}
-                </NavLink>
-              ))}
-            </div>
+            <NavLink
+              to="/periods"
+              onClick={() => setOpen(false)}
+              className={({ isActive }) =>
+                `rounded-sm px-3 py-2 text-xs font-semibold ${
+                  isActive
+                    ? "bg-[var(--gold)]/20 text-[var(--gold)]"
+                    : "text-[var(--foreground)] hover:bg-[var(--gold)]/10"
+                }`
+              }
+            >
+              {getTunisiaDropdownText(locale, "nav_periods")}
+            </NavLink>
+
+            <NavLink
+              to="/sources"
+              onClick={() => setOpen(false)}
+              className={({ isActive }) =>
+                `rounded-sm px-3 py-2 text-xs font-semibold ${
+                  isActive
+                    ? "bg-[var(--gold)]/20 text-[var(--gold)]"
+                    : "text-[var(--foreground)] hover:bg-[var(--gold)]/10"
+                }`
+              }
+            >
+              {getTunisiaDropdownText(locale, "nav_sources_and_archives")}
+            </NavLink>
+
+            <NavLink
+              to="/services"
+              onClick={() => setOpen(false)}
+              className={({ isActive }) =>
+                `rounded-sm px-3 py-2 text-xs font-semibold ${
+                  isActive
+                    ? "bg-[var(--gold)]/20 text-[var(--gold)]"
+                    : "text-[var(--foreground)] hover:bg-[var(--gold)]/10"
+                }`
+              }
+            >
+              {getTunisiaDropdownText(locale, "nav_services")}
+            </NavLink>
 
             <div className="py-1">
               <p className="px-3 text-[0.65rem] font-bold uppercase tracking-wider text-[var(--gold)]">
@@ -420,7 +439,7 @@ export function Navbar() {
             </div>
 
             <NavLink
-              to="/about"
+              to="/interactive-map"
               onClick={() => setOpen(false)}
               className={({ isActive }) =>
                 `rounded-sm px-3 py-2 text-xs font-semibold ${
@@ -430,22 +449,37 @@ export function Navbar() {
                 }`
               }
             >
-              {t("nav_about")}
+              {t("nav_interactive_map", "Carte Interactive")}
             </NavLink>
 
             <NavLink
-              to="/contact"
+              to="/subscriptions"
               onClick={() => setOpen(false)}
               className={({ isActive }) =>
                 `inline-flex items-center gap-2 rounded-sm px-3 py-2 text-xs font-semibold ${
                   isActive
                     ? "bg-[var(--gold)]/20 text-[var(--gold)]"
+                    : "text-[var(--gold)] hover:bg-[var(--gold)]/10"
+                }`
+              }
+            >
+              <Crown className="h-3.5 w-3.5 text-[var(--gold)] shrink-0" />
+              <span>{t("nav_subscriptions", "Abonnements & Tarifs")}</span>
+            </NavLink>
+
+            <NavLink
+              to="/helpcenter"
+              onClick={() => setOpen(false)}
+              className={({ isActive }) =>
+                `inline-flex items-center gap-2 rounded-sm px-3 py-2 text-xs font-semibold ${
+                  isActive || seoPath.startsWith("/helpcenter") || seoPath.startsWith("/contact")
+                    ? "bg-[var(--gold)]/20 text-[var(--gold)]"
                     : "text-[var(--foreground)] hover:bg-[var(--gold)]/10"
                 }`
               }
             >
-              <Phone className="h-3.5 w-3.5 text-[var(--gold)] shrink-0" />
-              <span>{t("nav_contact")}</span>
+              <HelpCircle className="h-3.5 w-3.5 text-[var(--gold)] shrink-0" />
+              <span>{t("nav_help_center", "Centre d'Aide")}</span>
             </NavLink>
           </nav>
         </div>

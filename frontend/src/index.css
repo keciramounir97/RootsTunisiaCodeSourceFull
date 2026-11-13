@@ -5222,3 +5222,32 @@ table.easy-admin-table tr:hover td, table.admin-table tr:hover td {
   letter-spacing: normal !important;
 }
 
+/* ========================================================================= */
+/* INFINITE MARQUEE TRANSLATE-X ANIMATION (LEFT TO RIGHT)                     */
+/* ========================================================================= */
+@keyframes marquee-translate-ltr {
+  0% {
+    transform: translateX(-50%);
+  }
+  100% {
+    transform: translateX(0%);
+  }
+}
+
+.animate-marquee-ltr {
+  display: flex;
+  width: max-content;
+  animation: marquee-translate-ltr 75s linear infinite;
+  will-change: transform;
+}
+
+.animate-marquee-ltr:hover,
+.animate-marquee-ltr:focus-within {
+  animation-play-state: paused;
+}
+
+.marquee-paused {
+  animation-play-state: paused !important;
+}
+
+

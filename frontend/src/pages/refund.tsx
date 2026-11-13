@@ -1,33 +1,22 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, RefreshCw, ShieldCheck, Mail, FileText, CheckCircle2 } from "lucide-react";
 import { PageHero, Section } from "../components/site/Primitives";
 import { useTranslation } from "../context/TranslationContext";
 import sidiBouSaid from "../assets/slider-sidibousaid.jpg";
 import SEO from "../components/SEO";
-import { api } from "../api/client";
 import SiteCustomBlocks from "../components/cms/SiteCustomBlocks";
-
-type LegalSection = { heading: string; body: string };
-type LegalDocument = { title: string; intro: string; sections: LegalSection[] };
-
-function unwrapLegalDocument(payload: any): LegalDocument | null {
-  const doc = payload?.data ?? payload;
-  if (!doc || !Array.isArray(doc.sections) || doc.sections.length === 0) return null;
-  return {
-    title: String(doc.title || ""),
-    intro: String(doc.intro || ""),
-    sections: doc.sections.map((section: any) => ({
-      heading: String(section?.heading || ""),
-      body: String(section?.body || ""),
-    })),
-  };
-}
+import {
+  type LegalDocument,
+  formatLegalSeoTitle,
+  getLegalSeoKeywords,
+  useLegalDocument,
+} from "../utils/legalDocument";
 
 const SECTION_ICONS = [RefreshCw, CheckCircle2, FileText, Mail, ShieldCheck];
 
 export default function RefundPolicy() {
-  const { t, locale } = useTranslation();
+  const { t, locale, isRtl } = useTranslation();
   const i18nFallback = useMemo<LegalDocument>(
     () => ({
       title: t("refund_title", "Refund & Cancellation Policy"),
@@ -107,31 +96,20 @@ export default function RefundPolicy() {
     }),
     [t],
   );
-  const [doc, setDoc] = useState<LegalDocument>(i18nFallback);
-
-  useEffect(() => {
-    setDoc(i18nFallback);
-    let cancelled = false;
-    api
-      .get("/legal/refund", { params: { locale } })
-      .then(({ data }) => {
-        const cms = unwrapLegalDocument(data);
-        if (!cancelled && cms) setDoc(cms);
-      })
-      .catch(() => {
-        // Keep i18n fallback when CMS is empty or unavailable.
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [locale, i18nFallback]);
+  const doc = useLegalDocument("refund", i18nFallback, locale);
 
   return (
-    <div className="bg-[var(--background)] text-[var(--foreground)] min-h-screen">
+    <div dir={isRtl ? "rtl" : "ltr"} className="bg-[var(--background)] text-[var(--foreground)] min-h-screen">
       <SEO
-        title={doc.title || t("seo_refund_title", "سياسة الاسترجاع والإلغاء — جذور تونس")}
-        description="Learn about refund eligibility, subscription cancellations, statutory withdrawal rights, and digital download terms on Roots Tunisia."
-        keywords={["Roots Tunisia refund", "subscription cancellation", "genealogy refund policy"]}
+        title={formatLegalSeoTitle(
+          doc.title || t("seo_refund_title", "Refund & Cancellation Policy — Roots Tunisia"),
+          locale,
+        )}
+        description={t(
+          "refund_seo_desc",
+          "Learn about refund eligibility, subscription cancellations, statutory withdrawal rights, and digital download terms on Roots Tunisia.",
+        )}
+        keywords={getLegalSeoKeywords("refund", locale)}
       />
 
       <PageHero

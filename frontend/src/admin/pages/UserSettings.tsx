@@ -215,12 +215,12 @@ export default function UserSettings() {
             </label>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               {[
-                { code: "fr", label: "Français 🇫🇷" },
-                { code: "en", label: "English 🇬🇧" },
-                { code: "ar", label: "العربية 🇹🇳" },
-                { code: "es", label: "Español 🇪🇸" },
-                { code: "it", label: "Italiano 🇮🇹" },
-                { code: "mt", label: "Malti 🇲🇹" },
+                { code: "fr", label: "Français [FR]" },
+                { code: "en", label: "English [EN]" },
+                { code: "ar", label: "العربية [AR]" },
+                { code: "es", label: "Español [ES]" },
+                { code: "it", label: "Italiano [IT]" },
+                { code: "mt", label: "Malti [MT]" },
               ].map((lang) => (
                 <button
                   key={lang.code}

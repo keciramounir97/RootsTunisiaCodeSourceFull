@@ -364,7 +364,7 @@ export default function GalleryImages() {
             {filteredImages.map((img) => (
               <article
                 key={img.id}
-                className="surface-card group overflow-hidden border border-[var(--gold)]/30 hover:border-[var(--gold)] transition-all hover:-translate-y-1 shadow-md flex h-full flex-col justify-between rounded-lg bg-[var(--card)] text-start"
+                className="surface-card frame-gold group overflow-hidden transition-all hover:-translate-y-1 shadow-md flex h-full flex-col justify-between rounded-lg bg-[var(--card)] text-start"
               >
                 <div>
                   <div
@@ -378,32 +378,32 @@ export default function GalleryImages() {
                       className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-3">
-                      <span className="text-white text-xs font-semibold flex items-center gap-1">
-                        <ZoomIn className="h-3.5 w-3.5 text-[var(--gold)]" />
+                      <span className="text-white text-xs font-semibold flex items-center gap-1.5">
+                        <ZoomIn className="h-3.5 w-3.5 text-[#f5c857]" />
                         <span>{t("view_high_res")}</span>
                       </span>
                     </div>
                     {img.yearStr && (
-                      <span className="absolute top-2.5 end-2.5 rounded-sm bg-black/70 px-2 py-0.5 text-[0.65rem] font-bold text-[var(--gold)] backdrop-blur-sm border border-[var(--gold)]/30">
+                      <span className="absolute top-2.5 end-2.5 rounded-md bg-[#140f0a]/85 px-2.5 py-1 text-xs font-mono font-bold text-[#f5c857] backdrop-blur-md border border-[#f5c857]/40 shadow-sm">
                         {img.yearStr}
                       </span>
                     )}
                   </div>
 
-                  <div className="p-4">
-                    <h3 className="font-display font-bold text-base text-[var(--foreground)] group-hover:text-[var(--gold)] transition-colors line-clamp-1">
+                  <div className="p-4 sm:p-5">
+                    <h3 className="font-display font-bold text-base sm:text-lg text-[var(--foreground)] group-hover:text-[var(--gold)] transition-colors line-clamp-1">
                       {img.title}
                     </h3>
-                    <p className="mt-1.5 text-xs text-[var(--muted-foreground)] line-clamp-2 leading-relaxed">
+                    <p className="mt-1.5 text-xs text-[var(--foreground)]/80 line-clamp-2 leading-relaxed">
                       {img.description}
                     </p>
                   </div>
                 </div>
 
-                <div className="px-4 pb-4 pt-2 border-t border-[var(--gold)]/15 flex items-center justify-between text-xs">
+                <div className="px-4 pb-4 pt-2.5 border-t border-[var(--border)] flex items-center justify-between text-xs">
                   {img.governorate && (
-                    <span className="font-semibold text-[var(--gold)] flex items-center gap-1 text-[0.68rem] truncate max-w-[130px]">
-                      <MapPin className="h-3 w-3 shrink-0" />
+                    <span className="font-semibold text-[var(--gold)] flex items-center gap-1.5 text-xs truncate max-w-[130px]">
+                      <MapPin className="h-3.5 w-3.5 shrink-0 text-[var(--gold)]" />
                       <span className="truncate">{img.governorate}</span>
                     </span>
                   )}
@@ -411,7 +411,11 @@ export default function GalleryImages() {
                     <button
                       type="button"
                       onClick={() => toggleLike(img.id)}
-                      className="flex items-center gap-1 text-[var(--muted-foreground)] hover:text-rose-400 transition-colors cursor-pointer text-xs"
+                      className={`flex items-center gap-1.5 text-xs transition-colors cursor-pointer ${
+                        img.isLiked
+                          ? "text-rose-500 font-bold"
+                          : "text-[var(--muted-foreground)] hover:text-rose-500"
+                      }`}
                       title={t("like", "Like")}
                     >
                       <Heart
@@ -433,10 +437,10 @@ export default function GalleryImages() {
                           entityId: Number(img.id) || undefined,
                         })
                       }
-                      className="flex items-center gap-1 text-[var(--muted-foreground)] hover:text-[var(--gold)] transition-colors cursor-pointer text-xs"
+                      className="flex items-center gap-1.5 text-xs text-[var(--muted-foreground)] hover:text-[var(--gold)] transition-colors cursor-pointer"
                       title={t("comments", "Comments")}
                     >
-                      <MessageSquare className="h-3.5 w-3.5" />
+                      <MessageSquare className="h-3.5 w-3.5 text-[var(--gold)]" />
                       <span>{t("comment", "Comment")}</span>
                     </button>
                   </div>

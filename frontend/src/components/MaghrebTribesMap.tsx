@@ -11,6 +11,7 @@ import "leaflet/dist/leaflet.css";
 import { useState, useEffect } from "react";
 import L from "leaflet";
 import { useTranslation } from "../context/TranslationContext";
+import { localizeMaghrebRegion, localizeMaghrebCity } from "../data/maghrebMapLocales";
 
 // Custom burgundy marker icon
 const burgundyIcon = L.divIcon({
@@ -583,7 +584,7 @@ const maghrebCities: MaghrebCity[] = [
    MAIN COMPONENT
    ======================= */
 export default function MaghrebTribesMap() {
-  const { t, dir } = useTranslation();
+  const { t, dir, locale } = useTranslation();
   const isRtl = dir === "rtl";
   const [mounted, setMounted] = useState(false);
 
@@ -624,73 +625,89 @@ export default function MaghrebTribesMap() {
         />
 
         {/* REGIONAL POLYGONS */}
-        {maghrebRegions.map((region) => (
-          <div key={`${region.country}-${region.name}`}>
-            <Polygon
-              positions={region.coordinates as any}
-              pathOptions={{
-                color: region.color,
-                fillColor: region.color,
-                fillOpacity: 0.22,
-                weight: 2,
-              }}
-            >
-              <Tooltip sticky direction="center" className="maghreb-tooltip">
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "10px",
-                  }}
-                >
-                  <span
+        {maghrebRegions.map((rawRegion) => {
+          const region = localizeMaghrebRegion(rawRegion, locale);
+          return (
+            <div key={`${rawRegion.country}-${rawRegion.name}`}>
+              <Polygon
+                positions={region.coordinates as any}
+                pathOptions={{
+                  color: region.color,
+                  fillColor: region.color,
+                  fillOpacity: 0.22,
+                  weight: 2,
+                }}
+              >
+                <Tooltip sticky direction="center" className="maghreb-tooltip">
+                  <div
+                    dir={isRtl ? "rtl" : "ltr"}
                     style={{
-                      width: 10,
-                      height: 10,
-                      borderRadius: "50%",
-                      background: "#c1913e",
-                      flexShrink: 0,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "10px",
+                      textAlign: isRtl ? "right" : "left",
                     }}
-                  />
-                  <div>
-                    <div style={{ fontWeight: "bold", color: "#c1913e", fontSize: 13, fontFamily: "Cinzel, serif" }}>
-                      {region.name} ({region.country})
-                    </div>
-                    <div style={{ fontSize: 11, color: "#111", marginTop: 1 }}>
-                      {region.description}
+                  >
+                    <span
+                      style={{
+                        width: 10,
+                        height: 10,
+                        borderRadius: "50%",
+                        background: "#c1913e",
+                        flexShrink: 0,
+                      }}
+                    />
+                    <div>
+                      <div style={{ fontWeight: "bold", color: "#c1913e", fontSize: 13, fontFamily: "Cinzel, serif" }}>
+                        {region.name} ({region.country})
+                      </div>
+                      <div style={{ fontSize: 11, color: "#111", marginTop: 1 }}>
+                        {region.description}
+                      </div>
                     </div>
                   </div>
-                </div>
-              </Tooltip>
-              <Popup>
-                <div className="maghreb-popup-content">
-                  <h4>{region.name} ({region.country})</h4>
-                  <p>
-                    <strong>{t("history_label", "Histoire :")}</strong> {region.history}
-                  </p>
-                  <p>
-                    <strong>{t("families_tribes_label", "Familles/Tribus :")}</strong> {region.tribes}
-                  </p>
-                  <p>
-                    <strong>{t("key_site_label", "Site clé :")}</strong> {region.attractions}
-                  </p>
-                </div>
-              </Popup>
-            </Polygon>
-          </div>
-        ))}
+                </Tooltip>
+                <Popup>
+                  <div
+                    dir={isRtl ? "rtl" : "ltr"}
+                    className="maghreb-popup-content"
+                    style={{ textAlign: isRtl ? "right" : "left" }}
+                  >
+                    <h4>{region.name} ({region.country})</h4>
+                    <p>
+                      <strong>{t("history_label", "Histoire :")}</strong> {region.history}
+                    </p>
+                    <p>
+                      <strong>{t("families_tribes_label", "Familles/Tribus :")}</strong> {region.tribes}
+                    </p>
+                    <p>
+                      <strong>{t("key_site_label", "Site clé :")}</strong> {region.attractions}
+                    </p>
+                  </div>
+                </Popup>
+              </Polygon>
+            </div>
+          );
+        })}
 
         {/* CITY MARKERS */}
-        {maghrebCities.map((city) => (
-          <Marker key={`${city.country}-${city.name}`} position={city.coords as any} icon={burgundyIcon}>
-            <Popup>
-              <div className="maghreb-popup-content">
-                <h4>{city.name} ({city.country})</h4>
-                <p>{city.importance}</p>
-              </div>
-            </Popup>
-          </Marker>
-        ))}
+        {maghrebCities.map((rawCity) => {
+          const city = localizeMaghrebCity(rawCity, locale);
+          return (
+            <Marker key={`${rawCity.country}-${rawCity.name}`} position={city.coords as any} icon={burgundyIcon}>
+              <Popup>
+                <div
+                  dir={isRtl ? "rtl" : "ltr"}
+                  className="maghreb-popup-content"
+                  style={{ textAlign: isRtl ? "right" : "left" }}
+                >
+                  <h4>{city.name} ({city.country})</h4>
+                  <p>{city.importance}</p>
+                </div>
+              </Popup>
+            </Marker>
+          );
+        })}
       </MapContainer>
     </div>
   );

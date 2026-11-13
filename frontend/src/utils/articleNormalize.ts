@@ -187,72 +187,7 @@ export function formatTimeAgo(
   return date.toLocaleDateString();
 }
 
-/** EXACTLY ONE realistic, highly curated test article to see the layout & sources */
-export const SCIENTIFIC_GEDCOM_ARTICLES: NormalizedArticle[] = [
-  {
-    id: "art-majba-sijillat-genealogie-tunisie",
-    title: "Retracer une lignée tunisienne : Le croisement méthodique des registres de la Majba et des Sijillats des Cadis (1860–1956)",
-    category: "Sijillats & Notariats",
-    userName: "Karim Admin",
-    userId: "1",
-    images: ["/assets/family-archive.jpg"],
-    videos: [],
-    readingTime: "6 min",
-    sources: [
-      {
-        title: "Archives Nationales de Tunisie (ANT)",
-        cote: "Série Historique, Sous-série Majba (Daftar al-Majba 1860–1869, Caïdats du Sahel et de Tunis)",
-        url: "http://www.archives.nat.tn",
-        note: "Recensement fiscal nominatif des chefs de famille et garçons pubères soumis à l'impôt de capitation.",
-      },
-      {
-        title: "Dépôt du Tribunal de la Charaa de Tunis (Mahkama Charaïa)",
-        cote: "Fonds Ouzara / Registres des Successions et Tutelles (Sijillat al-Tarikāt wa-l-Wasāyā)",
-        url: "http://www.archives.nat.tn",
-        note: "Actes de partage successoral établissant les filiations sur 3 à 5 générations et mentionnant les biens fonciers.",
-      },
-      {
-        title: "Centre des Archives Diplomatiques de Nantes (CADN)",
-        cote: "Série Tunisie (Protectorat 1881–1956), Registres d'état civil consulaire et décrets de naturalisation",
-        url: "https://www.diplomatie.gouv.fr/fr/archives-diplomatiques/",
-        note: "Index nominatif des décrets beylicaux et jugements déclaratifs de naissance.",
-      },
-    ],
-    comments: [
-      {
-        id: 101,
-        userId: "researcher",
-        userName: "Dr. Leila Trabelsi",
-        text: "Méthode rigoureuse et indispensable pour surmonter l'absence d'état civil patronymique avant le décret beylical de 1886.",
-        createdAt: "2026-11-10T14:00:00.000Z",
-      },
-    ],
-    createdAt: "2026-11-10T09:30:00.000Z",
-    likes: 24,
-    isLiked: false,
-    visibility: "public",
-    content: `La recherche généalogique en Tunisie antérieurement à l'instauration de l'état civil moderne (décret beylical de 1886 pour les Européens et réforme de 1957 pour les Tunisiens) se heurte fréquemment à un préjugé : l'absence supposée de registres d'état civil d'époque pré-coloniale.
+import { REAL_AUTHENTIC_ARTICLES } from "../data/realArticles";
 
-En réalité, l'État husseinite du XIXe siècle disposait d'un appareil administratif et notarial hautement sophistiqué, dont les registres permettent de reconstituer avec une exactitude mathématique les chaînes de filiation (Nasab).
-
-1. Les Registres Fiscaux de la Majba (1860–1869)
-Instituée par le Beylicat pour financer les réformes de l'État, la Majba (impôt de capitation) a donné lieu à des recensements nominatifs exhaustifs de tous les hommes pubères valides par Caïdat, Kahialat et Cheikhat.
-Chaque fiche consigne :
-• Le prénom et la chaîne patronymique (Ism wa Nasab) sur au moins 3 générations (ex: Mohamed ben Ali ben Belgacem).
-• L'âge approximatif et la profession ou corporation de métier (Hirfa).
-• Le village, le quartier de médina ou la fraction tribale (Arch).
-En consultant le Daftarkhana aux Archives Nationales de Tunisie, ces registres constituent un instantané démographique inestimable pour fixer l'ancêtre pivot des années 1860.
-
-2. Les Sijillats des Tribunaux Charaïques
-Parallèlement à la fiscalité, la justice charaïque (tribunaux malékites et hanafites présidés par les cadis) enregistrait quotidiennement des actes de la vie civile :
-• Hujaj al-Tarika (actes de dévolution successorale) : ils récapitulent la totalité des héritiers légitimes (veuve, fils, filles, frères consanguins, neveux) avec l'inventaire des biens et les dettes.
-• Actes de mariage (Sadaq) et tutelles d'orphelins (Hajr wa Wasaya) rédigés par les 'udul (notaires assermentés).
-Ces actes mentionnent très souvent les titres de propriété et l'origine géographique des grands-parents, levant toute ambiguïté sur les homonymies patronymiques courantes.
-
-3. La Règle d'Or du Croisement Méthodologique
-Pour valider une lignée sans faille :
-1) Partir de l'acte d'état civil le plus récent (XXe siècle) pour identifier la date et le lieu de décès de l'ancêtre né au XIXe siècle.
-2) Retrouver sa mention dans le registre de la Majba de son cheikhat d'origine.
-3) Confirmer les fratries et ascendances via l'acte notarié de succession aux Archives Nationales de Tunisie.`,
-  },
-];
+/** Real, in-depth academic genealogical monographs (minimum 14-page equivalent depth, without photos, starting with 0 likes & comments) */
+export const SCIENTIFIC_GEDCOM_ARTICLES: NormalizedArticle[] = REAL_AUTHENTIC_ARTICLES;

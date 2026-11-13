@@ -89,13 +89,21 @@ const GalleryDocuments = lazy(() => import("./pages/GalleryDocuments"));
 const GalleryArticles = lazy(() => import("./pages/GalleryArticles"));
 const ArticlesPage = lazy(() => import("./pages/articles"));
 const AboutPage = lazy(() => import("./pages/about"));
+const InteractiveMapPage = lazy(() => import("./pages/InteractiveMap"));
 const ResearchPage = lazy(() => import("./pages/Research"));
 const GenealogyGallery = lazy(() => import("./pages/genealogy-gallery"));
 const AudioPage = lazy(() => import("./pages/audio"));
 const MyDownloadRequests = lazy(() => import("./pages/MyDownloadRequests"));
 const HelpCenter = lazy(() => import("./pages/HelpCenter"));
+const FAQPage = lazy(() => import("./pages/FAQ"));
+const ServicesPage = lazy(() => import("./pages/Services"));
+const ServiceDetailPage = lazy(() => import("./pages/ServiceDetail"));
+const PeriodDetailPage = lazy(() => import("./pages/PeriodDetail"));
 
 // ===== NEW ADMIN PAGES (redesign parity) =====
+const AdminPeriods = lazy(() => import("./admin/pages/AdminPeriods"));
+const AdminServices = lazy(() => import("./admin/pages/AdminServices"));
+const AdminServicesBookings = lazy(() => import("./admin/pages/AdminServicesBookings"));
 const PaymentSettings = lazy(() => import("./admin/pages/PaymentSettings"));
 const Currencies = lazy(() => import("./admin/pages/Currencies"));
 const Backups = lazy(() => import("./admin/pages/Backups"));
@@ -109,6 +117,8 @@ const AdminLibraryContent = lazy(() => import("./admin/pages/AdminLibraryContent
 const AdminAudioContent = lazy(() => import("./admin/pages/AdminAudioContent"));
 const AdminDocumentsContent = lazy(() => import("./admin/pages/AdminDocumentsContent"));
 const AdminContactContent = lazy(() => import("./admin/pages/AdminContactContent"));
+const AdminFaqContent = lazy(() => import("./admin/pages/AdminFaqContent"));
+const AdminHelpCenterContent = lazy(() => import("./admin/pages/AdminHelpCenterContent"));
 const AdminPeriodsContent = lazy(() => import("./admin/pages/AdminPeriodsContent"));
 const AdminArchivesContent = lazy(() => import("./admin/pages/AdminArchivesContent"));
 const AdminSourcesContent = lazy(() => import("./admin/pages/AdminSourcesContent"));
@@ -119,7 +129,7 @@ const EmailTemplates = lazy(() => import("./admin/pages/EmailTemplates"));
 const DownloadRequests = lazy(() => import("./admin/pages/DownloadRequests"));
 const AdminArticles = lazy(() => import("./admin/pages/Articles"));
 /** Pages where WhatsApp button should appear */
-const WHATSAPP_PAGES = ["/", "/contact", "/subscriptions", "/tasks", "/notes", "/reminders"];
+const WHATSAPP_PAGES = ["/", "/contact", "/subscriptions", "/services", "/faq", "/tasks", "/notes", "/reminders"];
 
 function LocaleSync() {
   const location = useLocation();
@@ -238,20 +248,30 @@ function AppRoutes() {
       <Route path="/gallery/documents" element={<GalleryDocuments />} />
       <Route path="/gallery/articles" element={<GalleryArticles />} />
       <Route path="/articles" element={<ArticlesPage />} />
-      <Route path="/about" element={<AboutPage />} />
+      <Route path="/interactive-map" element={<InteractiveMapPage />} />
+      <Route path="/carte-interactive" element={<Navigate to="/interactive-map" replace />} />
+      <Route path="/map" element={<Navigate to="/interactive-map" replace />} />
+      <Route path="/about" element={<Navigate to="/helpcenter#about" replace />} />
+      <Route path="/faq" element={<Navigate to="/helpcenter#faq" replace />} />
+      <Route path="/faqs" element={<Navigate to="/helpcenter#faq" replace />} />
+      <Route path="/foire-aux-questions" element={<Navigate to="/helpcenter#faq" replace />} />
       <Route path="/research" element={<ResearchPage />} />
       <Route path="/genealogy-gallery" element={<GenealogyGallery />} />
       <Route path="/audio" element={<AudioPage />} />
       <Route path="/my-download-requests" element={<Navigate to="/gallery/trees" replace />} />
-      <Route path="/help-center" element={<HelpCenter />} />
+      <Route path="/help-center" element={<Navigate to="/helpcenter" replace />} />
+      <Route path="/helpcenter" element={<ContactUs />} />
       <Route path="/library" element={<GalleryBooks />} />
       <Route path="/periods" element={<Periods />} />
+      <Route path="/periods/:periodId" element={<PeriodDetailPage />} />
       {/* Unified Sources & Archives page */}
       <Route path="/archives" element={<SourcesAndArchives />} />
       <Route path="/sources" element={<SourcesAndArchives />} />
       <Route path="/access-reliability" element={<SourcesAndArchives />} />
       <Route path="/sourcesandarchives" element={<SourcesAndArchives />} />
-      <Route path="/contact" element={<ContactUs />} />
+      <Route path="/contact" element={<Navigate to="/helpcenter#contact" replace />} />
+      <Route path="/services" element={<ServicesPage />} />
+      <Route path="/services/:idOrSlug" element={<ServiceDetailPage />} />
 
       {/* ===== AUTH ROUTES ===== */}
       <Route path="/login" element={<Login />} />
@@ -543,6 +563,36 @@ function AppRoutes() {
           }
         />
         <Route
+          path="services"
+          element={
+            <Suspense fallback={<AdminLoadingFallback />}>
+              <ProtectedRoute roles={[3]}>
+                <AdminServices />
+              </ProtectedRoute>
+            </Suspense>
+          }
+        />
+        <Route
+          path="services-bookings"
+          element={
+            <Suspense fallback={<AdminLoadingFallback />}>
+              <ProtectedRoute roles={[3]}>
+                <AdminServicesBookings />
+              </ProtectedRoute>
+            </Suspense>
+          }
+        />
+        <Route
+          path="periods"
+          element={
+            <Suspense fallback={<AdminLoadingFallback />}>
+              <ProtectedRoute roles={[1, 3]}>
+                <AdminPeriods />
+              </ProtectedRoute>
+            </Suspense>
+          }
+        />
+        <Route
           path="subscriptions"
           element={
             <Suspense fallback={<AdminLoadingFallback />}>
@@ -779,6 +829,36 @@ function AppRoutes() {
             <Suspense fallback={<AdminLoadingFallback />}>
               <ProtectedRoute roles={[3]}>
                 <AdminContactContent />
+              </ProtectedRoute>
+            </Suspense>
+          }
+        />
+        <Route
+          path="faq-content"
+          element={
+            <Suspense fallback={<AdminLoadingFallback />}>
+              <ProtectedRoute roles={[3]}>
+                <AdminFaqContent />
+              </ProtectedRoute>
+            </Suspense>
+          }
+        />
+        <Route
+          path="help-center-content"
+          element={
+            <Suspense fallback={<AdminLoadingFallback />}>
+              <ProtectedRoute roles={[3]}>
+                <AdminHelpCenterContent />
+              </ProtectedRoute>
+            </Suspense>
+          }
+        />
+        <Route
+          path="helpcenter"
+          element={
+            <Suspense fallback={<AdminLoadingFallback />}>
+              <ProtectedRoute roles={[3]}>
+                <AdminHelpCenterContent />
               </ProtectedRoute>
             </Suspense>
           }

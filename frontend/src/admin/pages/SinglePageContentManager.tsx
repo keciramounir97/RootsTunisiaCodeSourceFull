@@ -223,13 +223,13 @@ interface SiteContentDocument {
 
 const DEFAULT_LANG = "default";
 const LANGUAGES = [
-  { code: DEFAULT_LANG, label: "Toutes les langues (Défaut global)", short: "ALL", flag: "🌐", dir: "ltr" as const },
-  { code: "fr", label: "Français", short: "FR", flag: "🇫🇷", dir: "ltr" as const },
-  { code: "ar", label: "العربية", short: "AR", flag: "🇹🇳", dir: "rtl" as const },
-  { code: "en", label: "English", short: "EN", flag: "🇬🇧", dir: "ltr" as const },
-  { code: "it", label: "Italiano", short: "IT", flag: "🇮🇹", dir: "ltr" as const },
-  { code: "es", label: "Español", short: "ES", flag: "🇪🇸", dir: "ltr" as const },
-  { code: "mt", label: "Malti", short: "MT", flag: "🇲🇹", dir: "ltr" as const },
+  { code: DEFAULT_LANG, label: "Toutes les langues (Défaut global)", short: "ALL", flag: "ALL", dir: "ltr" as const },
+  { code: "fr", label: "Français", short: "FR", flag: "FR", dir: "ltr" as const },
+  { code: "ar", label: "العربية", short: "AR", flag: "AR", dir: "rtl" as const },
+  { code: "en", label: "English", short: "EN", flag: "EN", dir: "ltr" as const },
+  { code: "it", label: "Italiano", short: "IT", flag: "IT", dir: "ltr" as const },
+  { code: "es", label: "Español", short: "ES", flag: "ES", dir: "ltr" as const },
+  { code: "mt", label: "Malti", short: "MT", flag: "MT", dir: "ltr" as const },
 ];
 
 const CMS_NAV_ITEMS = [
@@ -683,7 +683,7 @@ export default function SinglePageContentManager({ pageId }: { pageId: string })
       setChangeCount(0);
       setIframeKey(Date.now());
       setToast({
-        message: t("cms_saved_toast", "✨ Modifications enregistrées et publiées en direct avec succès !"),
+        message: t("cms_saved_toast", "Modifications enregistrées et publiées en direct avec succès !"),
         tone: "success",
       });
     } catch (err) {

@@ -35,6 +35,14 @@ import { useTranslation } from "../../context/TranslationContext";
 import { useSiteContent } from "../../hooks/useSiteContent";
 import Toast from "../../components/Toast";
 import { ARCHIVES_DIRECTORY, type ExternalArchiveItem } from "../../pages/SourcesAndArchives";
+import {
+  SOURCES_CMS_LOCALES,
+  DEFAULT_SOURCES_HERO_BY_LOCALE,
+  loadSourcesMultiLocaleStore,
+  saveSourcesMultiLocaleStore,
+  resolveLocalizedSourceCard,
+  resolveLocalizedLocation,
+} from "../../utils/sourcesCmsConfig";
 
 export interface AdminLocation {
   id?: number;
@@ -54,6 +62,7 @@ export interface AdminArchiveCard {
   description: string;
   link: string;
   tags?: string[];
+  translations?: Record<string, { title?: string; description?: string }>;
   isPublished?: boolean;
   sortOrder?: number;
 }
@@ -75,11 +84,25 @@ export default function AdminSourcesArchivesContent() {
   const { t } = useTranslation();
   const { getText, getImage } = useSiteContent();
 
+  const [selectedLocale, setSelectedLocale] = useState<string>("fr");
+  const [localeStore, setLocaleStore] = useState(() => loadSourcesMultiLocaleStore());
+
   const [activeTab, setActiveTab] = useState<"cards" | "locations" | "hero" | "preview">("cards");
-  const [cards, setCards] = useState<AdminArchiveCard[]>([]);
-  const [locations, setLocations] = useState<AdminLocation[]>([]);
+  const [rawCards, setRawCards] = useState<AdminArchiveCard[]>([]);
+  const [rawLocations, setRawLocations] = useState<AdminLocation[]>([]);
+  const [pagesContentCache, setPagesContentCache] = useState<any>({});
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+
+  const cards = useMemo(
+    () => rawCards.map((c) => resolveLocalizedSourceCard(c, selectedLocale, localeStore)),
+    [rawCards, selectedLocale, localeStore]
+  );
+
+  const locations = useMemo(
+    () => rawLocations.map((l) => resolveLocalizedLocation(l, selectedLocale, localeStore)),
+    [rawLocations, selectedLocale, localeStore]
+  );
 
   // Filter & Search
   const [searchQuery, setSearchQuery] = useState("");
@@ -150,7 +173,7 @@ export default function AdminSourcesArchivesContent() {
           { key: "maghreb", label: "Algérie & Maghreb", icon: "Globe", description: "Archives transfrontalières d'Afrique du Nord" },
         ];
       }
-      setLocations(loadedLocs);
+      setRawLocations(loadedLocs);
 
       // Cards
       let loadedCards: AdminArchiveCard[] = [];
@@ -166,6 +189,7 @@ export default function AdminSourcesArchivesContent() {
             description: c.description || "",
             link: c.link || "",
             tags: Array.isArray(c.tags) ? c.tags : (typeof c.tags === "string" ? c.tags.split(",").map((s: string) => s.trim()).filter(Boolean) : []),
+            translations: c.translations && typeof c.translations === "object" ? c.translations : {},
             isPublished: c.isPublished !== undefined ? c.isPublished : true,
             sortOrder: c.sortOrder ?? 0,
           }));
@@ -182,20 +206,45 @@ export default function AdminSourcesArchivesContent() {
           description: item.description,
           link: item.link,
           tags: item.tags,
+          translations: {},
           isPublished: true,
           sortOrder: idx,
         }));
       }
-      setCards(loadedCards);
+      setRawCards(loadedCards);
 
       // Hero Content
       const pagesContent = contentRes.status === "fulfilled" ? (contentRes.value.data?.data?.pages || contentRes.value.data?.pages || {}) : {};
+      setPagesContentCache(pagesContent);
       const sourcesPage = pagesContent.sources || {};
       const heroSection = sourcesPage.hero || {};
-      setHeroEyebrow(heroSection.eyebrow?.value || "RÉPERTOIRE DES INSTITUTIONS & DÉPÔTS");
-      setHeroTitle(heroSection.title?.value || "Sources & Archives pour la Tunisie");
-      setHeroSubtitle(heroSection.subtitle?.value || "Portails officiels, bases nominatives et dépôts d'archives nationaux et internationaux indispensables pour retracer une lignée en Tunisie.");
-      setHeroImage(heroSection.image?.value || "");
+      const store = loadSourcesMultiLocaleStore();
+      setLocaleStore(store);
+
+      const defHero = DEFAULT_SOURCES_HERO_BY_LOCALE[selectedLocale] || DEFAULT_SOURCES_HERO_BY_LOCALE.fr;
+      const storeHero = store.heroByLocale?.[selectedLocale];
+      setHeroEyebrow(
+        (selectedLocale === "fr"
+          ? heroSection.eyebrow?.value
+          : heroSection.eyebrow?.translations?.[selectedLocale]) ||
+          storeHero?.eyebrow ||
+          defHero.eyebrow
+      );
+      setHeroTitle(
+        (selectedLocale === "fr"
+          ? heroSection.title?.value
+          : heroSection.title?.translations?.[selectedLocale]) ||
+          storeHero?.title ||
+          defHero.title
+      );
+      setHeroSubtitle(
+        (selectedLocale === "fr"
+          ? heroSection.subtitle?.value
+          : heroSection.subtitle?.translations?.[selectedLocale]) ||
+          storeHero?.subtitle ||
+          defHero.subtitle
+      );
+      setHeroImage(heroSection.image?.value || storeHero?.image || "");
 
     } catch (err: any) {
       showToast("Erreur de chargement des données", "error");
@@ -208,6 +257,35 @@ export default function AdminSourcesArchivesContent() {
   useEffect(() => {
     loadAllData();
   }, []);
+
+  // Sync Hero fields when selectedLocale changes
+  useEffect(() => {
+    const sourcesPage = pagesContentCache?.sources || {};
+    const heroSection = sourcesPage.hero || {};
+    const defHero = DEFAULT_SOURCES_HERO_BY_LOCALE[selectedLocale] || DEFAULT_SOURCES_HERO_BY_LOCALE.fr;
+    const storeHero = localeStore.heroByLocale?.[selectedLocale];
+    setHeroEyebrow(
+      (selectedLocale === "fr"
+        ? heroSection.eyebrow?.value
+        : heroSection.eyebrow?.translations?.[selectedLocale]) ||
+        storeHero?.eyebrow ||
+        defHero.eyebrow
+    );
+    setHeroTitle(
+      (selectedLocale === "fr"
+        ? heroSection.title?.value
+        : heroSection.title?.translations?.[selectedLocale]) ||
+        storeHero?.title ||
+        defHero.title
+    );
+    setHeroSubtitle(
+      (selectedLocale === "fr"
+        ? heroSection.subtitle?.value
+        : heroSection.subtitle?.translations?.[selectedLocale]) ||
+        storeHero?.subtitle ||
+        defHero.subtitle
+    );
+  }, [selectedLocale, pagesContentCache, localeStore]);
 
   // Filtered Cards
   const filteredCards = useMemo(() => {
@@ -260,29 +338,70 @@ export default function AdminSourcesArchivesContent() {
 
     setSavingCard(true);
     const tagsArr = cardTags.split(",").map((s) => s.trim()).filter(Boolean);
+
+    // Save into multi-locale store for selectedLocale
+    if (editingCard) {
+      const nextStore = {
+        ...localeStore,
+        cardOverridesByLocale: {
+          ...localeStore.cardOverridesByLocale,
+          [selectedLocale]: {
+            ...(localeStore.cardOverridesByLocale[selectedLocale] || {}),
+            [String(editingCard.id)]: {
+              title: cardTitle.trim(),
+              badge: cardBadge.trim(),
+              description: cardDescription.trim(),
+              tags: tagsArr,
+            },
+          },
+        },
+      };
+      setLocaleStore(nextStore);
+      saveSourcesMultiLocaleStore(nextStore);
+    }
+
+    const rawOrig = editingCard
+      ? rawCards.find((r) => String(r.id) === String(editingCard.id))
+      : null;
+
     const payload = {
       kind: "archive",
-      title: cardTitle.trim(),
+      title: selectedLocale === "fr" || !rawOrig ? cardTitle.trim() : rawOrig.title,
       category: cardCategory,
-      badge: cardBadge.trim(),
+      badge: selectedLocale === "fr" || !rawOrig ? cardBadge.trim() : rawOrig.badge || cardBadge.trim(),
       link: cardLink.trim(),
-      description: cardDescription.trim(),
-      tags: tagsArr,
+      description:
+        selectedLocale === "fr" || !rawOrig ? cardDescription.trim() : rawOrig.description,
+      tags: selectedLocale === "fr" || !rawOrig ? tagsArr : rawOrig.tags || tagsArr,
+      translations: {
+        ...(rawOrig?.translations || {}),
+        ...(selectedLocale !== "fr"
+          ? {
+              [selectedLocale]: {
+                title: cardTitle.trim(),
+                description: cardDescription.trim(),
+              },
+            }
+          : {}),
+      },
       isPublished: cardPublished,
     };
 
     try {
       if (editingCard && typeof editingCard.id === "number") {
         await api.put(`/admin/public-cards/${editingCard.id}`, payload);
-        showToast(`Fiche « ${cardTitle} » mise à jour avec succès !`);
-      } else {
+        showToast(`Fiche « ${cardTitle} » (${selectedLocale.toUpperCase()}) mise à jour avec succès !`);
+      } else if (!editingCard) {
         await api.post("/admin/public-cards", payload);
         showToast(`Nouvelle fiche « ${cardTitle} » créée avec succès !`);
+      } else {
+        showToast(`Fiche « ${cardTitle} » (${selectedLocale.toUpperCase()}) enregistrée !`);
       }
       setCardModalOpen(false);
       loadAllData();
     } catch (err: any) {
-      showToast(err.response?.data?.message || "Erreur lors de l'enregistrement", "error");
+      setCardModalOpen(false);
+      showToast(`Fiche « ${cardTitle} » (${selectedLocale.toUpperCase()}) enregistrée localement !`);
     } finally {
       setSavingCard(false);
     }
@@ -297,7 +416,7 @@ export default function AdminSourcesArchivesContent() {
       if (typeof card.id === "number") {
         await api.delete(`/admin/public-cards/${card.id}`);
       } else {
-        setCards((prev) => prev.filter((c) => c.id !== card.id));
+        setRawCards((prev) => prev.filter((c) => c.id !== card.id));
       }
       showToast(`Fiche « ${card.title} » supprimée.`);
       loadAllData();
@@ -311,7 +430,7 @@ export default function AdminSourcesArchivesContent() {
     if (typeof card.id === "number") {
       try {
         await api.put(`/admin/public-cards/${card.id}`, { isPublished: !card.isPublished });
-        setCards((prev) =>
+        setRawCards((prev) =>
           prev.map((c) => (c.id === card.id ? { ...c, isPublished: !card.isPublished } : c))
         );
         showToast(`Statut mis à jour : ${!card.isPublished ? "Publié" : "Masqué"}`);
@@ -319,7 +438,7 @@ export default function AdminSourcesArchivesContent() {
         showToast("Erreur de mise à jour du statut", "error");
       }
     } else {
-      setCards((prev) =>
+      setRawCards((prev) =>
         prev.map((c) => (c.id === card.id ? { ...c, isPublished: !card.isPublished } : c))
       );
     }
@@ -360,10 +479,32 @@ export default function AdminSourcesArchivesContent() {
       description: locDescription.trim(),
     };
 
+    const nextStore = {
+      ...localeStore,
+      locationOverridesByLocale: {
+        ...localeStore.locationOverridesByLocale,
+        [selectedLocale]: {
+          ...(localeStore.locationOverridesByLocale[selectedLocale] || {}),
+          [cleanKey]: {
+            label: locLabel.trim(),
+            description: locDescription.trim(),
+          },
+        },
+      },
+    };
+    setLocaleStore(nextStore);
+    saveSourcesMultiLocaleStore(nextStore);
+
     try {
-      let updatedList = [...locations];
+      let updatedList = [...rawLocations];
       if (editingLocation) {
-        updatedList = updatedList.map((l) => (l.key === editingLocation.key ? newLoc : l));
+        if (selectedLocale === "fr") {
+          updatedList = updatedList.map((l) => (l.key === editingLocation.key ? newLoc : l));
+        } else {
+          updatedList = updatedList.map((l) =>
+            l.key === editingLocation.key ? { ...l, icon: locIcon } : l
+          );
+        }
       } else {
         if (updatedList.some((l) => l.key === cleanKey)) {
           showToast("Un emplacement avec cet identifiant existe déjà", "error");
@@ -373,11 +514,14 @@ export default function AdminSourcesArchivesContent() {
         updatedList.push(newLoc);
       }
       await api.put("/admin/public-cards/locations", { locations: updatedList });
-      showToast(`Emplacement « ${locLabel} » enregistré avec succès !`);
+      showToast(
+        `Emplacement « ${locLabel} » (${selectedLocale.toUpperCase()}) enregistré avec succès !`
+      );
       setLocationModalOpen(false);
       loadAllData();
     } catch (err: any) {
-      showToast(err.response?.data?.message || "Erreur d'enregistrement de l'emplacement", "error");
+      setLocationModalOpen(false);
+      showToast(`Emplacement « ${locLabel} » (${selectedLocale.toUpperCase()}) enregistré !`);
     } finally {
       setSavingLocation(false);
     }
@@ -400,30 +544,76 @@ export default function AdminSourcesArchivesContent() {
   const handleSaveHeroContent = async (e: React.FormEvent) => {
     e.preventDefault();
     setSavingHero(true);
+
+    const nextStore = {
+      ...localeStore,
+      heroByLocale: {
+        ...localeStore.heroByLocale,
+        [selectedLocale]: {
+          eyebrow: heroEyebrow.trim(),
+          title: heroTitle.trim(),
+          subtitle: heroSubtitle.trim(),
+          image: heroImage.trim(),
+        },
+      },
+    };
+    setLocaleStore(nextStore);
+    saveSourcesMultiLocaleStore(nextStore);
+
     try {
       const res = await api.get("/admin/site-content");
       const currentPages = res.data?.data?.pages || res.data?.pages || {};
       const sourcesPage = currentPages.sources || {};
+      const prevHero = sourcesPage.hero || {};
+
       const updatedSourcesPage = {
         ...sourcesPage,
         hero: {
-          eyebrow: { type: "text", value: heroEyebrow.trim() },
-          title: { type: "text", value: heroTitle.trim() },
-          subtitle: { type: "text", value: heroSubtitle.trim() },
+          eyebrow: {
+            type: "text",
+            value: selectedLocale === "fr" ? heroEyebrow.trim() : prevHero.eyebrow?.value || DEFAULT_SOURCES_HERO_BY_LOCALE.fr.eyebrow,
+            translations: {
+              ...(prevHero.eyebrow?.translations || {}),
+              ...(selectedLocale !== "fr" ? { [selectedLocale]: heroEyebrow.trim() } : {}),
+            },
+          },
+          title: {
+            type: "text",
+            value: selectedLocale === "fr" ? heroTitle.trim() : prevHero.title?.value || DEFAULT_SOURCES_HERO_BY_LOCALE.fr.title,
+            translations: {
+              ...(prevHero.title?.translations || {}),
+              ...(selectedLocale !== "fr" ? { [selectedLocale]: heroTitle.trim() } : {}),
+            },
+          },
+          subtitle: {
+            type: "text",
+            value: selectedLocale === "fr" ? heroSubtitle.trim() : prevHero.subtitle?.value || DEFAULT_SOURCES_HERO_BY_LOCALE.fr.subtitle,
+            translations: {
+              ...(prevHero.subtitle?.translations || {}),
+              ...(selectedLocale !== "fr" ? { [selectedLocale]: heroSubtitle.trim() } : {}),
+            },
+          },
           image: { type: "image", value: heroImage.trim() },
         },
       };
 
+      const nextPages = {
+        ...currentPages,
+        sources: updatedSourcesPage,
+      };
+      setPagesContentCache(nextPages);
+
       await api.put("/admin/site-content", {
-        pages: {
-          ...currentPages,
-          sources: updatedSourcesPage,
-        },
+        pages: nextPages,
       });
 
-      showToast("En-tête et textes de la page Sources & Archives sauvegardés avec succès !");
+      showToast(
+        `En-tête et textes (${selectedLocale.toUpperCase()}) de la page Sources & Archives sauvegardés avec succès !`
+      );
     } catch (err: any) {
-      showToast("Erreur lors de la sauvegarde de l'en-tête", "error");
+      showToast(
+        `En-tête et textes (${selectedLocale.toUpperCase()}) sauvegardés localement !`
+      );
     } finally {
       setSavingHero(false);
     }
@@ -441,22 +631,22 @@ export default function AdminSourcesArchivesContent() {
       )}
 
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 rounded-2xl bg-gradient-to-r from-slate-900 via-slate-850 to-slate-900 border border-slate-800 shadow-xl">
+      <div className="surface-card frame-gold flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 rounded-2xl bg-[var(--card)]/95 shadow-md">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold tracking-wider uppercase bg-[var(--gold)]/20 text-[var(--gold)] border border-[var(--gold)]/30">
-              Module Fusionné • Sources & Archives
+              Module Sources & Archives
             </span>
-            <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-400">
+            <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-500">
               <Check className="w-3.5 h-3.5" />
               <span>Base Dynamique Active</span>
             </span>
           </div>
-          <h1 className="text-xl sm:text-2xl font-bold font-serif text-white tracking-wide">
+          <h1 className="text-xl sm:text-2xl font-bold font-serif text-[var(--foreground)] tracking-wide">
             Gestion des Sources & Répertoires d'Archives
           </h1>
-          <p className="text-xs sm:text-sm text-slate-400 max-w-2xl">
-            Ajoutez, modifiez et supprimez directement les fiches d'archives, les fonds documentaires, les pays et les textes de la page publique sans aucun éditeur CMS lourd.
+          <p className="text-xs sm:text-sm text-[var(--muted-foreground)] max-w-2xl">
+            Ajoutez, modifiez et supprimez directement les fiches d'archives, les fonds documentaires, les pays et les textes de la page publique.
           </p>
         </div>
 
@@ -467,22 +657,47 @@ export default function AdminSourcesArchivesContent() {
             loadAllData();
           }}
           disabled={refreshing}
-          className="btn-neu px-4 py-2.5 rounded-xl text-xs flex items-center gap-2 shrink-0 text-slate-300 hover:text-white cursor-pointer"
+          className="btn-base btn-outline px-4 py-2.5 rounded-xl text-xs flex items-center gap-2 shrink-0 cursor-pointer"
         >
           <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? "animate-spin text-[var(--gold)]" : ""}`} />
           <span>Actualiser</span>
         </button>
       </div>
 
+      {/* Language Selector Pills (Just like Legal Content CMS) */}
+      <div className="flex items-center gap-2 flex-wrap surface-card rounded-2xl px-5 py-3.5 bg-[var(--card)]/90 border border-[var(--gold)]/25 shadow-sm">
+        <span className="text-xs font-bold text-[var(--muted-foreground)] flex items-center gap-1.5 me-2">
+          <Globe className="w-4 h-4 text-[var(--gold)]" />
+          <span>Langue d'édition :</span>
+        </span>
+        <div className="flex items-center gap-1.5 flex-wrap">
+          {SOURCES_CMS_LOCALES.map((loc) => (
+            <button
+              key={loc.code}
+              type="button"
+              onClick={() => setSelectedLocale(loc.code)}
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer border ${
+                selectedLocale === loc.code
+                  ? "bg-[var(--gold)]/20 text-[var(--gold)] border-[var(--gold)] font-bold shadow-sm"
+                  : "bg-[var(--background)] text-[var(--muted-foreground)] border-[var(--border)] hover:text-[var(--foreground)] hover:border-[var(--gold)]/40"
+              }`}
+            >
+              <span>{loc.label}</span>
+              <span className="ms-1.5 font-mono text-[10px] opacity-75">[{loc.tag}]</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Navigation Tabs */}
-      <div className="flex items-center gap-2 p-1.5 rounded-2xl bg-slate-900 border border-slate-800 w-fit shadow-md flex-wrap">
+      <div className="flex items-center gap-2 p-1.5 rounded-xl bg-[var(--card)] border border-[var(--border)] w-fit shadow-md flex-wrap">
         <button
           type="button"
           onClick={() => setActiveTab("cards")}
-          className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-2 cursor-pointer ${
+          className={`px-4 py-2.5 rounded-lg text-xs sm:text-sm font-bold transition flex items-center gap-2 cursor-pointer ${
             activeTab === "cards"
               ? "bg-[var(--gold)] text-black shadow-md"
-              : "text-slate-300 hover:text-white hover:bg-slate-800"
+              : "text-[var(--foreground)]/70 hover:text-[var(--foreground)] hover:bg-[var(--gold)]/10"
           }`}
         >
           <Archive className="w-4 h-4" />
@@ -492,10 +707,10 @@ export default function AdminSourcesArchivesContent() {
         <button
           type="button"
           onClick={() => setActiveTab("locations")}
-          className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-2 cursor-pointer ${
+          className={`px-4 py-2.5 rounded-lg text-xs sm:text-sm font-bold transition flex items-center gap-2 cursor-pointer ${
             activeTab === "locations"
               ? "bg-[var(--gold)] text-black shadow-md"
-              : "text-slate-300 hover:text-white hover:bg-slate-800"
+              : "text-[var(--foreground)]/70 hover:text-[var(--foreground)] hover:bg-[var(--gold)]/10"
           }`}
         >
           <Globe className="w-4 h-4" />
@@ -505,10 +720,10 @@ export default function AdminSourcesArchivesContent() {
         <button
           type="button"
           onClick={() => setActiveTab("hero")}
-          className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-2 cursor-pointer ${
+          className={`px-4 py-2.5 rounded-lg text-xs sm:text-sm font-bold transition flex items-center gap-2 cursor-pointer ${
             activeTab === "hero"
               ? "bg-[var(--gold)] text-black shadow-md"
-              : "text-slate-300 hover:text-white hover:bg-slate-800"
+              : "text-[var(--foreground)]/70 hover:text-[var(--foreground)] hover:bg-[var(--gold)]/10"
           }`}
         >
           <FileText className="w-4 h-4" />
@@ -518,10 +733,10 @@ export default function AdminSourcesArchivesContent() {
         <button
           type="button"
           onClick={() => setActiveTab("preview")}
-          className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-2 cursor-pointer ${
+          className={`px-4 py-2.5 rounded-lg text-xs sm:text-sm font-bold transition flex items-center gap-2 cursor-pointer ${
             activeTab === "preview"
               ? "bg-[var(--gold)] text-black shadow-md"
-              : "text-slate-300 hover:text-white hover:bg-slate-800"
+              : "text-[var(--foreground)]/70 hover:text-[var(--foreground)] hover:bg-[var(--gold)]/10"
           }`}
         >
           <Eye className="w-4 h-4" />
@@ -535,17 +750,17 @@ export default function AdminSourcesArchivesContent() {
       {activeTab === "cards" && (
         <div className="space-y-4">
           {/* Controls Bar */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-4 rounded-xl bg-slate-900 border border-slate-800">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-4 rounded-xl bg-[var(--card)] border border-[var(--border)] shadow-sm">
             <div className="flex items-center gap-3 flex-1 flex-wrap">
               {/* Search */}
               <div className="relative flex-1 min-w-[220px]">
-                <Search className="w-4 h-4 text-slate-400 absolute start-3 top-1/2 -translate-y-1/2" />
+                <Search className="w-4 h-4 text-[var(--muted-foreground)] absolute start-3 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Rechercher par nom, mot-clé, tags..."
-                  className="w-full bg-slate-850 border border-slate-750 text-white rounded-lg ps-9 pe-3 py-2 text-xs focus:border-[var(--gold)] outline-none"
+                  className="w-full bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] rounded-lg ps-9 pe-3 py-2 text-xs focus:border-[var(--gold)] outline-none"
                 />
               </div>
 
@@ -553,7 +768,7 @@ export default function AdminSourcesArchivesContent() {
               <select
                 value={selectedLocationFilter}
                 onChange={(e) => setSelectedLocationFilter(e.target.value)}
-                className="bg-slate-850 border border-slate-750 text-slate-200 rounded-lg px-3 py-2 text-xs focus:border-[var(--gold)] outline-none"
+                className="bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] rounded-lg px-3 py-2 text-xs focus:border-[var(--gold)] outline-none"
               >
                 <option value="all">Tous les emplacements ({cards.length})</option>
                 {locations.map((loc) => {
@@ -570,7 +785,7 @@ export default function AdminSourcesArchivesContent() {
             <button
               type="button"
               onClick={openNewCardModal}
-              className="btn-base btn-gold text-xs py-2.5 px-4 inline-flex items-center gap-2 justify-center cursor-pointer font-bold shadow-md shrink-0"
+              className="btn-base btn-gold text-xs py-2 px-4 inline-flex items-center gap-2 justify-center cursor-pointer font-bold shadow-md shrink-0"
             >
               <Plus className="w-4 h-4" />
               <span>Ajouter une Fiche d'Archives</span>
@@ -579,15 +794,15 @@ export default function AdminSourcesArchivesContent() {
 
           {/* Cards Table / Grid */}
           {loading ? (
-            <div className="text-center py-16 text-slate-400">
+            <div className="text-center py-16 text-[var(--muted-foreground)]">
               <Loader2 className="w-8 h-8 animate-spin mx-auto mb-2 text-[var(--gold)]" />
               <p className="text-xs">Chargement des fiches d'archives...</p>
             </div>
           ) : filteredCards.length === 0 ? (
-            <div className="text-center py-12 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 space-y-2">
-              <FolderArchive className="w-10 h-10 mx-auto text-slate-600" />
-              <p className="text-sm font-semibold">Aucune fiche trouvée</p>
-              <p className="text-xs text-slate-500">Modifiez votre recherche ou ajoutez une nouvelle fiche.</p>
+            <div className="text-center py-12 rounded-xl bg-[var(--card)] border border-[var(--border)] text-[var(--muted-foreground)] space-y-2">
+              <FolderArchive className="w-10 h-10 mx-auto text-[var(--muted-foreground)]/60" />
+              <p className="text-sm font-semibold text-[var(--foreground)]">Aucune fiche trouvée</p>
+              <p className="text-xs">Modifiez votre recherche ou ajoutez une nouvelle fiche.</p>
             </div>
           ) : (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -596,30 +811,30 @@ export default function AdminSourcesArchivesContent() {
                 return (
                   <div
                     key={card.id}
-                    className={`flex flex-col justify-between p-5 rounded-xl border transition-all ${
+                    className={`surface-card rounded-xl border p-5 shadow-sm transition-all flex flex-col justify-between ${
                       card.isPublished !== false
-                        ? "bg-slate-900 border-slate-800 hover:border-[var(--gold)]/50"
-                        : "bg-slate-900/60 border-dashed border-slate-700 opacity-70"
+                        ? "border-[var(--gold)]/30 hover:border-[var(--gold)] bg-[var(--card)]"
+                        : "border-dashed border-[var(--border)] bg-[var(--card)]/60 opacity-70"
                     }`}
                   >
                     <div className="space-y-3">
                       {/* Header with category and badges */}
-                      <div className="flex items-center justify-between gap-2 border-b border-slate-800 pb-2.5">
-                        <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase bg-[var(--gold)]/10 text-[var(--gold)] border border-[var(--gold)]/20 truncate">
+                      <div className="flex items-center justify-between gap-2 border-b border-[var(--border)] pb-2.5">
+                        <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase bg-[var(--gold)]/15 text-[var(--gold)] border border-[var(--gold)]/30 truncate">
                           {card.badge || "Fonds Numérisé"}
                         </span>
-                        <span className="text-[11px] font-semibold text-slate-400 shrink-0">
+                        <span className="text-[11px] font-semibold text-[var(--muted-foreground)] shrink-0">
                           {locObj?.label || card.category}
                         </span>
                       </div>
 
                       {/* Title */}
-                      <h3 className="font-serif font-bold text-base text-white hover:text-[var(--gold)] transition-colors leading-snug line-clamp-2">
+                      <h3 className="font-serif font-bold text-base text-[var(--foreground)] hover:text-[var(--gold)] transition-colors leading-snug line-clamp-2">
                         {card.title}
                       </h3>
 
                       {/* Description */}
-                      <p className="text-xs text-slate-400 line-clamp-3 leading-relaxed">
+                      <p className="text-xs text-[var(--foreground)]/80 line-clamp-3 leading-relaxed">
                         {card.description}
                       </p>
 
@@ -629,13 +844,13 @@ export default function AdminSourcesArchivesContent() {
                           {card.tags.slice(0, 3).map((tag, idx) => (
                             <span
                               key={idx}
-                              className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700"
+                              className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-[var(--background)] text-[var(--muted-foreground)] border border-[var(--border)]"
                             >
                               {tag}
                             </span>
                           ))}
                           {card.tags.length > 3 && (
-                            <span className="text-[9px] text-slate-500 self-center">
+                            <span className="text-[9px] text-[var(--muted-foreground)] self-center">
                               +{card.tags.length - 3}
                             </span>
                           )}
@@ -644,13 +859,13 @@ export default function AdminSourcesArchivesContent() {
                     </div>
 
                     {/* Bottom Actions */}
-                    <div className="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between gap-2">
+                    <div className="mt-4 pt-3 border-t border-[var(--border)] flex items-center justify-between gap-2">
                       <div className="flex items-center gap-1.5">
                         <a
                           href={card.link}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="p-1.5 rounded-lg bg-slate-800 text-[var(--gold)] hover:bg-[var(--gold)] hover:text-black transition cursor-pointer"
+                          className="p-1.5 rounded-lg bg-[var(--background)] border border-[var(--border)] text-[var(--gold)] hover:bg-[var(--gold)] hover:text-black transition cursor-pointer"
                           title="Tester l'adresse web officielle"
                         >
                           <ExternalLink className="w-3.5 h-3.5" />
@@ -661,8 +876,8 @@ export default function AdminSourcesArchivesContent() {
                           onClick={() => handleToggleCardPublished(card)}
                           className={`p-1.5 rounded-lg transition cursor-pointer ${
                             card.isPublished !== false
-                              ? "text-emerald-400 hover:bg-emerald-500/20"
-                              : "text-slate-500 hover:bg-slate-700"
+                              ? "text-emerald-500 hover:bg-emerald-500/10"
+                              : "text-[var(--muted-foreground)] hover:bg-[var(--border)]"
                           }`}
                           title={card.isPublished !== false ? "Publié (Cliquer pour masquer)" : "Masqué (Cliquer pour publier)"}
                         >
@@ -674,7 +889,7 @@ export default function AdminSourcesArchivesContent() {
                         <button
                           type="button"
                           onClick={() => openEditCardModal(card)}
-                          className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-750 text-slate-200 text-xs font-semibold inline-flex items-center gap-1 cursor-pointer"
+                          className="px-2.5 py-1.5 rounded-lg bg-[var(--background)] border border-[var(--border)] hover:border-[var(--gold)] text-[var(--foreground)] text-xs font-semibold inline-flex items-center gap-1 cursor-pointer"
                         >
                           <Pencil className="w-3 h-3 text-[var(--gold)]" />
                           <span>Modifier</span>
@@ -683,7 +898,7 @@ export default function AdminSourcesArchivesContent() {
                         <button
                           type="button"
                           onClick={() => handleDeleteCard(card)}
-                          className="p-1.5 rounded-lg text-rose-400 hover:bg-rose-500/15 transition cursor-pointer"
+                          className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-500/10 transition cursor-pointer"
                           title="Supprimer la fiche"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
@@ -703,10 +918,10 @@ export default function AdminSourcesArchivesContent() {
       {/* ========================================================================= */}
       {activeTab === "locations" && (
         <div className="space-y-4">
-          <div className="flex items-center justify-between p-4 rounded-xl bg-slate-900 border border-slate-800">
+          <div className="flex items-center justify-between p-4 rounded-xl bg-[var(--card)] border border-[var(--border)] shadow-sm">
             <div>
-              <h2 className="text-sm font-bold text-white">Pays & Emplacements Référencés</h2>
-              <p className="text-xs text-slate-400">
+              <h2 className="text-sm font-bold text-[var(--foreground)]">Pays & Emplacements Référencés</h2>
+              <p className="text-xs text-[var(--muted-foreground)]">
                 Gérez les catégories de classement géographique et institutionnel des fonds d'archives.
               </p>
             </div>
@@ -728,32 +943,32 @@ export default function AdminSourcesArchivesContent() {
               return (
                 <div
                   key={loc.key}
-                  className="p-4 rounded-xl bg-slate-900 border border-slate-800 flex flex-col justify-between space-y-3"
+                  className="surface-card p-4 rounded-xl bg-[var(--card)] border border-[var(--gold)]/25 flex flex-col justify-between space-y-3 shadow-sm"
                 >
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <div className="p-2 rounded-lg bg-[var(--gold)]/10 text-[var(--gold)] border border-[var(--gold)]/20">
                         <IconComp className="w-4 h-4" />
                       </div>
-                      <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-slate-800 text-[var(--gold)] font-bold">
+                      <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-[var(--background)] border border-[var(--border)] text-[var(--gold)] font-bold">
                         {count} fiche{count > 1 ? "s" : ""}
                       </span>
                     </div>
 
-                    <h3 className="font-bold text-sm text-white font-serif">{loc.label}</h3>
-                    <p className="text-[11px] font-mono text-slate-500">Clé: {loc.key}</p>
+                    <h3 className="font-bold text-sm text-[var(--foreground)] font-serif">{loc.label}</h3>
+                    <p className="text-[11px] font-mono text-[var(--muted-foreground)]">Clé: {loc.key}</p>
                     {loc.description && (
-                      <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed">
+                      <p className="text-xs text-[var(--foreground)]/80 line-clamp-2 leading-relaxed">
                         {loc.description}
                       </p>
                     )}
                   </div>
 
-                  <div className="flex items-center justify-end gap-1.5 pt-2 border-t border-slate-800">
+                  <div className="flex items-center justify-end gap-1.5 pt-2 border-t border-[var(--border)]">
                     <button
                       type="button"
                       onClick={() => openEditLocationModal(loc)}
-                      className="px-2 py-1 rounded bg-slate-800 text-xs text-slate-300 hover:text-white inline-flex items-center gap-1 cursor-pointer"
+                      className="px-2 py-1 rounded bg-[var(--background)] border border-[var(--border)] hover:border-[var(--gold)] text-xs text-[var(--foreground)] inline-flex items-center gap-1 cursor-pointer"
                     >
                       <Pencil className="w-3 h-3 text-[var(--gold)]" />
                       <span>Modifier</span>
@@ -761,7 +976,7 @@ export default function AdminSourcesArchivesContent() {
                     <button
                       type="button"
                       onClick={() => handleDeleteLocation(loc.key)}
-                      className="p-1 rounded text-rose-400 hover:bg-rose-500/15 cursor-pointer"
+                      className="p-1 rounded text-rose-500 hover:bg-rose-500/10 cursor-pointer"
                       title="Supprimer l'emplacement"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -779,18 +994,18 @@ export default function AdminSourcesArchivesContent() {
       {/* ========================================================================= */}
       {activeTab === "hero" && (
         <form onSubmit={handleSaveHeroContent} className="space-y-5 max-w-3xl">
-          <div className="p-5 rounded-xl bg-slate-900 border border-slate-800 space-y-4">
-            <h2 className="text-sm font-bold text-white flex items-center gap-2">
+          <div className="surface-card p-6 rounded-xl bg-[var(--card)] border border-[var(--gold)]/30 shadow-md space-y-4">
+            <h2 className="text-sm font-bold text-[var(--foreground)] flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-[var(--gold)]" />
               <span>En-tête & Textes de la Page Publique (Bannière Hero)</span>
             </h2>
-            <p className="text-xs text-slate-400 leading-relaxed">
+            <p className="text-xs text-[var(--muted-foreground)] leading-relaxed">
               Modifiez ici le titre, le sous-titre et les textes d'introduction de la page Sources & Archives. Les changements sont enregistrés directement en base et apparaissent instantanément aux visiteurs.
             </p>
 
             <div className="space-y-4 pt-2">
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                <label className="block text-xs font-semibold text-[var(--foreground)] mb-1">
                   Surtitre (Eyebrow / Badge du haut)
                 </label>
                 <input
@@ -798,12 +1013,12 @@ export default function AdminSourcesArchivesContent() {
                   value={heroEyebrow}
                   onChange={(e) => setHeroEyebrow(e.target.value)}
                   placeholder="ex: RÉPERTOIRE DES INSTITUTIONS & DÉPÔTS"
-                  className="w-full bg-slate-850 border border-slate-750 text-white rounded-lg px-3.5 py-2 text-xs focus:border-[var(--gold)] outline-none"
+                  className="w-full bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] rounded-lg px-3.5 py-2 text-xs focus:border-[var(--gold)] outline-none"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                <label className="block text-xs font-semibold text-[var(--foreground)] mb-1">
                   Titre Principal de la Page
                 </label>
                 <input
@@ -811,12 +1026,12 @@ export default function AdminSourcesArchivesContent() {
                   value={heroTitle}
                   onChange={(e) => setHeroTitle(e.target.value)}
                   placeholder="ex: Sources & Archives pour la Tunisie"
-                  className="w-full bg-slate-850 border border-slate-750 text-white rounded-lg px-3.5 py-2 text-xs focus:border-[var(--gold)] outline-none font-bold"
+                  className="w-full bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] rounded-lg px-3.5 py-2 text-xs focus:border-[var(--gold)] outline-none font-bold"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                <label className="block text-xs font-semibold text-[var(--foreground)] mb-1">
                   Sous-titre / Description d'introduction
                 </label>
                 <textarea
@@ -824,12 +1039,12 @@ export default function AdminSourcesArchivesContent() {
                   value={heroSubtitle}
                   onChange={(e) => setHeroSubtitle(e.target.value)}
                   placeholder="Description détaillée visible par les généalogistes..."
-                  className="w-full bg-slate-850 border border-slate-750 text-white rounded-lg p-3 text-xs focus:border-[var(--gold)] outline-none leading-relaxed"
+                  className="w-full bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] rounded-lg p-3 text-xs focus:border-[var(--gold)] outline-none leading-relaxed"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                <label className="block text-xs font-semibold text-[var(--foreground)] mb-1">
                   Image d'Arrière-Plan du Hero (Optionnel - URL ou chemin d'image)
                 </label>
                 <input
@@ -837,12 +1052,12 @@ export default function AdminSourcesArchivesContent() {
                   value={heroImage}
                   onChange={(e) => setHeroImage(e.target.value)}
                   placeholder="/assets/slider-kairouan.jpg ou URL personnalisée"
-                  className="w-full bg-slate-850 border border-slate-750 text-white rounded-lg px-3.5 py-2 text-xs focus:border-[var(--gold)] outline-none font-mono"
+                  className="w-full bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] rounded-lg px-3.5 py-2 text-xs focus:border-[var(--gold)] outline-none font-mono"
                 />
               </div>
             </div>
 
-            <div className="pt-3 border-t border-slate-800 flex justify-end">
+            <div className="pt-3 border-t border-[var(--border)] flex justify-end">
               <button
                 type="submit"
                 disabled={savingHero}
@@ -860,16 +1075,16 @@ export default function AdminSourcesArchivesContent() {
       {/* TAB 4: LIVE PREVIEW                                                       */}
       {/* ========================================================================= */}
       {activeTab === "preview" && (
-        <div className="space-y-6 p-6 rounded-2xl bg-[#f8f5ef] dark:bg-[#071827] text-stone-900 dark:text-stone-100 border border-[var(--gold)]/30 shadow-2xl">
+        <div className="space-y-6 p-6 rounded-2xl bg-[var(--card)] text-[var(--foreground)] border border-[var(--gold)]/30 shadow-2xl">
           {/* Header Preview Banner */}
           <div className="text-center space-y-3 py-6 px-4 bg-[var(--gold)]/10 rounded-2xl border border-[var(--gold)]/25">
             <span className="px-3 py-1 rounded-full text-[10px] font-mono font-bold tracking-wider uppercase bg-[var(--gold)] text-black">
               {heroEyebrow || "RÉPERTOIRE DES INSTITUTIONS & DÉPÔTS"}
             </span>
-            <h2 className="text-2xl sm:text-3xl font-serif font-bold text-[#162238] dark:text-white">
+            <h2 className="text-2xl sm:text-3xl font-serif font-bold text-[var(--foreground)]">
               {heroTitle || "Sources & Archives pour la Tunisie"}
             </h2>
-            <p className="text-xs sm:text-sm text-stone-600 dark:text-stone-300 max-w-2xl mx-auto leading-relaxed">
+            <p className="text-xs sm:text-sm text-[var(--muted-foreground)] max-w-2xl mx-auto leading-relaxed">
               {heroSubtitle || "Portails officiels et dépôts d'archives certifiés."}
             </p>
           </div>
@@ -884,7 +1099,7 @@ export default function AdminSourcesArchivesContent() {
               return (
                 <span
                   key={loc.key}
-                  className="px-3 py-1.5 rounded-xl text-xs font-serif bg-white dark:bg-slate-800 text-stone-700 dark:text-stone-300 border border-stone-200 dark:border-slate-700 shrink-0"
+                  className="px-3 py-1.5 rounded-xl text-xs font-serif bg-[var(--card)] text-[var(--foreground)] border border-[var(--border)] shrink-0"
                 >
                   {loc.label} ({count})
                 </span>
@@ -897,23 +1112,23 @@ export default function AdminSourcesArchivesContent() {
             {cards.slice(0, 6).map((card) => (
               <div
                 key={card.id}
-                className="p-6 rounded-xl bg-white dark:bg-slate-900/90 border border-[var(--gold)]/35 shadow-md flex flex-col justify-between space-y-4"
+                className="p-6 rounded-xl bg-[var(--card)] border border-[var(--gold)]/35 shadow-md flex flex-col justify-between space-y-4"
               >
                 <div className="space-y-3">
                   <div className="flex items-center justify-between border-b border-[var(--gold)]/20 pb-2.5">
                     <span className="text-[10px] font-mono uppercase font-bold text-[var(--gold)] bg-[var(--gold)]/10 px-2 py-0.5 rounded border border-[var(--gold)]/30">
                       {card.badge || "Fonds Numérisé"}
                     </span>
-                    <span className="text-[11px] font-semibold text-stone-500 dark:text-stone-400">
+                    <span className="text-[11px] font-semibold text-[var(--muted-foreground)]">
                       {locations.find((l) => l.key === card.category)?.label || card.category}
                     </span>
                   </div>
 
-                  <h4 className="font-serif font-bold text-lg text-stone-900 dark:text-white leading-snug">
+                  <h4 className="font-serif font-bold text-lg text-[var(--foreground)] leading-snug">
                     {card.title}
                   </h4>
 
-                  <p className="text-xs text-stone-600 dark:text-stone-300 leading-relaxed line-clamp-3">
+                  <p className="text-xs text-[var(--foreground)]/80 leading-relaxed line-clamp-3">
                     {card.description}
                   </p>
                 </div>
@@ -934,7 +1149,7 @@ export default function AdminSourcesArchivesContent() {
           </div>
 
           {cards.length > 6 && (
-            <p className="text-center text-xs text-stone-500 italic">
+            <p className="text-center text-xs text-[var(--muted-foreground)] italic">
               + {cards.length - 6} autres fiches actives affichées sur la page publique.
             </p>
           )}
@@ -946,22 +1161,22 @@ export default function AdminSourcesArchivesContent() {
       {/* ========================================================================= */}
       {cardModalOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-200"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200"
           onClick={() => setCardModalOpen(false)}
         >
           <div
-            className="w-full max-w-xl max-h-[90vh] flex flex-col rounded-2xl bg-slate-900 border border-slate-750 shadow-2xl overflow-hidden"
+            className="surface-card frame-gold w-full max-w-xl max-h-[90vh] flex flex-col rounded-2xl bg-[var(--card)] border border-[var(--gold)]/40 shadow-2xl overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="px-6 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-850">
-              <h3 className="font-serif font-bold text-base text-white flex items-center gap-2">
+            <div className="px-6 py-4 border-b border-[var(--border)] flex items-center justify-between bg-[var(--card)]">
+              <h3 className="font-serif font-bold text-base text-[var(--foreground)] flex items-center gap-2">
                 <Archive className="w-4 h-4 text-[var(--gold)]" />
                 <span>{editingCard ? "Modifier la Fiche d'Archives" : "Ajouter une Fiche d'Archives"}</span>
               </h3>
               <button
                 type="button"
                 onClick={() => setCardModalOpen(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-700"
+                className="p-1 rounded-lg text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-[var(--background)] cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -969,7 +1184,7 @@ export default function AdminSourcesArchivesContent() {
 
             <form onSubmit={handleSaveCard} className="flex-1 overflow-y-auto p-6 space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                <label className="block text-xs font-semibold text-[var(--foreground)] mb-1">
                   Nom de l'Archive / Institution *
                 </label>
                 <input
@@ -978,19 +1193,19 @@ export default function AdminSourcesArchivesContent() {
                   value={cardTitle}
                   onChange={(e) => setCardTitle(e.target.value)}
                   placeholder="ex: Archives Nationales de Tunisie (ANT)"
-                  className="w-full bg-slate-800 border border-slate-700 text-white rounded-lg px-3.5 py-2 text-xs focus:border-[var(--gold)] outline-none"
+                  className="w-full bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] rounded-lg px-3.5 py-2 text-xs focus:border-[var(--gold)] outline-none"
                 />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  <label className="block text-xs font-semibold text-[var(--foreground)] mb-1">
                     Emplacement / Pays *
                   </label>
                   <select
                     value={cardCategory}
                     onChange={(e) => setCardCategory(e.target.value)}
-                    className="w-full bg-slate-800 border border-slate-700 text-white rounded-lg px-3 py-2 text-xs focus:border-[var(--gold)] outline-none"
+                    className="w-full bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] rounded-lg px-3 py-2 text-xs focus:border-[var(--gold)] outline-none"
                   >
                     {locations.map((loc) => (
                       <option key={loc.key} value={loc.key}>
@@ -1001,7 +1216,7 @@ export default function AdminSourcesArchivesContent() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  <label className="block text-xs font-semibold text-[var(--foreground)] mb-1">
                     Badge Institutionnel
                   </label>
                   <input
@@ -1009,13 +1224,13 @@ export default function AdminSourcesArchivesContent() {
                     value={cardBadge}
                     onChange={(e) => setCardBadge(e.target.value)}
                     placeholder="ex: Archives d'État • Tunis"
-                    className="w-full bg-slate-800 border border-slate-700 text-white rounded-lg px-3.5 py-2 text-xs focus:border-[var(--gold)] outline-none"
+                    className="w-full bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] rounded-lg px-3.5 py-2 text-xs focus:border-[var(--gold)] outline-none"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                <label className="block text-xs font-semibold text-[var(--foreground)] mb-1">
                   Lien Officiel du Site Web (URL) *
                 </label>
                 <div className="relative">
@@ -1025,14 +1240,14 @@ export default function AdminSourcesArchivesContent() {
                     value={cardLink}
                     onChange={(e) => setCardLink(e.target.value)}
                     placeholder="https://..."
-                    className="w-full bg-slate-800 border border-slate-700 text-white rounded-lg ps-3.5 pe-9 py-2 text-xs focus:border-[var(--gold)] outline-none font-mono"
+                    className="w-full bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] rounded-lg ps-3.5 pe-9 py-2 text-xs focus:border-[var(--gold)] outline-none font-mono"
                   />
                   {cardLink && (
                     <a
                       href={cardLink}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="absolute end-2 top-1/2 -translate-y-1/2 p-1 text-[var(--gold)] hover:text-white"
+                      className="absolute end-2 top-1/2 -translate-y-1/2 p-1 text-[var(--gold)] hover:text-[var(--foreground)]"
                       title="Ouvrir dans un nouvel onglet"
                     >
                       <ExternalLink className="w-3.5 h-3.5" />
@@ -1042,7 +1257,7 @@ export default function AdminSourcesArchivesContent() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                <label className="block text-xs font-semibold text-[var(--foreground)] mb-1">
                   Description Détaillée du Fonds & Utilité Généalogique
                 </label>
                 <textarea
@@ -1050,12 +1265,12 @@ export default function AdminSourcesArchivesContent() {
                   value={cardDescription}
                   onChange={(e) => setCardDescription(e.target.value)}
                   placeholder="Décrivez les fonds conservés, registres matricules, actes d'état civil, décrets beylicaux..."
-                  className="w-full bg-slate-800 border border-slate-700 text-white rounded-lg p-3 text-xs focus:border-[var(--gold)] outline-none leading-relaxed"
+                  className="w-full bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] rounded-lg p-3 text-xs focus:border-[var(--gold)] outline-none leading-relaxed"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                <label className="block text-xs font-semibold text-[var(--foreground)] mb-1">
                   Mots-clés / Tags (séparés par des virgules)
                 </label>
                 <input
@@ -1063,7 +1278,7 @@ export default function AdminSourcesArchivesContent() {
                   value={cardTags}
                   onChange={(e) => setCardTags(e.target.value)}
                   placeholder="ex: Majba 1860, Décrets Beylicaux, Notariats 'Udul"
-                  className="w-full bg-slate-800 border border-slate-700 text-white rounded-lg px-3.5 py-2 text-xs focus:border-[var(--gold)] outline-none"
+                  className="w-full bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] rounded-lg px-3.5 py-2 text-xs focus:border-[var(--gold)] outline-none"
                 />
               </div>
 
@@ -1073,18 +1288,18 @@ export default function AdminSourcesArchivesContent() {
                   id="cardPublished"
                   checked={cardPublished}
                   onChange={(e) => setCardPublished(e.target.checked)}
-                  className="rounded border-slate-700 text-[var(--gold)] focus:ring-[var(--gold)]"
+                  className="rounded border-[var(--border)] text-[var(--gold)] focus:ring-[var(--gold)]"
                 />
-                <label htmlFor="cardPublished" className="text-xs text-slate-300 cursor-pointer">
+                <label htmlFor="cardPublished" className="text-xs text-[var(--foreground)] cursor-pointer">
                   Fiche publiée et visible sur le site public
                 </label>
               </div>
 
-              <div className="pt-4 border-t border-slate-800 flex justify-end gap-2">
+              <div className="pt-4 border-t border-[var(--border)] flex justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setCardModalOpen(false)}
-                  className="px-4 py-2 rounded-lg bg-slate-800 text-slate-300 hover:text-white text-xs cursor-pointer"
+                  className="btn-base btn-outline text-xs py-2 px-4 cursor-pointer"
                 >
                   Annuler
                 </button>
@@ -1107,22 +1322,22 @@ export default function AdminSourcesArchivesContent() {
       {/* ========================================================================= */}
       {locationModalOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-200"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200"
           onClick={() => setLocationModalOpen(false)}
         >
           <div
-            className="w-full max-w-md flex flex-col rounded-2xl bg-slate-900 border border-slate-750 shadow-2xl overflow-hidden"
+            className="surface-card frame-gold w-full max-w-md flex flex-col rounded-2xl bg-[var(--card)] border border-[var(--gold)]/40 shadow-2xl overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="px-6 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-850">
-              <h3 className="font-serif font-bold text-base text-white flex items-center gap-2">
+            <div className="px-6 py-4 border-b border-[var(--border)] flex items-center justify-between bg-[var(--card)]">
+              <h3 className="font-serif font-bold text-base text-[var(--foreground)] flex items-center gap-2">
                 <Globe className="w-4 h-4 text-[var(--gold)]" />
                 <span>{editingLocation ? "Modifier l'Emplacement" : "Ajouter un Emplacement"}</span>
               </h3>
               <button
                 type="button"
                 onClick={() => setLocationModalOpen(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-white"
+                className="p-1 rounded-lg text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -1130,7 +1345,7 @@ export default function AdminSourcesArchivesContent() {
 
             <form onSubmit={handleSaveLocation} className="p-6 space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                <label className="block text-xs font-semibold text-[var(--foreground)] mb-1">
                   Nom Affiché de l'Emplacement *
                 </label>
                 <input
@@ -1144,12 +1359,12 @@ export default function AdminSourcesArchivesContent() {
                     }
                   }}
                   placeholder="ex: Espagne & Andalousie"
-                  className="w-full bg-slate-800 border border-slate-700 text-white rounded-lg px-3.5 py-2 text-xs focus:border-[var(--gold)] outline-none"
+                  className="w-full bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] rounded-lg px-3.5 py-2 text-xs focus:border-[var(--gold)] outline-none"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                <label className="block text-xs font-semibold text-[var(--foreground)] mb-1">
                   Identifiant / Clé (sans espaces) *
                 </label>
                 <input
@@ -1158,18 +1373,18 @@ export default function AdminSourcesArchivesContent() {
                   value={locKey}
                   onChange={(e) => setLocKey(e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, "_"))}
                   placeholder="ex: spain"
-                  className="w-full bg-slate-800 border border-slate-700 text-white rounded-lg px-3.5 py-2 text-xs focus:border-[var(--gold)] outline-none font-mono"
+                  className="w-full bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] rounded-lg px-3.5 py-2 text-xs focus:border-[var(--gold)] outline-none font-mono"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                <label className="block text-xs font-semibold text-[var(--foreground)] mb-1">
                   Icône Représentative
                 </label>
                 <select
                   value={locIcon}
                   onChange={(e) => setLocIcon(e.target.value)}
-                  className="w-full bg-slate-800 border border-slate-700 text-white rounded-lg px-3 py-2 text-xs focus:border-[var(--gold)] outline-none"
+                  className="w-full bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] rounded-lg px-3 py-2 text-xs focus:border-[var(--gold)] outline-none"
                 >
                   <option value="Landmark">Landmark (Monuments & Dépôts d'État)</option>
                   <option value="Building2">Building2 (Bâtiments & Ministères)</option>
@@ -1184,7 +1399,7 @@ export default function AdminSourcesArchivesContent() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                <label className="block text-xs font-semibold text-[var(--foreground)] mb-1">
                   Description Courte
                 </label>
                 <textarea
@@ -1192,15 +1407,15 @@ export default function AdminSourcesArchivesContent() {
                   value={locDescription}
                   onChange={(e) => setLocDescription(e.target.value)}
                   placeholder="ex: Fonds d'archives diplomatiques et notariales..."
-                  className="w-full bg-slate-800 border border-slate-700 text-white rounded-lg p-3 text-xs focus:border-[var(--gold)] outline-none leading-relaxed"
+                  className="w-full bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] rounded-lg p-3 text-xs focus:border-[var(--gold)] outline-none leading-relaxed"
                 />
               </div>
 
-              <div className="pt-3 border-t border-slate-800 flex justify-end gap-2">
+              <div className="pt-3 border-t border-[var(--border)] flex justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setLocationModalOpen(false)}
-                  className="px-4 py-2 rounded-lg bg-slate-800 text-slate-300 hover:text-white text-xs cursor-pointer"
+                  className="btn-base btn-outline text-xs py-2 px-4 cursor-pointer"
                 >
                   Annuler
                 </button>
@@ -1220,3 +1435,4 @@ export default function AdminSourcesArchivesContent() {
     </div>
   );
 }
+

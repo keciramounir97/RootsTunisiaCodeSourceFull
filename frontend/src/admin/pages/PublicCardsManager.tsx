@@ -66,12 +66,12 @@ const EMPTY_FORM: FormState = {
 };
 
 const LOCALES = [
-  { code: "fr", label: "Français (Défaut)", flag: "🇫🇷", short: "FR", dir: "ltr" as const },
-  { code: "en", label: "English", flag: "🇬🇧", short: "EN", dir: "ltr" as const },
-  { code: "ar", label: "العربية", flag: "🇹🇳", short: "AR", dir: "rtl" as const },
-  { code: "es", label: "Español", flag: "🇪🇸", short: "ES", dir: "ltr" as const },
-  { code: "it", label: "Italiano", flag: "🇮🇹", short: "IT", dir: "ltr" as const },
-  { code: "mt", label: "Malti", flag: "🇲🇹", short: "MT", dir: "ltr" as const },
+  { code: "fr", label: "Français (Défaut)", flag: "FR", short: "FR", dir: "ltr" as const },
+  { code: "en", label: "English", flag: "EN", short: "EN", dir: "ltr" as const },
+  { code: "ar", label: "العربية", flag: "AR", short: "AR", dir: "rtl" as const },
+  { code: "es", label: "Español", flag: "ES", short: "ES", dir: "ltr" as const },
+  { code: "it", label: "Italiano", flag: "IT", short: "IT", dir: "ltr" as const },
+  { code: "mt", label: "Malti", flag: "MT", short: "MT", dir: "ltr" as const },
 ];
 
 export default function PublicCardsManager({ kind }: PublicCardsManagerProps) {

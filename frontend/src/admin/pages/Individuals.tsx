@@ -2,9 +2,6 @@
 // @ts-nocheck
 const SOURCE_HOST_LABELS: Array<[string, string]> = [
   ["gallica.bnf.fr", "Gallica (BnF)"],
-  ["familysearch.org", "FamilySearch"],
-  ["geneanet.org", "Geneanet"],
-  ["ancestry.", "Ancestry"],
   ["archives.gov", "National Archives (US)"],
   ["archive.org", "Internet Archive"],
   ["nationalarchives.gov.uk", "National Archives (UK)"],
@@ -53,29 +50,64 @@ export function isDomainOrHostString(str: string): boolean {
   return false;
 }
 
+const DEFAULT_MASKED_LABELS = new Set([
+  "Photographie d'Archive Numérisée",
+  "Enregistrement Oral d'Archive",
+  "Acte & Document d'Archives Officiel",
+  "Source d'Archives Certifiée",
+]);
+
 export function maskSourceLabel(
   label: string | undefined,
   url?: string | undefined,
-  kind?: string | undefined
+  kind?: string | undefined,
+  t?: (key: string, fb?: string) => string
 ): string {
   const trimmed = (label || "").trim();
   if (
     !trimmed ||
+    DEFAULT_MASKED_LABELS.has(trimmed) ||
     isInternalBackendUrl(trimmed) ||
     isDomainOrHostString(trimmed) ||
     /^(?:gallery|doc|file|avatar|audio)-[a-f0-9]{8,}/i.test(trimmed)
   ) {
-    const effectiveKind = (kind || "").toLowerCase();
+    let effectiveKind = (kind || "").toLowerCase();
+    if (!effectiveKind) {
+      const lowerRef = `${trimmed} ${url || ""}`.toLowerCase();
+      if (
+        trimmed === "Photographie d'Archive Numérisée" ||
+        /\.(png|jpe?g|gif|webp)(?:[?#].*)?$/i.test(lowerRef) ||
+        lowerRef.includes("/uploads/gallery/") ||
+        /^(?:gallery|avatar)-/i.test(trimmed)
+      ) {
+        effectiveKind = "image";
+      } else if (
+        trimmed === "Enregistrement Oral d'Archive" ||
+        /\.(mp3|wav|ogg|m4a)(?:[?#].*)?$/i.test(lowerRef) ||
+        lowerRef.includes("/uploads/audios/") ||
+        /^audio-/i.test(trimmed)
+      ) {
+        effectiveKind = "audio";
+      } else if (
+        trimmed === "Acte & Document d'Archives Officiel" ||
+        /\.(pdf|docx?|txt)(?:[?#].*)?$/i.test(lowerRef) ||
+        lowerRef.includes("/uploads/documents/") ||
+        lowerRef.includes("/uploads/books/") ||
+        /^(?:doc|file)-/i.test(trimmed)
+      ) {
+        effectiveKind = "document";
+      }
+    }
     if (effectiveKind === "image" || effectiveKind === "photo" || effectiveKind === "gallery") {
-      return "Photographie d'Archive Numérisée";
+      return t ? t("legacy.masked_archive_photo", "Photographie d'Archive Numérisée") : "Photographie d'Archive Numérisée";
     }
     if (effectiveKind === "audio") {
-      return "Enregistrement Oral d'Archive";
+      return t ? t("legacy.masked_archive_audio", "Enregistrement Oral d'Archive") : "Enregistrement Oral d'Archive";
     }
     if (effectiveKind === "document" || effectiveKind === "book") {
-      return "Acte & Document d'Archives Officiel";
+      return t ? t("legacy.masked_archive_document", "Acte & Document d'Archives Officiel") : "Acte & Document d'Archives Officiel";
     }
-    return "Source d'Archives Certifiée";
+    return t ? t("legacy.masked_archive_certified", "Source d'Archives Certifiée") : "Source d'Archives Certifiée";
   }
   return trimmed;
 }
@@ -373,11 +405,11 @@ export default function Individuals() {
     svg.append("rect").attr("x", 8).attr("y", 8).attr("width", 204).attr("height", 104).attr("rx", 18).attr("fill", surface).attr("stroke", accent).attr("stroke-width", 2);
     svg.append("circle").attr("cx", 34).attr("cy", 34).attr("r", 18).attr("fill", accent);
     svg.append("text").attr("x", 34).attr("y", 39).attr("text-anchor", "middle").attr("font-size", 16).attr("font-weight", 700).attr("fill", "#fff").text(String(selectedIndividual.name || "P").charAt(0).toUpperCase());
-    svg.append("text").attr("x", 60).attr("y", 34).attr("font-size", 11).attr("font-weight", 700).attr("fill", accent).text(selectedIndividual.name || "Individual");
+    svg.append("text").attr("x", 60).attr("y", 34).attr("font-size", 11).attr("font-weight", 700).attr("fill", accent).text(selectedIndividual.name || t("admin.individuals.individual_default", "Individu"));
     svg.append("text").attr("x", 60).attr("y", 50).attr("font-size", 9).attr("fill", textColor).text(selectedIndividual.profession || "—");
-    svg.append("text").attr("x", 20).attr("y", 82).attr("font-size", 9).attr("fill", textColor).text(`Birth: ${selectedIndividual.birthYear || "?"}`);
-    svg.append("text").attr("x", 20).attr("y", 96).attr("font-size", 9).attr("fill", textColor).text(`Death: ${selectedIndividual.deathDate || "—"}`);
-  }, [selectedIndividual, isDark]);
+    svg.append("text").attr("x", 20).attr("y", 82).attr("font-size", 9).attr("fill", textColor).text(`${t("genealogy.birth", "Naissance")}: ${selectedIndividual.birthYear || "?"}`);
+    svg.append("text").attr("x", 20).attr("y", 96).attr("font-size", 9).attr("fill", textColor).text(`${t("genealogy.death", "Décès")}: ${selectedIndividual.deathDate || "—"}`);
+  }, [selectedIndividual, isDark, t]);
 
   // Persist to user-scoped local storage only
   useEffect(() => {
@@ -630,7 +662,7 @@ export default function Individuals() {
 
     // 1. Instant optimistic UI population
     const optimisticItems = parsed.map((p) => ({
-      name: p.name || `${p.given || ""} ${p.surname || ""}`.trim() || "Personne sans nom",
+      name: p.name || `${p.given || ""} ${p.surname || ""}`.trim() || t("admin.individuals.unnamed_person", "Personne sans nom"),
       given: p.given || "",
       surname: p.surname || "",
       gender: p.gender || "",
@@ -736,14 +768,14 @@ export default function Individuals() {
     const fullUrl = resolveOpenableUrl(target);
     setPreviewSource({
       url: fullUrl,
-      label: maskSourceLabel(label, fullUrl, detectedKind),
+      label: maskSourceLabel(label, fullUrl, detectedKind, t),
       kind: detectedKind
     });
     resetPreviewTilt();
   };
 
   return (
-    <div className={`min-h-screen p-6 ${isDark ? "bg-[#071827] text-white" : "bg-[#f5f1e8] text-[#162238]"}`}>
+    <div dir={dir} className={`min-h-screen p-6 text-start ${isDark ? "bg-[#071827] text-white" : "bg-[#f5f1e8] text-[#162238]"}`}>
       <input
         ref={gedcomFileInputRef}
         type="file"
@@ -780,13 +812,13 @@ export default function Individuals() {
       {/* SEARCH AND FILTER BAR */}
       <div className="flex items-center gap-4 mb-6">
         <div className="relative flex-1 max-w-md">
-          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#0d9488] opacity-70" />
+          <Search className="w-4 h-4 absolute start-3.5 top-1/2 -translate-y-1/2 text-[#0d9488] opacity-70" />
           <input
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder={t("legacy.search_individuals_placeholder", "Rechercher par nom, métier, lieu, champ personnalisé...")}
-            className="neu-field w-full pl-10 pr-4 py-2.5 text-xs rounded-xl border focus:ring-2 focus:ring-[#0d9488]/40"
+            className="neu-field w-full ps-10 pe-4 py-2.5 text-xs rounded-xl border focus:ring-2 focus:ring-[#0d9488]/40"
           />
         </div>
         <div className="text-xs font-serif italic text-stone-500 dark:text-stone-400">
@@ -839,13 +871,13 @@ export default function Individuals() {
               <div className="mt-3 pt-3 border-t border-[#0d9488]/15 flex items-center justify-between text-[11px]">
                 <div className="flex items-center gap-1.5 text-stone-500 dark:text-stone-400">
                   <Link2 className="w-3.5 h-3.5 text-[#0d9488]" />
-                  <span>{links.length} sources/médias</span>
+                  <span>{links.length} {t("admin.individuals.sources_media_count", "sources/médias")}</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   {item.isBackedUp !== false && (
                     <span className="px-1.5 py-0.5 rounded text-[10px] bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-0.5" title={t("admin.individuals.saved_in_db", "محفوظ في قاعدة البيانات")}>
                       <ShieldCheck className="w-3 h-3" />
-                      DB
+                      {t("admin.individuals.db_short", "BDD")}
                     </span>
                   )}
                   <span
@@ -856,7 +888,7 @@ export default function Individuals() {
                     }`}
                   >
                     {item.isPublic !== false ? <Globe className="w-3 h-3" /> : <Lock className="w-3 h-3" />}
-                    {item.isPublic !== false ? "Public" : "Privé"}
+                    {item.isPublic !== false ? t("common.public", "Public") : t("common.private", "Privé")}
                   </span>
                 </div>
               </div>
@@ -876,7 +908,7 @@ export default function Individuals() {
 
       {/* CREATE / EDIT MODAL */}
       {isAddModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
+        <div dir={dir} className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn text-start">
           <div className={`neu-card w-full max-w-2xl max-h-[90vh] flex flex-col rounded-2xl border shadow-2xl overflow-hidden ${
             isDark ? "bg-[#0f1f33] border-[#0d9488]/30" : "bg-white border-[#e8e4dc]"
           }`}>
@@ -889,6 +921,8 @@ export default function Individuals() {
               </h2>
               <button
                 onClick={closeModal}
+                title={t("common.close", "Fermer")}
+                aria-label={t("common.close", "Fermer")}
                 className="p-1 rounded-lg text-stone-400 hover:bg-[#0d9488]/15 hover:text-[#0d9488]"
               >
                 <X className="w-5 h-5" />
@@ -960,7 +994,7 @@ export default function Individuals() {
                       <button
                         type="button"
                         onClick={() => gedcomFileInputRef.current?.click()}
-                        className="neu-inset p-4 rounded-xl text-start rtl:text-end hover:border-[#0d9488] transition-colors"
+                        className="neu-inset p-4 rounded-xl text-start hover:border-[#0d9488] transition-colors"
                       >
                         <Upload className="w-5 h-5 text-[#0d9488] mb-2" />
                         <div className="text-sm font-semibold">{t("import_file", "Importer un fichier")}</div>
@@ -972,7 +1006,7 @@ export default function Individuals() {
                           const el = document.getElementById("individual-gedcom-editor");
                           if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
                         }}
-                        className="neu-inset p-4 rounded-xl text-start rtl:text-end hover:border-[#0d9488] transition-colors"
+                        className="neu-inset p-4 rounded-xl text-start hover:border-[#0d9488] transition-colors"
                       >
                         <FileText className="w-5 h-5 text-[#0d9488] mb-2" />
                         <div className="text-sm font-semibold">{t("edit_or_paste", "Éditer / coller")}</div>
@@ -982,7 +1016,7 @@ export default function Individuals() {
                         type="button"
                         onClick={() => downloadGedcomText(currentGedcomText, `${(formData.name || "individual").replace(/\s+/g, "-").toLowerCase()}.ged`)}
                         disabled={!currentGedcomText}
-                        className="neu-inset p-4 rounded-xl text-start rtl:text-end hover:border-[#0d9488] transition-colors disabled:opacity-50"
+                        className="neu-inset p-4 rounded-xl text-start hover:border-[#0d9488] transition-colors disabled:opacity-50"
                       >
                         <FileCode2 className="w-5 h-5 text-[#0d9488] mb-2" />
                         <div className="text-sm font-semibold">{t("export_gedcom", "Exporter GEDCOM")}</div>
@@ -991,10 +1025,11 @@ export default function Individuals() {
                     </div>
                     <textarea
                       id="individual-gedcom-editor"
+                      dir="ltr"
                       value={gedcomText}
                       onChange={(e) => syncGedcomText(e.target.value)}
                       placeholder={t("admin.individuals.gedcom_snippet_placeholder", "0 @I1@ INDI\n1 NAME Ahmed /Ben Mohamed/\n1 SEX M\n1 BIRT\n2 DATE 1905")}
-                      className="neu-field w-full min-h-80 rounded-xl px-4 py-3 text-xs leading-6"
+                      className="neu-field w-full min-h-80 rounded-xl px-4 py-3 text-xs leading-6 text-left"
                     />
                   </div>
                   <div className="flex justify-end gap-3">
@@ -1033,7 +1068,7 @@ export default function Individuals() {
                           value={formData.name}
                           onChange={(e) => setFormData((s: any) => ({ ...s, name: e.target.value }))}
                           placeholder={t("placeholder_name_example", "ex. Ahmed Ben Mohamed")}
-                          className="neu-field w-full px-3 py-2 text-xs rtl:text-end"
+                          className="neu-field w-full px-3 py-2 text-xs"
                         />
                       </div>
 
@@ -1108,14 +1143,14 @@ export default function Individuals() {
                   <div className="space-y-3 pt-2">
                     <div className="flex items-center justify-between border-b border-[#0d9488]/30 pb-1">
                       <h4 className="text-xs font-bold uppercase tracking-widest text-[#0c4a6e] dark:text-[#0d9488]">
-                        Champs personnalisés
+                        {t("admin.individuals.custom_fields", "Champs personnalisés")}
                       </h4>
                       <button
                         type="button"
                         onClick={addCustomField}
                         className="interactive-btn btn-neu text-xs !px-3 !py-1 text-[#0d9488] font-semibold"
                       >
-                        + Ajouter un champ
+                        + {t("admin.individuals.add_custom_field", "Ajouter un champ")}
                       </button>
                     </div>
 
@@ -1154,21 +1189,21 @@ export default function Individuals() {
                           onClick={() => openMediaPanel("document")}
                           className="interactive-btn btn-neu text-[11px] !px-2.5 !py-1"
                         >
-                          <FileText className="w-3.5 h-3.5 inline mr-1 text-[#0d9488]" />
+                          <FileText className="w-3.5 h-3.5 inline me-1 text-[#0d9488]" />
                           {t("common.document", "وثيقة")}</button>
                         <button
                           type="button"
                           onClick={() => openMediaPanel("image")}
                           className="interactive-btn btn-neu text-[11px] !px-2.5 !py-1"
                         >
-                          <ImageIcon className="w-3.5 h-3.5 inline mr-1 text-[#0d9488]" />
+                          <ImageIcon className="w-3.5 h-3.5 inline me-1 text-[#0d9488]" />
                           {t("common.photo_image", "صورة")}</button>
                         <button
                           type="button"
                           onClick={() => openMediaPanel("audio")}
                           className="interactive-btn btn-neu text-[11px] !px-2.5 !py-1"
                         >
-                          <Music className="w-3.5 h-3.5 inline mr-1 text-[#0d9488]" />
+                          <Music className="w-3.5 h-3.5 inline me-1 text-[#0d9488]" />
                           {t("common.audio", "تسجيل صوتي")}</button>
                         <button
                           type="button"
@@ -1178,7 +1213,7 @@ export default function Individuals() {
                           }}
                           className="interactive-btn btn-neu btn-neu--primary text-[11px] !px-2.5 !py-1"
                         >
-                          <Link2 className="w-3.5 h-3.5 inline mr-1" />
+                          <Link2 className="w-3.5 h-3.5 inline me-1" />
                           {t("common.external_link", "رابط خارجي")}</button>
                       </div>
                     </div>
@@ -1187,7 +1222,7 @@ export default function Individuals() {
                     {mediaPanelOpen && (
                       <div className="neu-inset p-3 rounded-lg space-y-2">
                         <div className="flex justify-between items-center text-xs font-bold text-[#0c4a6e] dark:text-[#0d9488]">
-                          <span>{t("admin.individuals.link_existing_item", "ربط عنصر موجود")} ({mediaLinkType})</span>
+                          <span>{t("admin.individuals.link_existing_item", "ربط عنصر موجود")} ({mediaLinkType === "image" ? t("common.photo_image", "صورة") : mediaLinkType === "audio" ? t("common.audio", "تسجيل صوتي") : t("common.document", "وثيقة")})</span>
                           <div className="flex gap-2">
                             <button
                               type="button"
@@ -1282,7 +1317,7 @@ export default function Individuals() {
                               ) : (
                                 <ExternalLink className="w-3.5 h-3.5 shrink-0" />
                               )}
-                              <span className="truncate">{parsed?.label || link}</span>
+                              <span className="truncate">{maskSourceLabel(parsed?.label, parsed?.url || link, parsed?.kind, t)}</span>
                             </button>
                             <button
                               type="button"
@@ -1300,7 +1335,7 @@ export default function Individuals() {
                   {/* BACKUP & VISIBILITY OPTIONS */}
                   <div className="space-y-3 pt-2">
                     <h4 className="text-xs font-bold uppercase tracking-widest text-[#0c4a6e] dark:text-[#0d9488] border-b border-[#0d9488]/30 pb-1">
-                      Paramètres & Visibilité
+                      {t("admin.individuals.settings_and_visibility", "Paramètres & Visibilité")}
                     </h4>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <label className="flex items-center gap-2 text-xs font-medium cursor-pointer p-2.5 rounded-lg neu-inset">
@@ -1311,7 +1346,7 @@ export default function Individuals() {
                           className="w-4 h-4 accent-[#0d9488]"
                         />
                         <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                        <span>Sauvegardé en base de données (Backup)</span>
+                        <span>{t("admin.individuals.saved_in_db_backup", "Sauvegardé en base de données (Backup)")}</span>
                       </label>
 
                       <div className="p-2.5 rounded-lg neu-inset flex items-center justify-between">
@@ -1358,7 +1393,7 @@ export default function Individuals() {
 
       {/* INDIVIDUAL CARD MODAL (Matching Tree Builder Person Modal design) */}
       {selectedIndividual && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
+        <div dir={dir} className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn text-start">
           <div className={`neu-card w-full max-w-xl max-h-[85vh] rounded-2xl border shadow-2xl flex flex-col overflow-hidden ${
             isDark ? "bg-[#0f1f33] border-[#0d9488]/30" : "bg-white border-[#e8e4dc]"
           }`}>
@@ -1385,6 +1420,8 @@ export default function Individuals() {
               </div>
               <button
                 onClick={() => setSelectedIndividual(null)}
+                title={t("common.close", "Fermer")}
+                aria-label={t("common.close", "Fermer")}
                 className="p-1 rounded-lg text-stone-400 hover:bg-[#0d9488]/15 hover:text-[#0d9488]"
               >
                 <X className="w-5 h-5" />
@@ -1423,7 +1460,7 @@ export default function Individuals() {
                     <span className="text-[10px] font-bold uppercase tracking-wider block mb-1">
                       {t("legacy.import_gedcom_title", "Importer par GEDCOM")}
                     </span>
-                    <pre className="text-[11px] whitespace-pre-wrap break-words max-h-40 overflow-auto">
+                    <pre dir="ltr" className="text-[11px] whitespace-pre-wrap break-words max-h-40 overflow-auto text-left">
                       {selectedIndividual.gedcomText}
                     </pre>
                   </div>
@@ -1458,7 +1495,7 @@ export default function Individuals() {
               {selectedIndividual.details && (
                 <div>
                   <span className="neu-label text-[10px] block uppercase tracking-wider font-bold mb-1">
-                    Notes & Détails
+                    {t("admin.individuals.notes_and_details", "Notes & Détails")}
                   </span>
                   <p className="text-xs neu-inset p-3 rounded-lg leading-relaxed">
                     {selectedIndividual.details}
@@ -1470,7 +1507,7 @@ export default function Individuals() {
               {parseArrayField(selectedIndividual?.customFields).length > 0 && (
                 <div>
                   <span className="neu-label text-[10px] block uppercase tracking-wider font-bold mb-2">
-                    Champs personnalisés
+                    {t("admin.individuals.custom_fields", "Champs personnalisés")}
                   </span>
                   <div className="grid grid-cols-2 gap-2">
                     {parseArrayField(selectedIndividual?.customFields).map((field: any) => (
@@ -1486,7 +1523,7 @@ export default function Individuals() {
               {/* LINKED SOURCES & MEDIA */}
               <div>
                 <span className="neu-label text-[10px] block uppercase tracking-wider font-bold mb-2">
-                  Sources & Documents Rattachés
+                  {t("admin.individuals.linked_sources_and_docs", "Sources & Documents Rattachés")}
                 </span>
                 {parseIndividualPersonLinks(selectedIndividual).length > 0 ? (
                   <div className="space-y-2">
@@ -1494,14 +1531,14 @@ export default function Individuals() {
                       <button
                         key={idx}
                         type="button"
-                        onClick={() => openSourceLink(link.url, maskSourceLabel(link.label, link.url, link.kind), link.kind)}
+                        onClick={() => openSourceLink(link.url, maskSourceLabel(link.label, link.url, link.kind, t), link.kind)}
                         className="neu-card p-3 rounded-lg flex items-start justify-between text-xs hover:border-[#0d9488] transition-colors group w-full"
                       >
                         <div className="flex items-start gap-2 min-w-0">
                           <Link2 className="w-4 h-4 text-[#0d9488] shrink-0 mt-0.5" />
                           <span className="min-w-0 text-start">
                             <span className="block font-semibold text-[#0c4a6e] dark:text-[#0d9488] group-hover:underline break-words">
-                              {maskSourceLabel(link.label, link.url, link.kind)}
+                              {maskSourceLabel(link.label, link.url, link.kind, t)}
                             </span>
                             {link.url && !isInternalBackendUrl(link.url) && !isDomainOrHostString(link.url) ? (
                               <span className="block text-[10px] font-normal text-stone-500 dark:text-stone-400 truncate">
@@ -1516,7 +1553,7 @@ export default function Individuals() {
                   </div>
                 ) : (
                   <p className="text-xs italic neu-inset p-3 rounded-lg text-stone-400">
-                    Aucune source ou document rattaché.
+                    {t("admin.individuals.no_linked_sources", "Aucune source ou document rattaché.")}
                   </p>
                 )}
               </div>
@@ -1544,7 +1581,7 @@ export default function Individuals() {
       )}
 
       {previewSource && (
-        <div className="fixed inset-0 z-[2500] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn" onClick={() => setPreviewSource(null)}>
+        <div dir={dir} className="fixed inset-0 z-[2500] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn text-start" onClick={() => setPreviewSource(null)}>
           <div className={`w-full max-w-3xl max-h-[85vh] flex flex-col rounded-2xl border shadow-2xl overflow-hidden ${
             isDark ? "bg-[#0f1f33] border-[#0d9488]/30" : "bg-white border-[#e8e4dc]"
           } animate-in zoom-in-95 duration-200`} onClick={(e) => e.stopPropagation()}>
@@ -1553,15 +1590,17 @@ export default function Individuals() {
             <div className="px-6 py-4 border-b border-[#0d9488]/20 flex items-center justify-between bg-stone-50/50 dark:bg-[#071827]/30">
               <div className="min-w-0 flex-1">
                 <h2 className="font-cinzel text-lg font-bold text-[#0c4a6e] dark:text-[#0d9488] truncate">
-                  {maskSourceLabel(previewSource.label, previewSource.url, previewSource.kind)}
+                  {maskSourceLabel(previewSource.label, previewSource.url, previewSource.kind, t)}
                 </h2>
                 <div className="flex items-center gap-1.5 mt-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
                   <ShieldCheck className="w-3.5 h-3.5 shrink-0" />
-                  <span>Source d'Archives Certifiée • Fonds Numérisé</span>
+                  <span>{t("legacy.certified_archive_digitized_fund", "Source d'Archives Certifiée • Fonds Numérisé")}</span>
                 </div>
               </div>
               <button
                 onClick={() => setPreviewSource(null)}
+                title={t("common.close", "Fermer")}
+                aria-label={t("common.close", "Fermer")}
                 className="p-1 rounded-lg text-stone-400 hover:bg-[#0d9488]/15 hover:text-[#0d9488] transition-colors"
               >
                 <X className="w-5 h-5" />
@@ -1608,7 +1647,7 @@ export default function Individuals() {
                 className="interactive-btn btn-neu btn-neu--primary px-4 py-2 text-xs flex items-center gap-1.5 cursor-pointer"
               >
                 <Download className="w-3.5 h-3.5" />
-                Télécharger / Ouvrir
+                {t("legacy.download_or_open", "Télécharger / Ouvrir")}
               </button>
               <button
                 type="button"

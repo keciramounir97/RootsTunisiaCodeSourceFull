@@ -40,12 +40,12 @@ const LEGAL_DOCUMENTS = [
 ];
 
 const LOCALES = [
-  { code: "ar", label: "العربية 🇹🇳" },
-  { code: "fr", label: "Français 🇫🇷" },
-  { code: "en", label: "English 🇬🇧" },
-  { code: "es", label: "Español 🇪🇸" },
-  { code: "it", label: "Italiano 🇮🇹" },
-  { code: "mt", label: "Malti 🇲🇹" },
+  { code: "ar", label: "العربية", tag: "AR" },
+  { code: "fr", label: "Français", tag: "FR" },
+  { code: "en", label: "English", tag: "EN" },
+  { code: "es", label: "Español", tag: "ES" },
+  { code: "it", label: "Italiano", tag: "IT" },
+  { code: "mt", label: "Malti", tag: "MT" },
 ];
 
 function unwrapLegalPayload(payload: any): LegalDocument | null {
@@ -176,7 +176,7 @@ export default function LegalContent() {
   return (
     <div dir={isRtl ? "rtl" : "ltr"} className="space-y-6 text-start">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[var(--gold)]/20">
+      <div className="surface-card frame-gold flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 rounded-2xl bg-[var(--card)]/95 shadow-md">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <div className="p-2.5 rounded-xl bg-[var(--gold)]/20 text-[var(--gold)] border border-[var(--gold)]/30">
@@ -201,7 +201,7 @@ export default function LegalContent() {
             type="button"
             onClick={() => setPreviewMode((v) => !v)}
             disabled={!doc}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-[var(--border)] bg-[var(--card)] text-xs font-bold text-[var(--foreground)] hover:border-[var(--gold)] transition-colors cursor-pointer disabled:opacity-50"
+            className="btn-base btn-outline inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold cursor-pointer disabled:opacity-50"
           >
             <Eye className="w-4 h-4 text-[var(--gold)]" />
             <span>{previewMode ? t("edit_mode", "وضع التحرير") : t("live_preview", "معاينة الوثيقة")}</span>
@@ -219,7 +219,7 @@ export default function LegalContent() {
               key={d.slug}
               type="button"
               onClick={() => setSelectedSlug(d.slug)}
-              className={`px-4 py-2.5 rounded-2xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer border shrink-0 ${
+              className={`px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer border shrink-0 ${
                 isSelected
                   ? "bg-[var(--gold)] text-black border-[var(--gold)] shadow-md"
                   : "bg-[var(--card)] text-[var(--foreground)] border-[var(--border)] hover:border-[var(--gold)]/50"
@@ -233,12 +233,12 @@ export default function LegalContent() {
       </div>
 
       {/* Language Pills */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 flex-wrap">
         <span className="text-xs font-bold text-[var(--muted-foreground)] flex items-center gap-1">
           <Globe className="w-3.5 h-3.5 text-[var(--gold)]" />
           <span>{t("select_legal_locale", "لغة الوثيقة:")}</span>
         </span>
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1.5 flex-wrap">
           {LOCALES.map((loc) => (
             <button
               key={loc.code}
@@ -250,7 +250,8 @@ export default function LegalContent() {
                   : "bg-[var(--background)] text-[var(--muted-foreground)] border-[var(--border)] hover:text-[var(--foreground)]"
               }`}
             >
-              {loc.label}
+              <span>{loc.label}</span>
+              <span className="ms-1.5 font-mono text-[10px] opacity-75">[{loc.tag}]</span>
             </button>
           ))}
         </div>

@@ -36,6 +36,10 @@ import {
   Home,
   Info,
   Clock,
+  Briefcase,
+  Calendar,
+  Landmark,
+  HelpCircle,
 } from "lucide-react";
 
 interface SidebarLink {
@@ -71,6 +75,7 @@ const CATEGORIES: SidebarCategory[] = [
       { to: "/admin/trees", labelKey: "trees", Icon: Network },
       { to: "/admin/individuals", labelKey: "individuals", Icon: UserRound, permissionKey: "trees" },
       { to: "/admin/sources-archives", labelKey: "my_sources", Icon: Archive },
+      { to: "/admin/periods", labelKey: "periods_sources_management", Icon: Landmark },
       { to: "/admin/tasks", labelKey: "tasks", Icon: ListChecks },
       { to: "/admin/notes", labelKey: "notes", Icon: StickyNote },
     ],
@@ -91,15 +96,11 @@ const CATEGORIES: SidebarCategory[] = [
     id: "content",
     titleKey: "admin_cat_content",
     links: [
-      { to: "/admin/home-content", labelKey: "home_public_content", Icon: Home, roles: [3] },
-      { to: "/admin/about-content", labelKey: "about_public_content", Icon: Info, roles: [3] },
-      { to: "/admin/gallery-content", labelKey: "gallery_public_content", Icon: Image, roles: [3] },
-      { to: "/admin/library-content", labelKey: "library_public_content", Icon: BookOpen, roles: [3] },
-      { to: "/admin/audio-content", labelKey: "audio_public_content", Icon: Music, roles: [3] },
-      { to: "/admin/documents-content", labelKey: "documents_public_content", Icon: FileText, roles: [3] },
-      { to: "/admin/periods-content", labelKey: "periods_public_content", Icon: Clock, roles: [3] },
-      { to: "/admin/contact-content", labelKey: "contact_public_content", Icon: Mail, roles: [3] },
       { to: "/admin/sources-archives-content", labelKey: "sources_archives_content", Icon: Archive, roles: [3] },
+      { to: "/admin/periods-content", labelKey: "periods_content", Icon: Landmark, roles: [3] },
+      { to: "/admin/contact-content", labelKey: "contact_direct_content", Icon: Mail, roles: [3] },
+      { to: "/admin/about-content", labelKey: "about_mission_content", Icon: Info, roles: [3] },
+      { to: "/admin/faq-content", labelKey: "faq_content", Icon: HelpCircle, roles: [3] },
       { to: "/admin/site-image-placeholders", labelKey: "site_image_placeholders", Icon: MapPinned, roles: [3] },
       { to: "/admin/legal-content", labelKey: "legal_content", Icon: Scale, roles: [3] },
       { to: "/admin/footer-settings", labelKey: "footer_settings", Icon: Globe },
@@ -119,6 +120,8 @@ const CATEGORIES: SidebarCategory[] = [
     id: "finance",
     titleKey: "admin_cat_finance",
     links: [
+      { to: "/admin/services", labelKey: "services_management", Icon: Briefcase, roles: [3] },
+      { to: "/admin/services-bookings", labelKey: "services_bookings", Icon: Calendar, roles: [3] },
       { to: "/admin/subscriptions", labelKey: "subscriptions", Icon: Crown, roles: [3] },
       { to: "/admin/subscription-payments", labelKey: "subscription_payments", Icon: Wallet, roles: [3] },
       { to: "/admin/flagged-payments", labelKey: "flagged_payments", Icon: Flag, roles: [3] },
@@ -127,10 +130,21 @@ const CATEGORIES: SidebarCategory[] = [
       { to: "/admin/settings", labelKey: "settings", Icon: Settings, roles: [3] },
     ],
   },
+  {
+    id: "account",
+    titleKey: "admin_cat_account",
+    links: [
+      { to: "/admin/user-upgrade", labelKey: "user_upgrade", Icon: Crown },
+      { to: "/admin/support", labelKey: "contact_support", Icon: HelpCircle },
+      { to: "/admin/user-settings", labelKey: "user_settings", Icon: Settings },
+    ],
+  },
 ];
 
 /** Routes guarded by roles={[3]} — hidden from non-super-admins. */
 const superAdminOnlyRoutes = [
+  "/admin/services",
+  "/admin/services-bookings",
   "/admin/admins-roles",
   "/admin/admins",
   "/admin/super-admins",
@@ -149,7 +163,9 @@ const superAdminOnlyRoutes = [
   "/admin/audio-content",
   "/admin/documents-content",
   "/admin/periods-content",
+  "/admin/help-center-content",
   "/admin/contact-content",
+  "/admin/faq-content",
   "/admin/archives-content",
   "/admin/sources-content",
   "/admin/sources-archives-content",
@@ -184,6 +200,8 @@ const labelFallbacks: Record<string, string> = {
   contact_messages: "Messages de Contact",
   contactMessages: "Messages de Contact",
   newsletter: "Lettre d'Information",
+  services_management: "Création des Services & Offres",
+  services_bookings: "Réservations & Rendez-vous Clients",
   subscriptions: "Abonnements & Limites",
   subscription_payments: "Paiements d'Abonnement",
   flagged_payments: "Paiements Signalés",
@@ -202,11 +220,22 @@ const labelFallbacks: Record<string, string> = {
   archives_public_content: "Archives Public Content",
   sources_public_content: "Sources Public Content",
   sources_archives_content: "Sources & Archives Publiques",
+  periods_content: "Périodes Historiques Publiques",
+  periods_sources_management: "Périodes Historiques & Sources",
+  contact_direct_content: "Contact Direct (Centre d'Aide)",
+  about_mission_content: "À Propos & Mission",
+  faq_content: "Foire Aux Questions (FAQ)",
+  help_center_content: "Centre d'Aide",
   settings: "Paramètres",
   role_distribution: "Distribution des Rôles",
   activity: "Journal d'Activité",
   footer_settings: "Paramètres du Pied de Page",
   backups: "Sauvegardes & Snapshots",
+  user_upgrade: "Mon Abonnement & Mise à Niveau",
+  contact_support: "Contacter le Support",
+  user_settings: "Paramètres du Compte",
+  suggestions: "Suggestions & Idées",
+  download_requests: "Demandes de Téléchargement",
 };
 
 export default function AdminSidebar({
@@ -219,8 +248,8 @@ export default function AdminSidebar({
   onToggle: () => void;
 }) {
   const { logout, user } = useAuth();
-  const { t, dir } = useTranslation();
-  const isRtl = dir === "rtl";
+  const { t, dir, isRtl: contextIsRtl } = useTranslation();
+  const isRtl = Boolean(contextIsRtl || dir === "rtl");
 
   const granted = Array.isArray(user?.permissions) ? user.permissions : [];
   const normalizedRole = Number(user?.role);
@@ -264,7 +293,8 @@ export default function AdminSidebar({
       )}
 
       <aside
-        className={`fixed top-0 bottom-0 z-40 flex flex-col w-64 border-[var(--gold)]/30 bg-[var(--card)]/98 backdrop-blur shadow-2xl transition-transform duration-300 ${
+        dir={isRtl ? "rtl" : "ltr"}
+        className={`fixed top-0 bottom-0 z-40 flex flex-col w-64 border-[var(--gold)]/30 bg-[var(--card)]/98 backdrop-blur shadow-2xl transition-transform duration-300 text-start ${
           isRtl
             ? `right-0 border-l ${open ? "translate-x-0" : "translate-x-full"}`
             : `left-0 border-r ${open ? "translate-x-0" : "-translate-x-full"}`
@@ -274,7 +304,8 @@ export default function AdminSidebar({
           <Logo />
           <button
             onClick={onToggle}
-            title={t("close_sidebar", "Close Sidebar")}
+            aria-label={t("close_sidebar", "Fermer le menu latéral")}
+            title={t("close_sidebar", "Fermer le menu latéral")}
             className="rounded p-1.5 text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-[var(--gold)]/10 transition-colors"
           >
             <PanelLeftClose className={`h-5 w-5 ${isRtl ? "rotate-180" : ""}`} />
@@ -336,8 +367,8 @@ export default function AdminSidebar({
             onClick={() => logout()}
             className="flex items-center gap-1.5 rounded px-3 py-1.5 text-xs font-semibold text-red-500 hover:bg-red-500/10 transition-colors cursor-pointer"
           >
-            <LogOut className="h-3.5 w-3.5" />
-            <span>{t("nav_signout", "Sign Out")}</span>
+            <LogOut className={`h-3.5 w-3.5 ${isRtl ? "rotate-180" : ""}`} />
+            <span>{t("nav_signout", "Déconnexion")}</span>
           </button>
         </div>
       </aside>

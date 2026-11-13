@@ -7,7 +7,7 @@ import { useSiteImages } from "../hooks/useSiteImages";
 import { useTranslation } from "../context/TranslationContext";
 
 export default function AdminLayout() {
-  const { dir } = useTranslation();
+  const { dir, isRtl: contextIsRtl } = useTranslation();
   const [open, setOpen] = useState(() => {
     if (typeof window === "undefined") return true;
     if (window.innerWidth < 1024) return false;
@@ -25,12 +25,12 @@ export default function AdminLayout() {
     }
   }, [open]);
 
-  const isRtl = dir === "rtl";
+  const isRtl = Boolean(contextIsRtl || dir === "rtl");
 
   return (
     <div
       dir={isRtl ? "rtl" : "ltr"}
-      className="bg-[var(--background)] text-[var(--foreground)] min-h-screen bg-cover bg-center bg-fixed bg-no-repeat transition-colors duration-300 relative"
+      className="bg-[var(--background)] text-[var(--foreground)] min-h-screen bg-cover bg-center bg-fixed bg-no-repeat transition-colors duration-300 relative text-start"
       style={{ backgroundImage: `url(${backgroundImage})` }}
     >
       {/* Background Opacity Translucent Overlay */}
@@ -50,7 +50,7 @@ export default function AdminLayout() {
         >
           <div className={`mx-auto space-y-6 transition-all duration-300 ${open ? "max-w-7xl" : "max-w-[98%] w-full"}`}>
             <Breadcrumb />
-            <div dir={isRtl ? "rtl" : "ltr"} className="surface-card p-3 sm:p-6 lg:p-8 shadow-xl border border-[var(--gold)]/30 backdrop-blur-md w-full overflow-x-auto">
+            <div dir={isRtl ? "rtl" : "ltr"} className="surface-card p-3 sm:p-6 lg:p-8 shadow-xl border border-[var(--gold)]/30 backdrop-blur-md w-full overflow-x-auto text-start">
               <Outlet context={{ sidebarOpen: open }} />
             </div>
           </div>

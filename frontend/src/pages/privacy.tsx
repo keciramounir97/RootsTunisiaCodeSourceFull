@@ -1,27 +1,16 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useTranslation } from "../context/TranslationContext";
 import SEO from "../components/SEO";
-import { api } from "../api/client";
 import SiteCustomBlocks from "../components/cms/SiteCustomBlocks";
-
-type LegalSection = { heading: string; body: string };
-type LegalDocument = { title: string; intro: string; sections: LegalSection[] };
-
-function unwrapLegalDocument(payload: any): LegalDocument | null {
-  const doc = payload?.data ?? payload;
-  if (!doc || !Array.isArray(doc.sections) || doc.sections.length === 0) return null;
-  return {
-    title: String(doc.title || ""),
-    intro: String(doc.intro || ""),
-    sections: doc.sections.map((section: any) => ({
-      heading: String(section?.heading || ""),
-      body: String(section?.body || ""),
-    })),
-  };
-}
+import {
+  type LegalDocument,
+  formatLegalSeoTitle,
+  getLegalSeoKeywords,
+  useLegalDocument,
+} from "../utils/legalDocument";
 
 export default function Privacy() {
-  const { t, locale } = useTranslation();
+  const { t, locale, isRtl } = useTranslation();
   const i18nFallback = useMemo<LegalDocument>(
     () => ({
       title: t("privacy_policy", "Privacy Policy"),
@@ -55,33 +44,17 @@ export default function Privacy() {
     }),
     [t],
   );
-  const [doc, setDoc] = useState<LegalDocument>(i18nFallback);
-
-  useEffect(() => {
-    setDoc(i18nFallback);
-    let cancelled = false;
-    api
-      .get("/legal/privacy", { params: { locale } })
-      .then(({ data }) => {
-        const cms = unwrapLegalDocument(data);
-        if (!cancelled && cms) setDoc(cms);
-      })
-      .catch(() => {
-        // Keep i18n fallback when CMS is empty or unavailable.
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [locale, i18nFallback]);
+  const doc = useLegalDocument("privacy", i18nFallback, locale);
 
   return (
-    <div className="bg-[var(--background)] text-[var(--foreground)] min-h-screen py-16">
+    <div dir={isRtl ? "rtl" : "ltr"} className="bg-[var(--background)] text-[var(--foreground)] min-h-screen py-16">
       <SEO
-        title={`${doc.title || t("privacy_policy", "Privacy Policy")} — Roots Tunisia`}
+        title={formatLegalSeoTitle(doc.title || t("privacy_policy", "Privacy Policy"), locale)}
         description={t(
           "privacy_seo_desc",
           "Privacy policy and data protection guidelines for Roots Tunisia researchers and families.",
         )}
+        keywords={getLegalSeoKeywords("privacy", locale)}
       />
       <div className="max-w-4xl mx-auto px-5">
         <div className="surface-card p-8 sm:p-12">

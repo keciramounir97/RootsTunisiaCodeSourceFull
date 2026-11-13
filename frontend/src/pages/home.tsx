@@ -1,37 +1,71 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import {
-  BookOpen,
-  Camera,
+  History,
+  FolderArchive,
+  ShieldCheck,
   GitBranch,
-  Mic,
-  Landmark,
-  FileText,
+  Camera,
+  BookOpen,
+  Sparkles,
+  HelpCircle,
+  ArrowRight,
   ChevronLeft,
   ChevronRight,
-  Eye,
-  X,
   MapPin,
+  CheckCircle2,
+  FileText,
+  Headphones,
+  Scroll,
+  Users,
+  Clock,
+  Calendar,
+  Heart,
+  MessageSquare,
+  ZoomIn,
+  Layers,
+  X,
+  Play,
+  Pause,
 } from "lucide-react";
 import eljem from "../assets/eljem.jpg";
+import djerba from "../assets/djerba.jpg";
 import carthageRuins from "../assets/01_Carthage_Ancient_Ruins_Landscape.jpg";
 import elJemPanorama from "../assets/04_El_Jem_Amphitheater_Panorama.jpg";
 import sidiBouSaidDoors from "../assets/11_Sidi_Bou_Said_Blue_Doors_Bougainvillea.jpg";
 import kairouanMosque from "../assets/14_Kairouan_Mosque_Arched_Doorways_Dome.jpg";
 import medinaDoor from "../assets/16_Medina_Ornate_Door_Blue_Grille.jpg";
-import mosqueTilework from "../assets/07_Mosque_Mihrab_Intricate_Tilework.jpg";
-import sidiBouSaidCourtyard from "../assets/12_Sidi_Bou_Said_Blue_Gate_Courtyard.jpg";
-import kairouanMinaret from "../assets/13_Kairouan_Minaret_Night_Illuminated.jpg";
 import fortressPalms from "../assets/17_Fortress_Aerial_Courtyard_Palms.jpg";
-import { Section, SectionHeading, InfoCard } from "../components/site/Primitives";
-import { TreeCard, type TreeRecord } from "../components/site/TreeCard";
+import sidiBouSaid from "../assets/slider-sidibousaid.jpg";
+import kairouan from "../assets/slider-kairouan.jpg";
+import medina from "../assets/medina-tunis.jpg";
+import { Section, SectionHeading } from "../components/site/Primitives";
 import TunisiaGovernoratesMap from "../components/TunisiaGovernoratesMap";
+import PeriodsInfiniteMarquee from "../components/PeriodsInfiniteMarquee";
+import SourcesInfiniteMarquee from "../components/SourcesInfiniteMarquee";
 import SEO from "../components/SEO";
 import { useTranslation } from "../context/TranslationContext";
 import { api } from "../api/client";
 import { useSiteContent } from "../hooks/useSiteContent";
 import SiteCustomBlocks from "../components/cms/SiteCustomBlocks";
 import { getApiRoot } from "../api/helpers";
+import { getTreeMetrics } from "../utils/treeMetrics";
+import FamilyCardModal from "../components/FamilyCardModal";
+import ArticleModal from "../components/ArticleModal";
+import { useAuth } from "../admin/components/AuthContext";
+import {
+  extractArticleList,
+  normalizeArticle,
+  type NormalizedArticle,
+} from "../utils/articleNormalize";
+import { REAL_AUTHENTIC_ARTICLES } from "../data/realArticles";
+import {
+  getSocialLikes,
+  toggleSocialLike,
+  resolveAnyMediaUrl,
+  getTrackedUploads,
+  fetchBatchSocialCounts,
+} from "../utils/gallerySocial";
 
 function resolveBannerUrl(pathOrUrl?: string | null) {
   const raw = String(pathOrUrl || "").trim();
@@ -53,106 +87,287 @@ const slides = [
 
 const stats = [
   { valueKey: "stat_val_years", labelKey: "stat_years_history", to: "/periods" },
-  { valueKey: "stat_val_governorates", labelKey: "stat_governorates", to: "/archives" },
+  { valueKey: "stat_val_governorates", labelKey: "stat_governorates", to: "/interactive-map" },
   { valueKey: "stat_val_records", labelKey: "stat_records", to: "/gallery/trees" },
   { valueKey: "stat_val_sources", labelKey: "stat_sources", to: "/sources" },
 ];
 
-const tools = [
+// Fallback real trees matching backend data
+const fallbackRealTrees: any[] = [
   {
-    icon: GitBranch,
-    titleKey: "tool_trees_title",
-    bodyKey: "tool_trees_body",
-    to: "/gallery/trees",
+    id: 145,
+    title: "Famille Brakha : D'El Kef à Tunis",
+    name: "Les Brakha : Victor Samuel Brakha, cordonnier, et Marie Sabban, d’El Kef à Tunis (1889–1927)",
+    description: "Victor Samuel Brakha, cordonnier d’El Kef installé à Tunis, et Marie Sabban : itinéraire d’un couple et d’une fratrie (1889–1927)",
+    governorate: "El Kef & Tunis",
+    people_count: 7,
+    generations: 4,
+    people: [
+      { id: "p1", name: "Victor Samuel Brakha", birthDate: "1889", birthPlace: "El Kef", occupation: "Cordonnier" },
+      { id: "p2", name: "Marie Sabban", birthDate: "1893", birthPlace: "Tunis" },
+      { id: "p3", name: "Albert Brakha", birthDate: "1915", birthPlace: "Tunis" },
+      { id: "p4", name: "Gaston Brakha", birthDate: "1918", birthPlace: "Tunis" },
+      { id: "p5", name: "Fortunée Brakha", birthDate: "1921", birthPlace: "Tunis" },
+      { id: "p6", name: "Samuel Brakha", birthDate: "1862", birthPlace: "El Kef" },
+      { id: "p7", name: "Rachel Sitruk", birthDate: "1866", birthPlace: "El Kef" },
+    ],
+    likes: 0,
+    isLiked: false,
+    commentsCount: 0,
   },
   {
-    icon: Camera,
-    titleKey: "tool_photos_title",
-    bodyKey: "tool_photos_body",
-    to: "/gallery/images",
+    id: 144,
+    title: "Famille Cassar : Djerba & La Goulette",
+    name: "Xavier Cassar, dit Sauveur, pêcheur, et Richarde Gaffiero : un couple de Houmt Souk à Tunis (1890–1927)",
+    description: "Un foyer de pêcheurs entre Djerba et Tunis : Xavier et Richarde Cassar-Gaffiero, et la naturalisation de 1927",
+    governorate: "Djerba & La Goulette",
+    people_count: 2,
+    generations: 2,
+    people: [
+      { id: "p1", name: "Xavier Cassar", birthDate: "1890", birthPlace: "Houmt Souk, Djerba", occupation: "Marin-pêcheur" },
+      { id: "p2", name: "Richarde Gaffiero", birthDate: "1894", birthPlace: "La Goulette, Tunis" },
+    ],
+    likes: 0,
+    isLiked: false,
+    commentsCount: 0,
   },
   {
+    id: 136,
+    title: "Les Buonaventura-Guagliardo : de Palma à Radès (1884–1924)",
+    name: "Les Buonaventura-Guagliardo : une famille méditerranéenne de Palma à Radès (1884–1924)",
+    description: "Itinéraire d'un employé municipal et de sa famille entre Palma de Majorque, La Goulette et la commune de Radès.",
+    governorate: "Ben Arous / Radès",
+    people_count: 6,
+    generations: 3,
+    people: [
+      { id: "p1", name: "Nicolas Jean Buonaventura", birthDate: "1884", birthPlace: "Palma", occupation: "Employé municipal" },
+      { id: "p2", name: "Marie Guagliardo", birthDate: "1888", birthPlace: "Tunis" },
+    ],
+    likes: 0,
+    isLiked: false,
+    commentsCount: 0,
+  },
+  {
+    id: 133,
+    title: "Les Castellano-Monaco : de Skikda à Tunis (1894–1925)",
+    name: "Les Castellano-Monaco : une famille italienne de Skikda à Tunis (1894–1925) — itinéraire d’un boulanger",
+    description: "De l'artisanat boulanger à Skikda vers l'établissement durable dans la Médina et les faubourgs de Tunis.",
+    governorate: "Tunis",
+    people_count: 5,
+    generations: 3,
+    people: [
+      { id: "p1", name: "Rosaire Castellano", birthDate: "1894", birthPlace: "Skikda", occupation: "Maître boulanger" },
+    ],
+    likes: 0,
+    isLiked: false,
+    commentsCount: 0,
+  },
+  {
+    id: 129,
+    title: "La Lignée Cantini : de Livourne à Tunis (1878–1913)",
+    name: "La Lignée Cantini : De l'Ancrage Toscan de Livourne au Réseau de Transport Tunisois (1878-1913)",
+    description: "Lignée familiale originaire de Toscane établie à Tunis dans l'administration et les réseaux ferroviaires et urbains.",
+    governorate: "Tunis",
+    people_count: 6,
+    generations: 3,
+    people: [
+      { id: "p1", name: "Hamlet Humbert Cantini", birthDate: "1878", birthPlace: "Livourne" },
+    ],
+    likes: 0,
+    isLiked: false,
+    commentsCount: 0,
+  },
+  {
+    id: 32,
+    title: "Lignée Notariée Ali Ben Salah",
+    name: "Lignée Notariée Ali Ben Salah (Kairouan & Charaâ)",
+    description: "Généalogie continue documentée à partir des actes notariés d'udul, registres du Charaâ et rôles fiscaux de la Majba de Kairouan.",
+    governorate: "Kairouan",
+    people_count: 3,
+    generations: 3,
+    people: [
+      { id: "p1", name: "Ali Ben Salah", birthDate: "1838", birthPlace: "Kairouan", occupation: "Adoul notaire" },
+      { id: "p2", name: "Salah Ben Mohamed", birthDate: "1812", birthPlace: "Kairouan" },
+      { id: "p3", name: "Mohamed Ben Salah", birthDate: "1868", birthPlace: "Kairouan" },
+    ],
+    likes: 0,
+    isLiked: false,
+    commentsCount: 0,
+  },
+];
+
+// Fallback curated gallery images matching GalleryImages.tsx (all 6 curated items)
+const fallbackCuratedImages = [
+  {
+    id: "img-tn-1",
+    title: "Portes Cloutées de la Médina",
+    category: "Landmarks & Architecture",
+    governorate: "Tunis",
+    yearStr: "c. 1910",
+    imageUrl: medina,
+    description: "Ruelles voûtées, heurtoirs en bronze sculpté et moucharabiehs historiques de la Médina de Tunis.",
+    likes: 0,
+    isLiked: false,
+  },
+  {
+    id: "img-tn-2",
+    title: "Village de Sidi Bou Saïd",
+    category: "Landmarks & Architecture",
+    governorate: "Tunis / Sidi Bou Saïd",
+    yearStr: "c. 1925",
+    imageUrl: sidiBouSaid,
+    description: "Ruelles pavées, fenêtres bleues traditionnelles et bougainvilliers dominant le golfe de Tunis.",
+    likes: 0,
+    isLiked: false,
+  },
+  {
+    id: "img-tn-3",
+    title: "Grande Mosquée de Kairouan",
+    category: "Historic Landmarks",
+    governorate: "Kairouan",
+    yearStr: "c. 1900",
+    imageUrl: kairouan,
+    description: "Sanctuaire spirituel d'Ifriqiya fondé en 670, conservant les registres de waqf et manuscrits notariés.",
+    likes: 0,
+    isLiked: false,
+  },
+  {
+    id: "img-tn-4",
+    title: "Amphithéâtre Romain de Thysdrus",
+    category: "Ancient Heritage",
+    governorate: "Mahdia / El Jem",
+    yearStr: "c. 1915",
+    imageUrl: eljem,
+    description: "Arches monumentales du colisée romain d'Afrique proconsulaire et inscriptions épigraphiques séculaires.",
+    likes: 0,
+    isLiked: false,
+  },
+  {
+    id: "img-tn-5",
+    title: "Menzels & Coupoles Traditionnelles de Djerba",
+    category: "Regional Heritage",
+    governorate: "Médenine / Djerba",
+    yearStr: "c. 1930",
+    imageUrl: djerba,
+    description: "Architecture insulaire blanchie à la chaux des menzels de Djerba et mémoire séculaire des familles de Houmt Souk.",
+    likes: 0,
+    isLiked: false,
+  },
+  {
+    id: "img-tn-6",
+    title: "Porte Patricienne & Grille Bleue de Tunis",
+    category: "Landmarks & Architecture",
+    governorate: "Tunis",
+    yearStr: "c. 1915",
+    imageUrl: medinaDoor,
+    description: "Porte en bois clouté et ferronnerie d'art d'une demeure citadine baldiya de la Médina de Tunis.",
+    likes: 0,
+    isLiked: false,
+  },
+];
+
+// The 3 remaining gallery pages that do not have their own standalone section on the homepage
+const remainingGalleryPages = [
+  {
+    id: "books",
+    to: "/gallery/books",
     icon: BookOpen,
-    titleKey: "tool_library_title",
-    bodyKey: "tool_library_body",
-    to: "/library",
+    badgeKey: "col_books_badge",
+    badgeFallback: "Fonds Livres & Manuscrits",
+    titleKey: "col_books_title",
+    titleFallback: "Manuscrits & Ouvrages",
+    descKey: "col_books_desc",
+    descFallback:
+      "Registres de cadis hanéfites et malékites, traités généalogiques de la Mosquée Zitouna, ouvrages historiques et recueils rares de habous (awqaf).",
+    highlights: [
+      { key: "col_books_h1", fallback: "Manuscrits de la Zitouna & nasab" },
+      { key: "col_books_h2", fallback: "Ouvrages généalogiques historiques" },
+      { key: "col_books_h3", fallback: "Traités de jurisprudence & habous" },
+    ],
+    ctaKey: "col_books_cta",
+    ctaFallback: "Explorer les Manuscrits & Ouvrages",
   },
   {
-    icon: Mic,
-    titleKey: "tool_oral_title",
-    bodyKey: "tool_oral_body",
-    to: "/audio",
-  },
-  {
-    icon: Landmark,
-    titleKey: "tool_sources_title",
-    bodyKey: "tool_sources_body",
-    to: "/sources",
-  },
-  {
+    id: "documents",
+    to: "/gallery/documents",
     icon: FileText,
-    titleKey: "nav_articles",
-    bodyKey: "articles_intro",
-    to: "/gallery/articles",
+    badgeKey: "col_docs_badge",
+    badgeFallback: "Actes, Décrets & Sijillats",
+    titleKey: "col_docs_title",
+    titleFallback: "Documents & Sijillats",
+    descKey: "col_docs_desc",
+    descFallback:
+      "Actes d'état civil originaux (naissances, mariages, décès), décrets de naturalisation (1924–1927), sijillats notariés d''udul et registres fiscaux.",
+    highlights: [
+      { key: "col_docs_h1", fallback: "Sijillats notariés d''udul & mahkamas" },
+      { key: "col_docs_h2", fallback: "Décrets de naturalisation (1924–1927)" },
+      { key: "col_docs_h3", fallback: "Registres d'état civil originaux" },
+    ],
+    ctaKey: "col_docs_cta",
+    ctaFallback: "Consulter les Documents & Sijillats",
   },
-];
-
-const timeline = [
-  { id: "punic", eraKey: "era_punic_title", detailKey: "era_punic_detail", yearsKey: "era_punic_years" },
-  { id: "roman", eraKey: "era_roman_title", detailKey: "era_roman_detail", yearsKey: "era_roman_years" },
-  { id: "vandal", eraKey: "era_vandal_title", detailKey: "era_vandal_detail", yearsKey: "era_vandal_years" },
-  { id: "aghabid", eraKey: "era_aghlabid_title", detailKey: "era_aghlabid_detail", yearsKey: "era_aghlabid_years" },
-  { id: "hafsid", eraKey: "era_hafsid_title", detailKey: "era_hafsid_detail", yearsKey: "era_hafsid_years" },
-  { id: "ottoman", eraKey: "era_ottoman_title", detailKey: "era_ottoman_detail", yearsKey: "era_ottoman_years" },
-  { id: "protectorate", eraKey: "era_protectorate_title", detailKey: "era_protectorate_detail", yearsKey: "era_protectorate_years" },
-  { id: "independence", eraKey: "era_independence_title", detailKey: "era_independence_detail", yearsKey: "era_independence_years" },
-  { id: "contemporary", eraKey: "era_contemporary_title", detailKey: "era_contemporary_detail", yearsKey: "era_contemporary_years" },
-];
-
-const librarySources = [
-  { key: "lib_src_manuscripts" },
-  { key: "lib_src_etat_civil" },
-  { key: "lib_src_nasab" },
-  { key: "lib_src_ottoman" },
-  { key: "lib_src_habous" },
-  { key: "lib_src_maps" },
-];
-
-const archives = [
-  { key: "arch_ant" },
-  { key: "arch_charaiques" },
-  { key: "arch_habous" },
-  { key: "arch_anom" },
-  { key: "arch_beylical" },
-  { key: "arch_bnt" },
-];
-
-const gallery = [
-  { image: carthageRuins, altKey: "gallery_alt_carthage" },
-  { image: sidiBouSaidDoors, altKey: "gallery_alt_sidi_doors" },
-  { image: mosqueTilework, altKey: "gallery_alt_tilework" },
-  { image: elJemPanorama, altKey: "gallery_alt_eljem" },
-  { image: medinaDoor, altKey: "gallery_alt_medina_door" },
-  { image: fortressPalms, altKey: "gallery_alt_fortress" },
-  { image: sidiBouSaidCourtyard, altKey: "gallery_alt_sidi_courtyard" },
-  { image: kairouanMinaret, altKey: "gallery_alt_kairouan_night" },
+  {
+    id: "audios",
+    to: "/gallery/audios",
+    icon: Headphones,
+    badgeKey: "col_audios_badge",
+    badgeFallback: "Mémoire Sonore & Entretiens",
+    titleKey: "col_audios_title",
+    titleFallback: "Récits Oraux & Audio",
+    descKey: "col_audios_desc",
+    descFallback:
+      "Entretiens oraux avec les doyens et aînés de familles, transmissions orales des lignées tribales et enregistrements sonores du patrimoine traditionnel tunisien.",
+    highlights: [
+      { key: "col_audios_h1", fallback: "Témoignages oraux d'anciens & doyens" },
+      { key: "col_audios_h2", fallback: "Transmissions orales des lignées et tribus" },
+      { key: "col_audios_h3", fallback: "Fonds sonores et récits patrimoniaux" },
+    ],
+    ctaKey: "col_audios_cta",
+    ctaFallback: "Écouter les Récits Oraux & Audio",
+  },
 ];
 
 export default function Home() {
-  const { t, isRtl } = useTranslation();
+  const { t, isRtl, locale } = useTranslation();
+  const { user } = useAuth();
   const [active, setActive] = useState(0);
-  const [activeEraIndex, setActiveEraIndex] = useState(5); // Default to Ottoman & Beylical era
-  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
-  const [dbTrees, setDbTrees] = useState<any[]>([]);
   const [bannerSlides, setBannerSlides] = useState<any[]>(slides);
   const { getText, getImage } = useSiteContent();
+  const apiRoot = useMemo(() => getApiRoot(), []);
 
-  // Public Content Manager overrides (fall back to hardcoded/i18n defaults when unset).
+  // Live real data states (ALL items, no slice truncation)
+  const [trees, setTrees] = useState<any[]>(fallbackRealTrees);
+  const [galleryImages, setGalleryImages] = useState<any[]>(fallbackCuratedImages);
+  const [articles, setArticles] = useState<NormalizedArticle[]>(REAL_AUTHENTIC_ARTICLES);
+
+  // Infinite Marquee Pause States & Scroll Refs
+  const [treesPaused, setTreesPaused] = useState(false);
+  const [galleryPaused, setGalleryPaused] = useState(false);
+  const [articlesPaused, setArticlesPaused] = useState(false);
+  const treesMarqueeRef = useRef<HTMLDivElement>(null);
+  const galleryMarqueeRef = useRef<HTMLDivElement>(null);
+  const articlesMarqueeRef = useRef<HTMLDivElement>(null);
+
+  // Interactive modals
+  const [activeTree, setActiveTree] = useState<any | null>(null);
+  const [activeImage, setActiveImage] = useState<any | null>(null);
+  const [selectedArticle, setSelectedArticle] = useState<NormalizedArticle | null>(null);
+
+  const nudgeMarquee = (
+    ref: React.RefObject<HTMLDivElement | null>,
+    direction: "left" | "right"
+  ) => {
+    if (ref.current) {
+      const scrollAmount = direction === "left" ? -420 : 420;
+      ref.current.scrollBy({ left: scrollAmount, behavior: "smooth" });
+    }
+  };
+
   const heroImageOverride = getImage("home", "hero", "image");
   const activeSlides = useMemo(
     () =>
       heroImageOverride
-        ? [{ image: heroImageOverride, label: "", labelKey: "" }]
+        ? [{ image: heroImageOverride, label: "", labelKey: "hero_slide_medina" }]
         : bannerSlides,
     [heroImageOverride, bannerSlides],
   );
@@ -162,11 +377,8 @@ export default function Home() {
   const preserveTitle = getText("home", "preserve", "title") ?? t("preserve_lineage_title");
   const preserveDesc = getText("home", "preserve", "description") ?? t("preserve_lineage_desc");
   const preserveImage = getImage("home", "preserve", "image") ?? eljem;
-  const whyTitle = getText("home", "why", "title") ?? t("why_roots_tunisia_title");
-  const whyIntro = getText("home", "why", "intro") ?? t("why_roots_tunisia_intro");
-  const ctaTitle = getText("home", "cta", "title") ?? t("cta_preserve_history");
-  const ctaDesc = getText("home", "cta", "description") ?? t("cta_desc");
 
+  // Banner slides loader
   useEffect(() => {
     (async () => {
       try {
@@ -174,14 +386,13 @@ export default function Home() {
         const list = Array.isArray(data?.data) ? data.data : Array.isArray(data) ? data : [];
         if (list.length > 0) {
           setBannerSlides(
-            list.map((row: any) => ({
+            list.map((row: any, idx: number) => ({
               image: resolveBannerUrl(row.imagePath || row.image_path || row.imageUrl || row.image_url),
               label: String(row.caption || row.title || "").trim(),
-              labelKey: "",
+              labelKey: slides[idx % slides.length]?.labelKey || "hero_slide_medina",
             })),
           );
         } else {
-          // No active banners yet — keep branded defaults until admin checks slides
           setBannerSlides(slides);
         }
       } catch {
@@ -190,6 +401,251 @@ export default function Home() {
     })();
   }, []);
 
+  // Fetch ALL real Trees from /trees API + tracked uploads (identical to GalleryTrees.tsx)
+  useEffect(() => {
+    (async () => {
+      try {
+        const { data } = await api.get("/trees");
+        const items = Array.isArray(data?.data) ? data.data : Array.isArray(data) ? data : [];
+        const tracked = getTrackedUploads("trees");
+        const rawList = [...tracked, ...items];
+
+        if (rawList.length > 0) {
+          const seenIds = new Set<string>();
+          const formatted = rawList
+            .filter((tr: any) => {
+              const idKey = String(tr.id);
+              if (seenIds.has(idKey)) return false;
+              seenIds.add(idKey);
+
+              const titleStr = tr.name || tr.title || "";
+              if (/^new\s+family\s+tree$/i.test(titleStr.trim())) return false;
+              if (/^arbre\s+(famille\s+)?guagliardo$/i.test(titleStr.trim())) return false;
+              if (titleStr.trim() === "111") return false;
+              const descStr = tr.description || tr.notes || tr.provenance || "";
+              if (descStr.trim() === "1111") return false;
+              if (/genealogical\s+tree\s+uploaded\s+via\s+admin/i.test(descStr.trim())) return false;
+              return true;
+            })
+            .map((tr: any) => {
+              const key = `gallery_tree_${tr.id}`;
+              const social = getSocialLikes(key, 0);
+              return {
+                ...tr,
+                title: tr.title || tr.name,
+                likes: social.count,
+                isLiked: social.isLiked,
+              };
+            });
+
+          if (formatted.length > 0) {
+            setTrees(formatted);
+            const allKeys = formatted.map((tr: any) => `gallery_tree_${tr.id}`);
+            fetchBatchSocialCounts(allKeys)
+              .then((batch) => {
+                if (batch && Object.keys(batch).length > 0) {
+                  setTrees((prev) =>
+                    prev.map((tr) => {
+                      const k = `gallery_tree_${tr.id}`;
+                      if (batch[k]) {
+                        return {
+                          ...tr,
+                          likes: batch[k].likes ?? tr.likes,
+                          isLiked: batch[k].isLiked ?? tr.isLiked,
+                          commentsCount: batch[k].comments ?? tr.commentsCount,
+                        };
+                      }
+                      return tr;
+                    })
+                  );
+                }
+              })
+              .catch(() => {});
+          }
+        }
+      } catch {
+        // Fallback already set
+      }
+    })();
+  }, []);
+
+  // Fetch ALL real Gallery Images from /gallery + /documents?type=image + tracked uploads + curated images
+  useEffect(() => {
+    (async () => {
+      try {
+        let galleryItems: any[] = [];
+        let docImages: any[] = [];
+
+        try {
+          const { data } = await api.get("/gallery");
+          galleryItems = Array.isArray(data?.data) ? data.data : Array.isArray(data) ? data : [];
+        } catch {
+          // ignore
+        }
+
+        try {
+          const { data } = await api.get("/documents?type=image");
+          docImages = Array.isArray(data?.data) ? data.data : Array.isArray(data) ? data : [];
+        } catch {
+          // ignore
+        }
+
+        const formattedGallery = galleryItems.map((it: any) => {
+          const key = `gallery_img_${it.id}`;
+          const social = getSocialLikes(key, 0);
+          return {
+            id: it.id,
+            title: it.title || "Photographie d'Archive",
+            category: it.category || "Regional Heritage",
+            governorate: it.governorate || it.location || "Tunis",
+            yearStr: it.year || it.yearStr || "c. 1920",
+            imageUrl: resolveAnyMediaUrl(it.image_path || it.imageUrl || it.url, undefined, medina),
+            description: it.description || it.caption || "",
+            likes: social.count,
+            isLiked: social.isLiked,
+          };
+        });
+
+        const formattedDocs = docImages.map((img: any) => {
+          const key = `gallery_img_${img.id}`;
+          const social = getSocialLikes(key, 0);
+          return {
+            id: `doc-${img.id}`,
+            title: img.title || "Photographie d'Archive",
+            category: img.category || "Patrimoine & Architecture",
+            governorate: img.governorate || "Tunis",
+            yearStr: img.year || img.yearStr || "c. 1920",
+            imageUrl: resolveAnyMediaUrl(img.file_path || img.imageUrl, undefined, medina),
+            description: img.description || "",
+            likes: social.count,
+            isLiked: social.isLiked,
+          };
+        });
+
+        const tracked = getTrackedUploads("images").map((it: any) => {
+          const key = `gallery_img_${it.id}`;
+          const social = getSocialLikes(key, 0);
+          return {
+            id: it.id,
+            title: it.title || "Photographie d'Archive",
+            category: it.category || "Heritage Archives",
+            governorate: it.location || it.governorate || "Tunis",
+            yearStr: it.year || "Archive",
+            imageUrl: resolveAnyMediaUrl(it.image_path || it.imageUrl || it.url, undefined, medina),
+            description: it.description || "",
+            likes: social.count,
+            isLiked: social.isLiked,
+          };
+        });
+
+        const curated = fallbackCuratedImages.map((it) => {
+          const key = `gallery_img_${it.id}`;
+          const social = getSocialLikes(key, 0);
+          return {
+            ...it,
+            likes: social.count,
+            isLiked: social.isLiked,
+          };
+        });
+
+        const combined = [...tracked, ...formattedGallery, ...formattedDocs, ...curated];
+        const seenIds = new Set<string>();
+        const deduped = combined.filter((item) => {
+          const k = String(item.id);
+          if (seenIds.has(k)) return false;
+          seenIds.add(k);
+          return true;
+        });
+
+        if (deduped.length > 0) {
+          setGalleryImages(deduped);
+          const allKeys = deduped.map((x) => `gallery_img_${x.id}`);
+          fetchBatchSocialCounts(allKeys)
+            .then((batch) => {
+              if (batch && Object.keys(batch).length > 0) {
+                setGalleryImages((prev) =>
+                  prev.map((item) => {
+                    const k = `gallery_img_${item.id}`;
+                    if (batch[k]) {
+                      return {
+                        ...item,
+                        likes: batch[k].likes ?? item.likes,
+                        isLiked: batch[k].isLiked ?? item.isLiked,
+                      };
+                    }
+                    return item;
+                  })
+                );
+              }
+            })
+            .catch(() => {});
+        }
+      } catch {
+        // Fallback already set
+      }
+    })();
+  }, []);
+
+  // Fetch ALL real Articles from /articles API + tracked uploads + REAL_AUTHENTIC_ARTICLES
+  useEffect(() => {
+    (async () => {
+      try {
+        let apiItems: any[] = [];
+        try {
+          const { data } = await api.get("/articles");
+          apiItems = extractArticleList(data);
+        } catch {
+          // ignore
+        }
+
+        const normalizedApi = apiItems.map((item) => {
+          const norm = normalizeArticle(item, apiRoot, t("member", "Membre"), "");
+          const social = getSocialLikes(`gallery_article_${norm.id}`, norm.likes || 0);
+          return {
+            ...norm,
+            likes: social.count,
+            isLiked: social.isLiked,
+          };
+        });
+
+        const tracked = getTrackedUploads("articles").map((item: any) => {
+          const norm = normalizeArticle(item, apiRoot, item.authorName || "Karim Admin", "");
+          const social = getSocialLikes(`gallery_article_${norm.id}`, norm.likes || 0);
+          return {
+            ...norm,
+            likes: social.count,
+            isLiked: social.isLiked,
+          };
+        });
+
+        const authenticWithLikes = REAL_AUTHENTIC_ARTICLES.map((art) => {
+          const social = getSocialLikes(`gallery_article_${art.id}`, art.likes || 0);
+          return {
+            ...art,
+            likes: social.count,
+            isLiked: social.isLiked,
+          };
+        });
+
+        const combined = [...tracked, ...normalizedApi, ...authenticWithLikes];
+        const seenTitles = new Set<string>();
+        const deduped = combined.filter((art) => {
+          const normTitle = String(art.title || "").trim().toLowerCase();
+          const key = normTitle || String(art.id);
+          if (seenTitles.has(key)) return false;
+          seenTitles.add(key);
+          return true;
+        });
+
+        if (deduped.length > 0) {
+          setArticles(deduped);
+        }
+      } catch {
+        // Fallback already set
+      }
+    })();
+  }, [apiRoot, t]);
+
   useEffect(() => {
     if (!activeSlides.length) return;
     setActive(0);
@@ -197,49 +653,67 @@ export default function Home() {
     return () => clearInterval(id);
   }, [activeSlides.length]);
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const { data } = await api.get("/trees");
-        const items = Array.isArray(data?.data) ? data.data : Array.isArray(data) ? data : [];
-        setDbTrees(items);
-      } catch {
-        setDbTrees([]);
-      }
-    })();
-  }, []);
+  const toggleTreeLike = async (id: number | string) => {
+    const key = `gallery_tree_${id}`;
+    const target = trees.find((t) => t.id === id);
+    const result = await toggleSocialLike(key, target?.likes || 0, undefined, "tree", Number(id) || undefined);
+    setTrees((prev) =>
+      prev.map((t) => (t.id === id ? { ...t, isLiked: result.isLiked, likes: result.count } : t))
+    );
+  };
 
-  // Only genuine user-created trees are shown (no phantom or test cards).
-  const displayedTrees = useMemo(() => {
-    return dbTrees
-      .filter((tree) => {
-        const title = String(tree?.title || tree?.name || "").trim();
-        const desc = String(tree?.description || tree?.notes || tree?.summary || "").trim();
-        if (/^new\s+family\s+tree$/i.test(title)) return false;
-        if (/^arbre\s+(famille\s+)?guagliardo$/i.test(title)) return false;
-        if (title === "111" || desc === "1111") return false;
-        if (/genealogical\s+tree\s+uploaded\s+via\s+admin/i.test(desc)) return false;
-        return true;
-      })
-      .slice(0, dbTrees.length >= 6 ? 6 : 3);
-  }, [dbTrees]);
+  const toggleImageLike = async (id: number | string) => {
+    const key = `gallery_img_${id}`;
+    const target = galleryImages.find((img) => img.id === id);
+    const result = await toggleSocialLike(key, target?.likes || 0, undefined, "image", Number(id) || undefined);
+    setGalleryImages((prev) =>
+      prev.map((img) => (img.id === id ? { ...img, isLiked: result.isLiked, likes: result.count } : img))
+    );
+  };
+
+  const toggleArticleLike = async (id: number | string) => {
+    const key = `gallery_article_${id}`;
+    const target = articles.find((art) => art.id === id);
+    const result = await toggleSocialLike(key, target?.likes || 0, undefined, "article", Number(id) || undefined);
+    setArticles((prev) =>
+      prev.map((art) => (art.id === id ? { ...art, isLiked: result.isLiked, likes: result.count } : art))
+    );
+  };
+
+  // Build seamless duplicated tracks for the 3 infinite marquees
+  const duplicatedTrees = useMemo(() => {
+    const base = trees.length > 0 ? trees : fallbackRealTrees;
+    return [...base, ...base];
+  }, [trees]);
+
+  const duplicatedGalleryImages = useMemo(() => {
+    const base = galleryImages.length > 0 ? galleryImages : fallbackCuratedImages;
+    return [...base, ...base];
+  }, [galleryImages]);
+
+  const duplicatedArticles = useMemo(() => {
+    const base = articles.length > 0 ? articles : REAL_AUTHENTIC_ARTICLES;
+    const wideBase = base.length < 5 ? [...base, ...base] : base;
+    return [...wideBase, ...wideBase];
+  }, [articles]);
 
   return (
     <div dir={isRtl ? "rtl" : "ltr"} className="text-[var(--foreground)] min-h-screen">
       <SEO
         title={t("seo_home_title")}
         description={t("seo_home_desc")}
-        keywords={["Roots Tunisia", "Tunisian genealogy", "Tunisia family tree", "Archives Nationales de Tunisie", "Carthage history"]}
       />
 
-      {/* Hero slider (Diaporama) */}
+      {/* ========================================================================= */}
+      {/* 1. HERO SLIDER (DIAPORAMA) RESTORED ORIGINAL DESIGN                       */}
+      {/* ========================================================================= */}
       <section className="w-full px-4 pt-4 sm:px-6 lg:px-8">
         <div className="frame-gold relative mx-auto w-full max-w-[var(--content-max)] overflow-hidden rounded-md min-h-[460px] sm:min-h-[540px] lg:min-h-[600px] flex items-center justify-center">
           {activeSlides.map((s, i) => (
             <img
               key={s.labelKey || s.image || i}
               src={s.image}
-              alt={s.label || (s.labelKey ? t(s.labelKey) : "Roots Tunisia")}
+              alt={s.labelKey ? t(s.labelKey) : s.label || "Roots Tunisia"}
               width={1600}
               height={1000}
               className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-1000 ${
@@ -279,7 +753,7 @@ export default function Home() {
               {heroSubtitle}
             </p>
             <div className="mt-8 flex w-full sm:w-auto flex-col sm:flex-row flex-wrap justify-center gap-3">
-              <Link to="/sources" className="btn-base btn-gold w-full sm:w-auto min-w-[200px]">
+              <Link to="/interactive-map" className="btn-base btn-gold w-full sm:w-auto min-w-[200px]">
                 {t("start_exploring")}
               </Link>
               <Link to="/gallery/trees" className="btn-base btn-outline-light !text-white hover:!text-white w-full sm:w-auto min-w-[200px]">
@@ -289,7 +763,11 @@ export default function Home() {
             <div className="mt-6 flex flex-col items-center gap-2">
               {(() => {
                 const currentSlide = activeSlides[active] || activeSlides[0] || slides[0];
-                const slideLabel = currentSlide?.label?.trim() || (currentSlide?.labelKey ? t(currentSlide.labelKey) : "");
+                const slideLabel =
+                  locale !== "fr" && currentSlide?.labelKey
+                    ? t(currentSlide.labelKey)
+                    : currentSlide?.label?.trim() ||
+                      (currentSlide?.labelKey ? t(currentSlide.labelKey) : "");
                 if (!slideLabel) return null;
                 return (
                   <Link
@@ -318,7 +796,9 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Stats */}
+      {/* ========================================================================= */}
+      {/* 2. STATS BAR : 4 COLUMNS                                                  */}
+      {/* ========================================================================= */}
       <section className="w-full px-4 pt-6 sm:px-6 sm:pt-8 lg:px-8">
         <div className="mx-auto w-full max-w-[var(--content-max)]">
           <div className="grid grid-cols-2 gap-px overflow-hidden rounded-md border border-[var(--gold)]/45 bg-[var(--gold)]/35 md:grid-cols-4 shadow-md">
@@ -341,31 +821,34 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Preserve banner - Historic Tunisian El Jem Landmark Background */}
-      <Section>
-        <div className="frame-gold relative overflow-hidden rounded-md shadow-xl min-h-[320px] sm:min-h-[360px] flex items-center justify-center">
+      {/* ========================================================================= */}
+      {/* 3. PRESERVE BANNER (EL JEM MONUMENT ARCHES)                               */}
+      {/* ========================================================================= */}
+      <Section className="!pt-12 sm:!pt-16">
+        <div className="relative rounded-3xl overflow-hidden shadow-2xl border border-[var(--gold)]/30 min-h-[380px] sm:min-h-[440px] flex items-center justify-center text-center p-6 sm:p-12">
           <img
             src={preserveImage}
-            alt={t("eljem_colosseum_alt")}
+            alt={t("hero_slide_eljem", "Amphithéâtre d'El Jem")}
+            className="absolute inset-0 w-full h-full object-cover brightness-[0.4] contrast-[1.1]"
             loading="lazy"
-            width={1600}
-            height={800}
-            className="absolute inset-0 h-full w-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/65 to-black/80" />
-          <div className="relative z-10 flex w-full flex-col items-center justify-center px-5 py-12 sm:px-12 sm:py-16 text-center">
-            <p className="eyebrow !text-[#f5c857] text-shadow-dark font-bold">{t("site_title")}</p>
-            <h2 className="display-lg mt-3 max-w-3xl !text-white font-semibold hero-title-shadow">
+          <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-black/60" />
+
+          <div className="relative z-10 max-w-3xl mx-auto text-white space-y-4 sm:space-y-6">
+            <span className="inline-block text-xs sm:text-sm font-mono font-bold tracking-widest text-[#f5c857] uppercase px-3 py-1 rounded-full bg-black/50 border border-[#f5c857]/40">
+              {t("heritage_banner_eyebrow", "MÉMOIRE & PÉRENNITÉ HISTORIQUE")}
+            </span>
+            <h2 className="font-cinzel text-2xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-white leading-tight drop-shadow-md">
               {preserveTitle}
             </h2>
-            <p className="mt-4 max-w-2xl text-sm !text-white/95 leading-relaxed font-medium drop-shadow sm:text-base">
+            <p className="text-xs sm:text-base text-white/90 max-w-2xl mx-auto font-body leading-relaxed drop-shadow">
               {preserveDesc}
             </p>
             <div className="mt-6 flex w-full sm:w-auto flex-col sm:flex-row flex-wrap justify-center gap-3">
               <Link to="/gallery/trees" className="btn-base btn-gold w-full sm:w-auto min-w-[200px]">
                 {t("browse_family_trees")}
               </Link>
-              <Link to="/sources" className="btn-base btn-outline-light !text-white hover:!text-white w-full sm:w-auto min-w-[200px]">
+              <Link to="/interactive-map" className="btn-base btn-outline-light !text-white hover:!text-white w-full sm:w-auto min-w-[200px]">
                 {t("start_exploring")}
               </Link>
             </div>
@@ -373,428 +856,718 @@ export default function Home() {
         </div>
       </Section>
 
-      {/* Why Roots Tunisia */}
-      <Section className="!pt-0">
-        <SectionHeading
-          center={true}
-          eyebrow={t("why_roots_tunisia_eyebrow")}
-          title={whyTitle}
-          intro={whyIntro}
-        />
-
-        {/* 3 Symmetric Info Cards */}
-        <div className="mt-8 sm:mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 items-stretch">
-          <InfoCard
-            title={t("primary_evidence_title")}
-            body={t("primary_evidence_body")}
-            to="/sources"
-            actionLabel={`${t("open_tool")} ${isRtl ? "←" : "→"}`}
-          />
-          <InfoCard
-            title={t("territorial_depth_title")}
-            body={t("territorial_depth_body")}
-            to="/archives"
-            actionLabel={`${t("open_tool")} ${isRtl ? "←" : "→"}`}
-          />
-          <InfoCard
-            title={t("period_context_title")}
-            body={t("period_context_body")}
-            to="/periods"
-            actionLabel={`${t("open_tool")} ${isRtl ? "←" : "→"}`}
-          />
-        </div>
-
-        {/* Medina Heritage Feature Banner */}
-        <div className="mt-8 sm:mt-12 frame-gold relative overflow-hidden rounded-md shadow-xl bg-[var(--card)]">
-          <div className="grid items-center lg:grid-cols-12 min-h-[260px] sm:min-h-[280px]">
-            <div className="p-6 sm:p-8 lg:p-10 lg:col-span-7 flex flex-col justify-center">
-              <p className="eyebrow text-primary dark:text-[var(--gold)] font-bold">
-                {t("site_title")}
-              </p>
-              <h3 className="font-display text-xl sm:text-2xl lg:text-3xl font-bold mt-2 text-[var(--foreground)]">
-                {t("why_roots_tunisia_title")}
-              </h3>
-              <p className="mt-4 text-sm sm:text-base leading-relaxed text-[var(--muted-foreground)]">
-                {t("why_roots_tunisia_paragraph_2")}
-              </p>
-              <div className="mt-6 flex flex-wrap gap-3">
-                <Link to="/about" className="btn-base btn-gold">
-                  {t("nav_about")} {isRtl ? "←" : "→"}
-                </Link>
-                <Link to="/gallery/trees" className="btn-base btn-outline">
-                  {t("browse_family_trees")}
-                </Link>
-              </div>
-            </div>
-            <div className="relative h-64 lg:h-full min-h-[240px] lg:col-span-5 overflow-hidden">
-              <img
-                src={medinaDoor}
-                alt={t("medina_door_alt")}
-                width={800}
-                height={600}
-                className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 hover:scale-105"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t lg:bg-gradient-to-r from-black/60 via-transparent to-transparent pointer-events-none" />
-              <div className="absolute bottom-3 start-3 end-3 rounded bg-black/60 backdrop-blur-sm px-3 py-1.5 text-xs font-semibold !text-white text-center sm:text-start">
-                {t("medina_door_alt")}
-              </div>
-            </div>
-          </div>
-        </div>
+      {/* ========================================================================= */}
+      {/* 4. INTERACTIVE MAP SECTION RESTORED (ATLAS DES 24 GOUVERNORATS)           */}
+      {/* ========================================================================= */}
+      <Section id="atlas-map" className="bg-[var(--secondary)]/30">
+        <TunisiaGovernoratesMap hideHeaderBanners={true} />
       </Section>
 
-      {/* Tools */}
-      <Section>
-        <SectionHeading
-          eyebrow={t("research_tools_eyebrow")}
-          title={t("research_tools_title")}
-          intro={t("research_tools_intro")}
-        />
-        <div className="mt-10 sm:mt-12 grid gap-5 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3 items-stretch">
-          {tools.map((tool) => {
-            const Icon = tool.icon;
-            return (
-              <Link
-                key={tool.titleKey}
-                to={tool.to}
-                className="surface-card group flex h-full flex-col p-5 sm:p-6 text-start transition-transform hover:-translate-y-1 hover:border-[var(--gold)]/60 bg-[var(--card)]/95 backdrop-blur-sm"
-              >
-                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[var(--gold)]/15 text-[var(--gold)] ring-1 ring-[var(--gold)]/45">
-                  <Icon className="h-5 w-5" />
-                </div>
-                <h3 className="mt-4 font-display text-xl font-bold text-[var(--foreground)] group-hover:text-[var(--gold)] transition-colors">
-                  {t(tool.titleKey)}
-                </h3>
-                <p className="mt-2 flex-1 text-sm leading-relaxed text-[var(--muted-foreground)]">
-                  {t(tool.bodyKey)}
-                </p>
-                <div className="mt-6 pt-4 border-t border-[var(--gold)]/25">
-                  <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[var(--gold)] group-hover:text-[var(--primary)] group-hover:underline transition-colors">
-                    {t("open_tool")} {isRtl ? "←" : "→"}
-                  </span>
-                </div>
-              </Link>
-            );
-          })}
-        </div>
-      </Section>
+      {/* ========================================================================= */}
+      {/* 4.5 CHRONOLOGIE CONTINUE : DÉFILEMENT INFINI X DES 12 PÉRIODES DE TUNISIE */}
+      {/* ========================================================================= */}
+      <PeriodsInfiniteMarquee />
 
-      {/* Timeline (Interactive 9-Era Explorer) */}
-      <Section className="bg-[var(--secondary)]/40">
-        <SectionHeading
-          eyebrow={t("tunisian_timeline_eyebrow")}
-          title={t("tunisian_timeline_title")}
-          intro={t("tunisian_timeline_intro")}
-        />
-        <div className="mt-10 sm:mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 items-stretch">
-          {timeline.map((item, idx) => {
-            const isSelected = activeEraIndex === idx;
-            const isLastOdd = idx === timeline.length - 1;
-            return (
-              <div
-                key={item.eraKey}
-                role="button"
-                tabIndex={0}
-                onClick={() => setActiveEraIndex(idx)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    setActiveEraIndex(idx);
-                  }
-                }}
-                className={`surface-card group flex h-full flex-col justify-between p-5 text-start transition-all cursor-pointer hover:-translate-y-0.5 bg-[var(--card)]/95 backdrop-blur-sm ${
-                  isLastOdd ? "sm:col-span-2 lg:col-span-1" : ""
-                } ${
-                  isSelected
-                    ? "border-2 border-[var(--gold)] ring-2 ring-[var(--gold)]/30 shadow-lg"
-                    : "hover:border-[var(--gold)]/60"
-                }`}
-              >
-                <div>
-                  <div className="flex items-start justify-between gap-2">
-                    <h3 className="font-display text-lg font-bold text-[var(--foreground)] group-hover:text-[var(--gold)] transition-colors">
-                      {t(item.eraKey)}
-                    </h3>
-                    <span className="rounded-sm bg-[var(--gold)]/15 border border-[var(--gold)]/35 px-2 py-0.5 text-[0.68rem] font-bold text-[var(--gold)] shrink-0">
-                      {t(item.yearsKey)}
-                    </span>
-                  </div>
-                  <p className="mt-2.5 text-xs leading-relaxed text-[var(--muted-foreground)]">
-                    {t(item.detailKey)}
-                  </p>
-                </div>
-                <div className="mt-4 pt-3 border-t border-[var(--gold)]/20 flex items-center justify-between">
-                  <Link
-                    to={`/periods#period-${item.id}`}
-                    onClick={(e) => e.stopPropagation()}
-                    className="inline-flex items-center gap-1 text-xs font-bold uppercase tracking-[0.14em] text-[var(--gold)] hover:text-[var(--primary)] hover:underline"
-                  >
-                    {t("open_tool")} {isRtl ? "←" : "→"}
-                  </Link>
-                  <span dir="ltr" className="text-[0.65rem] font-mono font-bold text-[var(--muted-foreground)]">
-                    0{idx + 1} / 0{timeline.length}
-                  </span>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+      {/* ========================================================================= */}
+      {/* 4.6 INVENTAIRE CONTINU : DÉFILEMENT INFINI X DES 28 FONDS D'ARCHIVES      */}
+      {/* ========================================================================= */}
+      <SourcesInfiniteMarquee />
 
-        {/* Interactive Selected Era Spotlight Bar */}
-        {timeline[activeEraIndex] && (
-          <div className="mt-8 surface-card frame-gold p-5 sm:p-6 rounded-lg bg-[var(--card)] flex flex-col lg:flex-row items-start lg:items-center justify-between gap-5">
-            <div className="space-y-1.5 text-start">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="eyebrow text-[var(--gold)]">{t("tunisian_timeline_eyebrow")}</span>
-                <span className="rounded-sm bg-[var(--gold)]/15 border border-[var(--gold)]/35 px-2 py-0.5 text-xs font-bold text-[var(--gold)]">
-                  {t(timeline[activeEraIndex].yearsKey)}
+      {/* ========================================================================= */}
+      {/* 5. SECTION ARBRES GÉNÉALOGIQUES : DÉFILEMENT INFINI DE TOUS LES ARBRES    */}
+      {/* ========================================================================= */}
+      <Section id="genealogical-trees" className="!pt-6 !pb-10 overflow-hidden relative">
+        <div className="w-full max-w-[var(--content-max)] mx-auto px-4 sm:px-6 lg:px-8 mb-8 sm:mb-10">
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 border-b border-[var(--gold)]/20 pb-6">
+            <div className="max-w-3xl">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--gold)]/10 text-[var(--gold)] border border-[var(--gold)]/25 text-xs font-mono font-bold uppercase tracking-wider mb-2">
+                <GitBranch className="w-3.5 h-3.5" />
+                <span>{t("trees_section_eyebrow", "GÉNÉALOGIE & LIGNÉES")}</span>
+                <span className="px-1.5 py-0.2 rounded bg-[var(--gold)]/20 text-[10px]">
+                  {trees.length}
                 </span>
               </div>
-              <h3 className="font-display text-xl sm:text-2xl font-bold text-[var(--foreground)]">
-                {t(timeline[activeEraIndex].eraKey)}
-              </h3>
-              <p className="text-sm text-[var(--muted-foreground)] max-w-3xl leading-relaxed">
-                {t(timeline[activeEraIndex].detailKey)}
+              <h2 className="font-cinzel text-2xl sm:text-3xl md:text-4xl font-bold text-[var(--foreground)] tracking-tight">
+                {t("trees_section_title", "Arbres Généalogiques des Familles Tunisiennes")}
+              </h2>
+              <p className="mt-2 text-xs sm:text-sm text-[var(--muted-foreground)] leading-relaxed font-body">
+                {t(
+                  "trees_section_intro",
+                  "Explorez en défilement continu toutes les lignées familiales documentées à travers les 24 gouvernorats : visualisez les filiations sur plusieurs générations, les individus répertoriés et chaque fiche familiale."
+                )}
               </p>
             </div>
-            <div className="flex w-full sm:w-auto flex-col sm:flex-row flex-wrap gap-3 shrink-0">
-              <Link
-                to={`/periods#period-${timeline[activeEraIndex].id}`}
-                className="btn-base btn-gold w-full sm:w-auto"
-              >
-                {t("explore_all_9_periods")}
-              </Link>
-              <Link to="/sources" className="btn-base btn-outline-ink w-full sm:w-auto">
-                {t("nav_sources")}
-              </Link>
-            </div>
-          </div>
-        )}
-      </Section>
 
-      {/* Sources & Archives (Symmetric 2-Column Grid with 6 Items Each) */}
-      <Section>
-        <div className="grid gap-8 lg:grid-cols-2 lg:gap-10 items-stretch">
-          <div className="surface-card p-6 sm:p-8 flex flex-col justify-between bg-[var(--card)]/95">
-            <div>
-              <SectionHeading
-                center={false}
-                eyebrow={t("primary_sources_eyebrow")}
-                title={t("digitized_catalogued_records")}
-                intro={t("digitized_records_intro")}
-              />
-              <ul className="mt-6 space-y-2.5">
-                {librarySources.map((s) => (
-                  <li key={s.key}>
-                    <Link
-                      to="/library"
-                      className="surface-card group flex items-center justify-between gap-3 px-4 py-3 text-sm font-medium text-[var(--foreground)] hover:border-[var(--gold)] hover:-translate-y-0.5 transition-all bg-[var(--background)]/70"
-                    >
-                      <span className="flex items-center gap-3 text-start">
-                        <span className="h-2 w-2 rounded-full bg-[var(--gold)] shrink-0" />
-                        <span className="group-hover:text-[var(--gold)] transition-colors">{t(s.key)}</span>
-                      </span>
-                      <span className="text-xs font-bold text-[var(--gold)] shrink-0">
-                        {isRtl ? "←" : "→"}
-                      </span>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div className="mt-8 pt-4 border-t border-[var(--gold)]/20">
-              <Link to="/library" className="btn-base btn-red w-full sm:w-auto">
-                {t("browse_library")}
-              </Link>
-            </div>
-          </div>
-          <div className="surface-card p-6 sm:p-8 flex flex-col justify-between bg-[var(--card)]/95">
-            <div>
-              <SectionHeading
-                center={false}
-                eyebrow={t("archival_repositories_eyebrow")}
-                title={t("official_archives_title")}
-                intro={t("official_archives_intro")}
-              />
-              <ul className="mt-6 space-y-2.5">
-                {archives.map((a) => (
-                  <li key={a.key}>
-                    <Link
-                      to="/archives"
-                      className="surface-card group flex items-center justify-between gap-3 px-4 py-3 text-sm font-medium text-[var(--foreground)] hover:border-[var(--gold)] hover:-translate-y-0.5 transition-all bg-[var(--background)]/70"
-                    >
-                      <span className="flex items-center gap-3 text-start">
-                        <span className="h-2 w-2 rounded-full bg-[var(--primary)] shrink-0" />
-                        <span className="group-hover:text-[var(--gold)] transition-colors">{t(a.key)}</span>
-                      </span>
-                      <span className="text-xs font-bold text-[var(--gold)] shrink-0">
-                        {isRtl ? "←" : "→"}
-                      </span>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div className="mt-8 pt-4 border-t border-[var(--gold)]/20">
-              <Link to="/archives" className="btn-base btn-outline-ink w-full sm:w-auto">
-                {t("view_archive_guide")}
-              </Link>
-            </div>
-          </div>
-        </div>
-      </Section>
-
-      {/* Interactive Map Section */}
-      <Section id="atlas-map" className="bg-[var(--secondary)]/30">
-        <TunisiaGovernoratesMap />
-      </Section>
-
-      {/* Featured Trees */}
-      <Section>
-        <SectionHeading
-          eyebrow={t("genealogical_trees_eyebrow")}
-          title={t("featured_trees_title")}
-          intro={t("featured_trees_intro")}
-        />
-        {displayedTrees.length > 0 ? (
-          <div className="mt-10 sm:mt-12 grid gap-6 md:grid-cols-3 items-stretch">
-            {displayedTrees.map((tree) => (
-              <TreeCard key={tree.id} tree={tree} />
-            ))}
-          </div>
-        ) : null}
-        <div className="mt-10 text-center">
-          <Link to="/gallery/trees" className="btn-base btn-gold w-full sm:w-auto">
-            {t("browse_all_family_trees")}
-          </Link>
-        </div>
-      </Section>
-
-      {/* Photo Gallery Grid (Interactive Lightbox + Full Gallery Link) */}
-      <Section className="bg-[var(--secondary)]/40">
-        <SectionHeading
-          eyebrow={t("visual_heritage")}
-          title={t("tunisia_photo_manuscript")}
-          intro={t("tunisia_photo_desc")}
-        />
-        <div className="mt-10 sm:mt-12 grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4">
-          {gallery.map((item, i) => {
-            const caption = t(item.altKey);
-            return (
+            <div className="flex flex-wrap items-center gap-2.5 shrink-0">
               <button
-                key={i}
                 type="button"
-                onClick={() => setLightboxIndex(i)}
-                className="frame-gold group relative block aspect-[4/3] w-full overflow-hidden rounded-md text-start cursor-pointer"
+                onClick={() => setTreesPaused((prev) => !prev)}
+                aria-label={treesPaused ? t("marquee_resume", "Reprendre") : t("marquee_pause", "Pause")}
+                className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold bg-[var(--card)] hover:bg-[var(--gold)]/15 text-[var(--foreground)] border border-[var(--gold)]/30 hover:border-[var(--gold)] transition-all cursor-pointer shadow-xs"
               >
-                <img
-                  src={item.image}
-                  alt={caption}
-                  loading="lazy"
-                  width={600}
-                  height={450}
-                  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                />
-                <div className="absolute inset-0 flex items-end justify-between gap-2 bg-gradient-to-t from-black/85 via-black/35 to-transparent p-2.5 sm:p-3 opacity-90 sm:opacity-0 transition-opacity group-hover:opacity-100">
-                  <p className="text-[0.7rem] sm:text-xs !text-white font-medium line-clamp-2">{caption}</p>
-                  <span className="flex h-6 w-6 sm:h-7 sm:w-7 shrink-0 items-center justify-center rounded-full bg-[#d9a441] !text-[#1f160f]">
-                    <Eye className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-                  </span>
-                </div>
+                {treesPaused ? (
+                  <>
+                    <Play className="w-3.5 h-3.5 text-[var(--gold)] fill-[var(--gold)]" />
+                    <span>{t("marquee_resume", "Reprendre")}</span>
+                  </>
+                ) : (
+                  <>
+                    <Pause className="w-3.5 h-3.5 text-[var(--gold)]" />
+                    <span>{t("marquee_pause", "Pause")}</span>
+                  </>
+                )}
               </button>
+
+              <div className="hidden sm:inline-flex items-center rounded-xl bg-[var(--card)] border border-[var(--gold)]/30 p-0.5">
+                <button
+                  type="button"
+                  onClick={() => nudgeMarquee(treesMarqueeRef, "left")}
+                  aria-label={t("marquee_scroll_left", "Défiler vers la gauche")}
+                  className="p-1.5 rounded-lg hover:bg-[var(--gold)]/20 text-[var(--foreground)] transition-colors cursor-pointer"
+                >
+                  <ChevronLeft className="w-4 h-4 text-[var(--gold)]" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => nudgeMarquee(treesMarqueeRef, "right")}
+                  aria-label={t("marquee_scroll_right", "Défiler vers la droite")}
+                  className="p-1.5 rounded-lg hover:bg-[var(--gold)]/20 text-[var(--foreground)] transition-colors cursor-pointer"
+                >
+                  <ChevronRight className="w-4 h-4 text-[var(--gold)]" />
+                </button>
+              </div>
+
+              <Link
+                to="/gallery/trees"
+                className="btn-base btn-gold text-xs py-2 px-3.5 rounded-xl font-bold inline-flex items-center gap-2 shadow-xs cursor-pointer"
+              >
+                <Users className="w-3.5 h-3.5 shrink-0" />
+                <span>{t("browse_all_trees_cta", "Consulter Tous les Arbres Généalogiques")}</span>
+                <ArrowRight className={`w-3.5 h-3.5 shrink-0 ${isRtl ? "rotate-180" : ""}`} />
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        <div className="relative w-full overflow-hidden group">
+          <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-8 sm:w-16 lg:w-24 bg-gradient-to-r from-[var(--background)] to-transparent z-10" />
+          <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-8 sm:w-16 lg:w-24 bg-gradient-to-l from-[var(--background)] to-transparent z-10" />
+
+          <div
+            ref={treesMarqueeRef}
+            className="w-full overflow-x-auto no-scrollbar scroll-smooth py-3"
+            tabIndex={0}
+            role="region"
+            aria-label={t("trees_section_title", "Arbres Généalogiques des Familles Tunisiennes")}
+          >
+            <div
+              dir="ltr"
+              style={{ animationDuration: `${Math.max(65, trees.length * 4)}s` }}
+              className={`flex items-stretch gap-6 pl-4 sm:pl-8 pr-4 sm:pr-8 animate-marquee-ltr ${
+                treesPaused ? "marquee-paused" : ""
+              }`}
+            >
+              {duplicatedTrees.map((tree, idx) => {
+                const titleStr = tree.title || tree.name || `Arbre Familial #${tree.id}`;
+                const descStr = tree.description || tree.notes || tree.provenance || "";
+                const { individuals: memberCount, generations: genCount } = getTreeMetrics(tree);
+
+                return (
+                  <div
+                    key={`tree-marquee-${tree.id}-${idx}`}
+                    className="w-[330px] sm:w-[380px] shrink-0 flex flex-col"
+                  >
+                    <article
+                      dir={isRtl ? "rtl" : "ltr"}
+                      className="surface-card frame-gold p-6 rounded-lg shadow-md space-y-4 flex h-full flex-col justify-between hover:-translate-y-1 transition-all text-start"
+                    >
+                      <div className="space-y-3">
+                        <h3
+                          onClick={() => setActiveTree(tree)}
+                          className="text-lg sm:text-xl font-display font-bold text-[var(--foreground)] leading-snug cursor-pointer hover:text-[var(--gold)] transition-colors line-clamp-2"
+                          title={t("open_tree_details", "Cliquer pour ouvrir l'arbre généalogique")}
+                        >
+                          {titleStr}
+                        </h3>
+
+                        <p className="text-xs text-[var(--foreground)]/80 leading-relaxed line-clamp-3">
+                          {descStr}
+                        </p>
+                      </div>
+
+                      <div className="pt-3 border-t border-[var(--border)] space-y-3">
+                        <div className="grid grid-cols-2 gap-2 text-xs font-mono bg-[var(--background)] p-3 rounded-md border border-[var(--border)]">
+                          <div className="flex items-center gap-1.5 text-[var(--foreground)]">
+                            <Layers className="w-3.5 h-3.5 text-[var(--gold)] shrink-0" />
+                            <span>
+                              <strong>{t("generations_label", "Générations")}:</strong> {genCount}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1.5 text-[var(--foreground)]">
+                            <Users className="w-3.5 h-3.5 text-[var(--gold)] shrink-0" />
+                            <span>
+                              <strong>{t("individuals_label", "Individus")}:</strong> {memberCount}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="pt-2 flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setActiveTree(tree)}
+                            className="btn-base btn-gold flex-1 text-xs py-2 flex items-center justify-center gap-2 cursor-pointer font-bold"
+                          >
+                            <Sparkles className="w-3.5 h-3.5" />
+                            <span>{t("explore_family_card", "Explorer la Fiche")}</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => toggleTreeLike(tree.id)}
+                            className={`btn-base btn-outline text-xs py-2 px-2.5 flex items-center justify-center gap-1 cursor-pointer transition-all ${
+                              tree.isLiked ? "border-rose-500/50 bg-rose-500/10" : ""
+                            }`}
+                            title={user ? t("like", "Like") : t("login_to_like", "Connectez-vous pour aimer")}
+                          >
+                            <Heart
+                              className={`w-3.5 h-3.5 ${
+                                tree.isLiked ? "fill-rose-500 text-rose-500" : "text-[var(--gold)]"
+                              }`}
+                            />
+                            <span className={`text-[0.65rem] font-bold ${tree.isLiked ? "text-rose-500" : ""}`}>
+                              {tree.likes || 0}
+                            </span>
+                          </button>
+                          <Link
+                            to="/gallery/trees"
+                            className="btn-base btn-outline text-xs py-2 px-2.5 flex items-center justify-center gap-1 cursor-pointer"
+                            title={t("view_in_gallery", "Voir dans la galerie")}
+                          >
+                            <MessageSquare className="w-3.5 h-3.5 text-[var(--gold)]" />
+                            {typeof tree.commentsCount === "number" && tree.commentsCount > 0 && (
+                              <span className="text-[0.65rem] font-bold text-[var(--gold)]">
+                                {tree.commentsCount}
+                              </span>
+                            )}
+                          </Link>
+                        </div>
+                      </div>
+                    </article>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </Section>
+
+      {/* ========================================================================= */}
+      {/* 6. SECTION GALERIE DU PATRIMOINE HISTORIQUE : DÉFILEMENT INFINI           */}
+      {/* ========================================================================= */}
+      <Section id="heritage-gallery" className="!pt-6 !pb-10 bg-[var(--secondary)]/20 overflow-hidden relative">
+        <div className="w-full max-w-[var(--content-max)] mx-auto px-4 sm:px-6 lg:px-8 mb-8 sm:mb-10">
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 border-b border-[var(--gold)]/20 pb-6">
+            <div className="max-w-3xl">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--gold)]/10 text-[var(--gold)] border border-[var(--gold)]/25 text-xs font-mono font-bold uppercase tracking-wider mb-2">
+                <Camera className="w-3.5 h-3.5" />
+                <span>{t("gallery_section_eyebrow", "PATRIMOINE VISUEL")}</span>
+                <span className="px-1.5 py-0.2 rounded bg-[var(--gold)]/20 text-[10px]">
+                  {galleryImages.length}
+                </span>
+              </div>
+              <h2 className="font-cinzel text-2xl sm:text-3xl md:text-4xl font-bold text-[var(--foreground)] tracking-tight">
+                {t("gallery_section_title", "Galerie & Photothèque Historique")}
+              </h2>
+              <p className="mt-2 text-xs sm:text-sm text-[var(--muted-foreground)] leading-relaxed font-body">
+                {t(
+                  "gallery_section_intro",
+                  "Portraits anciens de familles tunisiennes, ruines archéologiques puniques et romaines, portes cloutées et médinas séculaires conservées en haute définition."
+                )}
+              </p>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+              <button
+                type="button"
+                onClick={() => setGalleryPaused((prev) => !prev)}
+                aria-label={galleryPaused ? t("marquee_resume", "Reprendre") : t("marquee_pause", "Pause")}
+                className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold bg-[var(--card)] hover:bg-[var(--gold)]/15 text-[var(--foreground)] border border-[var(--gold)]/30 hover:border-[var(--gold)] transition-all cursor-pointer shadow-xs"
+              >
+                {galleryPaused ? (
+                  <>
+                    <Play className="w-3.5 h-3.5 text-[var(--gold)] fill-[var(--gold)]" />
+                    <span>{t("marquee_resume", "Reprendre")}</span>
+                  </>
+                ) : (
+                  <>
+                    <Pause className="w-3.5 h-3.5 text-[var(--gold)]" />
+                    <span>{t("marquee_pause", "Pause")}</span>
+                  </>
+                )}
+              </button>
+
+              <div className="hidden sm:inline-flex items-center rounded-xl bg-[var(--card)] border border-[var(--gold)]/30 p-0.5">
+                <button
+                  type="button"
+                  onClick={() => nudgeMarquee(galleryMarqueeRef, "left")}
+                  aria-label={t("marquee_scroll_left", "Défiler vers la gauche")}
+                  className="p-1.5 rounded-lg hover:bg-[var(--gold)]/20 text-[var(--foreground)] transition-colors cursor-pointer"
+                >
+                  <ChevronLeft className="w-4 h-4 text-[var(--gold)]" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => nudgeMarquee(galleryMarqueeRef, "right")}
+                  aria-label={t("marquee_scroll_right", "Défiler vers la droite")}
+                  className="p-1.5 rounded-lg hover:bg-[var(--gold)]/20 text-[var(--foreground)] transition-colors cursor-pointer"
+                >
+                  <ChevronRight className="w-4 h-4 text-[var(--gold)]" />
+                </button>
+              </div>
+
+              <Link
+                to="/gallery/images"
+                className="btn-base btn-gold text-xs py-2 px-3.5 rounded-xl font-bold inline-flex items-center gap-2 shadow-xs cursor-pointer"
+              >
+                <Camera className="w-3.5 h-3.5 shrink-0" />
+                <span>{t("browse_all_gallery_cta", "Parcourir la Photothèque Complète")}</span>
+                <ArrowRight className={`w-3.5 h-3.5 shrink-0 ${isRtl ? "rotate-180" : ""}`} />
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        <div className="relative w-full overflow-hidden group">
+          <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-8 sm:w-16 lg:w-24 bg-gradient-to-r from-[var(--background)] to-transparent z-10" />
+          <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-8 sm:w-16 lg:w-24 bg-gradient-to-l from-[var(--background)] to-transparent z-10" />
+
+          <div
+            ref={galleryMarqueeRef}
+            className="w-full overflow-x-auto no-scrollbar scroll-smooth py-3"
+            tabIndex={0}
+            role="region"
+            aria-label={t("gallery_section_title", "Galerie & Photothèque Historique")}
+          >
+            <div
+              dir="ltr"
+              style={{ animationDuration: `${Math.max(65, galleryImages.length * 3.5)}s` }}
+              className={`flex items-stretch gap-6 pl-4 sm:pl-8 pr-4 sm:pr-8 animate-marquee-ltr ${
+                galleryPaused ? "marquee-paused" : ""
+              }`}
+            >
+              {duplicatedGalleryImages.map((img, idx) => (
+                <div
+                  key={`gallery-marquee-${img.id}-${idx}`}
+                  className="w-[300px] sm:w-[340px] shrink-0 flex flex-col"
+                >
+                  <article
+                    dir={isRtl ? "rtl" : "ltr"}
+                    className="surface-card frame-gold group/card overflow-hidden transition-all hover:-translate-y-1 shadow-md flex h-full flex-col justify-between rounded-lg bg-[var(--card)] text-start"
+                  >
+                    <div>
+                      <div
+                        onClick={() => setActiveImage(img)}
+                        className="relative aspect-[4/3] overflow-hidden bg-[var(--card)] cursor-pointer"
+                      >
+                        <img
+                          src={img.imageUrl}
+                          alt={img.title}
+                          loading="lazy"
+                          className="h-full w-full object-cover transition-transform duration-500 group-hover/card:scale-105"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-transparent opacity-0 group-hover/card:opacity-100 transition-opacity flex items-end p-3">
+                          <span className="text-white text-xs font-semibold flex items-center gap-1.5">
+                            <ZoomIn className="h-3.5 w-3.5 text-[#f5c857]" />
+                            <span>{t("view_high_res", "Voir en haute résolution")}</span>
+                          </span>
+                        </div>
+                        {img.yearStr && (
+                          <span className="absolute top-2.5 end-2.5 rounded-md bg-[#140f0a]/85 px-2.5 py-1 text-xs font-mono font-bold text-[#f5c857] backdrop-blur-md border border-[#f5c857]/40 shadow-sm">
+                            {img.yearStr}
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="p-4 sm:p-5">
+                        <h3
+                          onClick={() => setActiveImage(img)}
+                          className="font-display font-bold text-base sm:text-lg text-[var(--foreground)] group-hover/card:text-[var(--gold)] transition-colors line-clamp-1 cursor-pointer"
+                        >
+                          {img.title}
+                        </h3>
+                        <p className="mt-1.5 text-xs text-[var(--foreground)]/80 line-clamp-2 leading-relaxed">
+                          {img.description}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="px-4 pb-4 pt-2.5 border-t border-[var(--border)] flex items-center justify-between text-xs">
+                      {img.governorate && (
+                        <span className="font-semibold text-[var(--gold)] flex items-center gap-1.5 text-xs truncate max-w-[130px]">
+                          <MapPin className="h-3.5 w-3.5 shrink-0 text-[var(--gold)]" />
+                          <span className="truncate">{img.governorate}</span>
+                        </span>
+                      )}
+                      <div className="flex items-center gap-3">
+                        <button
+                          type="button"
+                          onClick={() => toggleImageLike(img.id)}
+                          className="flex items-center gap-1.5 text-xs text-[var(--muted-foreground)] hover:text-rose-500 transition-colors cursor-pointer"
+                          title={t("like", "Like")}
+                        >
+                          <Heart
+                            className={`h-3.5 w-3.5 ${
+                              img.isLiked ? "fill-rose-500 text-rose-500" : ""
+                            }`}
+                          />
+                          <span>{img.likes || 0}</span>
+                        </button>
+                        <Link
+                          to="/gallery/images"
+                          className="flex items-center gap-1.5 text-xs text-[var(--muted-foreground)] hover:text-[var(--gold)] transition-colors cursor-pointer"
+                          title={t("comments", "Commentaires")}
+                        >
+                          <MessageSquare className="h-3.5 w-3.5 text-[var(--gold)]" />
+                          <span>{t("comment", "Commenter")}</span>
+                        </Link>
+                      </div>
+                    </div>
+                  </article>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </Section>
+
+      {/* ========================================================================= */}
+      {/* 7. SECTION ARTICLES & MONOGRAPHIES : DÉFILEMENT INFINI                    */}
+      {/* ========================================================================= */}
+      <Section id="articles-section" className="!pt-6 !pb-10 overflow-hidden relative">
+        <div className="w-full max-w-[var(--content-max)] mx-auto px-4 sm:px-6 lg:px-8 mb-8 sm:mb-10">
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 border-b border-[var(--gold)]/20 pb-6">
+            <div className="max-w-3xl">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--gold)]/10 text-[var(--gold)] border border-[var(--gold)]/25 text-xs font-mono font-bold uppercase tracking-wider mb-2">
+                <BookOpen className="w-3.5 h-3.5" />
+                <span>{t("articles_section_eyebrow", "RECHERCHES & ÉTUDES HISTORIQUES")}</span>
+                <span className="px-1.5 py-0.2 rounded bg-[var(--gold)]/20 text-[10px]">
+                  {articles.length}
+                </span>
+              </div>
+              <h2 className="font-cinzel text-2xl sm:text-3xl md:text-4xl font-bold text-[var(--foreground)] tracking-tight">
+                {t("articles_section_title", "Articles & Monographies de Référence")}
+              </h2>
+              <p className="mt-2 text-xs sm:text-sm text-[var(--muted-foreground)] leading-relaxed font-body">
+                {t(
+                  "articles_section_intro",
+                  "Études approfondies et monographies universitaires complètes sur l'état civil tunisien, l'impôt de la Majba et la paléographie notariale."
+                )}
+              </p>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+              <button
+                type="button"
+                onClick={() => setArticlesPaused((prev) => !prev)}
+                aria-label={articlesPaused ? t("marquee_resume", "Reprendre") : t("marquee_pause", "Pause")}
+                className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold bg-[var(--card)] hover:bg-[var(--gold)]/15 text-[var(--foreground)] border border-[var(--gold)]/30 hover:border-[var(--gold)] transition-all cursor-pointer shadow-xs"
+              >
+                {articlesPaused ? (
+                  <>
+                    <Play className="w-3.5 h-3.5 text-[var(--gold)] fill-[var(--gold)]" />
+                    <span>{t("marquee_resume", "Reprendre")}</span>
+                  </>
+                ) : (
+                  <>
+                    <Pause className="w-3.5 h-3.5 text-[var(--gold)]" />
+                    <span>{t("marquee_pause", "Pause")}</span>
+                  </>
+                )}
+              </button>
+
+              <div className="hidden sm:inline-flex items-center rounded-xl bg-[var(--card)] border border-[var(--gold)]/30 p-0.5">
+                <button
+                  type="button"
+                  onClick={() => nudgeMarquee(articlesMarqueeRef, "left")}
+                  aria-label={t("marquee_scroll_left", "Défiler vers la gauche")}
+                  className="p-1.5 rounded-lg hover:bg-[var(--gold)]/20 text-[var(--foreground)] transition-colors cursor-pointer"
+                >
+                  <ChevronLeft className="w-4 h-4 text-[var(--gold)]" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => nudgeMarquee(articlesMarqueeRef, "right")}
+                  aria-label={t("marquee_scroll_right", "Défiler vers la droite")}
+                  className="p-1.5 rounded-lg hover:bg-[var(--gold)]/20 text-[var(--foreground)] transition-colors cursor-pointer"
+                >
+                  <ChevronRight className="w-4 h-4 text-[var(--gold)]" />
+                </button>
+              </div>
+
+              <Link
+                to="/articles"
+                className="btn-base btn-gold text-xs py-2 px-3.5 rounded-xl font-bold inline-flex items-center gap-2 shadow-xs cursor-pointer"
+              >
+                <BookOpen className="w-3.5 h-3.5 shrink-0" />
+                <span>{t("browse_all_articles_cta", "Consulter Tous les Articles & Monographies")}</span>
+                <ArrowRight className={`w-3.5 h-3.5 shrink-0 ${isRtl ? "rotate-180" : ""}`} />
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        <div className="relative w-full overflow-hidden group">
+          <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-8 sm:w-16 lg:w-24 bg-gradient-to-r from-[var(--background)] to-transparent z-10" />
+          <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-8 sm:w-16 lg:w-24 bg-gradient-to-l from-[var(--background)] to-transparent z-10" />
+
+          <div
+            ref={articlesMarqueeRef}
+            className="w-full overflow-x-auto no-scrollbar scroll-smooth py-3"
+            tabIndex={0}
+            role="region"
+            aria-label={t("articles_section_title", "Articles & Monographies de Référence")}
+          >
+            <div
+              dir="ltr"
+              style={{ animationDuration: `${Math.max(55, duplicatedArticles.length * 3)}s` }}
+              className={`flex items-stretch gap-6 pl-4 sm:pl-8 pr-4 sm:pr-8 animate-marquee-ltr ${
+                articlesPaused ? "marquee-paused" : ""
+              }`}
+            >
+              {duplicatedArticles.map((article, idx) => (
+                <div
+                  key={`article-marquee-${article.id}-${idx}`}
+                  className="w-[340px] sm:w-[390px] shrink-0 flex flex-col"
+                >
+                  <article
+                    dir={isRtl ? "rtl" : "ltr"}
+                    className="surface-card frame-gold p-6 rounded-lg shadow-md space-y-4 flex h-full flex-col justify-between hover:-translate-y-1 transition-all text-start"
+                  >
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded bg-[var(--gold)]/10 text-[var(--gold)] border border-[var(--gold)]/30 font-bold">
+                          {article.category || "Archives & Notariats"}
+                        </span>
+                        <span className="text-[11px] font-mono text-[var(--muted-foreground)] flex items-center gap-1">
+                          <Clock className="w-3 h-3 text-[var(--gold)]" />
+                          <span>{article.readingTime || "15 min"}</span>
+                        </span>
+                      </div>
+
+                      <h3
+                        onClick={() => setSelectedArticle(article)}
+                        className="text-lg sm:text-xl font-display font-bold text-[var(--foreground)] leading-snug cursor-pointer hover:text-[var(--gold)] transition-colors line-clamp-2"
+                        title={t("open_article_details", "Cliquer pour lire l'article complet et ses sources")}
+                      >
+                        {article.title}
+                      </h3>
+
+                      <p className="text-xs text-[var(--foreground)]/80 leading-relaxed line-clamp-3">
+                        {article.content}
+                      </p>
+                    </div>
+
+                    <div className="pt-3 border-t border-[var(--border)] space-y-3">
+                      <div className="grid grid-cols-2 gap-2 text-xs font-mono bg-[var(--background)] p-3 rounded-md border border-[var(--border)]">
+                        <div className="flex items-center gap-1.5 text-[var(--foreground)]">
+                          <FileText className="w-3.5 h-3.5 text-[var(--gold)] shrink-0" />
+                          <span>
+                            <strong>{t("sources_label", "Sources")}:</strong> {article.sources?.length || 3}{" "}
+                            {t("docs_short_label", "docs")}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1.5 text-[var(--foreground)]">
+                          <Clock className="w-3.5 h-3.5 text-[var(--gold)] shrink-0" />
+                          <span>
+                            <strong>{t("reading_label", "Lecture")}:</strong> {article.readingTime || "15 min"}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="pt-2 flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setSelectedArticle(article)}
+                          className="btn-base btn-gold flex-1 text-xs py-2 flex items-center justify-center gap-2 cursor-pointer font-bold"
+                        >
+                          <BookOpen className="w-3.5 h-3.5" />
+                          <span>{t("read_article_cta", "LIRE L'ARTICLE")}</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => toggleArticleLike(article.id)}
+                          className={`btn-base btn-outline text-xs py-2 px-2.5 flex items-center justify-center gap-1 cursor-pointer transition-all ${
+                            article.isLiked ? "border-rose-500/50 bg-rose-500/10 text-rose-500" : ""
+                          }`}
+                          title={t("like", "Like")}
+                        >
+                          <Heart
+                            className={`w-3.5 h-3.5 ${
+                              article.isLiked ? "fill-rose-500 text-rose-500" : "text-[var(--gold)]"
+                            }`}
+                          />
+                          <span className={`text-[0.65rem] font-bold ${article.isLiked ? "text-rose-500" : ""}`}>
+                            {article.likes || 0}
+                          </span>
+                        </button>
+
+                        <Link
+                          to="/articles"
+                          className="btn-base btn-outline text-xs py-2 px-2.5 flex items-center justify-center gap-1 cursor-pointer"
+                          title={t("browse_all_articles_cta", "Consulter tous les articles")}
+                        >
+                          <MessageSquare className="w-3.5 h-3.5 text-[var(--gold)]" />
+                        </Link>
+                      </div>
+                    </div>
+                  </article>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </Section>
+
+      {/* ========================================================================= */}
+      {/* 8. FONDS NUMÉRISÉS : DOCUMENTS, SIJILLATS & AUDIOS (3 CARTES DÉDIÉES)     */}
+      {/* ========================================================================= */}
+      <Section id="archival-collections" className="!pt-6 sm:!pt-10 bg-[var(--secondary)]/15">
+        <SectionHeading
+          center={true}
+          eyebrow={t("collections_section_eyebrow", "FONDS NUMÉRISÉS & MÉDIAS")}
+          title={t("collections_section_title", "Documents, Sijillats, Manuscrits & Mémoire Orale")}
+          intro={t(
+            "collections_section_intro",
+            "Accédez directement aux trois fonds documentaires numérisés de la plateforme : actes d'état civil originaux, manuscrits et sijillats des mahkamas, et mémoires orales."
+          )}
+        />
+
+        <div className="mt-10 sm:mt-12 grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-7 items-stretch">
+          {remainingGalleryPages.map((col) => {
+            const Icon = col.icon;
+            return (
+              <article
+                key={col.id}
+                className="surface-card frame-gold p-6 sm:p-7 rounded-lg shadow-md space-y-4 flex h-full flex-col justify-between hover:-translate-y-1 transition-all text-start"
+              >
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--gold)]/15 text-[var(--gold)] border border-[var(--gold)]/35">
+                      <Icon className="h-5 w-5" />
+                    </div>
+                    <span className="text-[10px] font-mono uppercase tracking-wider px-2.5 py-1 rounded bg-[var(--gold)]/10 text-[var(--gold)] border border-[var(--gold)]/30 font-bold">
+                      {t(col.badgeKey, col.badgeFallback)}
+                    </span>
+                  </div>
+
+                  <h3 className="text-lg sm:text-xl font-display font-bold text-[var(--foreground)] leading-snug">
+                    <Link to={col.to} className="hover:text-[var(--gold)] transition-colors">
+                      {t(col.titleKey, col.titleFallback)}
+                    </Link>
+                  </h3>
+
+                  <p className="text-xs text-[var(--foreground)]/80 leading-relaxed line-clamp-3">
+                    {t(col.descKey, col.descFallback)}
+                  </p>
+                </div>
+
+                <div className="pt-3 border-t border-[var(--border)] space-y-3">
+                  <div className="p-3 rounded-md bg-[var(--background)] border border-[var(--border)] space-y-1.5 text-xs font-mono">
+                    <span className="text-[10px] uppercase font-bold text-[var(--gold)] tracking-wider block">
+                      {t("collections_series_label", "Fonds & Séries Documentaires :")}
+                    </span>
+                    {col.highlights.map((h, i) => (
+                      <div key={i} className="flex items-center gap-1.5 text-[var(--foreground)] text-[11px]">
+                        <CheckCircle2 className="h-3 w-3 text-[var(--gold)] shrink-0" />
+                        <span className="truncate">{t(h.key, h.fallback)}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="pt-2">
+                    <Link
+                      to={col.to}
+                      className="btn-base btn-gold w-full text-xs py-2 flex items-center justify-center gap-2 cursor-pointer font-bold"
+                    >
+                      <span>{t(col.ctaKey, col.ctaFallback)}</span>
+                      <ArrowRight className={`h-3.5 w-3.5 ${isRtl ? "rotate-180" : ""}`} />
+                    </Link>
+                  </div>
+                </div>
+              </article>
             );
           })}
         </div>
-        <div className="mt-10 text-center">
-          <Link to="/gallery/images" className="btn-base btn-red w-full sm:w-auto">
-            {t("open_full_photo_gallery")}
-          </Link>
-        </div>
       </Section>
 
-      {/* Interactive Photo Lightbox Modal */}
-      {lightboxIndex !== null && gallery[lightboxIndex] && (
+      {/* Interactive Lightbox for Gallery Images */}
+      {activeImage && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4"
-          onClick={() => setLightboxIndex(null)}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4 backdrop-blur-sm animate-fade-in"
+          onClick={() => setActiveImage(null)}
         >
           <div
-            className="surface-card frame-gold relative max-w-4xl w-full overflow-hidden rounded-xl bg-[var(--card)] p-4 sm:p-6 shadow-2xl"
+            className="surface-card frame-gold relative max-w-4xl w-full overflow-hidden shadow-2xl p-4 sm:p-6 rounded-xl bg-[var(--card)] text-start"
             onClick={(e) => e.stopPropagation()}
           >
             <button
               type="button"
               aria-label={t("close")}
-              onClick={() => setLightboxIndex(null)}
-              className="absolute top-3 end-3 z-20 rounded-full bg-[var(--background)] p-2 text-[var(--foreground)] hover:bg-[var(--gold)]/20 cursor-pointer"
+              onClick={() => setActiveImage(null)}
+              className="absolute top-3 end-3 rounded-full bg-[var(--background)] p-1.5 text-[var(--foreground)] hover:bg-[var(--gold)]/20 transition-colors cursor-pointer z-10"
             >
               <X className="h-5 w-5" />
             </button>
 
-            <div className="relative overflow-hidden rounded-lg">
+            <div className="max-h-[60vh] overflow-hidden rounded-lg flex items-center justify-center bg-black/40">
               <img
-                src={gallery[lightboxIndex].image}
-                alt={t(gallery[lightboxIndex].altKey)}
-                className="max-h-[68vh] w-full object-cover rounded-lg"
+                src={activeImage.imageUrl}
+                alt={activeImage.title}
+                className="max-h-[60vh] max-w-full object-contain rounded"
               />
-              <button
-                type="button"
-                aria-label={t("previous")}
-                onClick={() => setLightboxIndex((i) => ((i ?? 0) - 1 + gallery.length) % gallery.length)}
-                className="absolute start-3 top-1/2 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full bg-black/65 !text-white hover:bg-[#d9a441] hover:!text-[#1f160f] cursor-pointer"
-              >
-                <ChevronLeft className={`h-5 w-5 ${isRtl ? "rotate-180" : ""}`} />
-              </button>
-              <button
-                type="button"
-                aria-label={t("next")}
-                onClick={() => setLightboxIndex((i) => ((i ?? 0) + 1) % gallery.length)}
-                className="absolute end-3 top-1/2 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full bg-black/65 !text-white hover:bg-[#d9a441] hover:!text-[#1f160f] cursor-pointer"
-              >
-                <ChevronRight className={`h-5 w-5 ${isRtl ? "rotate-180" : ""}`} />
-              </button>
             </div>
 
-            <div className="mt-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="mt-4 pt-4 border-t border-[var(--gold)]/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
-                <p className="eyebrow text-[var(--gold)]">{t("visual_heritage")}</p>
-                <h3 className="font-display text-xl font-bold text-[var(--foreground)]">
-                  {t(gallery[lightboxIndex].altKey)}
+                <h3 className="font-display text-xl sm:text-2xl font-bold text-[var(--foreground)]">
+                  {activeImage.title}
                 </h3>
+                <p className="mt-1 text-xs text-[var(--muted-foreground)] flex items-center gap-2">
+                  <span>{activeImage.yearStr}</span>
+                  {activeImage.governorate && <span>• {activeImage.governorate}</span>}
+                </p>
               </div>
-              <Link
-                to="/gallery/images"
-                onClick={() => setLightboxIndex(null)}
-                className="btn-base btn-gold w-full sm:w-auto"
-              >
-                {t("open_full_photo_gallery")}
-              </Link>
+
+              <div className="flex items-center gap-3">
+                <Link
+                  to="/gallery/images"
+                  className="btn-base btn-gold text-xs py-2 px-4 inline-flex items-center gap-1.5 font-bold"
+                >
+                  <Camera className="w-3.5 h-3.5" />
+                  <span>{t("view_in_gallery", "Voir dans la galerie")}</span>
+                </Link>
+              </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* Call to action */}
-      <Section>
-        <div className="surface-card relative overflow-hidden rounded-lg p-6 sm:p-10 md:p-16 text-center border-2 border-[var(--gold)]/50 bg-[var(--card)]/95 backdrop-blur-sm">
-          <div className="zellige absolute inset-0 opacity-25 pointer-events-none" />
-          <p className="eyebrow relative z-10">{t("start_your_journey")}</p>
-          <h2 className="display-lg relative z-10 mt-3 text-[var(--foreground)]">
-            {ctaTitle}
-          </h2>
-          <p className="relative z-10 mx-auto mt-4 max-w-xl text-sm leading-relaxed text-[var(--muted-foreground)]">
-            {ctaDesc}
-          </p>
-          <div className="relative z-10 mt-8 flex flex-col sm:flex-row flex-wrap justify-center gap-3 sm:gap-4">
-            <Link to="/signup" className="btn-base btn-red px-8 py-3.5 w-full sm:w-auto min-w-[200px]">
-              {t("create_free_account")}
-            </Link>
-            <Link to="/subscriptions" className="btn-base btn-outline-ink px-8 py-3.5 w-full sm:w-auto min-w-[200px]">
-              {t("view_plans_tiers")}
-            </Link>
-          </div>
-        </div>
-      </Section>
+      {/* 3D Family Card Inspector Modal for Trees */}
+      {activeTree && (
+        <FamilyCardModal
+          tree={activeTree}
+          onClose={() => setActiveTree(null)}
+        />
+      )}
+
+      {/* Article Reader Modal */}
+      {selectedArticle && (
+        <ArticleModal
+          article={selectedArticle}
+          onClose={() => setSelectedArticle(null)}
+          onLike={() => toggleArticleLike(selectedArticle.id)}
+        />
+      )}
 
       <SiteCustomBlocks pageId="home" />
     </div>

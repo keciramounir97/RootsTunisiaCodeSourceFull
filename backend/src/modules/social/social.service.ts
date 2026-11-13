@@ -320,6 +320,32 @@ export class SocialService implements OnModuleInit {
         };
     }
 
+    /** Edit comment content & author (Super Admin / Admin) */
+    async updateComment(id: number, content?: string, isApproved?: boolean, userName?: string) {
+        const comment = await this.knex('social_comments').where({ id }).first();
+        if (!comment) throw new NotFoundException('Comment not found');
+
+        const patch: any = {
+            updated_at: new Date(),
+        };
+        if (typeof content === 'string' && content.trim()) {
+            patch.content = content.trim();
+        }
+        if (typeof isApproved === 'boolean') {
+            patch.is_approved = isApproved ? 1 : 0;
+        }
+        if (typeof userName === 'string' && userName.trim()) {
+            patch.user_name = userName.trim();
+        }
+
+        await this.knex('social_comments').where({ id }).update(patch);
+        const updated = await this.knex('social_comments').where({ id }).first();
+        return {
+            success: true,
+            comment: updated,
+        };
+    }
+
     /** Delete like by ID (Super Admin / Admin) */
     async deleteLike(id: number) {
         const like = await this.knex('social_likes').where({ id }).first();

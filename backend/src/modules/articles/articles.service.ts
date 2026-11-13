@@ -3,17 +3,8 @@ import { ActivityService } from '../activity/activity.service';
 import { GALLERY_UPLOADS_DIR } from '../../common/utils/file.utils';
 import * as fs from 'fs';
 import * as path from 'path';
+import { REAL_GENEALOGICAL_ARTICLES } from './seed-articles-data';
 
-type SeedAdmin = {
-    email: string;
-    fullName: string;
-    posts: Array<{
-        title: string;
-        content: string;
-        image: string;
-        likes: number;
-    }>;
-};
 
 @Injectable()
 export class ArticlesService implements OnModuleInit {
@@ -213,106 +204,6 @@ export class ArticlesService implements OnModuleInit {
         return article;
     }
 
-    private seedAdmins(): SeedAdmin[] {
-        return [
-            {
-                email: 'karim@rootstunisia.com',
-                fullName: 'Karim Admin',
-                posts: [
-                    {
-                        title: 'Family archive photo from the RootsTunisia gallery',
-                        content: 'Karim Admin shared a newly organized Tunisia family archive photo. These gallery images are connected to the article feed so every post can carry its historical context.',
-                        image: '/uploads/gallery/seed-galleryimage.png',
-                        likes: 18,
-                    },
-                    {
-                        title: 'A preserved portrait for Tunisia genealogy notes',
-                        content: 'This portrait was added as a visual note for the RootsTunisia archive. Keeping the image beside the story makes it easier to verify names, places, and family branches later.',
-                        image: '/uploads/gallery/seed-galleryimage2.png',
-                        likes: 24,
-                    },
-                    {
-                        title: 'Archive detail prepared for community review',
-                        content: 'Karim Admin prepared this gallery detail for review. The post keeps the photo visible in both the public article feed and the admin editor.',
-                        image: '/uploads/gallery/seed-galleryimage3.png',
-                        likes: 16,
-                    },
-                ],
-            },
-            {
-                email: 'kamel@rootstunisia.com',
-                fullName: 'Kamel Admin',
-                posts: [
-                    {
-                        title: 'Photo note linked to a family branch',
-                        content: 'Kamel Admin posted this image while checking a Tunisia family branch. The photo is stored in uploads and can be edited from the admin article manager.',
-                        image: '/uploads/gallery/seed-galleryimage4.png',
-                        likes: 21,
-                    },
-                    {
-                        title: 'Gallery image prepared for the heritage feed',
-                        content: 'A public gallery image has been attached to this story so visitors can see the material directly instead of opening a separate archive page.',
-                        image: '/uploads/gallery/seed-galleryimage5.png',
-                        likes: 14,
-                    },
-                    {
-                        title: 'Tunisia migration story with a real gallery photo',
-                        content: 'Kamel Admin added this post as a short migration note across Tunisia regions and the diaspora. The attached photo comes from the bundled gallery assets and is ready for admin editing.',
-                        image: '/uploads/gallery/seed-galleryimage6.png',
-                        likes: 19,
-                    },
-                ],
-            },
-            {
-                email: 'devteam@rootstunisia.com',
-                fullName: 'Dev Team Admin',
-                posts: [
-                    {
-                        title: 'Article media rendering smoke post',
-                        content: 'Dev Team Admin published this post to verify that article images render from the same upload folder used by the gallery.',
-                        image: '/uploads/gallery/seed-galleryimage7.png',
-                        likes: 11,
-                    },
-                    {
-                        title: 'Admin-editable article photo check',
-                        content: 'This post checks the admin edit flow with a real uploaded image path. Titles, visibility, and media can be changed from the admin articles page.',
-                        image: '/uploads/gallery/seed-galleryimage8.png',
-                        likes: 13,
-                    },
-                    {
-                        title: 'Public feed photo display check',
-                        content: 'The final smoke post verifies that future article media follows the same URL normalization path as existing seeded gallery images.',
-                        image: '/uploads/gallery/seed-galleryimage9.png',
-                        likes: 17,
-                    },
-                ],
-            },
-        ];
-    }
-
-    private async copyBundledGalleryAssets() {
-        const backendRoot = path.resolve(__dirname, '..', '..', '..');
-        const assetsDir = path.resolve(backendRoot, '..', 'frontend', 'src', 'assets');
-        if (!fs.existsSync(assetsDir)) return;
-
-        const entries = await fs.promises.readdir(assetsDir, { withFileTypes: true });
-        const galleryAssets = entries.filter((entry) => {
-            const ext = path.extname(entry.name).toLowerCase();
-            return (
-                entry.isFile() &&
-                /^galleryimage(?:\d+)?\.(?:jpe?g|png|gif|webp)$/i.test(entry.name) &&
-                this.imageExtensions.has(ext)
-            );
-        });
-
-        await fs.promises.mkdir(GALLERY_UPLOADS_DIR, { recursive: true });
-        for (const asset of galleryAssets) {
-            const destination = path.join(GALLERY_UPLOADS_DIR, `seed-${asset.name}`);
-            if (fs.existsSync(destination)) continue;
-            await fs.promises.copyFile(path.join(assetsDir, asset.name), destination);
-        }
-    }
-
     private async ensureSeedPosts() {
         if (this.seedEnsured) return;
         if (!this.seedPromise) {
@@ -330,44 +221,86 @@ export class ArticlesService implements OnModuleInit {
         await this.seedPromise;
     }
 
+    private async cleanupMockArticles() {
+        try {
+            // Eradicate any previous mock test posts from the database
+            await this.knex('articles')
+                .where('seed_key', 'like', '%@rootstunisia.com:%')
+                .orWhere('title', 'like', '%smoke%')
+                .orWhere('title', 'like', '%Family archive photo%')
+                .orWhere('title', 'like', '%preserved portrait%')
+                .orWhere('title', 'like', '%Archive detail%')
+                .orWhere('title', 'like', '%Photo note%')
+                .orWhere('title', 'like', '%Gallery image%')
+                .orWhere('title', 'like', '%migration story%')
+                .orWhere('title', 'like', '%photo check%')
+                .orWhere('images', 'like', '%seed-galleryimage%')
+                .delete();
+        } catch (err: any) {
+            this.logger.warn(`Cleanup mock articles warning: ${err?.message || err}`);
+        }
+    }
+
     private async seedArticlePosts() {
         await this.ensureArticleSchema();
         if (!(await this.knex.schema.hasTable('users'))) return;
-        await this.copyBundledGalleryAssets();
+
+        // Eradicate old mock articles
+        await this.cleanupMockArticles();
 
         const now = Date.now();
-        const seedAdmins = this.seedAdmins();
         let offset = 0;
 
-        for (const seedAdmin of seedAdmins) {
+        for (let index = 0; index < REAL_GENEALOGICAL_ARTICLES.length; index += 1) {
+            const article = REAL_GENEALOGICAL_ARTICLES[index];
+            const seedKey = `genealogy-monograph-14p-${index + 1}`;
+
+            // Check if user exists for this email
             const user = await this.knex('users')
-                .where({ email: seedAdmin.email.toLowerCase() })
-                .orWhere({ email: seedAdmin.email })
+                .where({ email: article.authorEmail.toLowerCase() })
+                .orWhere({ email: article.authorEmail })
                 .first();
-            if (!user) continue;
 
-            for (let index = 0; index < seedAdmin.posts.length; index += 1) {
-                const post = seedAdmin.posts[index];
-                const seedKey = `${seedAdmin.email}:${index + 1}`;
-                const exists = await this.knex('articles').where({ seed_key: seedKey }).first();
-                if (exists) continue;
+            const authorId = user ? user.id : 1;
+            const authorName = user?.full_name || article.authorFullName;
 
-                const createdAt = new Date(now - (offset + 2) * 3600 * 1000)
-                    .toISOString()
-                    .slice(0, 19)
-                    .replace('T', ' ');
-                offset += 1;
+            const createdAt = new Date(now - (offset + 1) * 86400 * 1000)
+                .toISOString()
+                .slice(0, 19)
+                .replace('T', ' ');
+            offset += 1;
 
-                await this.knex('articles').insert({
-                    title: post.title,
-                    content: post.content,
-                    author_id: user.id,
-                    author_name: user.full_name || seedAdmin.fullName,
-                    images: JSON.stringify([post.image]),
+            const existing = await this.knex('articles').where({ seed_key: seedKey }).first();
+            if (existing) {
+                // Update to ensure no images, 0 likes, 0 comments, and full rich text and sources
+                await this.knex('articles').where({ id: existing.id }).update({
+                    title: article.title,
+                    category: article.category,
+                    content: article.content,
+                    author_id: authorId,
+                    author_name: authorName,
+                    images: JSON.stringify([]),
                     videos: JSON.stringify([]),
+                    sources: JSON.stringify(article.sources),
                     comments: JSON.stringify([]),
                     visibility: 'public',
-                    likes: post.likes,
+                    likes: 0,
+                    is_public: true,
+                    updated_at: createdAt,
+                });
+            } else {
+                await this.knex('articles').insert({
+                    title: article.title,
+                    category: article.category,
+                    content: article.content,
+                    author_id: authorId,
+                    author_name: authorName,
+                    images: JSON.stringify([]),
+                    videos: JSON.stringify([]),
+                    sources: JSON.stringify(article.sources),
+                    comments: JSON.stringify([]),
+                    visibility: 'public',
+                    likes: 0,
                     is_public: true,
                     seed_key: seedKey,
                     created_at: createdAt,

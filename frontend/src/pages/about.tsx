@@ -1,356 +1,416 @@
 import { Link } from "react-router-dom";
 import {
-  BookOpen,
+  MapPin,
   Landmark,
-  MapPinned,
+  BookOpen,
   ScrollText,
   Search,
   ShieldCheck,
-  MapPin,
   Building,
   Lock,
+  ArrowRight,
+  Sparkles,
+  FileSearch,
+  CheckCircle2,
+  Scale,
+  Compass,
+  FileText,
+  HelpCircle,
+  FolderArchive,
+  Eye,
+  Mail,
+  Network,
 } from "lucide-react";
-import { PageHero, Section } from "../components/site/Primitives";
-import TunisiaGovernoratesMap from "../components/TunisiaGovernoratesMap";
 import SEO from "../components/SEO";
 import { useTranslation } from "../context/TranslationContext";
-import { useSiteContent } from "../hooks/useSiteContent";
 import SiteCustomBlocks from "../components/cms/SiteCustomBlocks";
-import carthage from "../assets/slider-carthage.jpg";
 import medina from "../assets/medina-tunis.jpg";
 
 export default function About() {
   const { t, isRtl } = useTranslation();
-  const { getText, getImage } = useSiteContent();
 
   const brand = t("site_title", "Roots Tunisia");
-  const heroEyebrow = getText("about", "hero", "eyebrow") ?? brand;
-  const heroTitle = getText("about", "hero", "title") ?? t("about_hero_title", "Roots Tunisia");
-  const heroSubtitle =
-    getText("about", "hero", "subtitle") ??
-    t(
-      "about_hero_subtitle",
-      "From Carthage to the civil registers — a living archive of Tunisian lineages.",
-    );
-  const heroImage = getImage("about", "hero", "image") ?? carthage;
-  const missionTitle =
-    getText("about", "mission", "title") ??
-    t(
-      "about_mission_title",
-      "Read Tunisia through its records, cities, and family names.",
-    );
-  const missionIntro =
-    getText("about", "mission", "intro") ??
-    t(
-      "about_mission_intro",
-      "Roots Tunisia gathers periods, sijillat, and governorate memory so families can verify what oral history alone cannot hold.",
-    );
-  const ctaTitle =
-    getText("about", "cta", "title") ??
-    t("about_cta_title", "Start in the archives");
 
-  const themes = [
+  const corpuses = [
     {
-      icon: Landmark,
-      meta: "814 BC – 439 AD",
-      title: t("about_carthage_title", "Carthage & Roman Africa"),
-      body: t(
-        "about_carthage_body",
-        "Coastal cities, roads, and provincial families that still echo in place names and lineages.",
-      ),
-      to: "/periods",
+      icon: Building,
+      meta: "1886 – Aujourd'hui",
+      title: "Registres de l'État Civil Municipal",
+      desc: "Naissances, mariages et décès consignés dans les communes des 24 gouvernorats tunisiens depuis la création de l'état civil moderne sous le Protectorat.",
+      depot: "Dépôts municipaux & Archives Nationales",
     },
     {
-      icon: BookOpen,
-      meta: "670 – 1574",
-      title: t("about_kairouan_title", "Kairouan & Islamic learning"),
-      body: t(
-        "about_kairouan_body",
-        "Scholarship, madinas, and manuscript culture that shaped Tunisian family memory.",
-      ),
-      to: "/periods",
+      icon: Scale,
+      meta: "XVIIIe – 1957",
+      title: "Tribunaux Charaïques & Rabbiniques",
+      desc: "Actes de succession (‘Ilm Khabar), donations, testaments et dévolutions notariales rédigés par les ‘udûl de la Mahkama Cheraïa et de l'Ouzara.",
+      depot: "Tribunaux de première instance & AN de Tunisie",
     },
     {
       icon: ScrollText,
-      meta: "1574 – 1881",
-      title: t("about_sijillat_title", "Ottoman sijillat"),
-      body: t(
-        "about_sijillat_body",
-        "Court registers, habous, and notarial acts — the backbone of documentary genealogy.",
-      ),
-      to: "/archives",
+      meta: "1856 – 1920",
+      title: "Rôles Fiscaux Beylicaux & La Majba",
+      desc: "Recensements nominatifs des contribuables et des chefs de feu par caïdat et cheikhat, permettant d'identifier la présence ancestrale dans une localité.",
+      depot: "Série Historique du Gouvernement Beylical",
     },
     {
-      icon: MapPinned,
-      meta: "1886 – today",
-      title: t("about_civil_title", "Civil status & diaspora"),
-      body: t(
-        "about_civil_body",
-        "État civil, migration dossiers, and modern trees across the twenty-four governorates.",
-      ),
-      to: "/sources",
+      icon: FolderArchive,
+      meta: "XVIIe – 1956",
+      title: "Fonds des Habous (Waqf)",
+      desc: "Fondations pieuses familiales et dévolutions de biens décrivant les chaînes d'ascendance patrilinéaires authentifiées sur 3 à 6 générations.",
+      depot: "Archives Nationales de Tunisie (La Kasbah)",
     },
   ];
 
-  const practice = [
+  const whyUs = [
     {
-      title: t("about_method_step_1_title", "Collect"),
-      desc: t(
-        "about_method_step_1_desc",
-        "Gather civil acts, sijillat references, and family papers.",
-      ),
+      icon: MapPin,
+      title: "Présence Physique In Situ",
+      desc: "Nos chercheurs se déplacent physiquement à Tunis (Archives Nationales de La Kasbah, mairies de Bab Souika) et dans les régions pour localiser et photographier les cotes physiques exactes.",
     },
     {
-      title: t("about_method_step_2_title", "Verify"),
-      desc: t(
-        "about_method_step_2_desc",
-        "Cross-check places, dates, and archive codes before attaching them to a person.",
-      ),
+      icon: FileSearch,
+      title: "Paléographie Multilingue",
+      desc: "Maîtrise de l'arabe maghrébin manuscrit cursif, de la terminologie juridique des ‘udûl, du turc ottoman beylical ainsi que des registres consulaires italiens et français.",
     },
     {
-      title: t("about_method_step_3_title", "Transmit"),
-      desc: t(
-        "about_method_step_3_desc",
-        "Publish trees and sources so the next generation inherits evidence, not only stories.",
-      ),
+      icon: CheckCircle2,
+      title: "Traçabilité & Preuve Intégrale",
+      desc: "Chaque notice, individu ou filiation renvoie à une cote physique vérifiable (registre, carton, folio). Nous rejetons les généalogies présumées sans assise archivistique.",
+    },
+    {
+      icon: Lock,
+      title: "Déontologie & Protection INPDP",
+      desc: "Conformité stricte avec la loi tunisienne n° 2004-63 (INPDP) et le RGPD : respect scrupuleux du délai légal de 100 ans et protection absolue de la vie privée des personnes vivantes.",
     },
   ];
 
-  const pathways = [
-    { to: "/periods", title: t("nav_periods", "Historical periods"), body: t("about_path_periods", "Nine eras from antiquity to independence.") },
-    { to: "/sources", title: t("nav_sources", "Sources & archives"), body: t("about_path_sources", "Guides to Tunisian and overseas fonds.") },
-    { to: "/archives", title: t("nav_archives", "Archives"), body: t("about_path_archives", "Sijillat, habous, and civil-status pathways.") },
-    { to: "/gallery/trees", title: t("nav_trees", "Family trees"), body: t("about_path_trees", "Public Tunisian lineages and GEDCOM trees.") },
-    { to: "/gallery", title: t("nav_gallery", "Gallery"), body: t("about_path_gallery", "Photos, documents, and oral collections.") },
-    { to: "/contact", title: t("nav_contact", "Contact"), body: t("about_path_contact", "Reach the Roots Tunisia team.") },
+  const sectionsExploration = [
+    {
+      to: "/interactive-map",
+      icon: Compass,
+      title: "Atlas Archivistique (24 Gouvernorats)",
+      desc: "Explorez la Tunisie par région : découvrez les dépôts d'archives, les registres d'état civil locaux et les grandes lignées documentées.",
+      actionText: "Consulter la carte",
+    },
+    {
+      to: "/gallery/trees",
+      icon: Network,
+      title: "Arbres Généalogiques Documentés",
+      desc: "Consultez des arbres interactifs construits à partir d'actes authentifiés, reliant les membres de familles tunisiennes, italiennes, maltaises et musulmanes.",
+      actionText: "Explorer les lignées",
+    },
+    {
+      to: "/gallery",
+      icon: Eye,
+      title: "Galerie & Fonds Numérisés",
+      desc: "Archives photographiques d'époque, numérisations haute définition de manuscrits rares, récits oraux et documents historiques.",
+      actionText: "Parcourir la galerie",
+    },
+    {
+      to: "/services",
+      icon: Landmark,
+      title: "Prestations & Recherche In Situ",
+      desc: "Mandatez nos archivistes pour rechercher une cote physique aux Archives Nationales, déchiffrer un acte ancien ou valider un dossier de filiation.",
+      actionText: "Découvrir les services",
+    },
+    {
+      to: "/faq",
+      icon: HelpCircle,
+      title: "Foire Aux Questions (FAQ)",
+      desc: "Toutes les réponses sur la méthode de recherche, la communicabilité des registres, les cotes d'archives et nos garanties scientifiques.",
+      actionText: "Consulter la FAQ",
+    },
+  ];
+
+  const legalLinks = [
+    {
+      to: "/terms",
+      title: "Conditions Générales d'Utilisation",
+      desc: "Modalités d'accès à la plateforme et règles d'utilisation des outils de généalogie.",
+    },
+    {
+      to: "/privacy",
+      title: "Politique de Confidentialité",
+      desc: "Traitement de vos données personnelles et conformité INPDP (Loi n° 2004-63) & RGPD.",
+    },
+    {
+      to: "/refund",
+      title: "Prestations & Remboursement",
+      desc: "Cadre contractuel des recherches archivistiques in situ, devis sur-mesure et garanties.",
+    },
+    {
+      to: "/cookies",
+      title: "Gestion des Cookies",
+      desc: "Informations relatives aux traceurs techniques et respect de votre consentement.",
+    },
   ];
 
   return (
-    <div dir={isRtl ? "rtl" : "ltr"} className="about-page bg-[var(--background)] text-[var(--foreground)] min-h-screen">
+    <div dir={isRtl ? "rtl" : "ltr"} className="about-page bg-[var(--background)] text-[var(--foreground)] min-h-screen pb-20">
       <SEO
-        title={t("about_seo_title", `About | ${brand}`)}
-        description={t("about_seo_desc", "About Roots Tunisia — Carthage, Kairouan, sijillat, and civil registers.")}
-        keywords={["About Roots Tunisia", "Tunisian genealogy", "sijillat", "governorates"]}
+        title={`À Propos & Démarche Archivistique | ${brand}`}
+        description="Roots Tunisia — La généalogie tunisienne fondée sur la preuve documentaire, le déchiffrage paléographique et la recherche in situ aux Archives Nationales."
+        keywords={["À Propos Roots Tunisia", "Généalogie Tunisie", "Archives Nationales de Tunisie", "Paléographie", "INPDP"]}
       />
 
-      <style>{`
-        .about-page .about-fade { animation: aboutFadeUp 0.85s ease-out both; }
-        .about-page .about-fade-delay { animation: aboutFadeUp 0.95s ease-out 0.12s both; }
-        .about-page .about-map-frame { animation: aboutFadeUp 1s ease-out 0.08s both; }
-        @keyframes aboutFadeUp {
-          from { opacity: 0; transform: translateY(14px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        @media (prefers-reduced-motion: reduce) {
-          .about-page .about-fade,
-          .about-page .about-fade-delay,
-          .about-page .about-map-frame { animation: none; }
-        }
-      `}</style>
-
-      <PageHero eyebrow={heroEyebrow} title={heroTitle} subtitle={heroSubtitle} image={heroImage}>
-        <Link to="/sources" className="btn-base btn-gold">
-          <Search className="h-4 w-4" />
-          {t("start_exploring", "Start exploring")}
-        </Link>
-        <Link to="/gallery/trees" className="btn-base btn-outline-light !text-white hover:!text-white">
-          {t("browse_family_trees", "Family trees")}
-        </Link>
-      </PageHero>
-
-      <Section className="about-fade">
-        <div className="grid gap-10 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:items-end">
-          <div>
-            <p className="font-display text-[clamp(1.75rem,3.5vw,2.75rem)] leading-[1.15] text-[var(--foreground)]">
-              {missionTitle}
-            </p>
-            <div className="gold-rule mt-6 w-20" />
+      {/* 1. Minimalist Editorial Hero */}
+      <section className="relative overflow-hidden pt-28 pb-16 lg:pt-36 lg:pb-24 border-b border-[var(--gold)]/20 bg-gradient-to-b from-[var(--card)]/90 via-[var(--background)] to-[var(--background)]">
+        <div className="absolute inset-0 pointer-events-none opacity-10 bg-[radial-gradient(circle_at_50%_15%,var(--gold)_0%,transparent_60%)]" />
+        
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-[var(--gold)]/40 bg-[var(--gold)]/10 text-[var(--gold)] text-xs font-semibold uppercase tracking-widest mb-6">
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>Manifeste & Démarche Archivistique</span>
           </div>
-          <p className="text-base leading-relaxed text-[var(--muted-foreground)] sm:text-lg">
-            {missionIntro}
-          </p>
-        </div>
-      </Section>
 
-      <Section className="!pt-0 about-fade-delay">
-        <div className="grid gap-0 sm:grid-cols-2 lg:grid-cols-4 border-y border-[var(--gold)]/30">
-          {themes.map(({ icon: Icon, meta, title, body, to }, index) => (
-            <article
-              key={title}
-              className={`px-1 py-8 sm:px-5 sm:py-10 ${
-                index > 0 ? "border-t sm:border-t-0 sm:border-s border-[var(--gold)]/25" : ""
-              }`}
+          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-cinzel font-bold text-[var(--foreground)] tracking-tight leading-tight">
+            La Généalogie par la <span className="text-gradient-gold">Preuve Documentaire</span>
+          </h1>
+
+          <div className="w-20 h-0.5 bg-[var(--gold)] mx-auto my-6" />
+
+          <p className="text-base sm:text-lg text-[var(--foreground)]/80 max-w-2xl mx-auto font-body leading-relaxed">
+            En Tunisie, la vérité généalogique ne s'invente pas : elle s'établit dans les registres du XIXe et XXe siècle. Nous comblons le fossé entre la tradition orale et les dépôts d'archives réels, sans promesse démesurée ni artifice.
+          </p>
+
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+            <Link
+              to="/interactive-map"
+              className="px-6 py-3 rounded-xl bg-gradient-to-r from-[var(--gold)] to-[var(--gold)]/85 text-[var(--card)] font-bold text-xs flex items-center gap-2 shadow-lg hover:shadow-xl hover:opacity-95 transition-all cursor-pointer"
             >
-              <div className="flex items-center justify-between gap-2">
-                <Icon className="h-5 w-5 text-[var(--gold)]" aria-hidden />
-                <span dir="ltr" className="text-[0.65rem] font-bold text-[var(--gold)]">
-                  {meta}
-                </span>
-              </div>
-              <h2 className="mt-4 font-display text-xl text-[var(--foreground)]">{title}</h2>
-              <p className="mt-3 text-sm leading-relaxed text-[var(--muted-foreground)]">{body}</p>
-              <Link
-                to={to}
-                className="mt-4 inline-block text-xs font-bold uppercase tracking-[0.14em] text-[var(--gold)] hover:underline"
-              >
-                {t("open_tool", "Open")} {isRtl ? "←" : "→"}
-              </Link>
-            </article>
-          ))}
-        </div>
-      </Section>
+              <Compass className="w-4 h-4" />
+              <span>Consulter l'Atlas des 24 Gouvernorats</span>
+            </Link>
 
-      <Section id="governorates-map" className="bg-[var(--secondary)]/35">
-        <div className="mb-8 max-w-2xl">
-          <p className="font-display text-2xl text-[var(--foreground)] sm:text-3xl">
-            {t("about_map_title", "Twenty-four governorates")}
-          </p>
-          <p className="mt-3 text-sm leading-relaxed text-[var(--muted-foreground)] sm:text-base">
-            {t(
-              "about_map_intro",
-              "Place Tunisian families on the map — from Tunis and Sfax to the interior and the islands.",
-            )}
-          </p>
-        </div>
-        <div className="about-map-frame">
-          <TunisiaGovernoratesMap />
-        </div>
-      </Section>
-
-      <Section>
-        <p className="font-display text-2xl text-[var(--foreground)] sm:text-3xl">
-          {t("about_methodology_title", "How we work")}
-        </p>
-        <div className="mt-8 relative">
-          <div
-            className="pointer-events-none absolute start-[0.55rem] top-2 bottom-2 w-px bg-[var(--gold)]/40 md:start-0 md:inset-x-0 md:top-[0.85rem] md:bottom-auto md:h-px md:w-auto"
-            aria-hidden
-          />
-          <div className="grid gap-8 md:grid-cols-3 md:gap-6">
-            {practice.map(({ title, desc }) => (
-              <div key={title} className="relative ps-7 md:ps-0 md:pt-8">
-                <span className="absolute start-0 top-1.5 h-2.5 w-2.5 rounded-full bg-[var(--gold)] md:top-0" />
-                <h3 className="font-display text-xl text-[var(--foreground)]">{title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-[var(--muted-foreground)]">{desc}</p>
-              </div>
-            ))}
+            <Link
+              to="/gallery/trees"
+              className="px-6 py-3 rounded-xl border border-[var(--gold)]/40 bg-[var(--card)]/60 text-[var(--foreground)] font-bold text-xs flex items-center gap-2 hover:bg-[var(--gold)]/15 transition-all cursor-pointer"
+            >
+              <Network className="w-4 h-4 text-[var(--gold)]" />
+              <span>Parcourir les Lignées Documentées</span>
+            </Link>
           </div>
         </div>
-      </Section>
+      </section>
 
-      <Section className="!pt-0">
-        <p className="mb-6 font-display text-2xl text-[var(--foreground)] sm:text-3xl">
-          {t("about_gallery_title", "Pathways into Tunisia")}
-        </p>
-        <ul className="divide-y divide-[var(--gold)]/20 border-y border-[var(--gold)]/30">
-          {pathways.map(({ to, title, body }) => (
-            <li key={to}>
-              <Link
-                to={to}
-                className="group flex items-start justify-between gap-4 py-5 hover:bg-[var(--gold)]/[0.06] sm:items-center"
-              >
-                <span className="min-w-0">
-                  <span className="block font-display text-lg text-[var(--foreground)] group-hover:text-[var(--gold)] sm:text-xl">
-                    {title}
-                  </span>
-                  <span className="mt-1 block text-sm text-[var(--muted-foreground)]">{body}</span>
-                </span>
-                <span className="shrink-0 text-xs font-bold uppercase tracking-[0.14em] text-[var(--gold)]">
-                  {t("open_tool", "Open")}
-                </span>
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </Section>
+      {/* 2. Notre Mission: Combler l'écart entre le mythe et l'archive */}
+      <section className="py-16 sm:py-20 border-b border-[var(--gold)]/15">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            <div className="lg:col-span-5 text-start space-y-4">
+              <span className="text-xs font-bold uppercase tracking-widest text-[var(--gold)]">
+                Notre Démarche Scientifique
+              </span>
+              <h2 className="text-2xl sm:text-3xl font-cinzel font-bold text-[var(--foreground)] leading-snug">
+                Combler l'Écart Entre la Rumeur et l'Archive
+              </h2>
+              <p className="text-xs sm:text-sm text-[var(--foreground)]/75 leading-relaxed">
+                Trop souvent, la quête des origines en Afrique du Nord se heurte à des approximations ou des affirmations sans source. Chez Roots Tunisia, notre posture est délibérément rigoureuse : <strong>la généalogie vérifiable commence avec les documents probants.</strong>
+              </p>
+              <p className="text-xs sm:text-sm text-[var(--foreground)]/75 leading-relaxed">
+                Nous identifions, croisons et exploitons les fonds authentiques reliant les communautés musulmanes, juives, italiennes et maltaises de Tunisie.
+              </p>
+            </div>
 
-      {/* Team, Trust, Geographic Anchor & INPDP Data Protection */}
-      <Section className="!pt-0">
-        <div className="surface-card frame-gold p-8 sm:p-10 rounded-2xl shadow-xl space-y-8 text-start">
-          <div className="max-w-3xl">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-[var(--gold)]/15 text-[var(--gold)] border border-[var(--gold)]/30">
-              <ShieldCheck className="w-3.5 h-3.5" />
-              <span>{t("team_section_badge", "Confiance & Protection des Données")}</span>
+            <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {corpuses.map((corpus) => {
+                const Icon = corpus.icon;
+                return (
+                  <div
+                    key={corpus.title}
+                    className="surface-card rounded-xl border border-[var(--gold)]/25 p-5 text-start hover:border-[var(--gold)]/60 transition-all shadow-sm"
+                  >
+                    <div className="flex items-center justify-between gap-2 mb-3">
+                      <div className="w-9 h-9 rounded-lg bg-[var(--gold)]/15 text-[var(--gold)] flex items-center justify-center">
+                        <Icon className="w-4 h-4" />
+                      </div>
+                      <span className="text-[0.65rem] font-bold text-[var(--gold)] font-mono">
+                        {corpus.meta}
+                      </span>
+                    </div>
+                    <h3 className="text-sm font-bold text-[var(--foreground)] mb-1.5">
+                      {corpus.title}
+                    </h3>
+                    <p className="text-xs text-[var(--foreground)]/70 leading-relaxed mb-3">
+                      {corpus.desc}
+                    </p>
+                    <div className="pt-2 border-t border-[var(--gold)]/15 text-[0.68rem] text-[var(--foreground)]/60 flex items-center gap-1.5">
+                      <Landmark className="w-3 h-3 text-[var(--gold)] shrink-0" />
+                      <span className="truncate">{corpus.depot}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 3. Pourquoi Nous ? (Why Us) */}
+      <section className="py-16 sm:py-20 border-b border-[var(--gold)]/15 bg-[var(--card)]/40">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-[var(--gold)]/15 text-[var(--gold)] border border-[var(--gold)]/30 mb-3">
+            <ShieldCheck className="w-3.5 h-3.5" />
+            <span>Pourquoi Nous Choisir</span>
+          </div>
+
+          <h2 className="text-2xl sm:text-4xl font-cinzel font-bold text-[var(--foreground)]">
+            Quatre Engagements Inébranlables
+          </h2>
+
+          <p className="text-xs sm:text-sm text-[var(--foreground)]/70 max-w-xl mx-auto mt-2 mb-10">
+            Ce qui distingue Roots Tunisia : une éthique de travail sans complaisance, des sources physiques et une présence constante sur le terrain.
+          </p>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-start">
+            {whyUs.map((pillar) => {
+              const Icon = pillar.icon;
+              return (
+                <div
+                  key={pillar.title}
+                  className="surface-card rounded-xl border border-[var(--gold)]/25 p-5 hover:border-[var(--gold)]/60 transition-all flex flex-col justify-between"
+                >
+                  <div>
+                    <div className="w-10 h-10 rounded-lg bg-[var(--gold)]/15 text-[var(--gold)] flex items-center justify-center mb-4">
+                      <Icon className="w-5 h-5" />
+                    </div>
+                    <h3 className="text-sm font-bold text-[var(--foreground)] mb-2 font-cinzel">
+                      {pillar.title}
+                    </h3>
+                    <p className="text-xs text-[var(--foreground)]/70 leading-relaxed">
+                      {pillar.desc}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* 4. Explorer les Vrais Espaces de la Plateforme */}
+      <section className="py-16 sm:py-20 border-b border-[var(--gold)]/15">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-2xl text-start mb-8">
+            <span className="text-xs font-bold uppercase tracking-widest text-[var(--gold)]">
+              Accès Direct aux Données
             </span>
-            <h2 className="display-sm mt-3 text-[var(--foreground)] font-display font-bold">
-              {t("team_section_title", "Une équipe de chercheurs ancrée en Tunisie")}
+            <h2 className="text-2xl sm:text-3xl font-cinzel font-bold text-[var(--foreground)] mt-1">
+              Les Espaces de Recherche de Roots Tunisia
             </h2>
-            <p className="mt-3 text-sm sm:text-base text-[var(--muted-foreground)] leading-relaxed">
-              {t(
-                "team_section_desc",
-                "Roots Tunisia est un collectif indépendant d'historiens, d'archivistes et de généalogistes travaillant dans le strict respect de la rigueur scientifique et de la vie privée."
-              )}
+            <p className="text-xs sm:text-sm text-[var(--foreground)]/70 mt-1">
+              Chaque section de la plateforme répond à un objectif documentaire concret.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4 border-t border-[var(--border)]">
-            {/* Box 1: Permanence & Contact */}
-            <div className="p-5 rounded-xl bg-[var(--background)] border border-[var(--border)] space-y-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--gold)]/15 text-[var(--gold)]">
-                <MapPin className="h-5 w-5" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {sectionsExploration.map((item) => {
+              const Icon = item.icon;
+              return (
+                <Link
+                  key={item.to}
+                  to={item.to}
+                  className="surface-card rounded-xl border border-[var(--gold)]/25 p-5 text-start hover:border-[var(--gold)]/70 hover:shadow-lg transition-all group flex flex-col justify-between"
+                >
+                  <div>
+                    <div className="w-9 h-9 rounded-lg bg-[var(--gold)]/15 text-[var(--gold)] flex items-center justify-center mb-3 group-hover:bg-[var(--gold)] group-hover:text-[var(--card)] transition-colors">
+                      <Icon className="w-4 h-4" />
+                    </div>
+                    <h3 className="text-sm font-bold text-[var(--foreground)] group-hover:text-[var(--gold)] transition-colors font-cinzel">
+                      {item.title}
+                    </h3>
+                    <p className="text-xs text-[var(--foreground)]/70 leading-relaxed mt-2">
+                      {item.desc}
+                    </p>
+                  </div>
+
+                  <div className="mt-4 pt-3 border-t border-[var(--gold)]/15 flex items-center justify-between text-xs font-bold text-[var(--gold)]">
+                    <span>{item.actionText}</span>
+                    <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* 5. Transparence Juridique & Liens Légaux */}
+      <section className="py-16 sm:py-20">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="surface-card rounded-2xl border border-[var(--gold)]/35 p-6 sm:p-10 text-start shadow-xl">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-[var(--gold)]/20">
+              <div>
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-[var(--gold)]/15 text-[var(--gold)] border border-[var(--gold)]/30 mb-2">
+                  <Lock className="w-3.5 h-3.5" />
+                  <span>Transparence & Cadre Légal</span>
+                </span>
+                <h2 className="text-xl sm:text-2xl font-cinzel font-bold text-[var(--foreground)]">
+                  Protection des Données & Liens Juridiques
+                </h2>
+                <p className="text-xs sm:text-sm text-[var(--foreground)]/70 mt-1 max-w-xl">
+                  Roots Tunisia applique une politique stricte de conformité aux lois relatives aux archives et à la vie privée.
+                </p>
               </div>
-              <h3 className="text-base font-display font-bold text-[var(--foreground)]">
-                Permanence & Recherche
-              </h3>
-              <p className="text-xs text-[var(--muted-foreground)] leading-relaxed">
-                <strong>Contact Officiel :</strong> contact@rootstunisia.com<br />
-                <strong>Support Archivistique :</strong> Équipe Roots Tunisia<br />
-                <strong>Disponibilité :</strong> Du Lundi au Vendredi (9h – 17h)
-              </p>
+
+              <div className="p-4 rounded-xl bg-[var(--gold)]/10 border border-[var(--gold)]/25 shrink-0 text-start">
+                <p className="text-[0.7rem] uppercase tracking-wider font-bold text-[var(--gold)]">
+                  Contact Officiel & Déontologie
+                </p>
+                <p className="text-xs font-bold text-[var(--foreground)] mt-0.5">
+                  contact@rootstunisia.com
+                </p>
+                <p className="text-[0.65rem] text-[var(--foreground)]/60 mt-0.5">
+                  Permanence de recherche à Tunis (La Kasbah)
+                </p>
+              </div>
             </div>
 
-            {/* Box 2: INPDP & RGPD */}
-            <div className="p-5 rounded-xl bg-[var(--background)] border border-[var(--border)] space-y-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
-                <Lock className="h-5 w-5" />
-              </div>
-              <h3 className="text-base font-display font-bold text-[var(--foreground)]">
-                {t("inpdp_compliance_title", "Conformité INPDP & RGPD")}
-              </h3>
-              <p className="text-xs text-[var(--muted-foreground)] leading-relaxed">
-                {t(
-                  "inpdp_compliance_desc",
-                  "Conformément à la loi tunisienne n° 2004-63 relative à la protection des données à caractère personnel (INPDP) et au RGPD, les actes contemporains sont soumis au délai légal de 100 ans."
-                )}
-              </p>
-            </div>
-
-            {/* Box 3: Démarche institutionnelle */}
-            <div className="p-5 rounded-xl bg-[var(--background)] border border-[var(--border)] space-y-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--gold)]/15 text-[var(--gold)]">
-                <Building className="h-5 w-5" />
-              </div>
-              <h3 className="text-base font-display font-bold text-[var(--foreground)]">
-                {t("institution_partnerships_title", "Démarche Institutionnelle")}
-              </h3>
-              <p className="text-xs text-[var(--muted-foreground)] leading-relaxed">
-                {t(
-                  "institution_partnerships_desc",
-                  "Inventaires et cotes alignés sur les dépôts officiels : Archives Nationales de Tunisie (ANT), Centre des Archives Diplomatiques de Nantes (CADN) et cercles généalogiques partenaires."
-                )}
-              </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
+              {legalLinks.map((legal) => (
+                <Link
+                  key={legal.to}
+                  to={legal.to}
+                  className="p-4 rounded-xl border border-[var(--gold)]/20 bg-[var(--background)] hover:border-[var(--gold)]/60 transition-all text-start group"
+                >
+                  <FileText className="w-4 h-4 text-[var(--gold)] mb-2" />
+                  <h3 className="text-xs font-bold text-[var(--foreground)] group-hover:text-[var(--gold)] transition-colors">
+                    {legal.title}
+                  </h3>
+                  <p className="text-[0.7rem] text-[var(--foreground)]/65 leading-relaxed mt-1">
+                    {legal.desc}
+                  </p>
+                </Link>
+              ))}
             </div>
           </div>
         </div>
-      </Section>
+      </section>
 
-      <Section className="!pt-0">
-        <div className="frame-gold relative overflow-hidden rounded-md min-h-[280px] flex items-center justify-center">
-          <img src={medina} alt="" className="absolute inset-0 h-full w-full object-cover" loading="lazy" />
-          <div className="absolute inset-0 bg-[var(--brand-teal)]/80" />
-          <div className="relative z-10 px-6 py-12 text-center text-white">
-            <p className="font-display text-2xl sm:text-3xl !text-white">{ctaTitle}</p>
-            <div className="mt-7 flex flex-wrap justify-center gap-3">
-              <Link to="/sources" className="btn-base btn-gold">
-                {t("start_exploring", "Start exploring")}
+      {/* CTA final avec photo de fond de la Médina */}
+      <section className="px-4 pb-8 sm:px-6 lg:px-8 max-w-5xl mx-auto">
+        <div className="relative overflow-hidden rounded-2xl min-h-[240px] flex items-center justify-center p-8 text-center border border-[var(--gold)]/35 shadow-xl">
+          <img src={medina} alt="Médina de Tunis" className="absolute inset-0 h-full w-full object-cover" loading="lazy" />
+          <div className="absolute inset-0 bg-[#092C2B]/85 backdrop-blur-[1px]" />
+          <div className="relative z-10 space-y-3 max-w-xl">
+            <h3 className="font-cinzel text-xl sm:text-2xl font-bold text-white">
+              Une Question sur vos Ancêtres Tunisiens ?
+            </h3>
+            <p className="text-xs sm:text-sm text-white/80 leading-relaxed">
+              Consultez nos réponses méthodologiques ou contactez directement nos généalogistes pour une consultation gratuite sans engagement.
+            </p>
+            <div className="pt-2 flex flex-wrap justify-center gap-3">
+              <Link to="/faq" className="px-5 py-2.5 rounded-xl bg-white text-[#092C2B] font-bold text-xs hover:bg-gray-100 transition-colors shadow">
+                Consulter la FAQ
               </Link>
-              <Link to="/contact" className="btn-base btn-outline !text-white !border-white/50">
-                {t("nav_contact", "Contact")}
+              <Link to="/services" className="px-5 py-2.5 rounded-xl border border-white/40 text-white font-bold text-xs hover:bg-white/10 transition-colors">
+                Nos Services de Recherche
               </Link>
             </div>
           </div>
         </div>
-      </Section>
+      </section>
 
       <SiteCustomBlocks pageId="about" />
     </div>

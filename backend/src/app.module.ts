@@ -29,6 +29,8 @@ import { SourcesModule } from './modules/sources/sources.module';
 import { SiteContentModule } from './modules/site-content/site-content.module';
 import { PublicCardsModule } from './modules/public-cards/public-cards.module';
 import { SocialModule } from './modules/social/social.module';
+import { CustomServicesModule } from './modules/services/custom-services.module';
+import { PeriodsModule } from './modules/periods/periods.module';
 
 @Module({
     imports: [
@@ -67,6 +69,8 @@ import { SocialModule } from './modules/social/social.module';
         SiteContentModule,
         PublicCardsModule,
         SocialModule,
+        CustomServicesModule,
+        PeriodsModule,
     ],
     controllers: [],
     providers: [],

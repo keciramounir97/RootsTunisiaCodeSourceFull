@@ -56,8 +56,9 @@ const adminTreeCache = new Map<number | string, { raw: string; people: any[] }>(
 
 export default function Trees() {
   const { theme } = useThemeStore();
-  const { language: locale, t } = useLanguage();
+  const { language: locale, t, dir } = useLanguage();
   const { user } = useAuth();
+  const isRtl = dir === "rtl" || locale === "ar";
 
   const isDark = theme === "dark";
   const isAdmin = user?.role === 1 || user?.role === 3;
@@ -186,7 +187,7 @@ export default function Trees() {
           : null;
 
       if (err) {
-        loadError = getApiErrorMessage(err, "Failed to load trees");
+        loadError = getApiErrorMessage(err, t("legacy.trees_load_failed", "Failed to load trees"));
         setTreesError(loadError);
         setSaveError(loadError);
       } else if (notify) {
@@ -461,7 +462,7 @@ export default function Trees() {
         typeof err?.response?.data === "string"
           ? err.response.data
           : err?.response?.data?.message || err?.message,
-        getApiErrorMessage(err, "Failed to load tree file"),
+        getApiErrorMessage(err, t("legacy.tree_file_load_failed", "Failed to load tree file")),
       );
 
       setGedcomError(gedcomMessage);
@@ -484,7 +485,7 @@ export default function Trees() {
     includeFile = true,
   }: any) => {
     const safeTitle = String(title || "").trim();
-    if (!safeTitle) throw new Error("Title is required");
+    if (!safeTitle) throw new Error(t("legacy.tree_title_required", "Title is required"));
 
     const fd = new FormData();
     fd.append("title", safeTitle);
@@ -672,7 +673,7 @@ export default function Trees() {
       if ((line.startsWith("1 NAME ") || line.startsWith("2 NAME ")) && !title) {
         const rawName = line.replace(/^[12] NAME\s+/, "").replace(/\//g, "").trim();
         if (rawName && rawName.toLowerCase() !== "unknown") {
-          title = `Arbre Famille ${rawName}`;
+          title = `${t("legacy.family_tree_prefix", "Arbre Famille")} ${rawName}`;
         }
       }
     }
@@ -728,7 +729,7 @@ export default function Trees() {
       }));
 
       setSaveSuccess(
-        `${t("legacy.gedcom_imported", "GEDCOM importé avec succès")} : ${file.name} (${parsed.length} individus)`
+        `${t("legacy.gedcom_imported", "GEDCOM importé avec succès")} : ${file.name} (${parsed.length} ${t("legacy.individuals_detected", "individus")})`
       );
       setSaveError("");
     } catch (err: any) {
@@ -1102,7 +1103,7 @@ export default function Trees() {
   const saveToastTone = saveError ? "error" : "success";
 
   return (
-    <div className={`p-4 min-h-screen ${pageBg} ${text} heritage-page-root relative`}>
+    <div dir={isRtl ? "rtl" : "ltr"} className={`p-4 min-h-screen ${pageBg} ${text} heritage-page-root relative text-start`}>
       <Toast message={saveToast} tone={saveToastTone} />
 
       {/* TOP HEADER / ACTION BAR */}
@@ -1152,7 +1153,7 @@ export default function Trees() {
             >
               <Eye className="w-4 h-4 text-white" />
               <span>{t("legacy.see_my_trees", "See My Trees")}</span>
-              <span className="ml-1 px-2 py-0.5 rounded-full text-[10px] bg-white/20 text-white font-extrabold">
+              <span className="ms-1 px-2 py-0.5 rounded-full text-[10px] bg-white/20 text-white font-extrabold">
                 {myTrees.length}
               </span>
             </button>
@@ -1286,11 +1287,12 @@ export default function Trees() {
       {/* DRAWER 1: TREES LIST SIDEBAR (Triggered by "See My Trees") */}
       {treesListDrawerOpen ? createPortal(
         <div
-          className="fixed inset-0 z-[2200] flex justify-end bg-black/60 backdrop-blur-xs animate-in fade-in duration-200"
+          dir={isRtl ? "rtl" : "ltr"}
+          className="fixed inset-0 z-[2200] flex justify-end bg-black/60 backdrop-blur-xs animate-in fade-in duration-200 text-start"
           onClick={() => setTreesListDrawerOpen(false)}
         >
           <div
-            className={`w-full sm:w-[460px] h-full max-h-screen flex flex-col ${card} ${inputText} border-l ${border} shadow-2xl animate-in slide-in-from-right duration-300 overflow-hidden`}
+            className={`w-full sm:w-[460px] h-full max-h-screen flex flex-col ${card} ${inputText} border-s ${border} shadow-2xl animate-in slide-in-from-right duration-300 overflow-hidden`}
             onClick={(e) => e.stopPropagation()}
           >
             {/* HEADER */}
@@ -1304,6 +1306,8 @@ export default function Trees() {
               <button
                 type="button"
                 onClick={() => setTreesListDrawerOpen(false)}
+                title={t("common.close", "Fermer")}
+                aria-label={t("common.close", "Fermer")}
                 className="p-1.5 rounded-lg text-stone-400 hover:bg-stone-500/10 hover:text-red-500 transition-colors"
               >
                 <X className="w-5 h-5" />
@@ -1433,6 +1437,7 @@ export default function Trees() {
                                 }}
                                 className="px-2 py-1 rounded bg-stone-500/15 hover:bg-stone-500/25 text-stone-300 font-semibold transition"
                                 title={t("legacy.download", "Download")}
+                                aria-label={t("legacy.download", "Download")}
                               >
                                 <Download className="w-3.5 h-3.5" />
                               </button>
@@ -1465,11 +1470,12 @@ export default function Trees() {
       {/* DRAWER 2: TREE FORM SIDEBAR (Triggered by "+ Add Tree" or "Edit Tree") */}
       {treeFormDrawerOpen ? createPortal(
         <div
-          className="fixed inset-0 z-[2200] flex justify-end bg-black/60 backdrop-blur-xs animate-in fade-in duration-200"
+          dir={isRtl ? "rtl" : "ltr"}
+          className="fixed inset-0 z-[2200] flex justify-end bg-black/60 backdrop-blur-xs animate-in fade-in duration-200 text-start"
           onClick={() => setTreeFormDrawerOpen(false)}
         >
           <div
-            className={`w-full sm:w-[460px] h-full max-h-screen flex flex-col ${card} ${inputText} border-l ${border} shadow-2xl animate-in slide-in-from-right duration-300 overflow-hidden`}
+            className={`w-full sm:w-[460px] h-full max-h-screen flex flex-col ${card} ${inputText} border-s ${border} shadow-2xl animate-in slide-in-from-right duration-300 overflow-hidden`}
             onClick={(e) => e.stopPropagation()}
           >
             {/* DRAWER HEADER WITH MODE SWITCHER */}
@@ -1486,6 +1492,8 @@ export default function Trees() {
                 <button
                   type="button"
                   onClick={() => setTreeFormDrawerOpen(false)}
+                  title={t("common.close", "Fermer")}
+                  aria-label={t("common.close", "Fermer")}
                   className="p-1.5 rounded-lg text-stone-400 hover:bg-stone-500/10 hover:text-red-500 transition-colors"
                 >
                   <X className="w-5 h-5" />
@@ -1584,7 +1592,8 @@ export default function Trees() {
                     }}
                     placeholder={`0 HEAD\n1 SOUR RootsTunisia\n1 GEDC\n2 VERS 5.5.1\n0 @I1@ INDI\n1 NAME Prénom /Nom/\n1 SEX M\n1 BIRT\n2 DATE 1950\n0 TRLR\n\n// OU FORMAT GEDCOM X (JSON / XML):\n{\n  "persons": [{ "id": "p1", "names": [{ "nameForms": [{ "fullText": "Ali Ben Salah" }] }] }]\n}`}
                     rows={16}
-                    className={`w-full p-4 font-mono text-[11px] leading-relaxed rounded-xl border ${border} ${inputBg} ${inputText} focus:ring-2 focus:ring-[#0d9488]/40 resize-none shadow-inner`}
+                    dir="ltr"
+                    className={`w-full p-4 font-mono text-[11px] leading-relaxed rounded-xl border ${border} ${inputBg} ${inputText} focus:ring-2 focus:ring-[#0d9488]/40 resize-none shadow-inner text-left`}
                   />
 
                   <div className="flex items-center gap-2">
@@ -1662,7 +1671,7 @@ export default function Trees() {
                         <button
                           type="button"
                           onClick={() => drawerFileInputRef.current?.click()}
-                          className="text-[11px] font-bold text-[#0d9488] dark:text-[#5eead4] hover:underline shrink-0 ml-2 cursor-pointer"
+                          className="text-[11px] font-bold text-[#0d9488] dark:text-[#5eead4] hover:underline shrink-0 ms-2 cursor-pointer"
                         >
                           {t("legacy.change_file", "Changer")}
                         </button>
@@ -1684,7 +1693,7 @@ export default function Trees() {
                           {t("legacy.click_or_drag_gedcom", "Cliquez ou glissez-déposez votre fichier GEDCOM ici")}
                         </span>
                         <span className="text-[10px] text-stone-400 mt-0.5">
-                          .ged (5.5.1 / 7.0), .gedx, .xml, .json (max 50 Mo)
+                          {t("legacy.gedcom_upload_formats_hint", ".ged (5.5.1 / 7.0), .gedx, .xml, .json (max 50 Mo)")}
                         </span>
                       </div>
                     )}
@@ -1697,7 +1706,7 @@ export default function Trees() {
                     <input
                       value={treeForm.title}
                       onChange={(e) => setTreeForm((s) => ({ ...s, title: e.target.value }))}
-                      placeholder={t("legacy.tree_title", "e.g. Famille Ben Mohamed")}
+                      placeholder={t("legacy.tree_title_placeholder", "e.g. Famille Ben Mohamed")}
                       className={`w-full px-4 py-2.5 text-xs rounded-lg border ${border} ${inputBg} ${inputText} focus:ring-2 focus:ring-[#0d9488]/40`}
                     />
                   </div>
@@ -1739,7 +1748,7 @@ export default function Trees() {
                     <textarea
                       value={treeForm.description}
                       onChange={(e) => setTreeForm((s) => ({ ...s, description: e.target.value }))}
-                      placeholder={t("legacy.description", "Description (optional)")}
+                      placeholder={t("legacy.tree_description_placeholder", "Description (optional)")}
                       rows={3}
                       className={`w-full px-4 py-2.5 text-xs rounded-lg border ${border} ${inputBg} ${inputText} resize-none`}
                     />

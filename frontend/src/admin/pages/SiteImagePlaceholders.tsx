@@ -304,13 +304,13 @@ export default function SiteImagePlaceholders() {
       {toast.message ? <Toast message={toast.message} type={toast.tone} /> : null}
 
       {/* Top Header */}
-      <header className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between border-b border-[var(--gold)]/20 pb-4">
+      <header className="surface-card frame-gold flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between p-6 rounded-2xl bg-[var(--card)]/95 shadow-md">
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--gold)] flex items-center gap-1.5">
             <Sparkles className="h-3.5 w-3.5" />
-            Super Administration · Gestionnaire d&apos;Images
+            Administration · Gestionnaire d&apos;Images
           </p>
-          <h1 className="mt-1 text-2xl font-bold text-[var(--foreground)] flex items-center gap-2">
+          <h1 className="mt-1 text-2xl font-bold font-serif text-[var(--foreground)] flex items-center gap-2">
             <MapPinned className="h-6 w-6 text-[var(--gold)]" />
             Emplacements des Images du Site & Volet Galerie
           </h1>
@@ -345,7 +345,7 @@ export default function SiteImagePlaceholders() {
           <button
             type="button"
             onClick={() => void load()}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-xs font-semibold hover:border-[var(--gold)] cursor-pointer"
+            className="btn-base btn-outline inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold cursor-pointer"
           >
             <RefreshCw className="h-3.5 w-3.5" />
             Recharger
@@ -397,19 +397,8 @@ export default function SiteImagePlaceholders() {
             {grouped.map(([key, pageSlots]) => {
               const [pageIdKey, pageLabel, pagePath] = key.split("::");
               const studioAdminRouteMap: Record<string, string> = {
-                home: "/admin/home-content",
-                about: "/admin/about-content",
-                gallery: "/admin/gallery-content",
-                gallery_images: "/admin/gallery-content",
-                library: "/admin/library-content",
-                audio: "/admin/audio-content",
-                documents: "/admin/documents-content",
-                gallery_documents: "/admin/documents-content",
-                periods: "/admin/periods-content",
-                contact: "/admin/contact-content",
-                archives: "/admin/archives-content",
-                sources: "/admin/sources-content",
-                research: "/admin/sources-content",
+                sources: "/admin/sources-archives-content",
+                archives: "/admin/sources-archives-content",
               };
               const studioRoute = studioAdminRouteMap[pageIdKey];
               return (

@@ -58,7 +58,7 @@ export const getGedcomLoadErrorMessage = (
 };
 
 export const getApiRoot = () => {
-  const base = String(api.defaults.baseURL || "");
+  const base = String(api?.defaults?.baseURL || "");
   return base.replace(/\/api\/?$/, "");
 };
 

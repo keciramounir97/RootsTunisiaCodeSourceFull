@@ -14,7 +14,7 @@ export interface CookiePreferences {
 }
 
 export default function CookieConsentBanner() {
-  const { t } = useTranslation();
+  const { t, isRtl } = useTranslation();
   const [isVisible, setIsVisible] = useState(false);
   const [showCustomize, setShowCustomize] = useState(false);
 
@@ -69,6 +69,7 @@ export default function CookieConsentBanner() {
 
   return (
     <div
+      dir={isRtl ? "rtl" : "ltr"}
       role="region"
       aria-label={t("cookie_consent_banner")}
       className="fixed bottom-0 left-0 right-0 z-50 p-4 sm:p-6 bg-black/50 backdrop-blur-md animate-fade-in"
@@ -158,6 +159,7 @@ export default function CookieConsentBanner() {
                   type="checkbox"
                   checked
                   disabled
+                  aria-label={t("essential_cookies")}
                   className="h-4 w-4 rounded text-[var(--gold)] border-[var(--border)] opacity-70 cursor-not-allowed"
                 />
               </div>
@@ -177,9 +179,10 @@ export default function CookieConsentBanner() {
                     type="checkbox"
                     checked={prefStorage}
                     onChange={(e) => setPrefStorage(e.target.checked)}
+                    aria-label={t("preference_storage")}
                     className="sr-only peer"
                   />
-                  <div className="w-9 h-5 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[var(--gold)]"></div>
+                  <div className="w-9 h-5 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] rtl:after:left-auto rtl:after:right-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[var(--gold)]"></div>
                 </label>
               </div>
 
@@ -198,9 +201,10 @@ export default function CookieConsentBanner() {
                     type="checkbox"
                     checked={analyticsStorage}
                     onChange={(e) => setAnalyticsStorage(e.target.checked)}
+                    aria-label={t("analytics_cookies")}
                     className="sr-only peer"
                   />
-                  <div className="w-9 h-5 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[var(--gold)]"></div>
+                  <div className="w-9 h-5 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] rtl:after:left-auto rtl:after:right-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[var(--gold)]"></div>
                 </label>
               </div>
             </div>

@@ -439,7 +439,7 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
             memberRole,
             gender: p.gender,
             url: l.url,
-            label: l.label || l.url,
+            label: maskSourceLabel(l.label, l.url, kind),
             kind,
             archiveSource: archSrc || undefined,
             documentCode: docCode || undefined,
@@ -1211,7 +1211,7 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                                               onClick={() =>
                                                 openSourceAction({
                                                   url: s.url,
-                                                  label: s.label || s.url,
+                                                  label: maskSourceLabel(s.label, s.url, kind),
                                                   kind,
                                                   memberName: nameOf(currentPerson),
                                                   archiveSource: cleanArchText(currentPerson?.archiveSource) || undefined,
@@ -1240,8 +1240,8 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                                           ) : (
                                             <Link2 className="h-4 w-4 shrink-0 text-teal-400" />
                                           )}
-                                          <span className="font-semibold text-xs text-[var(--foreground)] break-words" title={s.label || s.url}>
-                                            {s.label || s.url}
+                                          <span className="font-semibold text-xs text-[var(--foreground)] break-words" title={maskSourceLabel(s.label, s.url, kind)}>
+                                            {maskSourceLabel(s.label, s.url, kind)}
                                           </span>
                                         </div>
 
@@ -1299,7 +1299,7 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                         <span>Téléchargement GEDCOM 5.5.1 Conforme</span>
                       </h5>
                       <p className="text-xs text-[var(--muted-foreground)]">
-                        Format interopérable avec Gramps, MyHeritage, Geneanet et FamilySearch.
+                        Format standard ouvert interopérable avec tous les logiciels de généalogie (Gramps, Heredis).
                       </p>
                     </div>
                     <button
@@ -1775,21 +1775,21 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                 ) : previewSource.kind === "audio" || /\.(mp3|wav|ogg|m4a)$/i.test(previewSource.url) ? (
                   <div className="text-center p-6 bg-[var(--card)] rounded-xl border border-[var(--gold)]/30 w-full max-w-md shadow-md">
                     <Music className="w-16 h-16 text-[var(--gold)] mx-auto mb-4 animate-pulse" />
-                    <p className="text-sm font-semibold mb-3">{previewSource.label}</p>
+                    <p className="text-sm font-semibold mb-3">{maskSourceLabel(previewSource.label, previewSource.url, previewSource.kind)}</p>
                     <audio controls src={previewSource.url} className="w-full" autoPlay />
                   </div>
                 ) : previewSource.url.toLowerCase().endsWith(".pdf") || previewSource.kind === "document" || previewSource.kind === "book" ? (
                   <div className="w-full h-full min-h-[48vh] flex flex-col">
                     <iframe
                       src={previewSource.url}
-                      title={previewSource.label}
+                      title={maskSourceLabel(previewSource.label, previewSource.url, previewSource.kind)}
                       className="w-full flex-1 min-h-[45vh] border border-[var(--gold)]/30 rounded-lg bg-white"
                     />
                   </div>
                 ) : (
                   <div className="text-center p-8 bg-[var(--card)] rounded-xl border border-[var(--gold)]/30 max-w-md">
                     <FileText className="w-16 h-16 text-[var(--gold)] mx-auto mb-4" />
-                    <p className="text-sm font-semibold mb-2">{previewSource.label}</p>
+                    <p className="text-sm font-semibold mb-2">{maskSourceLabel(previewSource.label, previewSource.url, previewSource.kind)}</p>
                     <p className="text-xs text-[var(--muted-foreground)] mb-4">
                       Pièce d'archives officielle ou document externe. Cliquez ci-dessous pour ouvrir en plein écran.
                     </p>

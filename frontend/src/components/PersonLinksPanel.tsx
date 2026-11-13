@@ -152,7 +152,6 @@ export default function PersonLinksPanel({
     { label: "ANOM — Archives d'Outre-Mer (France)", url: "https://anom.archivesnationales.culture.gouv.fr/", type: "archive" },
     { label: "Ottoman State Archives (Osmanlı Arşivi)", url: "https://www.devletarsivleri.gov.tr/", type: "archive" },
     { label: "WorldCat — Library Catalog", url: "https://www.worldcat.org/", type: "catalog" },
-    { label: "FamilySearch — Genealogy Records", url: "https://www.familysearch.org/", type: "genealogy" },
   ];
 
   return (

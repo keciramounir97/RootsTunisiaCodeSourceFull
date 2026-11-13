@@ -196,44 +196,44 @@ const dictionaries: Record<SupportedLocale, Record<string, string>> = {
     ...englishGeneratedTranslations,
     ...(SOURCE_FALLBACK_TRANSLATIONS.en || {}),
     ...(AUTO_TRANSLATIONS.en || {}),
-    ...(ADDITION_TRANSLATIONS.en || {}),
     ...(FEATURE_TRANSLATIONS.en || {}),
-    ...(en as Record<string, string>),
+    ...(en as unknown as Record<string, string>),
+    ...(ADDITION_TRANSLATIONS.en || {}),
   },
   fr: {
     ...(SOURCE_FALLBACK_TRANSLATIONS.fr || {}),
     ...(AUTO_TRANSLATIONS.fr || {}),
-    ...(ADDITION_TRANSLATIONS.fr || {}),
     ...(FEATURE_TRANSLATIONS.fr || {}),
-    ...(fr as Record<string, string>),
+    ...(fr as unknown as Record<string, string>),
+    ...(ADDITION_TRANSLATIONS.fr || {}),
   },
   ar: {
     ...filterArabic(SOURCE_FALLBACK_TRANSLATIONS.ar),
     ...filterArabic(AUTO_TRANSLATIONS.ar),
-    ...filterArabic(ADDITION_TRANSLATIONS.ar),
     ...filterArabic(FEATURE_TRANSLATIONS.ar),
-    ...(ar as Record<string, string>),
+    ...(ar as unknown as Record<string, string>),
+    ...filterArabic(ADDITION_TRANSLATIONS.ar),
   },
   es: {
     ...(SOURCE_FALLBACK_TRANSLATIONS.es || {}),
     ...(AUTO_TRANSLATIONS.es || {}),
-    ...(ADDITION_TRANSLATIONS.es || {}),
     ...(FEATURE_TRANSLATIONS.es || {}),
-    ...(es as Record<string, string>),
+    ...(es as unknown as Record<string, string>),
+    ...(ADDITION_TRANSLATIONS.es || {}),
   },
   it: {
     ...(SOURCE_FALLBACK_TRANSLATIONS.it || {}),
     ...(AUTO_TRANSLATIONS.it || {}),
-    ...(ADDITION_TRANSLATIONS.it || {}),
     ...(FEATURE_TRANSLATIONS.it || {}),
-    ...(it as Record<string, string>),
+    ...(it as unknown as Record<string, string>),
+    ...(ADDITION_TRANSLATIONS.it || {}),
   },
   mt: {
     ...(SOURCE_FALLBACK_TRANSLATIONS.mt || {}),
     ...(AUTO_TRANSLATIONS.mt || {}),
-    ...(ADDITION_TRANSLATIONS.mt || {}),
     ...(FEATURE_TRANSLATIONS.mt || {}),
-    ...(mt as Record<string, string>),
+    ...(mt as unknown as Record<string, string>),
+    ...(ADDITION_TRANSLATIONS.mt || {}),
   },
 };
 
@@ -268,7 +268,7 @@ export function tForLocale(locale: string, key: string, fallback?: string): stri
   // If in Arabic mode, NEVER fall back to French or English dictionaries!
   if (isAr) {
     // 1. Check direct ar.json dictionary first
-    const arDirect = ar as Record<string, string>;
+    const arDirect = ar as unknown as Record<string, string>;
     if (arDirect[key] && /[\u0600-\u06FF]/.test(arDirect[key])) {
       return arDirect[key];
     }

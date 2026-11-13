@@ -29,6 +29,9 @@ import {
   Music,
   Newspaper,
   ShieldAlert,
+  Pencil,
+  Plus,
+  X,
 } from "lucide-react";
 import { useThemeStore } from "../../store/theme";
 import Toast from "../../components/Toast";
@@ -119,14 +122,31 @@ export default function SocialComments() {
   const [toastMessage, setToastMessage] = useState("");
   const [toastTone, setToastTone] = useState<"success" | "error">("success");
 
-  // Styling helpers
-  const pageBg = isDark ? "bg-[#071827]" : "bg-[#f7f5f0]";
-  const text = isDark ? "text-gray-100" : "text-[#162238]";
-  const cardBg = isDark ? "bg-[#0f1f33]" : "bg-white";
-  const border = isDark ? "border-[#1e3852]" : "border-[#e5dfd5]";
-  const hoverRow = isDark ? "hover:bg-white/[0.03]" : "hover:bg-[#fbf9f5]";
-  const inputBg = isDark ? "bg-[#0b1726]" : "bg-white";
-  const inputText = isDark ? "text-white" : "text-gray-900";
+  // Modals state for Add / Edit Comment
+  const [addCommentModalOpen, setAddCommentModalOpen] = useState(false);
+  const [editCommentModalOpen, setEditCommentModalOpen] = useState(false);
+  const [editingComment, setEditingComment] = useState<SocialComment | null>(null);
+  const [commentFormAuthor, setCommentFormAuthor] = useState("");
+  const [commentFormContent, setCommentFormContent] = useState("");
+  const [commentFormMediaKey, setCommentFormMediaKey] = useState("gallery_tree_1");
+  const [commentFormEntityType, setCommentFormEntityType] = useState("tree");
+  const [commentFormApproved, setCommentFormApproved] = useState(true);
+  const [submittingComment, setSubmittingComment] = useState(false);
+
+  // Add Like Modal state
+  const [addLikeModalOpen, setAddLikeModalOpen] = useState(false);
+  const [likeFormMediaKey, setLikeFormMediaKey] = useState("gallery_tree_1");
+  const [likeFormEntityType, setLikeFormEntityType] = useState("tree");
+  const [submittingLike, setSubmittingLike] = useState(false);
+
+  // Dashboard luxury theme styling helpers
+  const pageBg = "bg-[var(--background)] text-[var(--foreground)]";
+  const text = "text-[var(--foreground)]";
+  const cardBg = "surface-card bg-[var(--card)]";
+  const border = "border-[var(--border)]";
+  const hoverRow = "hover:bg-[var(--gold)]/5";
+  const inputBg = "bg-[var(--background)]";
+  const inputText = "text-[var(--foreground)]";
 
   // Fetch overall statistics
   const fetchStats = useCallback(async () => {
@@ -306,6 +326,122 @@ export default function SocialComments() {
     }
   };
 
+  // Open modals
+  const openAddCommentModal = () => {
+    setCommentFormAuthor("");
+    setCommentFormContent("");
+    setCommentFormMediaKey("gallery_tree_1");
+    setCommentFormEntityType("tree");
+    setCommentFormApproved(true);
+    setAddCommentModalOpen(true);
+  };
+
+  const openEditCommentModal = (comment: SocialComment) => {
+    setEditingComment(comment);
+    setCommentFormAuthor(comment.user_name || "");
+    setCommentFormContent(comment.content || "");
+    setCommentFormApproved(Boolean(comment.is_approved));
+    setEditCommentModalOpen(true);
+  };
+
+  const handleCreateComment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!commentFormContent.trim()) {
+      setToastTone("error");
+      setToastMessage("Le texte du commentaire est obligatoire.");
+      return;
+    }
+    try {
+      setSubmittingComment(true);
+      await api.post("/social/admin/comments", {
+        mediaKey: commentFormMediaKey.trim() || "gallery_tree_1",
+        entityType: commentFormEntityType,
+        userName: commentFormAuthor.trim() || "Administrateur",
+        content: commentFormContent.trim(),
+      });
+      setToastTone("success");
+      setToastMessage("Commentaire ajouté avec succès !");
+      setAddCommentModalOpen(false);
+      setCommentFormContent("");
+      fetchComments(1);
+      fetchStats();
+    } catch {
+      try {
+        await api.post("/social/comments", {
+          mediaKey: commentFormMediaKey.trim() || "gallery_tree_1",
+          entityType: commentFormEntityType,
+          content: commentFormContent.trim(),
+        });
+        setToastTone("success");
+        setToastMessage("Commentaire ajouté avec succès !");
+        setAddCommentModalOpen(false);
+        setCommentFormContent("");
+        fetchComments(1);
+        fetchStats();
+      } catch {
+        setToastTone("error");
+        setToastMessage("Erreur lors de l'ajout du commentaire.");
+      }
+    } finally {
+      setSubmittingComment(false);
+    }
+  };
+
+  const handleSaveEditedComment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingComment || !commentFormContent.trim()) return;
+    try {
+      setSubmittingComment(true);
+      await api.patch(`/social/admin/comments/${editingComment.id}`, {
+        content: commentFormContent.trim(),
+        userName: commentFormAuthor.trim() || editingComment.user_name,
+        isApproved: commentFormApproved,
+      });
+      setComments((prev) =>
+        prev.map((c) =>
+          c.id === editingComment.id
+            ? {
+                ...c,
+                content: commentFormContent.trim(),
+                user_name: commentFormAuthor.trim() || c.user_name,
+                is_approved: commentFormApproved,
+              }
+            : c
+        )
+      );
+      setToastTone("success");
+      setToastMessage("Commentaire modifié avec succès !");
+      setEditCommentModalOpen(false);
+      fetchStats();
+    } catch {
+      setToastTone("error");
+      setToastMessage("Erreur lors de la modification du commentaire.");
+    } finally {
+      setSubmittingComment(false);
+    }
+  };
+
+  const handleCreateLike = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      setSubmittingLike(true);
+      await api.post("/social/likes", {
+        mediaKey: likeFormMediaKey.trim() || "gallery_tree_1",
+        entityType: likeFormEntityType,
+      });
+      setToastTone("success");
+      setToastMessage("Mention J'aime enregistrée avec succès !");
+      setAddLikeModalOpen(false);
+      fetchLikes(1);
+      fetchStats();
+    } catch {
+      setToastTone("error");
+      setToastMessage("Erreur lors de l'enregistrement de la mention J'aime.");
+    } finally {
+      setSubmittingLike(false);
+    }
+  };
+
   // Helper to resolve readable type label and icon
   const getResourceMeta = (type?: string, key?: string) => {
     const rawType = String(type || "").toLowerCase();
@@ -337,29 +473,27 @@ export default function SocialComments() {
       <Toast message={toastMessage} tone={toastTone} />
 
       {/* ----------------- TOP HERO PANEL ----------------- */}
-      <section className={`rounded-2xl p-6 mb-6 border ${border} ${cardBg} shadow-lg relative overflow-hidden`}>
-        <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-bl from-[#0d9488]/15 via-transparent to-transparent pointer-events-none rounded-full blur-3xl -mr-20 -mt-20" />
-
-        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">
+      <section className="surface-card frame-gold p-6 mb-6 rounded-2xl bg-[var(--card)]/95 shadow-md">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">
           <div className="flex items-start sm:items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#0d9488] to-[#0c4a6e] flex items-center justify-center text-white shadow-md shrink-0">
+            <div className="w-14 h-14 rounded-2xl bg-[var(--gold)]/20 border border-[var(--gold)]/40 flex items-center justify-center text-[var(--gold)] shadow-md shrink-0">
               <MessageSquare className="w-7 h-7" />
             </div>
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold tracking-wider uppercase bg-[#0d9488]/15 text-[#0d9488] border border-[#0d9488]/30 flex items-center gap-1">
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold tracking-wider uppercase bg-[var(--gold)]/20 text-[var(--gold)] border border-[var(--gold)]/30 flex items-center gap-1">
                   <ShieldCheck className="w-3 h-3" />
-                  {t("super_admin_module", "Super Admin Control")}
+                  <span>{t("super_admin_module", "Super Admin Control")}</span>
                 </span>
                 <span className="text-xs opacity-50">·</span>
-                <span className="text-xs font-semibold opacity-70 flex items-center gap-1 text-emerald-500">
-                  <CheckCircle className="w-3.5 h-3.5" /> {t("live_sync_active", "Synchronisation Réelle")}
+                <span className="text-xs font-semibold flex items-center gap-1 text-emerald-500">
+                  <CheckCircle className="w-3.5 h-3.5" /> {t("live_sync_active", "Base Dynamique Active")}
                 </span>
               </div>
-              <h1 className="font-serif font-bold text-2xl md:text-3xl text-gray-900 dark:text-white">
+              <h1 className="font-serif font-bold text-2xl md:text-3xl text-[var(--foreground)]">
                 {t("social_interactions_title", "Interactions Sociales : J'aime & Commentaires")}
               </h1>
-              <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400 max-w-2xl mt-1">
+              <p className="text-xs md:text-sm text-[var(--muted-foreground)] max-w-2xl mt-1">
                 {t(
                   "social_interactions_desc",
                   "Supervisez en temps réel les mentions J'aime authentiques, modérez les commentaires de la communauté et analysez l'engagement sur les arbres généalogiques et archives tunisiennes."
@@ -376,11 +510,11 @@ export default function SocialComments() {
                 if (activeTab === "comments") fetchComments(commentPage);
                 else fetchLikes(likePage);
               }}
-              className="px-4 py-2.5 rounded-xl border border-[#0d9488]/30 bg-[#0d9488]/10 hover:bg-[#0d9488]/20 text-[#0d9488] text-xs font-bold transition flex items-center gap-2 shadow-xs cursor-pointer"
+              className="btn-base btn-outline text-xs px-4 py-2.5 flex items-center gap-2 cursor-pointer"
             >
               <RefreshCw
                 className={`w-4 h-4 ${
-                  commentsLoading || likesLoading ? "animate-spin" : ""
+                  commentsLoading || likesLoading ? "animate-spin text-[var(--gold)]" : ""
                 }`}
               />
               <span>{t("refresh_now", "Actualiser les données")}</span>
@@ -389,47 +523,47 @@ export default function SocialComments() {
         </div>
 
         {/* ----------------- KPI SUMMARY CARDS ----------------- */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mt-6 pt-6 border-t border-[var(--border-color,rgba(13,148,136,0.15))]">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mt-6 pt-6 border-t border-[var(--border)]">
           {/* Card 1: Total Likes */}
-          <div className={`p-4 rounded-xl border ${border} ${isDark ? "bg-[#0b1726]/60" : "bg-[#fbf9f5]"} flex items-center gap-3.5`}>
+          <div className="surface-card p-4 rounded-xl border border-rose-500/25 bg-[var(--card)] flex items-center gap-3.5 shadow-xs">
             <div className="w-10 h-10 rounded-xl bg-rose-500/15 text-rose-500 flex items-center justify-center shrink-0">
               <Heart className="w-5 h-5 fill-rose-500/20" />
             </div>
             <div className="min-w-0">
-              <p className="text-[11px] font-medium text-gray-500 dark:text-gray-400 truncate">
+              <p className="text-[11px] font-medium text-[var(--muted-foreground)] truncate">
                 {t("real_likes_count", "Mentions J'aime Réelles")}
               </p>
-              <strong className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white">
+              <strong className="text-xl md:text-2xl font-bold text-[var(--foreground)]">
                 {stats.totalLikes}
               </strong>
             </div>
           </div>
 
           {/* Card 2: Total Comments */}
-          <div className={`p-4 rounded-xl border ${border} ${isDark ? "bg-[#0b1726]/60" : "bg-[#fbf9f5]"} flex items-center gap-3.5`}>
-            <div className="w-10 h-10 rounded-xl bg-[#0d9488]/15 text-[#0d9488] flex items-center justify-center shrink-0">
+          <div className="surface-card p-4 rounded-xl border border-[var(--gold)]/30 bg-[var(--card)] flex items-center gap-3.5 shadow-xs">
+            <div className="w-10 h-10 rounded-xl bg-[var(--gold)]/15 text-[var(--gold)] flex items-center justify-center shrink-0">
               <MessageSquare className="w-5 h-5" />
             </div>
             <div className="min-w-0">
-              <p className="text-[11px] font-medium text-gray-500 dark:text-gray-400 truncate">
+              <p className="text-[11px] font-medium text-[var(--muted-foreground)] truncate">
                 {t("total_comments", "Total Commentaires")}
               </p>
-              <strong className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white">
+              <strong className="text-xl md:text-2xl font-bold text-[var(--foreground)]">
                 {stats.totalComments}
               </strong>
             </div>
           </div>
 
           {/* Card 3: Approved vs Pending */}
-          <div className={`p-4 rounded-xl border ${border} ${isDark ? "bg-[#0b1726]/60" : "bg-[#fbf9f5]"} flex items-center gap-3.5`}>
+          <div className="surface-card p-4 rounded-xl border border-emerald-500/25 bg-[var(--card)] flex items-center gap-3.5 shadow-xs">
             <div className="w-10 h-10 rounded-xl bg-emerald-500/15 text-emerald-500 flex items-center justify-center shrink-0">
               <ShieldCheck className="w-5 h-5" />
             </div>
             <div className="min-w-0">
-              <p className="text-[11px] font-medium text-gray-500 dark:text-gray-400 truncate">
+              <p className="text-[11px] font-medium text-[var(--muted-foreground)] truncate">
                 {t("moderation_status", "Statut Modération")}
               </p>
-              <div className="text-xs font-bold text-gray-900 dark:text-white flex items-center gap-2 mt-0.5">
+              <div className="text-xs font-bold text-[var(--foreground)] flex items-center gap-2 mt-0.5">
                 <span className="text-emerald-500">{stats.approvedComments} {t("approved", "Approuvés")}</span>
                 {stats.pendingComments > 0 && (
                   <span className="text-amber-500">· {stats.pendingComments} {t("pending", "En attente")}</span>
@@ -439,15 +573,15 @@ export default function SocialComments() {
           </div>
 
           {/* Card 4: Engaged Items */}
-          <div className={`p-4 rounded-xl border ${border} ${isDark ? "bg-[#0b1726]/60" : "bg-[#fbf9f5]"} flex items-center gap-3.5`}>
-            <div className="w-10 h-10 rounded-xl bg-amber-500/15 text-amber-500 flex items-center justify-center shrink-0">
+          <div className="surface-card p-4 rounded-xl border border-[var(--gold)]/25 bg-[var(--card)] flex items-center gap-3.5 shadow-xs">
+            <div className="w-10 h-10 rounded-xl bg-[var(--gold)]/15 text-[var(--gold)] flex items-center justify-center shrink-0">
               <Award className="w-5 h-5" />
             </div>
             <div className="min-w-0">
-              <p className="text-[11px] font-medium text-gray-500 dark:text-gray-400 truncate">
+              <p className="text-[11px] font-medium text-[var(--muted-foreground)] truncate">
                 {t("interacted_items", "Ressources Engagées")}
               </p>
-              <strong className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white">
+              <strong className="text-xl md:text-2xl font-bold text-[var(--foreground)]">
                 {stats.uniqueLikedItems}
               </strong>
             </div>
@@ -455,20 +589,20 @@ export default function SocialComments() {
         </div>
       </section>
 
-      {/* ----------------- NAVIGATION TABS ----------------- */}
-      <div className="flex items-center gap-2 mb-4 border-b border-[var(--border-color,rgba(13,148,136,0.2))] pb-2 overflow-x-auto">
+      {/* ----------------- NAVIGATION TABS (NO EMOJIS) ----------------- */}
+      <div className="flex items-center gap-2 mb-4 p-1.5 rounded-xl bg-[var(--card)] border border-[var(--border)] w-fit shadow-md flex-wrap">
         <button
           type="button"
           onClick={() => setActiveTab("comments")}
-          className={`px-4 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center gap-2 cursor-pointer shrink-0 ${
+          className={`px-4 py-2.5 rounded-lg font-bold text-xs transition-all flex items-center gap-2 cursor-pointer shrink-0 ${
             activeTab === "comments"
-              ? "bg-[#0d9488] text-white shadow-md shadow-[#0d9488]/20"
-              : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5"
+              ? "bg-[var(--gold)] text-black shadow-md"
+              : "text-[var(--foreground)]/70 hover:text-[var(--foreground)] hover:bg-[var(--gold)]/10"
           }`}
         >
           <MessageSquare className="w-4 h-4" />
-          <span>{t("comments_moderation_tab", "💬 Modération des Commentaires")}</span>
-          <span className="px-1.5 py-0.5 rounded-md text-[10px] bg-black/20">
+          <span>{t("comments_moderation_tab", "Modération des Commentaires")}</span>
+          <span className="px-1.5 py-0.5 rounded-md text-[10px] bg-black/20 text-current">
             {stats.totalComments}
           </span>
         </button>
@@ -476,15 +610,15 @@ export default function SocialComments() {
         <button
           type="button"
           onClick={() => setActiveTab("likes")}
-          className={`px-4 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center gap-2 cursor-pointer shrink-0 ${
+          className={`px-4 py-2.5 rounded-lg font-bold text-xs transition-all flex items-center gap-2 cursor-pointer shrink-0 ${
             activeTab === "likes"
-              ? "bg-rose-600 text-white shadow-md shadow-rose-600/20"
-              : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5"
+              ? "bg-[var(--gold)] text-black shadow-md"
+              : "text-[var(--foreground)]/70 hover:text-[var(--foreground)] hover:bg-[var(--gold)]/10"
           }`}
         >
           <Heart className="w-4 h-4 fill-current" />
-          <span>{t("likes_monitoring_tab", "❤️ Surveillance des J'aime")}</span>
-          <span className="px-1.5 py-0.5 rounded-md text-[10px] bg-black/20">
+          <span>{t("likes_monitoring_tab", "Surveillance des J'aime")}</span>
+          <span className="px-1.5 py-0.5 rounded-md text-[10px] bg-black/20 text-current">
             {stats.totalLikes}
           </span>
         </button>
@@ -492,15 +626,15 @@ export default function SocialComments() {
         <button
           type="button"
           onClick={() => setActiveTab("ranking")}
-          className={`px-4 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center gap-2 cursor-pointer shrink-0 ${
+          className={`px-4 py-2.5 rounded-lg font-bold text-xs transition-all flex items-center gap-2 cursor-pointer shrink-0 ${
             activeTab === "ranking"
-              ? "bg-amber-600 text-white shadow-md shadow-amber-600/20"
-              : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5"
+              ? "bg-[var(--gold)] text-black shadow-md"
+              : "text-[var(--foreground)]/70 hover:text-[var(--foreground)] hover:bg-[var(--gold)]/10"
           }`}
         >
           <Flame className="w-4 h-4" />
-          <span>{t("ranking_tab", "📊 Palmarès & Top Ressources")}</span>
-          <span className="px-1.5 py-0.5 rounded-md text-[10px] bg-black/20">
+          <span>{t("ranking_tab", "Palmarès & Top Ressources")}</span>
+          <span className="px-1.5 py-0.5 rounded-md text-[10px] bg-black/20 text-current">
             {(stats.topLikedItems || []).length}
           </span>
         </button>
@@ -512,15 +646,15 @@ export default function SocialComments() {
       {activeTab === "comments" && (
         <div className="space-y-4">
           {/* SEARCH & FILTERS BAR */}
-          <div className={`p-4 rounded-xl border ${border} ${cardBg} shadow-sm flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between`}>
+          <div className="surface-card p-4 rounded-xl border border-[var(--border)] bg-[var(--card)] shadow-sm flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
             <div className="relative flex-1 max-w-md">
-              <Search className="w-4 h-4 absolute start-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <Search className="w-4 h-4 absolute start-3 top-1/2 -translate-y-1/2 text-[var(--muted-foreground)]" />
               <input
                 type="text"
                 value={commentSearch}
                 onChange={(e) => setCommentSearch(e.target.value)}
                 placeholder={t("search_comments_placeholder", "Rechercher par auteur, email, contenu ou ressource...")}
-                className={`w-full ps-9 pe-4 py-2 text-xs rounded-lg border ${border} ${inputBg} ${inputText} focus:ring-2 focus:ring-[#0d9488]/40 outline-none`}
+                className="w-full ps-9 pe-4 py-2 text-xs rounded-lg border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] focus:border-[var(--gold)] outline-none"
               />
             </div>
 
@@ -529,7 +663,7 @@ export default function SocialComments() {
               <select
                 value={commentStatusFilter}
                 onChange={(e) => setCommentStatusFilter(e.target.value)}
-                className={`px-3 py-2 text-xs rounded-lg border ${border} ${inputBg} ${inputText} outline-none cursor-pointer`}
+                className="px-3 py-2 text-xs rounded-lg border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] outline-none cursor-pointer focus:border-[var(--gold)]"
               >
                 <option value="all">{t("all_statuses", "Tous les statuts")}</option>
                 <option value="approved">{t("approved_only", "Approuvés uniquement")}</option>
@@ -540,7 +674,7 @@ export default function SocialComments() {
               <select
                 value={commentTypeFilter}
                 onChange={(e) => setCommentTypeFilter(e.target.value)}
-                className={`px-3 py-2 text-xs rounded-lg border ${border} ${inputBg} ${inputText} outline-none cursor-pointer`}
+                className="px-3 py-2 text-xs rounded-lg border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] outline-none cursor-pointer focus:border-[var(--gold)]"
               >
                 <option value="all">{t("all_types", "Toutes les ressources")}</option>
                 <option value="tree">{t("trees", "Arbres Généalogiques")}</option>
@@ -550,6 +684,15 @@ export default function SocialComments() {
                 <option value="audio">{t("audios", "Récits Audio")}</option>
                 <option value="article">{t("articles", "Articles")}</option>
               </select>
+
+              <button
+                type="button"
+                onClick={openAddCommentModal}
+                className="btn-base btn-gold text-xs py-2 px-3.5 inline-flex items-center gap-1.5 cursor-pointer font-bold shadow-md shrink-0"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Ajouter un Commentaire</span>
+              </button>
 
               <div className="text-xs font-semibold opacity-70 px-2">
                 {totalComments} {t("comments_found", "commentaire(s)")}
@@ -681,6 +824,14 @@ export default function SocialComments() {
                             <div className="flex items-center justify-end gap-1.5">
                               <button
                                 type="button"
+                                onClick={() => openEditCommentModal(comment)}
+                                className="p-1.5 rounded-lg text-[var(--gold)] hover:bg-[var(--gold)]/15 border border-[var(--gold)]/30 transition-colors cursor-pointer"
+                                title={t("edit_comment", "Modifier le commentaire")}
+                              >
+                                <Pencil className="w-4 h-4" />
+                              </button>
+                              <button
+                                type="button"
                                 onClick={() => handleToggleApproval(comment)}
                                 disabled={togglingId === comment.id}
                                 className={`p-1.5 rounded-lg border transition-colors cursor-pointer ${
@@ -747,15 +898,15 @@ export default function SocialComments() {
       {activeTab === "likes" && (
         <div className="space-y-4">
           {/* SEARCH & FILTERS BAR */}
-          <div className={`p-4 rounded-xl border ${border} ${cardBg} shadow-sm flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between`}>
+          <div className="surface-card p-4 rounded-xl border border-[var(--border)] bg-[var(--card)] shadow-sm flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
             <div className="relative flex-1 max-w-md">
-              <Search className="w-4 h-4 absolute start-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <Search className="w-4 h-4 absolute start-3 top-1/2 -translate-y-1/2 text-[var(--muted-foreground)]" />
               <input
                 type="text"
                 value={likeSearch}
                 onChange={(e) => setLikeSearch(e.target.value)}
                 placeholder={t("search_likes_placeholder", "Rechercher par membre, email ou titre de ressource...")}
-                className={`w-full ps-9 pe-4 py-2 text-xs rounded-lg border ${border} ${inputBg} ${inputText} focus:ring-2 focus:ring-rose-500/40 outline-none`}
+                className="w-full ps-9 pe-4 py-2 text-xs rounded-lg border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] focus:border-[var(--gold)] outline-none"
               />
             </div>
 
@@ -763,7 +914,7 @@ export default function SocialComments() {
               <select
                 value={likeTypeFilter}
                 onChange={(e) => setLikeTypeFilter(e.target.value)}
-                className={`px-3 py-2 text-xs rounded-lg border ${border} ${inputBg} ${inputText} outline-none cursor-pointer`}
+                className="px-3 py-2 text-xs rounded-lg border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] outline-none cursor-pointer focus:border-[var(--gold)]"
               >
                 <option value="all">{t("all_types", "Toutes les ressources")}</option>
                 <option value="tree">{t("trees", "Arbres Généalogiques")}</option>
@@ -773,6 +924,19 @@ export default function SocialComments() {
                 <option value="audio">{t("audios", "Récits Audio")}</option>
                 <option value="article">{t("articles", "Articles")}</option>
               </select>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setLikeFormMediaKey("gallery_tree_1");
+                  setLikeFormEntityType("tree");
+                  setAddLikeModalOpen(true);
+                }}
+                className="btn-base btn-gold text-xs py-2 px-3.5 inline-flex items-center gap-1.5 cursor-pointer font-bold shadow-md shrink-0"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Ajouter un J'aime</span>
+              </button>
 
               <div className="text-xs font-semibold opacity-70 px-2">
                 {totalLikes} {t("likes_found", "mention(s) J'aime")}
@@ -1022,6 +1186,297 @@ export default function SocialComments() {
               })}
             </div>
           )}
+        </div>
+      )}
+
+      {/* ========================================================= */}
+      {/* MODAL 1: AJOUTER UN COMMENTAIRE                           */}
+      {/* ========================================================= */}
+      {addCommentModalOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200"
+          onClick={() => setAddCommentModalOpen(false)}
+        >
+          <div
+            className="surface-card frame-gold w-full max-w-lg rounded-2xl bg-[var(--card)] border border-[var(--gold)]/40 shadow-2xl overflow-hidden text-start"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="px-6 py-4 border-b border-[var(--border)] flex items-center justify-between">
+              <h3 className="font-serif font-bold text-base text-[var(--foreground)] flex items-center gap-2">
+                <MessageSquare className="w-4 h-4 text-[var(--gold)]" />
+                <span>Ajouter un Commentaire</span>
+              </h3>
+              <button
+                type="button"
+                onClick={() => setAddCommentModalOpen(false)}
+                className="p-1 rounded-lg text-[var(--muted-foreground)] hover:text-[var(--foreground)] cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateComment} className="p-6 space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-[var(--foreground)] mb-1">
+                    Type de Ressource *
+                  </label>
+                  <select
+                    value={commentFormEntityType}
+                    onChange={(e) => {
+                      setCommentFormEntityType(e.target.value);
+                      setCommentFormMediaKey(`gallery_${e.target.value}_1`);
+                    }}
+                    className="w-full bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] rounded-lg px-3 py-2 text-xs focus:border-[var(--gold)] outline-none"
+                  >
+                    <option value="tree">Arbre Généalogique</option>
+                    <option value="gallery">Photo de Galerie</option>
+                    <option value="book">Livre & Manuscrit</option>
+                    <option value="document">Document & Sijillat</option>
+                    <option value="audio">Récit Audio</option>
+                    <option value="article">Article de Référence</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-[var(--foreground)] mb-1">
+                    Clé de Média / ID *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={commentFormMediaKey}
+                    onChange={(e) => setCommentFormMediaKey(e.target.value)}
+                    placeholder="ex: gallery_tree_124"
+                    className="w-full bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] rounded-lg px-3.5 py-2 text-xs focus:border-[var(--gold)] outline-none font-mono"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-[var(--foreground)] mb-1">
+                  Nom de l&apos;Auteur
+                </label>
+                <input
+                  type="text"
+                  value={commentFormAuthor}
+                  onChange={(e) => setCommentFormAuthor(e.target.value)}
+                  placeholder="Administrateur (ou nom du membre)"
+                  className="w-full bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] rounded-lg px-3.5 py-2 text-xs focus:border-[var(--gold)] outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-[var(--foreground)] mb-1">
+                  Texte du Commentaire *
+                </label>
+                <textarea
+                  rows={4}
+                  required
+                  value={commentFormContent}
+                  onChange={(e) => setCommentFormContent(e.target.value)}
+                  placeholder="Écrivez le contenu du commentaire ici..."
+                  className="w-full bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] rounded-lg p-3 text-xs focus:border-[var(--gold)] outline-none leading-relaxed"
+                />
+              </div>
+
+              <div className="pt-3 border-t border-[var(--border)] flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setAddCommentModalOpen(false)}
+                  className="btn-base btn-outline text-xs py-2 px-4 cursor-pointer"
+                >
+                  Annuler
+                </button>
+                <button
+                  type="submit"
+                  disabled={submittingComment}
+                  className="btn-base btn-gold text-xs py-2 px-5 inline-flex items-center gap-1.5 font-bold cursor-pointer"
+                >
+                  {submittingComment ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
+                  <span>Publier le Commentaire</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================= */}
+      {/* MODAL 2: MODIFIER UN COMMENTAIRE                          */}
+      {/* ========================================================= */}
+      {editCommentModalOpen && editingComment && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200"
+          onClick={() => setEditCommentModalOpen(false)}
+        >
+          <div
+            className="surface-card frame-gold w-full max-w-lg rounded-2xl bg-[var(--card)] border border-[var(--gold)]/40 shadow-2xl overflow-hidden text-start"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="px-6 py-4 border-b border-[var(--border)] flex items-center justify-between">
+              <h3 className="font-serif font-bold text-base text-[var(--foreground)] flex items-center gap-2">
+                <Pencil className="w-4 h-4 text-[var(--gold)]" />
+                <span>Modifier le Commentaire #{editingComment.id}</span>
+              </h3>
+              <button
+                type="button"
+                onClick={() => setEditCommentModalOpen(false)}
+                className="p-1 rounded-lg text-[var(--muted-foreground)] hover:text-[var(--foreground)] cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveEditedComment} className="p-6 space-y-4">
+              <div className="p-3 rounded-lg bg-[var(--background)] border border-[var(--border)] text-xs space-y-1">
+                <div className="text-[10px] font-mono uppercase font-bold text-[var(--gold)]">Ressource rattachée :</div>
+                <div className="font-semibold text-[var(--foreground)]">{editingComment.item_title || editingComment.media_key}</div>
+                <div className="text-[10px] font-mono text-[var(--muted-foreground)]">{editingComment.media_key}</div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-[var(--foreground)] mb-1">
+                  Auteur du Commentaire
+                </label>
+                <input
+                  type="text"
+                  value={commentFormAuthor}
+                  onChange={(e) => setCommentFormAuthor(e.target.value)}
+                  placeholder="Nom de l'auteur"
+                  className="w-full bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] rounded-lg px-3.5 py-2 text-xs focus:border-[var(--gold)] outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-[var(--foreground)] mb-1">
+                  Contenu du Commentaire *
+                </label>
+                <textarea
+                  rows={4}
+                  required
+                  value={commentFormContent}
+                  onChange={(e) => setCommentFormContent(e.target.value)}
+                  className="w-full bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] rounded-lg p-3 text-xs focus:border-[var(--gold)] outline-none leading-relaxed"
+                />
+              </div>
+
+              <div className="flex items-center gap-2 pt-1">
+                <input
+                  type="checkbox"
+                  id="editApproved"
+                  checked={commentFormApproved}
+                  onChange={(e) => setCommentFormApproved(e.target.checked)}
+                  className="rounded border-[var(--border)] text-[var(--gold)] focus:ring-[var(--gold)]"
+                />
+                <label htmlFor="editApproved" className="text-xs text-[var(--foreground)] cursor-pointer font-semibold">
+                  Commentaire approuvé et visible en direct
+                </label>
+              </div>
+
+              <div className="pt-3 border-t border-[var(--border)] flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setEditCommentModalOpen(false)}
+                  className="btn-base btn-outline text-xs py-2 px-4 cursor-pointer"
+                >
+                  Annuler
+                </button>
+                <button
+                  type="submit"
+                  disabled={submittingComment}
+                  className="btn-base btn-gold text-xs py-2 px-5 inline-flex items-center gap-1.5 font-bold cursor-pointer"
+                >
+                  {submittingComment ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle className="w-3.5 h-3.5" />}
+                  <span>Enregistrer les Modifications</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================= */}
+      {/* MODAL 3: AJOUTER UN J'AIME                                 */}
+      {/* ========================================================= */}
+      {addLikeModalOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200"
+          onClick={() => setAddLikeModalOpen(false)}
+        >
+          <div
+            className="surface-card frame-gold w-full max-w-md rounded-2xl bg-[var(--card)] border border-[var(--gold)]/40 shadow-2xl overflow-hidden text-start"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="px-6 py-4 border-b border-[var(--border)] flex items-center justify-between">
+              <h3 className="font-serif font-bold text-base text-[var(--foreground)] flex items-center gap-2">
+                <Heart className="w-4 h-4 text-rose-500 fill-current" />
+                <span>Ajouter / Basculer un J&apos;aime</span>
+              </h3>
+              <button
+                type="button"
+                onClick={() => setAddLikeModalOpen(false)}
+                className="p-1 rounded-lg text-[var(--muted-foreground)] hover:text-[var(--foreground)] cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateLike} className="p-6 space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-[var(--foreground)] mb-1">
+                  Type de Ressource *
+                </label>
+                <select
+                  value={likeFormEntityType}
+                  onChange={(e) => {
+                    setLikeFormEntityType(e.target.value);
+                    setLikeFormMediaKey(`gallery_${e.target.value}_1`);
+                  }}
+                  className="w-full bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] rounded-lg px-3 py-2 text-xs focus:border-[var(--gold)] outline-none"
+                >
+                  <option value="tree">Arbre Généalogique</option>
+                  <option value="gallery">Photo de Galerie</option>
+                  <option value="book">Livre & Manuscrit</option>
+                  <option value="document">Document & Sijillat</option>
+                  <option value="audio">Récit Audio</option>
+                  <option value="article">Article de Référence</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-[var(--foreground)] mb-1">
+                  Clé du Média / ID de la Ressource *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={likeFormMediaKey}
+                  onChange={(e) => setLikeFormMediaKey(e.target.value)}
+                  placeholder="ex: gallery_tree_124"
+                  className="w-full bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] rounded-lg px-3.5 py-2 text-xs focus:border-[var(--gold)] outline-none font-mono"
+                />
+              </div>
+
+              <div className="pt-3 border-t border-[var(--border)] flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setAddLikeModalOpen(false)}
+                  className="btn-base btn-outline text-xs py-2 px-4 cursor-pointer"
+                >
+                  Annuler
+                </button>
+                <button
+                  type="submit"
+                  disabled={submittingLike}
+                  className="btn-base btn-gold text-xs py-2 px-5 inline-flex items-center gap-1.5 font-bold cursor-pointer"
+                >
+                  {submittingLike ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Heart className="w-3.5 h-3.5 fill-current" />}
+                  <span>Enregistrer le J&apos;aime</span>
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
     </div>

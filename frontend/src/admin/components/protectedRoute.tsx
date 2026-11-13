@@ -17,12 +17,15 @@ export default function ProtectedRoute({
 }: ProtectedRouteProps) {
   const { user, loading } = useAuth();
   const location = useLocation();
-  const { t } = useTranslation();
+  const { t, isRtl } = useTranslation();
 
   // ✅ WAIT until auth is fully resolved
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-lg">
+      <div
+        dir={isRtl ? "rtl" : "ltr"}
+        className="min-h-screen flex items-center justify-center text-lg"
+      >
         {t("auth_checking", "Checking authentication...")}
       </div>
     );
