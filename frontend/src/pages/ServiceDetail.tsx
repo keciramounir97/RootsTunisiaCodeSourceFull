@@ -29,6 +29,7 @@ import {
   SERVICES_UI_BY_LOCALE,
   localizeServiceItem,
 } from "../utils/servicesCatalogI18n";
+import { buildConfiguredWhatsAppUrl } from "../utils/whatsAppContact";
 
 export default function ServiceDetailPage() {
   const { idOrSlug } = useParams<{ idOrSlug: string }>();
@@ -197,9 +198,10 @@ export default function ServiceDetailPage() {
   }
 
   const deliverables = parseDeliverables(service.deliverables);
-  const waContactUrl = service.whatsapp_prefill
-    ? `https://wa.me/21671234567?text=${encodeURIComponent(service.whatsapp_prefill)}`
-    : `https://wa.me/21671234567?text=${encodeURIComponent(ui.defaultWhatsappPrefill(service.title))}`;
+  const waContactUrl = buildConfiguredWhatsAppUrl(
+    service.whatsapp_prefill || ui.defaultWhatsappPrefill(service.title),
+    service.contact_phone,
+  );
 
   return (
     <div
@@ -299,24 +301,26 @@ export default function ServiceDetailPage() {
                 </div>
               )}
 
-              {/* Direct WhatsApp Option */}
-              <div className="mt-8 pt-6 border-t border-[var(--gold)]/20 flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div className="text-start">
-                  <p className="text-xs font-bold text-[var(--foreground)]">{ui.detailNeedDirectChatTitle}</p>
-                  <p className="text-[0.7rem] text-[var(--foreground)]/60">
-                    {ui.detailNeedDirectChatSub}
-                  </p>
+              {/* Direct WhatsApp Option — only when admin configured a real number */}
+              {waContactUrl ? (
+                <div className="mt-8 pt-6 border-t border-[var(--gold)]/20 flex flex-col sm:flex-row items-center justify-between gap-4">
+                  <div className="text-start">
+                    <p className="text-xs font-bold text-[var(--foreground)]">{ui.detailNeedDirectChatTitle}</p>
+                    <p className="text-[0.7rem] text-[var(--foreground)]/60">
+                      {ui.detailNeedDirectChatSub}
+                    </p>
+                  </div>
+                  <a
+                    href={waContactUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-4 py-2 rounded-lg border border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-bold inline-flex items-center gap-2 hover:bg-emerald-500/20 transition-all shrink-0"
+                  >
+                    <MessageCircle className="w-3.5 h-3.5" />
+                    <span>{ui.detailOrderViaWhatsappCta}</span>
+                  </a>
                 </div>
-                <a
-                  href={waContactUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-4 py-2 rounded-lg border border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-bold inline-flex items-center gap-2 hover:bg-emerald-500/20 transition-all shrink-0"
-                >
-                  <MessageCircle className="w-3.5 h-3.5" />
-                  <span>{ui.detailOrderViaWhatsappCta}</span>
-                </a>
-              </div>
+              ) : null}
             </div>
 
             {/* Quality Guarantees */}
@@ -446,11 +450,12 @@ export default function ServiceDetailPage() {
                     {ui.successRefLabel} #BK-{submitSuccess.id || "CONFIRMED"}
                   </div>
 
-                  {consultationMode === "whatsapp" && (
+                  {consultationMode === "whatsapp" && waContactUrl ? (
                     <a
-                      href={`https://wa.me/21671234567?text=${encodeURIComponent(
-                        `${ui.defaultWhatsappPrefill(service.title)} #${submitSuccess.id || ""} (${clientName})`
-                      )}`}
+                      href={buildConfiguredWhatsAppUrl(
+                        `${ui.defaultWhatsappPrefill(service.title)} #${submitSuccess.id || ""} (${clientName})`,
+                        service.contact_phone,
+                      )}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="w-full py-2.5 px-4 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-md transition-all"
@@ -458,7 +463,7 @@ export default function ServiceDetailPage() {
                       <MessageCircle className="w-4 h-4" />
                       <span>{ui.successOpenWhatsappCta}</span>
                     </a>
-                  )}
+                  ) : null}
 
                   <button
                     type="button"

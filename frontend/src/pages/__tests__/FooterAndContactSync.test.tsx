@@ -37,6 +37,23 @@ describe("Footer Settings <-> Footer <-> Contact Page Official Platforms Sync", 
   });
 
   it("toggling checkboxes in FooterSettings makes platforms appear/disappear simultaneously in Footer and Contact Page", async () => {
+    // Seed only after admin filled real URLs — defaults ship empty/disabled.
+    localStorage.setItem(
+      FOOTER_STORAGE_KEY,
+      JSON.stringify({
+        socialLinks: [
+          { id: "wa", icon: "whatsapp", url: "", enabled: false },
+          { id: "fb", icon: "facebook", url: "https://facebook.com/rootstunisia", enabled: true },
+          { id: "ig", icon: "instagram", url: "https://instagram.com/rootstunisia", enabled: true },
+          { id: "yt", icon: "youtube", url: "https://youtube.com/@rootstunisia", enabled: false },
+        ],
+        location: "",
+        email: "contact@rootstunisia.com",
+        phone: "",
+        whatsapp: "",
+      }),
+    );
+
     render(
       <MemoryRouter initialEntries={["/helpcenter"]}>
         <TranslationProvider>
@@ -57,7 +74,6 @@ describe("Footer Settings <-> Footer <-> Contact Page Official Platforms Sync", 
     const footerNav = () =>
       within(footerEl()).queryByRole("navigation", { name: "Réseaux Sociaux" });
 
-    // Default active: Facebook, Instagram; WhatsApp/YouTube stay off until configured
     await waitFor(() => {
       expect(within(contactPane()).getByText("Facebook Officiel")).toBeInTheDocument();
       expect(within(contactPane()).getByText("Instagram Roots")).toBeInTheDocument();
@@ -68,11 +84,11 @@ describe("Footer Settings <-> Footer <-> Contact Page Official Platforms Sync", 
     expect(within(footerNav()!).queryByLabelText("WhatsApp Officiel")).not.toBeInTheDocument();
     expect(within(footerNav()!).getByLabelText("Facebook Officiel")).toHaveAttribute(
       "href",
-      "https://facebook.com",
+      "https://facebook.com/rootstunisia",
     );
     expect(within(footerNav()!).getByLabelText("Instagram Roots")).toHaveAttribute(
       "href",
-      "https://instagram.com",
+      "https://instagram.com/rootstunisia",
     );
     expect(within(footerNav()!).queryByLabelText("YouTube Officiel")).not.toBeInTheDocument();
 
@@ -107,14 +123,13 @@ describe("Footer Settings <-> Footer <-> Contact Page Official Platforms Sync", 
       expect(within(contactPane()).getByText("YouTube Officiel")).toBeInTheDocument();
       expect(within(footerNav()!).getByLabelText("YouTube Officiel")).toHaveAttribute(
         "href",
-        "https://youtube.com",
+        "https://youtube.com/@rootstunisia",
       );
     });
     const ytContactLink = within(contactPane()).getByText("YouTube Officiel").closest("a");
-    expect(ytContactLink).toHaveAttribute("href", "https://youtube.com");
+    expect(ytContactLink).toHaveAttribute("href", "https://youtube.com/@rootstunisia");
 
     // 3. Uncheck ALL remaining active platforms -> both Footer nav & Plateformes Officielles card disappear
-    fireEvent.click(within(adminPane()).getByLabelText("WhatsApp — Actif"));
     fireEvent.click(within(adminPane()).getByLabelText("Instagram — Actif"));
     fireEvent.click(within(adminPane()).getByLabelText("YouTube — Actif"));
 
@@ -125,6 +140,22 @@ describe("Footer Settings <-> Footer <-> Contact Page Official Platforms Sync", 
   });
 
   it("updates platform URLs, supports WhatsApp numbers, adds new networks, and deletes networks across both Footer and Contact Page", async () => {
+    localStorage.setItem(
+      FOOTER_STORAGE_KEY,
+      JSON.stringify({
+        socialLinks: [
+          { id: "wa", icon: "whatsapp", url: "", enabled: false },
+          { id: "fb", icon: "facebook", url: "https://facebook.com/rootstunisia", enabled: true },
+          { id: "ig", icon: "instagram", url: "https://instagram.com/rootstunisia", enabled: true },
+          { id: "yt", icon: "youtube", url: "", enabled: false },
+        ],
+        location: "",
+        email: "contact@rootstunisia.com",
+        phone: "",
+        whatsapp: "",
+      }),
+    );
+
     render(
       <MemoryRouter initialEntries={["/helpcenter"]}>
         <TranslationProvider>

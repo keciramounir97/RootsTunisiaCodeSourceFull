@@ -258,9 +258,9 @@ export const DEFAULT_HELP_CENTER_CMS_CONFIG: HelpCenterCmsConfig = {
       platformsTitle: "Plateformes Officielles",
       whatsappPlatformLabel: "WhatsApp Officiel",
       facebookPlatformLabel: "Facebook Officiel",
-      facebookUrl: "https://facebook.com",
+      facebookUrl: "",
       instagramPlatformLabel: "Instagram Roots",
-      instagramUrl: "https://instagram.com",
+      instagramUrl: "",
     },
   },
   about: {
@@ -626,9 +626,9 @@ const LOCALE_DEFAULTS: Record<string, HelpCenterCmsConfig> = {
         platformsTitle: "Official Platforms",
         whatsappPlatformLabel: "Official WhatsApp",
         facebookPlatformLabel: "Official Facebook",
-        facebookUrl: "https://facebook.com",
+        facebookUrl: "",
         instagramPlatformLabel: "Roots Instagram",
-        instagramUrl: "https://instagram.com",
+        instagramUrl: "",
       },
     },
     about: {
@@ -991,9 +991,9 @@ const LOCALE_DEFAULTS: Record<string, HelpCenterCmsConfig> = {
         platformsTitle: "المنصات الرسمية",
         whatsappPlatformLabel: "واتساب الرسمي",
         facebookPlatformLabel: "فيسبوك الرسمي",
-        facebookUrl: "https://facebook.com",
+        facebookUrl: "",
         instagramPlatformLabel: "إنستغرام جذور تونس",
-        instagramUrl: "https://instagram.com",
+        instagramUrl: "",
       },
     },
     about: {
@@ -1354,9 +1354,9 @@ const LOCALE_DEFAULTS: Record<string, HelpCenterCmsConfig> = {
         platformsTitle: "Plataformas Oficiales",
         whatsappPlatformLabel: "WhatsApp Oficial",
         facebookPlatformLabel: "Facebook Oficial",
-        facebookUrl: "https://facebook.com",
+        facebookUrl: "",
         instagramPlatformLabel: "Instagram Roots",
-        instagramUrl: "https://instagram.com",
+        instagramUrl: "",
       },
     },
     about: {
@@ -1717,9 +1717,9 @@ const LOCALE_DEFAULTS: Record<string, HelpCenterCmsConfig> = {
         platformsTitle: "Piattaforme Ufficiali",
         whatsappPlatformLabel: "WhatsApp Ufficiale",
         facebookPlatformLabel: "Facebook Ufficiale",
-        facebookUrl: "https://facebook.com",
+        facebookUrl: "",
         instagramPlatformLabel: "Instagram Roots",
-        instagramUrl: "https://instagram.com",
+        instagramUrl: "",
       },
     },
     about: {
@@ -2080,9 +2080,9 @@ const LOCALE_DEFAULTS: Record<string, HelpCenterCmsConfig> = {
         platformsTitle: "Pjattaformi Uffiċjali",
         whatsappPlatformLabel: "WhatsApp Uffiċjali",
         facebookPlatformLabel: "Facebook Uffiċjali",
-        facebookUrl: "https://facebook.com",
+        facebookUrl: "",
         instagramPlatformLabel: "Instagram Roots",
-        instagramUrl: "https://instagram.com",
+        instagramUrl: "",
       },
     },
     about: {
@@ -2384,7 +2384,12 @@ export function getDefaultHelpCenterConfig(locale = "fr"): HelpCenterCmsConfig {
 }
 
 /** Contact card fields admins can intentionally clear; empty must not fall back to defaults. */
-const CLEARABLE_STRING_KEYS = new Set(["phoneValue", "whatsappValue"]);
+const CLEARABLE_STRING_KEYS = new Set([
+  "phoneValue",
+  "whatsappValue",
+  "facebookUrl",
+  "instagramUrl",
+]);
 
 function resolveLocalizedString(candidate: any, baseVal: string, frVal: string, cleanLocale: string): string {
   if (typeof candidate !== "string") return baseVal;

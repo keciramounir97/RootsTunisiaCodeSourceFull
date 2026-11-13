@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { useTranslation } from "../context/TranslationContext";
 import SEO from "../components/SEO";
+import { buildConfiguredWhatsAppUrl } from "../utils/whatsAppContact";
 
 interface FaqItem {
   id: string;
@@ -30,6 +31,9 @@ interface FaqItem {
 
 export default function FAQPage() {
   const { t, isRtl } = useTranslation();
+  const faqWhatsappUrl = buildConfiguredWhatsAppUrl(
+    "Bonjour Roots Tunisia, j'ai une question spécifique concernant mes recherches d'archives.",
+  );
 
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
@@ -386,17 +390,17 @@ export default function FAQPage() {
           </p>
 
           <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
-            <a
-              href={`https://wa.me/21671234567?text=${encodeURIComponent(
-                "Bonjour Roots Tunisia, j'ai une question spécifique concernant mes recherches d'archives."
-              )}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs inline-flex items-center justify-center gap-2 shadow-md transition-all"
-            >
-              <MessageCircle className="w-4 h-4" />
-              <span>Contacter un Archiviste sur WhatsApp</span>
-            </a>
+            {faqWhatsappUrl ? (
+              <a
+                href={faqWhatsappUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs inline-flex items-center justify-center gap-2 shadow-md transition-all"
+              >
+                <MessageCircle className="w-4 h-4" />
+                <span>Contacter un Archiviste sur WhatsApp</span>
+              </a>
+            ) : null}
 
             <Link
               to="/contact"

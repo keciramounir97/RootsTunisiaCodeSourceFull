@@ -38,11 +38,13 @@ describe("Contact CMS phone/whatsapp clearing", () => {
     expect(reloaded.contact.cards.whatsappValue).toBe("");
   });
 
-  it("does not ship a hardcoded public phone number in defaults", () => {
+  it("does not ship a hardcoded public phone number or social URL in defaults", () => {
     for (const locale of ["fr", "en", "ar", "es", "it", "mt"]) {
       const cfg = getDefaultHelpCenterConfig(locale);
       expect(cfg.contact.cards.phoneValue).toBe("");
       expect(cfg.contact.cards.whatsappValue).toBe("");
+      expect(cfg.contact.sidebar.facebookUrl).toBe("");
+      expect(cfg.contact.sidebar.instagramUrl).toBe("");
     }
   });
 });

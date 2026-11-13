@@ -79,7 +79,7 @@ export default function AdminServicesPage() {
     full_offer: "",
     deliverablesText: "",
     whatsapp_prefill: "",
-    contact_phone: "+216 71 234 567",
+    contact_phone: "",
     contact_email: "services@rootstunisia.com",
     meeting_enabled: true,
     order_index: 0,
@@ -123,7 +123,7 @@ export default function AdminServicesPage() {
       full_offer: "",
       deliverablesText: "Déplacement physique aux dépôts\nPhotographies HD des folios originaux\nRapport de recherche avec cotes exactes",
       whatsapp_prefill: "Bonjour Roots Tunisia, je souhaite réserver une consultation pour cette prestation.",
-      contact_phone: "+216 71 234 567",
+      contact_phone: "",
       contact_email: "services@rootstunisia.com",
       meeting_enabled: true,
       order_index: services.length + 1,
@@ -154,7 +154,7 @@ export default function AdminServicesPage() {
       full_offer: service.full_offer || "",
       deliverablesText: delivText,
       whatsapp_prefill: service.whatsapp_prefill || "",
-      contact_phone: service.contact_phone || "+216 71 234 567",
+      contact_phone: service.contact_phone || "",
       contact_email: service.contact_email || "services@rootstunisia.com",
       meeting_enabled: service.meeting_enabled !== false && Number(service.meeting_enabled) !== 0,
       order_index: service.order_index ?? 0,
@@ -637,7 +637,7 @@ export default function AdminServicesPage() {
                       type="text"
                       value={formData.contact_phone}
                       onChange={(e) => setFormData({ ...formData, contact_phone: e.target.value })}
-                      placeholder="+216 71 234 567"
+                      placeholder="Laisser vide jusqu'à configuration (ex : +216 …)"
                       className="w-full px-3 py-2 rounded-lg border border-[var(--gold)]/35 bg-[var(--background)]"
                     />
                   </div>

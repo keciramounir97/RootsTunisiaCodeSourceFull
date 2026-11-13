@@ -22,6 +22,7 @@ import {
   SERVICES_UI_BY_LOCALE,
   localizeServiceItem,
 } from "../utils/servicesCatalogI18n";
+import { buildConfiguredWhatsAppUrl } from "../utils/whatsAppContact";
 
 export interface CustomService {
   id: number;
@@ -36,6 +37,7 @@ export interface CustomService {
   full_offer?: string;
   deliverables?: string[] | string;
   whatsapp_prefill?: string;
+  contact_phone?: string;
   order_index?: number;
   is_active?: boolean | number;
   booking_count?: number;
@@ -258,9 +260,10 @@ export default function ServicesPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 items-stretch">
             {filteredServices.map((service) => {
               const deliverables = parseDeliverables(service.deliverables);
-              const waUrl = service.whatsapp_prefill
-                ? `https://wa.me/21671234567?text=${encodeURIComponent(service.whatsapp_prefill)}`
-                : `https://wa.me/21671234567?text=${encodeURIComponent(ui.defaultWhatsappPrefill(service.title))}`;
+              const waUrl = buildConfiguredWhatsAppUrl(
+                service.whatsapp_prefill || ui.defaultWhatsappPrefill(service.title),
+                service.contact_phone,
+              );
 
               return (
                 <div
@@ -328,15 +331,17 @@ export default function ServicesPage() {
                       <ArrowRight className={`w-3.5 h-3.5 ${isRtl ? "rotate-180" : ""}`} />
                     </Link>
 
-                    <a
-                      href={waUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-full py-2 px-4 rounded-lg border border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-semibold text-xs flex items-center justify-center gap-2 hover:bg-emerald-500/20 transition-all"
-                    >
-                      <MessageCircle className="w-3.5 h-3.5" />
-                      <span>{ui.chatWithAgentWhatsappCta}</span>
-                    </a>
+                    {waUrl ? (
+                      <a
+                        href={waUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-full py-2 px-4 rounded-lg border border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-semibold text-xs flex items-center justify-center gap-2 hover:bg-emerald-500/20 transition-all"
+                      >
+                        <MessageCircle className="w-3.5 h-3.5" />
+                        <span>{ui.chatWithAgentWhatsappCta}</span>
+                      </a>
+                    ) : null}
                   </div>
                 </div>
               );

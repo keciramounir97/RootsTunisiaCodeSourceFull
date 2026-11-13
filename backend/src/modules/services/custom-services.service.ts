@@ -197,7 +197,7 @@ export class CustomServicesService implements OnModuleInit {
       const hasContactPhone = await this.knex.schema.hasColumn(SERVICES_TABLE, "contact_phone");
       if (!hasContactPhone) {
         await this.knex.schema.table(SERVICES_TABLE, (table) => {
-          table.string("contact_phone", 100).nullable().defaultTo("+216 71 234 567");
+          table.string("contact_phone", 100).nullable().defaultTo(null);
           table.string("contact_email", 255).nullable().defaultTo("contact@rootstunisia.com");
           table.string("meeting_link", 500).nullable();
           table.boolean("meeting_enabled").notNullable().defaultTo(true);
@@ -253,7 +253,7 @@ export class CustomServicesService implements OnModuleInit {
       full_offer: row.full_offer,
       deliverables: Array.isArray(deliverables) ? deliverables : [],
       whatsapp_text: row.whatsapp_text || "",
-      contact_phone: row.contact_phone || "+216 71 234 567",
+      contact_phone: row.contact_phone || "",
       contact_email: row.contact_email || "contact@rootstunisia.com",
       meeting_link: row.meeting_link || "",
       meeting_enabled: row.meeting_enabled !== false,
@@ -418,7 +418,7 @@ export class CustomServicesService implements OnModuleInit {
       full_offer: dto.full_offer?.trim() || dto.short_desc || "",
       deliverables: deliverablesJson,
       whatsapp_text: dto.whatsapp_text?.trim() || `Bonjour Roots Tunisia, je souhaite commander le service ${dto.title}`,
-      contact_phone: dto.contact_phone?.trim() || "+216 71 234 567",
+      contact_phone: dto.contact_phone?.trim() || "",
       contact_email: dto.contact_email?.trim() || "contact@rootstunisia.com",
       meeting_link: dto.meeting_link?.trim() || null,
       meeting_enabled: dto.meeting_enabled !== false,
