@@ -65,6 +65,7 @@
   "active_tree": "Árbol activo actualmente.",
   "active_visible_to_clients": "Activo (visible para clientes)",
   "activity": "Registro de Actividad",
+  "live_analytics": "Analítica en vivo",
   "activity_desc": "Track what happens across your platform.",
   "activity_load_failed": "Failed to load activity",
   "activity_log": "Activity Log:",

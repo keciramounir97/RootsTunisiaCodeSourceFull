@@ -47,6 +47,7 @@ const Unsubscribe = lazy(() => import("./pages/unsubscribe"));
 
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import CookieConsentBanner from "./components/CookieConsentBanner";
+import AnalyticsProvider from "./analytics/AnalyticsProvider";
 
 // ===== ADMIN ROUTE COMPONENTS =====
 const AdminLayout = lazy(() => import("./admin/AdminLayout"));
@@ -60,6 +61,7 @@ const AdminBooks = lazy(() => import("./admin/pages/Books"));
 const UsersPage = lazy(() => import("./admin/pages/Users"));
 const Settings = lazy(() => import("./admin/pages/Settings"));
 const ActivityLog = lazy(() => import("./admin/pages/ActivityLog"));
+const LiveAnalytics = lazy(() => import("./admin/pages/LiveAnalytics"));
 
 const AdminSourcesAndArchives = lazy(() => import("./admin/pages/SourcesAndArchives"));
 const AdminAudios = lazy(() => import("./admin/pages/Audios"));
@@ -172,6 +174,7 @@ function AppWithRouter() {
         {t("skip_to_main_content", "الانتقال إلى المحتوى الرئيسي")}
       </a>
       <SeoHead />
+      <AnalyticsProvider />
       <LocaleSync />
       {/* Historic Tunisian Landmark Background with soft opacity across all pages, sections, navbar & admin */}
       <div
@@ -423,6 +426,16 @@ function AppRoutes() {
             <Suspense fallback={<AdminLoadingFallback />}>
               <ProtectedRoute privileges={["activity"]}>
                 <ActivityLog />
+              </ProtectedRoute>
+            </Suspense>
+          }
+        />
+        <Route
+          path="live-analytics"
+          element={
+            <Suspense fallback={<AdminLoadingFallback />}>
+              <ProtectedRoute privileges={["activity", "dashboard"]}>
+                <LiveAnalytics />
               </ProtectedRoute>
             </Suspense>
           }

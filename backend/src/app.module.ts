@@ -31,6 +31,7 @@ import { PublicCardsModule } from './modules/public-cards/public-cards.module';
 import { SocialModule } from './modules/social/social.module';
 import { CustomServicesModule } from './modules/services/custom-services.module';
 import { PeriodsModule } from './modules/periods/periods.module';
+import { AnalyticsModule } from './modules/analytics/analytics.module';
 
 @Module({
     imports: [
@@ -71,6 +72,7 @@ import { PeriodsModule } from './modules/periods/periods.module';
         SocialModule,
         CustomServicesModule,
         PeriodsModule,
+        AnalyticsModule,
     ],
     controllers: [],
     providers: [],

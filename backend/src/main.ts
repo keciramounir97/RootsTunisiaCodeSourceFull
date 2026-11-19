@@ -605,6 +605,22 @@ async function ensureCriticalSchema(knex: Knex) {
             console.log('🟡 Schema patch: created activity_logs table');
         }
 
+        // 20b) analytics_pageviews table (first-party live analytics)
+        if (!(await knex.schema.hasTable('analytics_pageviews'))) {
+            await knex.schema.createTable('analytics_pageviews', (t) => {
+                t.bigIncrements('id');
+                t.string('path', 500).notNullable().index();
+                t.string('title', 500).nullable();
+                t.string('referrer', 1000).nullable();
+                t.string('locale', 16).nullable().index();
+                t.string('session_id', 64).nullable().index();
+                t.string('visitor_hash', 64).nullable().index();
+                t.string('user_agent', 500).nullable();
+                t.timestamp('created_at').defaultTo(knex.fn.now()).index();
+            });
+            console.log('🟡 Schema patch: created analytics_pageviews table');
+        }
+
         // 21) notes table
         if (!(await knex.schema.hasTable('notes'))) {
             await knex.schema.createTable('notes', (t) => {

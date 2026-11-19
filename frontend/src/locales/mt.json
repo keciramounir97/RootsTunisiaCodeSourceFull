@@ -65,6 +65,7 @@
   "active_tree": "Is-siġra attiva bħalissa.",
   "active_visible_to_clients": "Attiv (jidher lill-klijenti)",
   "activity": "Reġistru tal-Attività",
+  "live_analytics": "Analitika live",
   "activity_desc": "Track what happens across your platform.",
   "activity_load_failed": "Failed to load activity",
   "activity_log": "Activity Log:",

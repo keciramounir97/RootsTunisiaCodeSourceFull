@@ -68,6 +68,16 @@ export default function SeoHead() {
       return m;
     }, (el) => el.setAttribute("content", robots));
 
+    const siteVerification =
+      (import.meta.env.VITE_GOOGLE_SITE_VERIFICATION as string | undefined)?.trim() || "";
+    if (siteVerification) {
+      upsert('meta[name="google-site-verification"]', () => {
+        const m = document.createElement("meta");
+        m.setAttribute("name", "google-site-verification");
+        return m;
+      }, (el) => el.setAttribute("content", siteVerification));
+    }
+
     upsert('link[rel="canonical"]', () => {
       const l = document.createElement("link");
       l.setAttribute("rel", "canonical");

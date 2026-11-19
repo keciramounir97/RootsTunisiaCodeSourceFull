@@ -40,6 +40,7 @@ import {
   Calendar,
   Landmark,
   HelpCircle,
+  Radio,
 } from "lucide-react";
 
 interface SidebarLink {
@@ -64,6 +65,7 @@ const CATEGORIES: SidebarCategory[] = [
     links: [
       { to: "/admin", end: true, labelKey: "dashboard", Icon: LayoutDashboard },
       { to: "/admin/usage", labelKey: "usage_quotas", Icon: Gauge },
+      { to: "/admin/live-analytics", labelKey: "live_analytics", Icon: Radio },
       { to: "/admin/activity", labelKey: "activity", Icon: Activity },
       { to: "/admin/backups", labelKey: "backups", Icon: ArchiveRestore, roles: [3] },
     ],
@@ -178,6 +180,7 @@ const labelFallbacks: Record<string, string> = {
   dashboard: "Tableau de Bord",
   usage_quotas: "Quotas d'Utilisation",
   usage_and_quotas: "Quotas d'Utilisation",
+  live_analytics: "Analytique en direct",
   trees: "Arbres Généalogiques",
   individuals: "Individus & Ancêtres",
   my_sources: "Mes Sources & Archives",
