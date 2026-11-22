@@ -971,10 +971,10 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                     <div className="flex items-center justify-between border-b border-[var(--border)] pb-2">
                       <h4 className="font-serif text-base font-bold text-[var(--foreground)] flex items-center gap-2">
                         <Users className="h-4 w-4 text-[var(--gold)]" />
-                        <span>Personnes de l'Arbre & Fiches Détaillées</span>
+                        <span>{t("tree_persons_title", "Personnes de l'Arbre & Fiches Détaillées")}</span>
                       </h4>
                       <span className="text-xs font-mono text-[var(--muted-foreground)]">
-                        Cliquez pour inspecter en 3D
+                        {t("click_to_inspect_3d", "Cliquez pour inspecter en 3D")}
                       </span>
                     </div>
 
@@ -982,13 +982,13 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                     {loadingGedcom && displayPeople.length === 0 ? (
                       <div className="p-8 rounded-xl border border-dashed border-[var(--border)] text-center text-xs text-[var(--muted-foreground)] flex items-center justify-center gap-2">
                         <RefreshCcw className="h-4 w-4 text-[var(--gold)] animate-spin" />
-                        <span>Chargement des individus de l&apos;arbre...</span>
+                        <span>{t("loading_tree_individuals", "Chargement des individus de l'arbre...")}</span>
                       </div>
                     ) : displayPeople.length === 0 ? (
                       <div className="p-8 rounded-xl border border-dashed border-[var(--border)] text-center text-xs text-[var(--muted-foreground)] space-y-2">
                         <Users className="h-7 w-7 text-[var(--gold)]/60 mx-auto" />
-                        <div className="font-semibold text-[var(--foreground)]">Aucun individu répertorié dans cet arbre pour le moment.</div>
-                        <p>Aucune fiche personnelle ni source GEDCOM n&apos;est encore associée à cet arbre.</p>
+                        <div className="font-semibold text-[var(--foreground)]">{t("no_individuals_in_tree", "Aucun individu répertorié dans cet arbre pour le moment.")}</div>
+                        <p>{t("no_fiches_or_gedcom", "Aucune fiche personnelle ni source GEDCOM n'est encore associée à cet arbre.")}</p>
                       </div>
                     ) : (
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
@@ -1054,11 +1054,11 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                               <div className="flex items-center justify-between text-xs border-b border-[var(--gold)]/20 pb-2">
                                 <span className="font-mono text-[0.68rem] uppercase tracking-wider text-[var(--gold)] flex items-center gap-1">
                                   <User className="h-3.5 w-3.5" />
-                                  <span>Fiche Personne • ID: {currentPerson.id}</span>
+                                  <span>{t("person_fiche_id", "Fiche Personne • ID: ")}{currentPerson.id}</span>
                                 </span>
                                 <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-semibold text-[0.65rem] flex items-center gap-1">
                                   <ShieldCheck className="w-3 h-3" />
-                                  <span>Dossier Individu</span>
+                                  <span>{t("person_dossier", "Dossier Individu")}</span>
                                 </span>
                               </div>
 
@@ -1076,7 +1076,7 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                                   </h4>
                                   <p className="text-xs text-[var(--gold)] font-medium flex items-center gap-1 mt-0.5">
                                     <Briefcase className="h-3 w-3" />
-                                    <span>{currentPerson.profession || currentPerson.occupation || "Profession non précisée"}</span>
+                                    <span>{currentPerson.profession || currentPerson.occupation || t("profession_unspecified", "Profession non précisée")}</span>
                                   </p>
                                 </div>
                               </div>
@@ -1179,10 +1179,10 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                               <div className="flex items-center justify-between">
                                 <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-[var(--gold)] flex items-center gap-1.5">
                                   <Archive className="h-3.5 w-3.5 text-[var(--gold)]" />
-                                  <span>Sources & Documents rattachés</span>
+                                  <span>{t("attached_sources_docs", "Sources & Documents rattachés")}</span>
                                 </span>
                                 <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[var(--gold)]/10 text-[var(--gold)] border border-[var(--gold)]/30">
-                                  {selectedPersonSources.length} document{selectedPersonSources.length > 1 ? "s" : ""}
+                                  {selectedPersonSources.length} {t("documents_count_badge", "document(s)")}
                                 </span>
                               </div>
 
@@ -1255,7 +1255,7 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                               ) : (
                                 <div className="p-3.5 rounded-xl border border-dashed border-[var(--border)] text-xs text-[var(--muted-foreground)] italic flex items-center gap-2">
                                   <Archive className="h-4 w-4 opacity-50 shrink-0" />
-                                  <span>Aucune source ni document rattaché à cet individu pour le moment.</span>
+                                  <span>{t("no_attached_sources", "Aucune source ni document rattaché à cet individu pour le moment.")}</span>
                                 </div>
                               )}
                             </div>
@@ -1268,7 +1268,7 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                                 className="btn-base btn-outline text-xs py-2 px-3 flex items-center gap-2 cursor-pointer hover:border-[var(--gold)] hover:text-[var(--gold)]"
                               >
                                 <FileText className="h-3.5 w-3.5 text-[var(--gold)]" />
-                                <span>Voir l&apos;ensemble des sources</span>
+                                <span>{t("view_all_sources", "Voir l'ensemble des sources")}</span>
                               </button>
 
                               <button
@@ -1277,13 +1277,13 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                                 className="btn-base btn-gold text-xs py-2 px-3 flex items-center gap-1.5 cursor-pointer"
                               >
                                 <GitBranch className="h-3.5 w-3.5" />
-                                <span>Situer dans l&apos;arbre</span>
+                                <span>{t("locate_in_tree", "Situer dans l'arbre")}</span>
                               </button>
                             </div>
                           </div>
                         ) : (
                           <div className="p-8 rounded-xl border border-dashed border-[var(--border)] text-center text-xs text-[var(--muted-foreground)]">
-                            Sélectionnez un individu à gauche pour inspecter sa fiche complète.
+                            {t("select_individual_to_inspect", "Sélectionnez un individu à gauche pour inspecter sa fiche complète.")}
                           </div>
                         )}
                       </div>
@@ -1296,10 +1296,10 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                     <div className="space-y-1 text-center sm:text-start">
                       <h5 className="font-serif text-sm font-bold text-[var(--foreground)] flex items-center gap-2 justify-center sm:justify-start">
                         <FileCode className="h-4 w-4 text-[var(--gold)]" />
-                        <span>Téléchargement GEDCOM 5.5.1 Conforme</span>
+                        <span>{t("gedcom_download_compliant", "Téléchargement GEDCOM 5.5.1 Conforme")}</span>
                       </h5>
                       <p className="text-xs text-[var(--muted-foreground)]">
-                        Format standard ouvert interopérable avec tous les logiciels de généalogie (Gramps, Heredis).
+                        {t("gedcom_standard_desc", "Format standard ouvert interopérable avec tous les logiciels de généalogie (Gramps, Heredis).")}
                       </p>
                     </div>
                     <button
@@ -1308,7 +1308,7 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                       className="btn-base btn-gold text-xs py-2 px-4 flex items-center gap-2 shrink-0 cursor-pointer shadow-md"
                     >
                       <Download className="h-4 w-4" />
-                      <span>Télécharger le Fichier .GED</span>
+                      <span>{t("download_ged_file", "Télécharger le Fichier .GED")}</span>
                     </button>
                   </div>
                 </div>
@@ -1324,10 +1324,10 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                     <div className="space-y-0.5">
                       <h4 className="font-serif text-base sm:text-lg font-bold text-[var(--foreground)] flex items-center gap-2">
                         <FileText className="h-4 w-4 text-[var(--gold)]" />
-                        <span>Aperçu des Sources & Documents Réels</span>
+                        <span>{t("sources_preview_title", "Aperçu des Sources & Documents Réels")}</span>
                       </h4>
                       <p className="text-xs text-[var(--muted-foreground)]">
-                        Documents, archives et liens probatoires rattachés aux individus dans l'arbre généalogique.
+                        {t("sources_preview_desc", "Documents, archives et liens probatoires rattachés aux individus dans l'arbre généalogique.")}
                       </p>
                     </div>
 

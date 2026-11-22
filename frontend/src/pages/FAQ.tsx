@@ -145,6 +145,13 @@ export default function FAQPage() {
 
     // === Confidentialité & Droits ===
     {
+      id: "srv-free-vs-roots",
+      category: "privacy",
+      badge: "Méthodologie",
+      q: "Qu'est-ce qui différencie Roots Tunisia des sites d'arbres gratuits ?",
+      a: "Contrairement aux plateformes commerciales génériques, Roots Tunisia repose exclusivement sur des archives physiques tunisiennes vérifiées (Sijillats, Habous, Daftarkhana, Registres de la Kasbah) avec cotes officielles et assistance paléographique.",
+    },
+    {
       id: "priv-visibility",
       category: "privacy",
       q: "Qui a accès aux données de mon arbre généalogique ?",
@@ -232,16 +239,15 @@ export default function FAQPage() {
         <div className="max-w-[var(--content-max)] mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-[var(--gold)]/40 bg-[var(--gold)]/10 text-[var(--gold)] text-xs font-semibold uppercase tracking-widest mb-6">
             <HelpCircle className="w-3.5 h-3.5" />
-            <span>Centre d'Aide & Questions Fréquentes</span>
+            <span>{t("faq_badge", "Centre d'Aide & Questions Fréquentes")}</span>
           </div>
 
           <h1 className="text-3xl sm:text-5xl lg:text-6xl font-cinzel font-bold text-[var(--foreground)] tracking-tight leading-tight max-w-4xl mx-auto">
-            Foire Aux <span className="text-gradient-gold">Questions</span>
+            {t("faq_title_part1", "Foire Aux")} <span className="text-gradient-gold">{t("faq_title_part2", "Questions")}</span>
           </h1>
 
           <p className="mt-5 text-base sm:text-lg text-[var(--foreground)]/75 max-w-2xl mx-auto font-body leading-relaxed">
-            Tout ce que vous devez savoir sur la consultation des registres d'archives, nos abonnements,
-            le déchiffrage paléographique et la construction de vos arbres généalogiques en Tunisie.
+            {t("faq_subtitle", "Toutes les réponses sur les consultations d'archives, les arbres généalogiques, les cotes de Dar El Bey, la compatibilité GEDCOM et nos formules d'abonnement.")}
           </p>
 
           {/* Quick Search Input */}
@@ -251,7 +257,7 @@ export default function FAQPage() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Rechercher une question (tarifs, GEDCOM, déchiffrage, Kasbah, virement)..."
+              placeholder={t("faq_search_placeholder", "Rechercher une question (tarifs, GEDCOM, déchiffrage, Kasbah, virement)...")}
               className="w-full ps-11 pe-10 py-3.5 rounded-xl border border-[var(--gold)]/40 bg-[var(--card)] text-sm shadow-xl focus:outline-none focus:border-[var(--gold)] transition-colors placeholder:text-[var(--foreground)]/40"
             />
             {searchQuery && (
@@ -377,16 +383,15 @@ export default function FAQPage() {
         <div className="mt-16 surface-card rounded-2xl border border-[var(--gold)]/35 p-6 sm:p-8 shadow-xl text-center relative overflow-hidden">
           <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[var(--gold)] mb-2">
             <Sparkles className="w-3.5 h-3.5" />
-            <span>Assistance Dédiée</span>
+            <span>{t("faq_cta_badge", "Assistance Dédiée")}</span>
           </div>
 
           <h3 className="text-xl sm:text-2xl font-cinzel font-bold text-[var(--foreground)]">
-            Vous n'avez pas trouvé réponse à votre question ?
+            {t("faq_cta_title", "Vous n'avez pas trouvé réponse à votre question ?")}
           </h3>
 
           <p className="mt-2 text-xs sm:text-sm text-[var(--foreground)]/75 max-w-xl mx-auto font-body leading-relaxed">
-            Nos chercheurs, archivistes et paléographes sont à votre écoute pour examiner la faisabilité
-            de vos recherches d'ancêtres en Tunisie.
+            {t("faq_cta_desc", "Nos généalogistes et archivistes répondent directement à vos interrogations sur vos recherches et le déchiffrage de vos documents.")}
           </p>
 
           <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
@@ -398,7 +403,7 @@ export default function FAQPage() {
                 className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs inline-flex items-center justify-center gap-2 shadow-md transition-all"
               >
                 <MessageCircle className="w-4 h-4" />
-                <span>Contacter un Archiviste sur WhatsApp</span>
+                <span>{t("faq_whatsapp_btn", "Contacter un Archiviste sur WhatsApp")}</span>
               </a>
             ) : null}
 
@@ -407,7 +412,7 @@ export default function FAQPage() {
               className="w-full sm:w-auto px-5 py-2.5 rounded-xl border border-[var(--gold)]/50 bg-[var(--gold)]/10 hover:bg-[var(--gold)]/20 text-[var(--gold)] font-bold text-xs inline-flex items-center justify-center gap-2 transition-all"
             >
               <Mail className="w-4 h-4" />
-              <span>Envoyer un message de contact</span>
+              <span>{t("faq_contact_btn", "Envoyer un message de contact")}</span>
             </Link>
           </div>
         </div>

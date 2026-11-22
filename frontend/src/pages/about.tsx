@@ -161,17 +161,17 @@ export default function About() {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-[var(--gold)]/40 bg-[var(--gold)]/10 text-[var(--gold)] text-xs font-semibold uppercase tracking-widest mb-6">
             <Sparkles className="w-3.5 h-3.5" />
-            <span>Manifeste & Démarche Archivistique</span>
+            <span>{t("about_manifesto_badge", "Manifeste & Démarche Archivistique")}</span>
           </div>
 
           <h1 className="text-3xl sm:text-5xl lg:text-6xl font-cinzel font-bold text-[var(--foreground)] tracking-tight leading-tight">
-            La Généalogie par la <span className="text-gradient-gold">Preuve Documentaire</span>
+            {t("about_hero_title", "La Généalogie par la")} <span className="text-gradient-gold">{t("about_hero_title_highlight", "Preuve Documentaire")}</span>
           </h1>
 
           <div className="w-20 h-0.5 bg-[var(--gold)] mx-auto my-6" />
 
           <p className="text-base sm:text-lg text-[var(--foreground)]/80 max-w-2xl mx-auto font-body leading-relaxed">
-            En Tunisie, la vérité généalogique ne s'invente pas : elle s'établit dans les registres du XIXe et XXe siècle. Nous comblons le fossé entre la tradition orale et les dépôts d'archives réels, sans promesse démesurée ni artifice.
+            {t("about_hero_p", "En Tunisie, la vérité généalogique ne s'invente pas : elle s'établit dans les registres du XIXe et XXe siècle. Nous comblons le fossé entre la tradition orale et les dépôts d'archives réels, sans promesse démesurée ni artifice.")}
           </p>
 
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
@@ -180,7 +180,7 @@ export default function About() {
               className="px-6 py-3 rounded-xl bg-gradient-to-r from-[var(--gold)] to-[var(--gold)]/85 text-[var(--card)] font-bold text-xs flex items-center gap-2 shadow-lg hover:shadow-xl hover:opacity-95 transition-all cursor-pointer"
             >
               <Compass className="w-4 h-4" />
-              <span>Consulter l'Atlas des 24 Gouvernorats</span>
+              <span>{t("about_btn_atlas", "Consulter l'Atlas des 24 Gouvernorats")}</span>
             </Link>
 
             <Link
@@ -188,7 +188,7 @@ export default function About() {
               className="px-6 py-3 rounded-xl border border-[var(--gold)]/40 bg-[var(--card)]/60 text-[var(--foreground)] font-bold text-xs flex items-center gap-2 hover:bg-[var(--gold)]/15 transition-all cursor-pointer"
             >
               <Network className="w-4 h-4 text-[var(--gold)]" />
-              <span>Parcourir les Lignées Documentées</span>
+              <span>{t("about_btn_lineages", "Parcourir les Lignées Documentées")}</span>
             </Link>
           </div>
         </div>
@@ -252,15 +252,15 @@ export default function About() {
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-[var(--gold)]/15 text-[var(--gold)] border border-[var(--gold)]/30 mb-3">
             <ShieldCheck className="w-3.5 h-3.5" />
-            <span>Pourquoi Nous Choisir</span>
+            <span>{t("why_us", "Pourquoi Nous Choisir")}</span>
           </div>
 
           <h2 className="text-2xl sm:text-4xl font-cinzel font-bold text-[var(--foreground)]">
-            Quatre Engagements Inébranlables
+            {t("about_why_title", "Quatre Engagements Inébranlables")}
           </h2>
 
           <p className="text-xs sm:text-sm text-[var(--foreground)]/70 max-w-xl mx-auto mt-2 mb-10">
-            Ce qui distingue Roots Tunisia : une éthique de travail sans complaisance, des sources physiques et une présence constante sur le terrain.
+            {t("about_why_desc", "Ce qui distingue Roots Tunisia : une éthique de travail sans complaisance, des sources physiques et une présence constante sur le terrain.")}
           </p>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-start">
@@ -344,13 +344,13 @@ export default function About() {
               <div>
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-[var(--gold)]/15 text-[var(--gold)] border border-[var(--gold)]/30 mb-2">
                   <Lock className="w-3.5 h-3.5" />
-                  <span>Transparence & Cadre Légal</span>
+                  <span>{t("about_legal_badge", "Transparence & Cadre Légal")}</span>
                 </span>
                 <h2 className="text-xl sm:text-2xl font-cinzel font-bold text-[var(--foreground)]">
-                  Protection des Données & Liens Juridiques
+                  {t("about_legal_title", "Protection des Données & Liens Juridiques")}
                 </h2>
                 <p className="text-xs sm:text-sm text-[var(--foreground)]/70 mt-1 max-w-xl">
-                  Roots Tunisia applique une politique stricte de conformité aux lois relatives aux archives et à la vie privée.
+                  {t("about_legal_desc", "Roots Tunisia applique une politique stricte de conformité aux lois relatives aux archives et à la vie privée.")}
                 </p>
               </div>
 
