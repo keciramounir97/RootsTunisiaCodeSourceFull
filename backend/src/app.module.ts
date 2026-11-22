@@ -32,6 +32,8 @@ import { SocialModule } from './modules/social/social.module';
 import { CustomServicesModule } from './modules/services/custom-services.module';
 import { PeriodsModule } from './modules/periods/periods.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
+import { PersonalModule } from './modules/personal/personal.module';
+import { WorkspaceModule } from './modules/workspace/workspace.module';
 
 @Module({
     imports: [
@@ -73,6 +75,8 @@ import { AnalyticsModule } from './modules/analytics/analytics.module';
         CustomServicesModule,
         PeriodsModule,
         AnalyticsModule,
+        PersonalModule,
+        WorkspaceModule,
     ],
     controllers: [],
     providers: [],

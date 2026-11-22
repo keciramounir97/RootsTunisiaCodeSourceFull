@@ -4941,15 +4941,32 @@ export default function TreesBuilder({
                     </div>
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={closeSelectedPersonCard}
-                    className={`shrink-0 rounded-lg p-2 transition ${isDark ? "hover:bg-white/10" : "hover:bg-black/5"}`}
-                    title={t("legacy.close", "Close")}
-                    aria-label={t("legacy.close", "Close")}
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
+                  <div className="flex items-center gap-2">
+                    {!readOnly && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const p = selectedPerson;
+                          closeSelectedPersonCard();
+                          startEdit(p);
+                        }}
+                        className="interactive-btn btn-neu !px-3.5 !py-1.5 !text-xs flex items-center gap-1.5 text-[#0d9488]"
+                        title={t("legacy.edit", "Éditer l'individu")}
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                        <span>{t("legacy.edit", "Éditer")}</span>
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={closeSelectedPersonCard}
+                      className={`shrink-0 rounded-lg p-2 transition ${isDark ? "hover:bg-white/10" : "hover:bg-black/5"}`}
+                      title={t("legacy.close", "Close")}
+                      aria-label={t("legacy.close", "Close")}
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
                 </div>
 
                 <div className="flex-1 overflow-y-auto custom-scrollbar px-5 py-5 sm:px-7">
