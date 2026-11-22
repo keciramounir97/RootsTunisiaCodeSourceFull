@@ -159,7 +159,7 @@ export default function NewsletterSubscribers() {
         ) : rows.length === 0 ? (
           <p className={`${muted} text-center py-12`}>{t("no_subscribers_yet", "No subscribers yet")}</p>
         ) : (
-          <div className={`${card} border ${border} rounded-xl overflow-hidden shadow-lg`}>
+          <div className={`${card} border ${border} rounded-xl overflow-x-auto shadow-lg`}>
             <table className="w-full text-sm">
               <thead>
                 <tr className={isDark ? "bg-white/5" : "bg-black/5"}>

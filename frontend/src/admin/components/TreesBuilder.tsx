@@ -4607,7 +4607,7 @@ export default function TreesBuilder({
           </div>
 
           {!readOnly ? (
-          <div className="grid grid-cols-4 gap-2 max-w-3xl">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 max-w-3xl w-full">
             <div className="relative min-w-0" ref={gedcomImportDropdownRef}>
               <button
                 onClick={() => {

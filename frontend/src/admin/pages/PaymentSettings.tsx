@@ -356,7 +356,7 @@ export default function PaymentSettings() {
                     ) : null}
                     <span className="text-[0.65rem] font-mono text-[var(--muted-foreground)]">#{item.code}</span>
                   </div>
-                  <pre className="text-[0.7rem] font-mono whitespace-pre-wrap text-[var(--muted-foreground)] leading-relaxed">
+                  <pre className="text-[0.7rem] font-mono whitespace-pre-wrap break-words text-[var(--muted-foreground)] leading-relaxed">
                     {item.account_details || "—"}
                   </pre>
                   {item.instructions ? (

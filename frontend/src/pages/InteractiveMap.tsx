@@ -904,7 +904,7 @@ export default function InteractiveMap() {
             </div>
 
             {/* 4-Mode Segmented Selector: [ Régions ] | [ 24 Gouv. / Divisions ] | [ Tribus ] | [ Époques ] */}
-            <div className="grid grid-cols-4 gap-1 rounded-xl border border-[var(--gold)]/25 bg-[var(--background)] p-1 text-center">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-1 rounded-xl border border-[var(--gold)]/25 bg-[var(--background)] p-1 text-center">
               {[
                 { id: "regions", icon: Compass, label: t("map_mode_regions", "Régions") },
                 {
@@ -1347,7 +1347,7 @@ export default function InteractiveMap() {
               </span>
               <span className="font-mono text-[var(--gold)] uppercase">{t(currentLayer.labelKey)}</span>
             </div>
-            <div className="grid grid-cols-4 gap-1">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-1">
               {(Object.keys(OPEN_SOURCE_TILE_LAYERS) as TileLayerKey[]).map((key) => {
                 const layer = OPEN_SOURCE_TILE_LAYERS[key];
                 return (
@@ -1945,7 +1945,7 @@ export default function InteractiveMap() {
 
             {/* CONTEXT 2: AN HISTORICAL ERA IS SELECTED */}
             {selectedEra && !selectedTribe && !selectedDivision && (
-              <div className="grid grid-cols-4 gap-1 rounded-xl border border-[var(--gold)]/25 bg-[var(--background)] p-1 text-center">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-1 rounded-xl border border-[var(--gold)]/25 bg-[var(--background)] p-1 text-center">
                 {[
                   {
                     id: "state",

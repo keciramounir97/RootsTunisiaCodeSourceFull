@@ -367,7 +367,7 @@ export default function ServiceDetailPage() {
                 </p>
 
                 {/* 3-Way Consultation Mode Switcher */}
-                <div className="grid grid-cols-3 gap-1.5 mt-4 p-1 rounded-xl bg-[var(--gold)]/10 border border-[var(--gold)]/25">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5 mt-4 p-1 rounded-xl bg-[var(--gold)]/10 border border-[var(--gold)]/25">
                   <button
                     type="button"
                     onClick={() => setConsultationMode("zoom")}

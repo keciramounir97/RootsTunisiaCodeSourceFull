@@ -424,7 +424,7 @@ export default function UserSettings() {
               {t("no_activity_logs", "No activity logs recorded yet.")}
             </div>
           ) : (
-            <div className="border border-[var(--border-color)] rounded-2xl overflow-hidden shadow-sm">
+            <div className="border border-[var(--border-color)] rounded-2xl overflow-x-auto shadow-sm">
               <table className="w-full text-xs text-gray-900 dark:text-white">
                 <thead>
                   <tr className="bg-gray-50 dark:bg-gray-800 border-b border-[var(--border-color)]">

@@ -154,7 +154,7 @@ export default function SuperAdminApprovals() {
               {users.length === 0 ? (
                 <p className={`${muted} text-center py-6`}>{t("legacy.noUsers", "لا يوجد مستخدمون")}</p>
               ) : (
-                <div className={`${card} border ${border} rounded-xl overflow-hidden`}>
+                <div className={`${card} border ${border} rounded-xl overflow-x-auto`}>
                   <table className="w-full text-sm">
                     <thead>
                       <tr className={isDark ? "bg-white/5" : "bg-black/5"}>

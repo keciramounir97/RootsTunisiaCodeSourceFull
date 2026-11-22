@@ -48,7 +48,7 @@ export default function AdminHeader({
         </button>
       </div>
 
-      <div className="flex-1 max-w-md mx-2 sm:mx-6 flex justify-center">
+      <div className="hidden sm:flex flex-1 max-w-md mx-2 sm:mx-6 justify-center">
         <form onSubmit={handleSearch} className="w-full max-w-sm flex items-center gap-2 rounded border border-[var(--border)] bg-[var(--background)]/60 px-3 py-1.5 focus-within:border-[var(--gold)] transition-colors">
           <Search className="h-3.5 w-3.5 text-[var(--muted-foreground)] shrink-0" />
           <input

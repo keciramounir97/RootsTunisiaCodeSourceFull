@@ -459,7 +459,7 @@ export default function UserUpgrade() {
             </div>
           </div>
 
-          <div className="admin-data-card rounded-2xl border overflow-hidden shadow-sm">
+          <div className="admin-data-card rounded-2xl border overflow-x-auto shadow-sm">
             <table className="w-full text-sm text-gray-900 dark:text-white">
               <thead>
                 <tr className="border-b border-[var(--border-color)] bg-[var(--paper-color)]">

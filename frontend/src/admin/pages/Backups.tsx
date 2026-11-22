@@ -54,7 +54,7 @@ export default function Backups() {
 
       {message && <p className="text-sm opacity-75">{message}</p>}
 
-      <div className="overflow-hidden rounded-2xl border border-[var(--border-color)]">
+      <div className="overflow-x-auto rounded-2xl border border-[var(--border-color)]">
         <table className="w-full text-sm">
           <thead>
             <tr className="bg-[var(--paper-color)] ltr:text-start rtl:text-end">
