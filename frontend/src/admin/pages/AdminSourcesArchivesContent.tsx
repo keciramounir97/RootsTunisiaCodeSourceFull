@@ -1386,15 +1386,15 @@ export default function AdminSourcesArchivesContent() {
                   onChange={(e) => setLocIcon(e.target.value)}
                   className="w-full bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] rounded-lg px-3 py-2 text-xs focus:border-[var(--gold)] outline-none"
                 >
-                  <option value="Landmark">Landmark (Monuments & Dépôts d'État)</option>
-                  <option value="Building2">Building2 (Bâtiments & Ministères)</option>
-                  <option value="Ship">Ship (Navires, Marins & Ports)</option>
-                  <option value="Shield">Shield (Armoiries & Protection)</option>
-                  <option value="Crown">Crown (Royaumes & Monarchies)</option>
-                  <option value="Scroll">Scroll (Parchemins & Manuscrits Juifs)</option>
-                  <option value="Moon">Moon (Croissant Ottoman & Islamique)</option>
-                  <option value="Globe">Globe (Maghreb & International)</option>
-                  <option value="FolderArchive">FolderArchive (Dossier d'Archives)</option>
+                  <option value="Landmark">{t("opt_icon_landmark_state", "Landmark (Monuments & Dépôts d'État)")}</option>
+                  <option value="Building2">{t("opt_icon_building2", "Building2 (Bâtiments & Ministères)")}</option>
+                  <option value="Ship">{t("opt_icon_ship", "Ship (Navires, Marins & Ports)")}</option>
+                  <option value="Shield">{t("opt_icon_shield_arms", "Shield (Armoiries & Protection)")}</option>
+                  <option value="Crown">{t("opt_icon_crown_monarchy", "Crown (Royaumes & Monarchies)")}</option>
+                  <option value="Scroll">{t("opt_icon_scroll_jewish", "Scroll (Parchemins & Manuscrits Juifs)")}</option>
+                  <option value="Moon">{t("opt_icon_moon_ottoman", "Moon (Croissant Ottoman & Islamique)")}</option>
+                  <option value="Globe">{t("opt_icon_globe_maghreb", "Globe (Maghreb & International)")}</option>
+                  <option value="FolderArchive">{t("opt_icon_folder_archive", "FolderArchive (Dossier d'Archives)")}</option>
                 </select>
               </div>
 

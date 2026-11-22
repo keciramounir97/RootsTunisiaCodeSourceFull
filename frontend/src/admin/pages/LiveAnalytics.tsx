@@ -205,15 +205,15 @@ export default function LiveAnalytics() {
           <h2 className="font-semibold">{t("google_analytics_link", "Google Analytics & Search Console")}</h2>
           <dl className="text-sm space-y-2">
             <div className="flex justify-between gap-3">
-              <dt className="text-[var(--muted-foreground)]">Measurement ID</dt>
+              <dt className="text-[var(--muted-foreground)]">{t("measurement_id", "Measurement ID")}</dt>
               <dd className="font-mono">{config?.measurementId || t("not_set", "Not set")}</dd>
             </div>
             <div className="flex justify-between gap-3">
-              <dt className="text-[var(--muted-foreground)]">GA4 Property ID</dt>
+              <dt className="text-[var(--muted-foreground)]">{t("ga4_property_id", "GA4 Property ID")}</dt>
               <dd className="font-mono">{config?.propertyId || t("not_set", "Not set")}</dd>
             </div>
             <div className="flex justify-between gap-3">
-              <dt className="text-[var(--muted-foreground)]">Data API</dt>
+              <dt className="text-[var(--muted-foreground)]">{t("data_api", "Data API")}</dt>
               <dd>{config?.dataApiConfigured ? t("connected", "Connected") : t("pending_setup", "Pending setup")}</dd>
             </div>
           </dl>

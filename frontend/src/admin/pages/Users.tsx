@@ -956,7 +956,7 @@ export default function UsersPage() {
                         onChange={(e) => setForm((s) => ({ ...s, phone: e.target.value }))}
                         className={`heritage-input w-full pl-9 pr-3.5 py-2 rounded-xl border text-sm ${inputBg} ${inputText} ${border}
                         focus:outline-none focus:ring-2 focus:ring-[var(--brand-gold)]/30`}
-                        placeholder="+216 20 000 000"
+                        placeholder={t("ph_phone_tunisia", "+216 20 000 000")}
                         disabled={saving}
                       />
                     </div>
@@ -1013,9 +1013,9 @@ export default function UsersPage() {
                       focus:outline-none focus:ring-2 focus:ring-[var(--brand-gold)]/30 cursor-pointer`}
                       disabled={saving}
                     >
-                      <option value={2}>Utilisateur (Membre Standard)</option>
-                      <option value={1}>Administrateur (Gestionnaire de Pages)</option>
-                      {isSuperAdmin && <option value={3}>Super Administrateur (Accès Total)</option>}
+                      <option value={2}>{t("user_standard_member", "Utilisateur (Membre Standard)")}</option>
+                      <option value={1}>{t("admin_page_manager", "Administrateur (Gestionnaire de Pages)")}</option>
+                      {isSuperAdmin && <option value={3}>{t("super_admin_full_access", "Super Administrateur (Accès Total)")}</option>}
                     </select>
                   </div>
 
@@ -1220,7 +1220,7 @@ export default function UsersPage() {
                         onChange={(e) => setEditForm((s) => ({ ...s, phone: e.target.value }))}
                         className={`heritage-input w-full pl-9 pr-3.5 py-2 rounded-xl border text-sm ${inputBg} ${inputText} ${border}
                         focus:outline-none focus:ring-2 focus:ring-[var(--brand-gold)]/30`}
-                        placeholder="+216 ..."
+                        placeholder={t("ph_phone_tunisia_short", "+216 ...")}
                         disabled={saving}
                       />
                     </div>

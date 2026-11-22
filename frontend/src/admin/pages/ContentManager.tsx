@@ -355,10 +355,10 @@ function HtmlField({ field, lang, dir, onChange, onReset, t }: FieldEditorProps)
   };
 
   const tools = [
-    { icon: Bold, label: "Bold", run: () => wrap("<strong>", "</strong>") },
-    { icon: Italic, label: "Italic", run: () => wrap("<em>", "</em>") },
-    { icon: ListIcon, label: "List", run: () => wrap("<ul>\n  <li>", "</li>\n</ul>", "item") },
-    { icon: Link2, label: "Link", run: addLink },
+    { icon: Bold, label: t("rich_text_bold", "Bold"), run: () => wrap("<strong>", "</strong>") },
+    { icon: Italic, label: t("rich_text_italic", "Italic"), run: () => wrap("<em>", "</em>") },
+    { icon: ListIcon, label: t("rich_text_list", "List"), run: () => wrap("<ul>\n  <li>", "</li>\n</ul>", "item") },
+    { icon: Link2, label: t("rich_text_link", "Link"), run: addLink },
   ];
 
   return (

@@ -2142,11 +2142,11 @@ export default function AdminPeriods() {
                   onChange={(e) => setCatIcon(e.target.value)}
                   className="w-full bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] rounded-lg px-3 py-2 text-xs focus:border-[var(--gold)] outline-none"
                 >
-                  <option value="Landmark">Landmark (Antiquité & Monuments)</option>
-                  <option value="Crown">Crown (Dynasties & Royaumes)</option>
-                  <option value="Scroll">Scroll (Régence & Traités)</option>
-                  <option value="Shield">Shield (République & Institutions)</option>
-                  <option value="History">History (Chronologie)</option>
+                  <option value="Landmark">{t("opt_icon_landmark", "Landmark (Antiquité & Monuments)")}</option>
+                  <option value="Crown">{t("opt_icon_crown", "Crown (Dynasties & Royaumes)")}</option>
+                  <option value="Scroll">{t("opt_icon_scroll", "Scroll (Régence & Traités)")}</option>
+                  <option value="Shield">{t("opt_icon_shield", "Shield (République & Institutions)")}</option>
+                  <option value="History">{t("opt_icon_history", "History (Chronologie)")}</option>
                 </select>
               </div>
 
@@ -2226,10 +2226,10 @@ export default function AdminPeriods() {
                 >
                   <option value="all">{t("all_types", "Tous les types")}</option>
                   <option value="document">{t("documents", "Documents")}</option>
-                  <option value="book">Livres & Manuscrits</option>
-                  <option value="tree">Arbres Généalogiques</option>
+                  <option value="book">{t("books_and_manuscripts", "Livres & Manuscrits")}</option>
+                  <option value="tree">{t("genealogical_trees", "Arbres Généalogiques")}</option>
                   <option value="gallery">{t("gallery_photos", "Photos Galerie")}</option>
-                  <option value="audio">Récits Audio</option>
+                  <option value="audio">{t("audio_recordings", "Récits Audio")}</option>
                 </select>
               </div>
 

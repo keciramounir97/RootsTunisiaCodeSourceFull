@@ -632,7 +632,7 @@ export default function AdminManagement({
                     value={form.phone}
                     onChange={(e) => setForm({ ...form, phone: e.target.value })}
                     className={`w-full px-4 py-3 rounded-lg ${inputBg} border ${border} ${textColor} outline-none focus:border-[#d9a441]`}
-                    placeholder="+21600000000"
+                    placeholder={t("ph_phone_tunisia_raw", "+21600000000")}
                   />
                 </div>
               </div>

@@ -1457,17 +1457,17 @@ export default function SinglePageContentManager({ pageId }: { pageId: string })
                       {/* Change Background Button Overlay */}
                       <button
                         type="button"
-                        onClick={() => openMediaPicker("hero", "image", "Image de fond de la bannière")}
+                        onClick={() => openMediaPicker("hero", "image", t("hero_background_image", "Image de fond de la bannière"))}
                         className="absolute top-4 end-4 px-3 py-1.5 rounded-xl text-xs font-bold bg-black/85 text-amber-300 border border-amber-400/40 opacity-0 group-hover/hero:opacity-100 transition-opacity flex items-center gap-1.5 hover:bg-black cursor-pointer shadow-lg z-20"
                       >
                         <ImageIcon className="w-3.5 h-3.5 text-[var(--gold)]" />
-                        <span>Changer l'image de fond (Tunisie)</span>
+                        <span>{t("change_background_image_tunisia", "Changer l'image de fond (Tunisie)")}</span>
                       </button>
 
                       <div className="relative z-10 max-w-3xl space-y-4 mx-auto flex flex-col items-center">
                         {/* Eyebrow / Badge */}
                         <div
-                          onClick={() => handleCanvasElementClick("hero", "eyebrow", "Badge / Surtitre")}
+                          onClick={() => handleCanvasElementClick("hero", "eyebrow", t("badge_eyebrow", "Badge / Surtitre"))}
                           className="group/item relative cursor-pointer"
                           title={t("click_to_edit_badge", "Cliquer pour modifier le badge")}
                         >

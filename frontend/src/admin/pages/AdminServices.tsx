@@ -431,10 +431,10 @@ export default function AdminServicesPage() {
                     <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/25 text-xs font-bold text-emerald-600 dark:text-emerald-400 flex items-center justify-between">
                       <span className="flex items-center gap-1.5">
                         <Video className="w-3.5 h-3.5" />
-                        <span>Rendez-vous & Consultation Gratuite</span>
+                        <span>{t("free_consultation_appointment", "Rendez-vous & Consultation Gratuite")}</span>
                       </span>
                       <span className="text-[0.7rem] font-semibold text-[var(--foreground)]/70">
-                        Sur Devis
+                        {t("quote_on_demand", "Sur Devis")}
                       </span>
                     </div>
 
@@ -447,13 +447,13 @@ export default function AdminServicesPage() {
                       {svc.contact_phone && (
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25">
                           <MessageCircle className="w-3 h-3" />
-                          <span>WhatsApp</span>
+                          <span>{t("whatsapp", "WhatsApp")}</span>
                         </span>
                       )}
                       {svc.contact_email && (
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/25">
                           <Mail className="w-3 h-3" />
-                          <span>Email</span>
+                          <span>{t("email", "Email")}</span>
                         </span>
                       )}
                       {hasMeeting && (
@@ -466,8 +466,8 @@ export default function AdminServicesPage() {
 
                     {/* Booking Count Info */}
                     <div className="pt-2 flex items-center justify-between text-xs text-[var(--foreground)]/70">
-                      <span>Réservations reçues :</span>
-                      <strong className="text-[var(--gold)] font-mono">{bCount} dossier{bCount > 1 ? "s" : ""}</strong>
+                      <span>{t("received_bookings", "Réservations reçues :")}</span>
+                      <strong className="text-[var(--gold)] font-mono">{bCount} {bCount > 1 ? t("service_files_plural", "dossiers") : t("service_file_singular", "dossier")}</strong>
                     </div>
                   </div>
 
@@ -550,7 +550,7 @@ export default function AdminServicesPage() {
                   />
                 </div>
                 <div>
-                  <label className="block font-semibold mb-1">Identifiant URL (Slug optionnel)</label>
+                  <label className="block font-semibold mb-1">{t("service_slug_optional", "Identifiant URL (Slug optionnel)")}</label>
                   <input
                     type="text"
                     value={formData.slug}
@@ -564,7 +564,7 @@ export default function AdminServicesPage() {
               {/* Category & Order Index */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-semibold mb-1">Catégorie de la Prestation</label>
+                  <label className="block font-semibold mb-1">{t("service_category_label", "Catégorie de la Prestation")}</label>
                   <input
                     type="text"
                     value={formData.category}
@@ -587,7 +587,7 @@ export default function AdminServicesPage() {
 
               {/* Short Description */}
               <div>
-                <label className="block font-semibold mb-1">Description courte (affichée sur la carte)</label>
+                <label className="block font-semibold mb-1">{t("service_short_desc_label", "Description courte (affichée sur la carte)")}</label>
                 <textarea
                   rows={2}
                   value={formData.description}
@@ -599,7 +599,7 @@ export default function AdminServicesPage() {
 
               {/* Full Offer Description */}
               <div>
-                <label className="block font-semibold mb-1">Présentation détaillée de l'offre</label>
+                <label className="block font-semibold mb-1">{t("service_full_offer_label", "Présentation détaillée de l'offre")}</label>
                 <textarea
                   rows={3}
                   value={formData.full_offer}
@@ -612,13 +612,13 @@ export default function AdminServicesPage() {
               {/* Deliverables (One per line) */}
               <div>
                 <label className="block font-semibold mb-1">
-                  Livrables & Engagements inclus (un point par ligne)
+                  {t("service_deliverables_label", "Livrables & Engagements inclus (un point par ligne)")}
                 </label>
                 <textarea
                   rows={3}
                   value={formData.deliverablesText}
                   onChange={(e) => setFormData({ ...formData, deliverablesText: e.target.value })}
-                  placeholder="Ex:&#10;Consultation préliminaire de faisabilité&#10;Vérification des cotes physiques&#10;Rapport archivistique officiel"
+                  placeholder={t("ph_service_deliv_ex", "Ex:\nConsultation préliminaire de faisabilité\nVérification des cotes physiques\nRapport archivistique officiel")}
                   className="w-full p-2.5 rounded-lg border border-[var(--gold)]/35 bg-[var(--background)] font-mono text-[0.75rem]"
                 />
               </div>
@@ -627,12 +627,12 @@ export default function AdminServicesPage() {
               <div className="p-3.5 rounded-xl border border-[var(--gold)]/30 bg-[var(--gold)]/5 space-y-3">
                 <p className="font-bold text-[var(--gold)] uppercase tracking-wider text-[0.7rem] flex items-center gap-1.5">
                   <Phone className="w-3.5 h-3.5" />
-                  <span>Canaux de Contact & Réservation de Rendez-vous</span>
+                  <span>{t("contact_booking_channels", "Canaux de Contact & Réservation de Rendez-vous")}</span>
                 </p>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="block font-semibold mb-1">Numéro WhatsApp de contact</label>
+                    <label className="block font-semibold mb-1">{t("whatsapp_contact_number", "Numéro WhatsApp de contact")}</label>
                     <input
                       type="text"
                       value={formData.contact_phone}
