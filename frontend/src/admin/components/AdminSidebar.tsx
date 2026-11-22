@@ -320,11 +320,7 @@ export default function AdminSidebar({
             <div className="flex-1 min-w-0">
               <p className="text-xs font-bold text-[var(--foreground)] truncate">{user?.name || "Admin"}</p>
               <p className="text-[0.65rem] text-[var(--gold)] uppercase tracking-[0.14em] font-semibold">
-                {isSuperAdmin
-                  ? t("super_admin", "Super Admin")
-                  : normalizedRole === 2
-                  ? t("user_account", "Espace Utilisateur")
-                  : t("researcher", "Researcher")}
+                {isSuperAdmin ? t("super_admin", "Super Admin") : t("researcher", "Researcher")}
               </p>
             </div>
           </div>

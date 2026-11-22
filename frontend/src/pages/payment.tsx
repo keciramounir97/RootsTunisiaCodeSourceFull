@@ -184,7 +184,7 @@ export default function Payment() {
               {t("confirm_your_plan", "تفاصيل الخطة والدفع")}
             </h1>
             <p className="text-xs sm:text-sm text-[var(--muted-foreground)] max-w-lg mx-auto">
-              {t("checkout_subtitle", "اختر وسيلة الدفع المناسبة واطلع على بيانات الحساب المعتمدة مباشرة من إدارة المنصة.")}
+              {t("checkout_subtitle", "Choisissez votre moyen de paiement et consultez les coordonnées bancaires officielles validées par la plateforme.")}
             </p>
           </div>
 
@@ -202,7 +202,7 @@ export default function Payment() {
                   {tierName} {t("plan", "Plan")}
                 </h3>
                 <span className="text-xs text-[var(--muted-foreground)]">
-                  {isAnnual ? t("billed_annually", "فاتورة سنوية (شهرين مجاناً)") : t("billed_monthly", "فاتورة شهرية")}
+                  {isAnnual ? t("billed_annually", "Facturation annuelle (2 mois offerts)") : t("billed_monthly", "Facturation mensuelle")}
                 </span>
               </div>
             </div>
@@ -241,7 +241,7 @@ export default function Payment() {
                 <span>{t("select_payment_method", "اختر وسيلة الدفع المعتمدة")}</span>
               </h3>
               <span className="text-[0.68rem] text-[var(--muted-foreground)]">
-                {paymentMethods.length} {t("methods_available", "طرق متاحة")}
+                {paymentMethods.length} {t("methods_available", "Moyens disponibles")}
               </span>
             </div>
 
@@ -251,7 +251,7 @@ export default function Payment() {
               </div>
             ) : paymentMethods.length === 0 ? (
               <div className="p-6 text-center text-sm rounded-xl border border-[var(--border)] text-[var(--muted-foreground)]">
-                {t("no_payment_methods_active", "يرجى التواصل مع الدعم الفني لإتمام الدفع.")}
+                {t("no_payment_methods_active", "Veuillez contacter le support pour finaliser votre règlement.")}
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -301,7 +301,7 @@ export default function Payment() {
                     className="btn-base btn-outline-light text-[0.7rem] py-1 px-2.5 flex items-center gap-1.5 cursor-pointer"
                   >
                     {copiedField ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
-                    <span>{copiedField ? t("copied", "تم النسخ!") : t("copy_coordinates", "نسخ البيانات")}</span>
+                    <span>{copiedField ? t("copied", "Copié !") : t("copy_coordinates", "نسخ البيانات")}</span>
                   </button>
                 </div>
 
@@ -314,7 +314,7 @@ export default function Payment() {
                 {selectedMethod.instructions && (
                   <div className="p-3.5 rounded-lg bg-[var(--gold)]/10 border border-[var(--gold)]/25 text-xs text-[var(--foreground)] space-y-1">
                     <strong className="text-[var(--gold)] font-bold block">
-                      💡 {t("payment_instructions_title", "تعليمات الإيداع والتحويل")}:
+                      💡 {t("payment_instructions_title", "Instructions de dépôt et de virement")}:
                     </strong>
                     <p className="text-[var(--muted-foreground)] leading-relaxed">
                       {selectedMethod.instructions}
@@ -388,10 +388,10 @@ export default function Payment() {
           <div className="pt-4 border-t border-[var(--gold)]/20 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[var(--muted-foreground)]">
             <div className="flex items-center gap-2">
               <ShieldCheck className="h-4 w-4 text-[var(--gold)] shrink-0" />
-              <span>{t("secure_verified_payment", "دفع آمن معتمد ومراجع يدوياً من إدارة المنصة")}</span>
+              <span>{t("secure_verified_payment", "Paiement sécurisé et vérifié manuellement par l'administration de la plateforme")}</span>
             </div>
             <Link to="/refund" target="_blank" className="text-[var(--gold)] hover:underline">
-              {t("refund_policy_link", "سياسة الاسترجاع والإلغاء")}
+              {t("refund_policy_link", "Politique de remboursement & d'annulation")}
             </Link>
           </div>
         </div>
