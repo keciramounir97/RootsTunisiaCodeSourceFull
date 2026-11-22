@@ -492,7 +492,7 @@ export default function SubscriptionPayments() {
                         >
                           <img
                             src={payment.proof_url}
-                            alt="Receipt Preview"
+                            alt={t("receipt_preview_title", "Receipt Preview")}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                             onError={(e) => {
                               (e.target as HTMLImageElement).style.display = "none";
@@ -691,7 +691,7 @@ export default function SubscriptionPayments() {
             <div className="overflow-auto max-h-[82vh] flex items-center justify-center">
               <img
                 src={activeProofModal}
-                alt="Full Payment Proof"
+                alt={t("full_payment_proof_title", "Full Payment Proof")}
                 className="max-w-full max-h-[80vh] object-contain rounded-lg"
               />
             </div>

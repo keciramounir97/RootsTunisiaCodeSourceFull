@@ -812,7 +812,7 @@ export default function UsersPage() {
                             </span>
                           </span>
                         ) : (
-                          <span className="text-xs opacity-40">Standard</span>
+                          <span className="text-xs opacity-40">{t("role_standard", "Standard")}</span>
                         )}
                       </td>
 
@@ -922,7 +922,7 @@ export default function UsersPage() {
                       required
                       className={`heritage-input w-full px-3.5 py-2 rounded-xl border text-sm ${inputBg} ${inputText} ${border}
                       focus:outline-none focus:ring-2 focus:ring-[var(--brand-gold)]/30`}
-                      placeholder="Ex: Mohamed Ben Salah"
+                      placeholder={t("ph_user_name", "Ex: Mohamed Ben Salah")}
                       disabled={saving}
                     />
                   </label>
@@ -938,7 +938,7 @@ export default function UsersPage() {
                       type="email"
                       className={`heritage-input w-full px-3.5 py-2 rounded-xl border text-sm ${inputBg} ${inputText} ${border}
                       focus:outline-none focus:ring-2 focus:ring-[var(--brand-gold)]/30`}
-                      placeholder="nom@exemple.com"
+                      placeholder={t("ph_user_email", "nom@exemple.com")}
                       disabled={saving}
                     />
                   </label>
@@ -974,7 +974,7 @@ export default function UsersPage() {
                         type={showPassword ? "text" : "password"}
                         className={`heritage-input w-full pl-9 pr-10 py-2 rounded-xl border text-sm ${inputBg} ${inputText} ${border}
                         focus:outline-none focus:ring-2 focus:ring-[var(--brand-gold)]/30`}
-                        placeholder="Min. 6 caractères (ou laisser vide)"
+                        placeholder={t("ph_user_password_opt", "Min. 6 caractères (ou laisser vide)")}
                         disabled={saving}
                       />
                       <button
@@ -1239,7 +1239,7 @@ export default function UsersPage() {
                       type={showEditPassword ? "text" : "password"}
                       className={`heritage-input w-full pl-9 pr-10 py-2 rounded-xl border text-sm ${inputBg} ${inputText} ${border}
                       focus:outline-none focus:ring-2 focus:ring-[var(--brand-gold)]/30`}
-                      placeholder="Laisser vide pour ne pas modifier"
+                      placeholder={t("ph_user_password_keep", "Laisser vide pour ne pas modifier")}
                       disabled={saving}
                     />
                     <button
@@ -1274,9 +1274,9 @@ export default function UsersPage() {
                       focus:outline-none focus:ring-2 focus:ring-[var(--brand-gold)]/30 cursor-pointer`}
                       disabled={saving}
                     >
-                      <option value={2}>Utilisateur</option>
-                      <option value={1}>Administrateur</option>
-                      {isSuperAdmin && <option value={3}>Super Administrateur</option>}
+                      <option value={2}>{t("role_user", "Utilisateur")}</option>
+                      <option value={1}>{t("role_admin", "Administrateur")}</option>
+                      {isSuperAdmin && <option value={3}>{t("role_super_admin", "Super Administrateur")}</option>}
                     </select>
                   </div>
 
@@ -1314,8 +1314,8 @@ export default function UsersPage() {
                       focus:outline-none focus:ring-2 focus:ring-[var(--brand-gold)]/30 cursor-pointer`}
                       disabled={saving}
                     >
-                      <option value="active">Actif</option>
-                      <option value="pending">En attente</option>
+                      <option value="active">{t("status_active", "Actif")}</option>
+                      <option value="pending">{t("status_pending", "En attente")}</option>
                       <option value="disabled">Désactivé</option>
                     </select>
                   </div>

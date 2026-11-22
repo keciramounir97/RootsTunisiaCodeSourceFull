@@ -851,7 +851,7 @@ export default function SinglePageContentManager({ pageId }: { pageId: string })
     return (
       <div className="flex flex-col items-center justify-center min-h-[500px] space-y-4">
         <Loader2 className="w-12 h-12 text-[var(--gold)] animate-spin" />
-        <p className="font-mono text-base text-[var(--gold)]">Chargement du Studio CMS de Tunisie...</p>
+        <p className="font-mono text-base text-[var(--gold)]">{t("loading_studio_cms", "Chargement du Studio CMS de Tunisie...")}</p>
       </div>
     );
   }
@@ -860,7 +860,7 @@ export default function SinglePageContentManager({ pageId }: { pageId: string })
     return (
       <div className="p-8 text-center border border-[var(--gold)]/30 rounded-xl bg-[var(--card)] text-sm text-[var(--muted-foreground)]">
         <AlertCircle className="w-8 h-8 text-[var(--gold)] mx-auto mb-2 opacity-70" />
-        <p>Page introuvable dans le gestionnaire de contenu.</p>
+        <p>{t("page_not_found_cms", "Page introuvable dans le gestionnaire de contenu.")}</p>
       </div>
     );
   }
@@ -916,7 +916,7 @@ export default function SinglePageContentManager({ pageId }: { pageId: string })
             {pageDropdownOpen && (
               <div className="absolute top-full start-0 mt-2 w-72 sm:w-84 rounded-2xl border border-slate-700 bg-[#0f1a2d] shadow-2xl p-2 z-50 animate-in fade-in zoom-in-95 duration-150">
                 <div className="px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-[var(--gold)] border-b border-slate-800 flex items-center justify-between">
-                  <span>Navigation Rapide Studio</span>
+                  <span>{t("studio_quick_nav", "Navigation Rapide Studio")}</span>
                   <span className="font-mono text-slate-500">14 Pages</span>
                 </div>
                 <div className="max-h-80 overflow-y-auto py-1 space-y-0.5 scrollbar-thin">
@@ -960,7 +960,7 @@ export default function SinglePageContentManager({ pageId }: { pageId: string })
                   ? "bg-[var(--gold)] text-black shadow-md"
                   : "text-slate-300 hover:text-white hover:bg-slate-800"
               }`}
-              title="Studio Interactif avec modification en direct"
+              title={t("studio_interactive_mode", "Studio Interactif avec modification en direct")}
             >
               <Layout className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Studio Éditeur</span>
@@ -973,10 +973,10 @@ export default function SinglePageContentManager({ pageId }: { pageId: string })
                   ? "bg-[var(--gold)] text-black shadow-md"
                   : "text-slate-300 hover:text-white hover:bg-slate-800"
               }`}
-              title="Aperçu réel de la page en ligne"
+              title={t("live_page_preview", "Aperçu réel de la page en ligne")}
             >
               <Globe className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Vraie Page Publique</span>
+              <span className="hidden sm:inline">{t("real_public_page", "Vraie Page Publique")}</span>
             </button>
           </div>
 
@@ -985,7 +985,7 @@ export default function SinglePageContentManager({ pageId }: { pageId: string })
             <button
               type="button"
               onClick={() => setDeviceMode("desktop")}
-              title="Écran Ordinateur (100%)"
+              title={t("desktop_screen", "Écran Ordinateur (100%)")}
               className={`p-1.5 rounded-lg text-xs transition ${
                 deviceMode === "desktop" ? "bg-slate-700 text-white shadow-xs" : "text-slate-400 hover:text-white"
               }`}
@@ -995,7 +995,7 @@ export default function SinglePageContentManager({ pageId }: { pageId: string })
             <button
               type="button"
               onClick={() => setDeviceMode("tablet")}
-              title="Écran Tablette (768px)"
+              title={t("tablet_screen", "Écran Tablette (768px)")}
               className={`p-1.5 rounded-lg text-xs transition ${
                 deviceMode === "tablet" ? "bg-slate-700 text-white shadow-xs" : "text-slate-400 hover:text-white"
               }`}
@@ -1005,7 +1005,7 @@ export default function SinglePageContentManager({ pageId }: { pageId: string })
             <button
               type="button"
               onClick={() => setDeviceMode("mobile")}
-              title="Écran Mobile (375px)"
+              title={t("mobile_screen", "Écran Mobile (375px)")}
               className={`p-1.5 rounded-lg text-xs transition ${
                 deviceMode === "mobile" ? "bg-slate-700 text-white shadow-xs" : "text-slate-400 hover:text-white"
               }`}
@@ -1038,7 +1038,7 @@ export default function SinglePageContentManager({ pageId }: { pageId: string })
               type="button"
               onClick={handleUndo}
               disabled={!canUndo}
-              title="Annuler (Ctrl+Z)"
+              title={t("undo_shortcut", "Annuler (Ctrl+Z)")}
               className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
             >
               <Undo2 className="w-4 h-4" />
@@ -1047,7 +1047,7 @@ export default function SinglePageContentManager({ pageId }: { pageId: string })
               type="button"
               onClick={handleRedo}
               disabled={!canRedo}
-              title="Rétablir (Ctrl+Y)"
+              title={t("redo_shortcut", "Rétablir (Ctrl+Y)")}
               className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
             >
               <Redo2 className="w-4 h-4" />
@@ -1060,7 +1060,7 @@ export default function SinglePageContentManager({ pageId }: { pageId: string })
               href={meta.publicPath}
               target="_blank"
               rel="noreferrer"
-              title="Ouvrir la page publique réelle"
+              title={t("open_real_public_page", "Ouvrir la page publique réelle")}
               className="p-2 rounded-xl border border-slate-700/80 bg-slate-800/80 text-slate-300 hover:text-white hover:border-[var(--gold)] transition-colors"
             >
               <ExternalLink className="w-4 h-4" />
@@ -1072,7 +1072,7 @@ export default function SinglePageContentManager({ pageId }: { pageId: string })
             type="button"
             onClick={loadContent}
             disabled={!dirty || saving}
-            title="Annuler toutes les modifications non enregistrées"
+            title={t("undo_all_changes", "Annuler toutes les modifications non enregistrées")}
             className="p-2 rounded-xl border border-slate-700/80 bg-slate-800/80 text-slate-300 hover:text-red-400 hover:border-red-500/50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
           >
             <RotateCcw className="w-4 h-4" />
@@ -1131,7 +1131,7 @@ export default function SinglePageContentManager({ pageId }: { pageId: string })
                 }`}
               >
                 <SlidersHorizontal className="w-3.5 h-3.5" />
-                <span>Inspecteur</span>
+                <span>{t("inspector", "Inspecteur")}</span>
               </button>
             </div>
 
@@ -1164,7 +1164,7 @@ export default function SinglePageContentManager({ pageId }: { pageId: string })
               <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/25 text-amber-200 text-xs flex items-start gap-2.5 leading-relaxed">
                 <Sparkles className="w-4 h-4 text-[var(--gold)] shrink-0 mt-0.5" />
                 <div>
-                  <strong className="block font-bold">Aide pour les Administrateurs :</strong>
+                  <strong className="block font-bold">{t("admin_help_notice", "Aide pour les Administrateurs :")}</strong>
                   Cliquez sur n'importe quelle section ci-dessous ou directement sur le texte de l'aperçu à droite pour le modifier.
                 </div>
               </div>
@@ -1254,7 +1254,7 @@ export default function SinglePageContentManager({ pageId }: { pageId: string })
                           <button
                             type="button"
                             onClick={() => handleCopyFromDefault(activeSection.id, field.key)}
-                            title="Rétablir le modèle ou texte par défaut"
+                            title={t("restore_default_text", "Rétablir le modèle ou texte par défaut")}
                             className="p-1 rounded-md text-slate-400 hover:text-[var(--gold)] hover:bg-slate-800 text-[10px] font-semibold transition"
                           >
                             Modèle
@@ -1282,7 +1282,7 @@ export default function SinglePageContentManager({ pageId }: { pageId: string })
                               className="btn-base btn-gold text-xs py-2 px-3 font-bold flex-1 flex items-center justify-center gap-1.5 cursor-pointer shadow-md"
                             >
                               <ImageIcon className="w-3.5 h-3.5" />
-                              <span>Choisir image de Tunisie</span>
+                              <span>{t("choose_tunisia_image", "Choisir image de Tunisie")}</span>
                             </button>
 
                             <label className="px-3 py-2 rounded-xl border border-slate-700 bg-slate-800 hover:bg-slate-750 text-xs font-semibold text-slate-300 flex items-center justify-center gap-1.5 cursor-pointer transition">
@@ -1305,7 +1305,7 @@ export default function SinglePageContentManager({ pageId }: { pageId: string })
                             type="text"
                             value={typeof rawVal === "string" ? rawVal : ""}
                             onChange={(e) => handleFieldValueChange(activeSection.id, field.key, e.target.value)}
-                            placeholder="Ou collez une URL d'image personnalisée..."
+                            placeholder={t("ph_custom_image_url", "Ou collez une URL d'image personnalisée...")}
                             className={`${inputClass} !py-2 text-xs font-mono`}
                           />
                         </div>
@@ -1316,7 +1316,7 @@ export default function SinglePageContentManager({ pageId }: { pageId: string })
                           rows={5}
                           value={typeof rawVal === "string" ? rawVal : ""}
                           onChange={(e) => handleFieldValueChange(activeSection.id, field.key, e.target.value)}
-                          placeholder="Saisissez votre texte ou contenu..."
+                          placeholder={t("ph_enter_text_content", "Saisissez votre texte ou contenu...")}
                           className={inputClass}
                         />
                       ) : (
@@ -1326,7 +1326,7 @@ export default function SinglePageContentManager({ pageId }: { pageId: string })
                           dir={activeLangObj.dir}
                           value={typeof rawVal === "string" ? rawVal : ""}
                           onChange={(e) => handleFieldValueChange(activeSection.id, field.key, e.target.value)}
-                          placeholder="Saisissez le texte..."
+                          placeholder={t("ph_enter_text", "Saisissez le texte...")}
                           className={inputClass}
                         />
                       )}
@@ -1363,7 +1363,7 @@ export default function SinglePageContentManager({ pageId }: { pageId: string })
                 <iframe
                   key={iframeKey}
                   src={meta.publicPath || "/"}
-                  title="Roots Tunisia Public Preview"
+                  title={t("roots_preview_title", "Roots Tunisia Public Preview")}
                   className={`h-full border-none transition-all duration-300 ${
                     deviceMode === "mobile" ? "w-[375px]" : deviceMode === "tablet" ? "w-[768px]" : "w-full"
                   }`}
@@ -1402,7 +1402,7 @@ export default function SinglePageContentManager({ pageId }: { pageId: string })
                         type="text"
                         dir={activeLangObj.dir}
                         value={inlineQuickEdit.value}
-                        placeholder="Tapez le nouveau texte ici..."
+                        placeholder={t("type_new_text_ph", "Tapez le nouveau texte ici...")}
                         onChange={(e) => {
                           const val = e.target.value;
                           setInlineQuickEdit((prev) => (prev ? { ...prev, value: val } : null));
@@ -1413,7 +1413,7 @@ export default function SinglePageContentManager({ pageId }: { pageId: string })
                       <button
                         type="button"
                         onClick={() => setInlineQuickEdit(null)}
-                        title="Valider"
+                        title={t("validate_btn", "Valider")}
                         className="p-1.5 rounded-lg bg-[var(--gold)] text-black font-bold text-xs hover:scale-105 transition-transform shrink-0 cursor-pointer shadow-md"
                       >
                         <Check className="w-4 h-4" />
@@ -1421,7 +1421,7 @@ export default function SinglePageContentManager({ pageId }: { pageId: string })
                       <button
                         type="button"
                         onClick={() => setInlineQuickEdit(null)}
-                        title="Fermer"
+                        title={t("close", "Fermer")}
                         className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition shrink-0 cursor-pointer"
                       >
                         <X className="w-4 h-4" />
@@ -1469,7 +1469,7 @@ export default function SinglePageContentManager({ pageId }: { pageId: string })
                         <div
                           onClick={() => handleCanvasElementClick("hero", "eyebrow", "Badge / Surtitre")}
                           className="group/item relative cursor-pointer"
-                          title="Cliquer pour modifier le badge"
+                          title={t("click_to_edit_badge", "Cliquer pour modifier le badge")}
                         >
                           <span className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-xs font-mono font-bold tracking-widest uppercase bg-amber-400/10 text-amber-300 border border-amber-300/30 group-hover/item:ring-2 group-hover/item:ring-[var(--gold)] group-hover/item:bg-amber-400/20 transition-all">
                             <span>{heroEyebrow}</span>
@@ -1481,7 +1481,7 @@ export default function SinglePageContentManager({ pageId }: { pageId: string })
                         <div
                           onClick={() => handleCanvasElementClick("hero", "title", "Titre principal (H1)")}
                           className="group/item relative cursor-pointer w-full"
-                          title="Cliquer pour modifier le titre principal"
+                          title={t("click_to_edit_title", "Cliquer pour modifier le titre principal")}
                         >
                           <h1 className="font-serif font-black text-2xl sm:text-4xl lg:text-5xl text-amber-50 tracking-wide leading-tight group-hover/item:text-[var(--gold)] transition-colors p-1 rounded-xl group-hover/item:ring-2 group-hover/item:ring-[var(--gold)]/60 group-hover/item:bg-black/30">
                             {heroTitle}
@@ -1495,7 +1495,7 @@ export default function SinglePageContentManager({ pageId }: { pageId: string })
                         <div
                           onClick={() => handleCanvasElementClick("hero", "subtitle", "Sous-titre")}
                           className="group/item relative cursor-pointer w-full max-w-2xl"
-                          title="Cliquer pour modifier le sous-titre"
+                          title={t("click_to_edit_subtitle", "Cliquer pour modifier le sous-titre")}
                         >
                           <p className="text-xs sm:text-sm text-slate-200 leading-relaxed font-light group-hover/item:text-white transition-colors p-2 rounded-xl group-hover/item:ring-2 group-hover/item:ring-[var(--gold)]/60 group-hover/item:bg-black/30">
                             {heroSubtitle}
@@ -1819,7 +1819,7 @@ export default function SinglePageContentManager({ pageId }: { pageId: string })
                   type="text"
                   value={mediaSearchQuery}
                   onChange={(e) => setMediaSearchQuery(e.target.value)}
-                  placeholder="Rechercher par lieu..."
+                  placeholder={t("search_by_location_ph", "Rechercher par lieu...")}
                   className="w-full ps-9 pe-3 py-1.5 rounded-xl border border-slate-700 bg-slate-900 text-xs text-white outline-none focus:border-[var(--gold)]"
                 />
               </div>
@@ -1858,7 +1858,7 @@ export default function SinglePageContentManager({ pageId }: { pageId: string })
                         className="w-full mt-2 py-1.5 rounded-lg bg-[var(--gold)]/15 group-hover:bg-[var(--gold)] text-[var(--gold)] group-hover:text-black font-bold text-xs transition-colors flex items-center justify-center gap-1.5"
                       >
                         <Check className="w-3.5 h-3.5" />
-                        <span>Choisir cette photo</span>
+                        <span>{t("choose_this_photo", "Choisir cette photo")}</span>
                       </button>
                     </div>
                   </div>

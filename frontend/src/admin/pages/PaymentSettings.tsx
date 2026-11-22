@@ -247,7 +247,7 @@ export default function PaymentSettings() {
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--background)] outline-none focus:border-[var(--gold)]"
-                placeholder="ex: Virement Bancaire BIAT"
+                placeholder={t("ph_payment_bank_wire", "ex: Virement Bancaire BIAT")}
               />
             </label>
             <label className="block text-xs space-y-1">
@@ -265,7 +265,7 @@ export default function PaymentSettings() {
                 value={formData.badge}
                 onChange={(e) => setFormData({ ...formData, badge: e.target.value })}
                 className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--background)] outline-none focus:border-[var(--gold)]"
-                placeholder="ex: Recommandé"
+                placeholder={t("ph_recommended", "ex: Recommandé")}
               />
             </label>
             <label className="block text-xs space-y-1 sm:col-span-2">
@@ -293,7 +293,7 @@ export default function PaymentSettings() {
                 value={formData.fee_note}
                 onChange={(e) => setFormData({ ...formData, fee_note: e.target.value })}
                 className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--background)] outline-none focus:border-[var(--gold)]"
-                placeholder="Sans frais supplémentaires"
+                placeholder={t("no_extra_fees", "Sans frais supplémentaires")}
               />
             </label>
           </div>

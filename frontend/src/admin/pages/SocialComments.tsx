@@ -691,7 +691,7 @@ export default function SocialComments() {
                 className="btn-base btn-gold text-xs py-2 px-3.5 inline-flex items-center gap-1.5 cursor-pointer font-bold shadow-md shrink-0"
               >
                 <Plus className="w-3.5 h-3.5" />
-                <span>Ajouter un Commentaire</span>
+                <span>{t("add_comment_button", "Ajouter un Commentaire")}</span>
               </button>
 
               <div className="text-xs font-semibold opacity-70 px-2">
@@ -935,7 +935,7 @@ export default function SocialComments() {
                 className="btn-base btn-gold text-xs py-2 px-3.5 inline-flex items-center gap-1.5 cursor-pointer font-bold shadow-md shrink-0"
               >
                 <Plus className="w-3.5 h-3.5" />
-                <span>Ajouter un J'aime</span>
+                <span>{t("add_like_button", "Ajouter un J'aime")}</span>
               </button>
 
               <div className="text-xs font-semibold opacity-70 px-2">
@@ -1204,7 +1204,7 @@ export default function SocialComments() {
             <div className="px-6 py-4 border-b border-[var(--border)] flex items-center justify-between">
               <h3 className="font-serif font-bold text-base text-[var(--foreground)] flex items-center gap-2">
                 <MessageSquare className="w-4 h-4 text-[var(--gold)]" />
-                <span>Ajouter un Commentaire</span>
+                <span>{t("add_comment_button", "Ajouter un Commentaire")}</span>
               </h3>
               <button
                 type="button"
@@ -1230,7 +1230,7 @@ export default function SocialComments() {
                     className="w-full bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] rounded-lg px-3 py-2 text-xs focus:border-[var(--gold)] outline-none"
                   >
                     <option value="tree">Arbre Généalogique</option>
-                    <option value="gallery">Photo de Galerie</option>
+                    <option value="gallery">{t("gallery_photo", "Photo de Galerie")}</option>
                     <option value="book">Livre & Manuscrit</option>
                     <option value="document">Document & Sijillat</option>
                     <option value="audio">Récit Audio</option>
@@ -1261,7 +1261,7 @@ export default function SocialComments() {
                   type="text"
                   value={commentFormAuthor}
                   onChange={(e) => setCommentFormAuthor(e.target.value)}
-                  placeholder="Administrateur (ou nom du membre)"
+                  placeholder={t("ph_admin_or_member_name", "Administrateur (ou nom du membre)")}
                   className="w-full bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] rounded-lg px-3.5 py-2 text-xs focus:border-[var(--gold)] outline-none"
                 />
               </div>
@@ -1275,7 +1275,7 @@ export default function SocialComments() {
                   required
                   value={commentFormContent}
                   onChange={(e) => setCommentFormContent(e.target.value)}
-                  placeholder="Écrivez le contenu du commentaire ici..."
+                  placeholder={t("ph_comment_body", "Écrivez le contenu du commentaire ici...")}
                   className="w-full bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] rounded-lg p-3 text-xs focus:border-[var(--gold)] outline-none leading-relaxed"
                 />
               </div>
@@ -1294,7 +1294,7 @@ export default function SocialComments() {
                   className="btn-base btn-gold text-xs py-2 px-5 inline-flex items-center gap-1.5 font-bold cursor-pointer"
                 >
                   {submittingComment ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
-                  <span>Publier le Commentaire</span>
+                  <span>{t("publish_comment_btn", "Publier le Commentaire")}</span>
                 </button>
               </div>
             </form>
@@ -1343,7 +1343,7 @@ export default function SocialComments() {
                   type="text"
                   value={commentFormAuthor}
                   onChange={(e) => setCommentFormAuthor(e.target.value)}
-                  placeholder="Nom de l'auteur"
+                  placeholder={t("ph_author_name", "Nom de l'auteur")}
                   className="w-full bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] rounded-lg px-3.5 py-2 text-xs focus:border-[var(--gold)] outline-none"
                 />
               </div>
@@ -1388,7 +1388,7 @@ export default function SocialComments() {
                   className="btn-base btn-gold text-xs py-2 px-5 inline-flex items-center gap-1.5 font-bold cursor-pointer"
                 >
                   {submittingComment ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle className="w-3.5 h-3.5" />}
-                  <span>Enregistrer les Modifications</span>
+                  <span>{t("save_changes_btn", "Enregistrer les Modifications")}</span>
                 </button>
               </div>
             </form>
@@ -1436,7 +1436,7 @@ export default function SocialComments() {
                   className="w-full bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] rounded-lg px-3 py-2 text-xs focus:border-[var(--gold)] outline-none"
                 >
                   <option value="tree">Arbre Généalogique</option>
-                  <option value="gallery">Photo de Galerie</option>
+                  <option value="gallery">{t("gallery_photo", "Photo de Galerie")}</option>
                   <option value="book">Livre & Manuscrit</option>
                   <option value="document">Document & Sijillat</option>
                   <option value="audio">Récit Audio</option>

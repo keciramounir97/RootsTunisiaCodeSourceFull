@@ -1,3 +1,4 @@
+import { useTranslation } from "../../context/TranslationContext";
 import React, { useState } from "react";
 import {
   Mail,
@@ -28,6 +29,7 @@ import {
 import { api } from "../../api/client";
 
 export default function AdminContactContent() {
+  const { t } = useTranslation();
   const [selectedLocale, setSelectedLocale] = useState<string>("fr");
   const { config, setConfig } = useHelpCenterCmsConfig(selectedLocale);
   const [saving, setSaving] = useState(false);
@@ -329,7 +331,7 @@ export default function AdminContactContent() {
                       onChange={(e) =>
                         setConfig({ ...config, hero: { ...config.hero, image: e.target.value } })
                       }
-                      placeholder="Image par défaut (Sidi Bou Saïd)"
+                      placeholder={t("default_img_sidi_bou_said", "Image par défaut (Sidi Bou Saïd)")}
                       className="flex-1 px-3 py-2 rounded-xl border border-[var(--gold)]/30 bg-[var(--background)] text-xs"
                     />
                     <label className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-[var(--gold)]/40 bg-[var(--gold)]/10 text-xs font-bold text-[var(--gold)] hover:bg-[var(--gold)]/20 cursor-pointer shrink-0">
@@ -367,7 +369,7 @@ export default function AdminContactContent() {
                         },
                       })
                     }
-                    placeholder="Titre (Téléphone)"
+                    placeholder={t("phone_title_ph", "Titre (Téléphone)")}
                     className="w-full px-2.5 py-1.5 rounded-lg border border-[var(--gold)]/30 bg-[var(--background)] text-xs"
                   />
                   <input
@@ -382,7 +384,7 @@ export default function AdminContactContent() {
                         },
                       })
                     }
-                    placeholder="Numéro (+216...)"
+                    placeholder={t("phone_num_ph", "Numéro (+216...)")}
                     className="w-full px-2.5 py-1.5 rounded-lg border border-[var(--gold)]/30 bg-[var(--background)] text-xs font-bold"
                   />
                   <input
@@ -397,7 +399,7 @@ export default function AdminContactContent() {
                         },
                       })
                     }
-                    placeholder="Texte action (Appel direct)"
+                    placeholder={t("call_action_ph", "Texte action (Appel direct)")}
                     className="w-full px-2.5 py-1.5 rounded-lg border border-[var(--gold)]/30 bg-[var(--background)] text-xs"
                   />
                 </div>
@@ -417,7 +419,7 @@ export default function AdminContactContent() {
                         },
                       })
                     }
-                    placeholder="Titre (WhatsApp)"
+                    placeholder={t("whatsapp_title_ph", "Titre (WhatsApp)")}
                     className="w-full px-2.5 py-1.5 rounded-lg border border-[var(--gold)]/30 bg-[var(--background)] text-xs"
                   />
                   <input
@@ -432,7 +434,7 @@ export default function AdminContactContent() {
                         },
                       })
                     }
-                    placeholder="Numéro WhatsApp"
+                    placeholder={t("whatsapp_num_ph", "Numéro WhatsApp")}
                     className="w-full px-2.5 py-1.5 rounded-lg border border-[var(--gold)]/30 bg-[var(--background)] text-xs font-bold"
                   />
                   <input
@@ -447,7 +449,7 @@ export default function AdminContactContent() {
                         },
                       })
                     }
-                    placeholder="Texte action (Chat en direct)"
+                    placeholder={t("whatsapp_action_ph", "Texte action (Chat en direct)")}
                     className="w-full px-2.5 py-1.5 rounded-lg border border-[var(--gold)]/30 bg-[var(--background)] text-xs"
                   />
                 </div>
@@ -467,7 +469,7 @@ export default function AdminContactContent() {
                         },
                       })
                     }
-                    placeholder="Titre (Email Officiel)"
+                    placeholder={t("email_title_ph", "Titre (Email Officiel)")}
                     className="w-full px-2.5 py-1.5 rounded-lg border border-[var(--gold)]/30 bg-[var(--background)] text-xs"
                   />
                   <input
@@ -497,7 +499,7 @@ export default function AdminContactContent() {
                         },
                       })
                     }
-                    placeholder="Texte action (Envoyer un email)"
+                    placeholder={t("email_action_ph", "Texte action (Envoyer un email)")}
                     className="w-full px-2.5 py-1.5 rounded-lg border border-[var(--gold)]/30 bg-[var(--background)] text-xs"
                   />
                 </div>
@@ -517,7 +519,7 @@ export default function AdminContactContent() {
                         },
                       })
                     }
-                    placeholder="Titre (Horaires)"
+                    placeholder={t("hours_title_ph", "Titre (Horaires)")}
                     className="w-full px-2.5 py-1.5 rounded-lg border border-[var(--gold)]/30 bg-[var(--background)] text-xs"
                   />
                   <input
@@ -547,7 +549,7 @@ export default function AdminContactContent() {
                         },
                       })
                     }
-                    placeholder="Badge (Réponse sous 24h)"
+                    placeholder={t("badge_reply_24h_ph", "Badge (Réponse sous 24h)")}
                     className="w-full px-2.5 py-1.5 rounded-lg border border-[var(--gold)]/30 bg-[var(--background)] text-xs"
                   />
                 </div>
@@ -652,7 +654,7 @@ export default function AdminContactContent() {
                     type="text"
                     value={newTopicLabel}
                     onChange={(e) => setNewTopicLabel(e.target.value)}
-                    placeholder="Nouvel objet de demande..."
+                    placeholder={t("new_request_subject_ph", "Nouvel objet de demande...")}
                     className="flex-1 px-3 py-1.5 rounded-xl border border-[var(--gold)]/30 bg-[var(--background)] text-xs"
                   />
                   <button
@@ -661,7 +663,7 @@ export default function AdminContactContent() {
                     className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-[var(--gold)]/20 border border-[var(--gold)]/50 text-xs font-bold text-[var(--gold)] cursor-pointer"
                   >
                     <Plus className="w-3.5 h-3.5" />
-                    <span>Ajouter</span>
+                    <span>{t("add", "Ajouter")}</span>
                   </button>
                 </div>
               </div>

@@ -1,3 +1,4 @@
+import { useTranslation } from "../../context/TranslationContext";
 import React, { useState } from "react";
 import {
   Landmark,
@@ -22,6 +23,7 @@ import {
 } from "../../utils/helpCenterCmsConfig";
 
 export default function AdminAboutContent() {
+  const { t } = useTranslation();
   const [selectedLocale, setSelectedLocale] = useState<string>("fr");
   const { config, setConfig } = useHelpCenterCmsConfig(selectedLocale);
   const [saving, setSaving] = useState(false);
@@ -364,7 +366,7 @@ export default function AdminAboutContent() {
                   className="inline-flex items-center gap-1 px-3 py-1 rounded-xl bg-[var(--gold)]/20 border border-[var(--gold)]/50 text-xs font-bold text-[var(--gold)] cursor-pointer"
                 >
                   <Plus className="w-3.5 h-3.5" />
-                  <span>Ajouter un Pilier</span>
+                  <span>{t("add_pillar", "Ajouter un Pilier")}</span>
                 </button>
               </div>
 
@@ -381,7 +383,7 @@ export default function AdminAboutContent() {
                       },
                     })
                   }
-                  placeholder="Surtitre section"
+                  placeholder={t("section_overtitle_ph", "Surtitre section")}
                   className="px-3 py-1.5 rounded-xl border border-[var(--gold)]/30 bg-[var(--background)] text-xs"
                 />
                 <input
@@ -396,7 +398,7 @@ export default function AdminAboutContent() {
                       },
                     })
                   }
-                  placeholder="Titre section"
+                  placeholder={t("section_title_ph", "Titre section")}
                   className="px-3 py-1.5 rounded-xl border border-[var(--gold)]/30 bg-[var(--background)] text-xs font-bold"
                 />
               </div>
@@ -412,14 +414,14 @@ export default function AdminAboutContent() {
                         type="text"
                         value={c.title}
                         onChange={(e) => updateCorpus(idx, "title", e.target.value)}
-                        placeholder="Titre du pilier"
+                        placeholder={t("pillar_title_ph", "Titre du pilier")}
                         className="flex-1 px-2.5 py-1.5 rounded-lg border border-[var(--gold)]/30 bg-[var(--background)] text-xs font-bold"
                       />
                       <input
                         type="text"
                         value={c.meta}
                         onChange={(e) => updateCorpus(idx, "meta", e.target.value)}
-                        placeholder="Époque (ex: 1886 – Aujourd'hui)"
+                        placeholder={t("ph_pillar_era_ex", "Époque (ex: 1886 – Aujourd'hui)")}
                         className="w-40 px-2.5 py-1.5 rounded-lg border border-[var(--gold)]/30 bg-[var(--background)] text-[11px] text-[var(--gold)] font-semibold"
                       />
                       <button
@@ -434,14 +436,14 @@ export default function AdminAboutContent() {
                       rows={2}
                       value={c.desc}
                       onChange={(e) => updateCorpus(idx, "desc", e.target.value)}
-                      placeholder="Description du corpus..."
+                      placeholder={t("corpus_desc_ph", "Description du corpus...")}
                       className="w-full px-2.5 py-1.5 rounded-lg border border-[var(--gold)]/30 bg-[var(--background)] text-xs"
                     />
                     <input
                       type="text"
                       value={c.depot}
                       onChange={(e) => updateCorpus(idx, "depot", e.target.value)}
-                      placeholder="Lieu de dépôt (ex: Archives Nationales)"
+                      placeholder={t("deposit_place_ph", "Lieu de dépôt (ex: Archives Nationales)")}
                       className="w-full px-2.5 py-1 rounded-lg border border-[var(--gold)]/20 bg-[var(--background)] text-[11px] text-[var(--gold)]"
                     />
                   </div>
@@ -464,7 +466,7 @@ export default function AdminAboutContent() {
                   className="inline-flex items-center gap-1 px-3 py-1 rounded-xl bg-[var(--gold)]/20 border border-[var(--gold)]/50 text-xs font-bold text-[var(--gold)] cursor-pointer"
                 >
                   <Plus className="w-3.5 h-3.5" />
-                  <span>Ajouter</span>
+                  <span>{t("add", "Ajouter")}</span>
                 </button>
               </div>
 

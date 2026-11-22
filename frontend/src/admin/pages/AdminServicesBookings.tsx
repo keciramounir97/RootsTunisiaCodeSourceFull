@@ -285,7 +285,7 @@ export default function AdminServicesBookingsPage() {
   return (
     <div className={`p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto ${isRtl ? "rtl" : "ltr"}`}>
       <SEO
-        title="Réception des Réservations & Rendez-vous — Super Admin | Roots Tunisia"
+        title={t("bookings_page_title", "Réception des Réservations & Rendez-vous — Super Admin | Roots Tunisia")}
         description="Consultez et gérez l'ensemble des réservations et rendez-vous clients reçus par volet de service."
       />
 
@@ -319,14 +319,14 @@ export default function AdminServicesBookingsPage() {
             className="px-4 py-2.5 rounded-xl border border-emerald-500/40 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-bold transition-all flex items-center gap-2 shadow-sm cursor-pointer"
           >
             <Download className="w-4 h-4" />
-            <span>Exporter en CSV</span>
+            <span>{t("export_csv", "Exporter en CSV")}</span>
           </button>
 
           <button
             type="button"
             onClick={fetchData}
             className="p-2.5 rounded-xl border border-[var(--gold)]/30 hover:bg-[var(--gold)]/10 text-[var(--foreground)] transition-all cursor-pointer"
-            title="Rafraîchir"
+            title={t("refresh", "Rafraîchir")}
           >
             <RefreshCw className={`w-4 h-4 text-[var(--gold)] ${loading ? "animate-spin" : ""}`} />
           </button>
@@ -336,34 +336,34 @@ export default function AdminServicesBookingsPage() {
       {/* KPI Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3.5">
         <div className="surface-card p-4 rounded-xl border border-[var(--gold)]/25 flex flex-col justify-between">
-          <span className="text-[0.7rem] uppercase font-bold text-[var(--foreground)]/60">Total Reçu</span>
+          <span className="text-[0.7rem] uppercase font-bold text-[var(--foreground)]/60">{t("total_received", "Total Reçu")}</span>
           <div className="flex items-baseline gap-2 mt-2">
             <span className="text-2xl font-cinzel font-bold text-[var(--foreground)]">{stats.total}</span>
-            <span className="text-[0.65rem] text-[var(--foreground)]/50">dossiers</span>
+            <span className="text-[0.65rem] text-[var(--foreground)]/50">{t("folders_count", "dossiers")}</span>
           </div>
         </div>
 
         <div className="surface-card p-4 rounded-xl border border-amber-500/30 bg-amber-500/5 flex flex-col justify-between">
-          <span className="text-[0.7rem] uppercase font-bold text-amber-600 dark:text-amber-400">Nouveaux</span>
+          <span className="text-[0.7rem] uppercase font-bold text-amber-600 dark:text-amber-400">{t("new_status", "Nouveaux")}</span>
           <div className="flex items-baseline gap-2 mt-2">
             <span className="text-2xl font-cinzel font-bold text-amber-600 dark:text-amber-400">{stats.newCount}</span>
-            <span className="text-[0.65rem] text-amber-600/70">à traiter</span>
+            <span className="text-[0.65rem] text-amber-600/70">{t("to_process", "à traiter")}</span>
           </div>
         </div>
 
         <div className="surface-card p-4 rounded-xl border border-blue-500/30 bg-blue-500/5 flex flex-col justify-between">
-          <span className="text-[0.7rem] uppercase font-bold text-blue-600 dark:text-blue-400">Rendez-vous</span>
+          <span className="text-[0.7rem] uppercase font-bold text-blue-600 dark:text-blue-400">{t("appointments", "Rendez-vous")}</span>
           <div className="flex items-baseline gap-2 mt-2">
             <span className="text-2xl font-cinzel font-bold text-blue-600 dark:text-blue-400">{stats.meetings}</span>
-            <span className="text-[0.65rem] text-blue-600/70">entretiens</span>
+            <span className="text-[0.65rem] text-blue-600/70">{t("interviews", "entretiens")}</span>
           </div>
         </div>
 
         <div className="surface-card p-4 rounded-xl border border-purple-500/30 bg-purple-500/5 flex flex-col justify-between">
-          <span className="text-[0.7rem] uppercase font-bold text-purple-600 dark:text-purple-400">En Cours</span>
+          <span className="text-[0.7rem] uppercase font-bold text-purple-600 dark:text-purple-400">{t("in_progress", "En Cours")}</span>
           <div className="flex items-baseline gap-2 mt-2">
             <span className="text-2xl font-cinzel font-bold text-purple-600 dark:text-purple-400">{stats.inProgress}</span>
-            <span className="text-[0.65rem] text-purple-600/70">en étude</span>
+            <span className="text-[0.65rem] text-purple-600/70">{t("under_study", "en étude")}</span>
           </div>
         </div>
 
@@ -461,7 +461,7 @@ export default function AdminServicesBookingsPage() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Rechercher nom, ancêtre, tel..."
+                placeholder={t("search_bookings_ph", "Rechercher nom, ancêtre, tel...")}
                 className="w-full ps-8 pe-3 py-1.5 rounded-lg border border-[var(--gold)]/30 bg-[var(--background)] text-xs focus:outline-none focus:border-[var(--gold)]"
               />
             </div>
@@ -473,9 +473,9 @@ export default function AdminServicesBookingsPage() {
                 onChange={(e) => setTypeFilter(e.target.value)}
                 className="px-2.5 py-1.5 rounded-lg border border-[var(--gold)]/30 bg-[var(--background)] text-xs font-semibold focus:outline-none focus:border-[var(--gold)] cursor-pointer"
               >
-                <option value="all">Tous types</option>
-                <option value="service">Prestation seule</option>
-                <option value="meeting">Rendez-vous / Entretien</option>
+                <option value="all">{t("all_types", "Tous types")}</option>
+                <option value="service">{t("service_only", "Prestation seule")}</option>
+                <option value="meeting">{t("meeting_interview", "Rendez-vous / Entretien")}</option>
               </select>
             </div>
 
@@ -487,12 +487,12 @@ export default function AdminServicesBookingsPage() {
                 onChange={(e) => setStatusFilter(e.target.value)}
                 className="px-2.5 py-1.5 rounded-lg border border-[var(--gold)]/30 bg-[var(--background)] text-xs font-semibold focus:outline-none focus:border-[var(--gold)] cursor-pointer"
               >
-                <option value="all">Tous statuts</option>
-                <option value="nouveau">Nouveau</option>
-                <option value="en_cours">En cours</option>
-                <option value="confirme">Confirmé</option>
-                <option value="termine">Terminé</option>
-                <option value="annule">Annulé</option>
+                <option value="all">{t("all_statuses", "Tous statuts")}</option>
+                <option value="nouveau">{t("status_new", "Nouveau")}</option>
+                <option value="en_cours">{t("status_in_progress", "En cours")}</option>
+                <option value="confirme">{t("status_confirmed", "Confirmé")}</option>
+                <option value="termine">{t("status_completed", "Terminé")}</option>
+                <option value="annule">{t("status_cancelled", "Annulé")}</option>
               </select>
             </div>
           </div>
@@ -502,13 +502,13 @@ export default function AdminServicesBookingsPage() {
         {loading ? (
           <div className="py-16 text-center space-y-3">
             <RefreshCw className="w-8 h-8 text-[var(--gold)] animate-spin mx-auto" />
-            <p className="text-xs text-[var(--foreground)]/70">Chargement des réservations...</p>
+            <p className="text-xs text-[var(--foreground)]/70">{t("loading_bookings", "Chargement des réservations...")}</p>
           </div>
         ) : filteredBookings.length === 0 ? (
           <div className="py-14 text-center space-y-3 border border-dashed border-[var(--gold)]/30 rounded-xl">
             <Calendar className="w-10 h-10 text-[var(--gold)]/40 mx-auto" />
             <h3 className="font-cinzel text-base font-bold text-[var(--foreground)]">
-              Aucune réservation trouvée pour ce volet
+              {t("no_bookings_found_title", "Aucune réservation trouvée pour ce volet")}
             </h3>
             <p className="text-xs text-[var(--foreground)]/60 max-w-md mx-auto">
               {searchQuery || statusFilter !== "all" || typeFilter !== "all"
@@ -521,13 +521,13 @@ export default function AdminServicesBookingsPage() {
             <table className="w-full text-xs text-start">
               <thead className="bg-[var(--gold)]/10 border-b border-[var(--gold)]/25 text-[var(--foreground)]/80 uppercase text-[0.68rem] tracking-wider font-bold">
                 <tr>
-                  <th className="p-3 text-start">Réf. & Date</th>
-                  {activeVolet === "all" && <th className="p-3 text-start">Prestation</th>}
-                  <th className="p-3 text-start">Client & Contact</th>
-                  <th className="p-3 text-start">Type / Rendez-vous</th>
-                  <th className="p-3 text-start">Ancêtre Ciblé & Message</th>
-                  <th className="p-3 text-start">Statut</th>
-                  <th className="p-3 text-end">Actions Rapides</th>
+                  <th className="p-3 text-start">{t("ref_and_date", "Réf. & Date")}</th>
+                  {activeVolet === "all" && <th className="p-3 text-start">{t("service", "Prestation")}</th>}
+                  <th className="p-3 text-start">{t("client_and_contact", "Client & Contact")}</th>
+                  <th className="p-3 text-start">{t("type_or_appointment", "Type / Rendez-vous")}</th>
+                  <th className="p-3 text-start">{t("ancestor_and_msg", "Ancêtre Ciblé & Message")}</th>
+                  <th className="p-3 text-start">{t("status", "Statut")}</th>
+                  <th className="p-3 text-end">{t("quick_actions", "Actions Rapides")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[var(--gold)]/15">
@@ -616,7 +616,7 @@ export default function AdminServicesBookingsPage() {
                           <div className="space-y-1">
                             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[0.68rem] font-bold bg-stone-500/15 text-stone-600 dark:text-stone-300 border border-stone-500/25">
                               <Briefcase className="w-3 h-3" />
-                              <span>Commande Prestation</span>
+                              <span>{t("order_service", "Commande Prestation")}</span>
                             </span>
                             <div className="text-[0.68rem] text-[var(--foreground)]/60">
                               Contact: <span className="capitalize font-medium">{b.preferred_contact || "WhatsApp"}</span>
@@ -639,7 +639,7 @@ export default function AdminServicesBookingsPage() {
                           <div className="mt-2 p-1.5 rounded bg-[var(--gold)]/10 border border-[var(--gold)]/20 text-[0.68rem] text-[var(--foreground)]/80 flex items-start gap-1">
                             <FileText className="w-3 h-3 text-[var(--gold)] shrink-0 mt-0.5" />
                             <span className="line-clamp-2">
-                              <strong>Note :</strong> {b.admin_notes}
+                              <strong>{t("note_colon", "Note :")}</strong> {b.admin_notes}
                             </span>
                           </div>
                         )}
@@ -662,11 +662,11 @@ export default function AdminServicesBookingsPage() {
                               : "bg-stone-500/15 text-stone-500 border-stone-500/30"
                           }`}
                         >
-                          <option value="nouveau">Nouveau</option>
-                          <option value="en_cours">En cours</option>
-                          <option value="confirme">Confirmé</option>
-                          <option value="termine">Terminé</option>
-                          <option value="annule">Annulé</option>
+                          <option value="nouveau">{t("status_new", "Nouveau")}</option>
+                          <option value="en_cours">{t("status_in_progress", "En cours")}</option>
+                          <option value="confirme">{t("status_confirmed", "Confirmé")}</option>
+                          <option value="termine">{t("status_completed", "Terminé")}</option>
+                          <option value="annule">{t("status_cancelled", "Annulé")}</option>
                         </select>
                       </td>
 
@@ -679,7 +679,7 @@ export default function AdminServicesBookingsPage() {
                             target="_blank"
                             rel="noopener noreferrer"
                             className="p-1.5 rounded-lg border border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/25 transition-all"
-                            title="Contacter sur WhatsApp en 1 clic"
+                            title={t("contact_whatsapp_1click", "Contacter sur WhatsApp en 1 clic")}
                           >
                             <MessageCircle className="w-3.5 h-3.5" />
                           </a>
@@ -690,7 +690,7 @@ export default function AdminServicesBookingsPage() {
                               `Roots Tunisia - Réservation #${b.id} (${b.service_title || ""})`
                             )}`}
                             className="p-1.5 rounded-lg border border-blue-500/40 bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-500/25 transition-all"
-                            title="Envoyer un email"
+                            title={t("send_email", "Envoyer un email")}
                           >
                             <Mail className="w-3.5 h-3.5" />
                           </a>
@@ -703,7 +703,7 @@ export default function AdminServicesBookingsPage() {
                               setNotesDraft(b.admin_notes || "");
                             }}
                             className="p-1.5 rounded-lg border border-[var(--gold)]/40 hover:bg-[var(--gold)]/15 text-[var(--gold)] transition-all cursor-pointer"
-                            title="Ajouter une note d'administration"
+                            title={t("add_progress_note", "Ajouter une note d'administration")}
                           >
                             <FileText className="w-3.5 h-3.5" />
                           </button>
@@ -713,7 +713,7 @@ export default function AdminServicesBookingsPage() {
                             type="button"
                             onClick={() => handleDeleteBooking(b.id)}
                             className="p-1.5 rounded-lg border border-red-500/30 text-red-500 hover:bg-red-500/15 transition-all cursor-pointer"
-                            title="Supprimer la réservation"
+                            title={t("delete_booking", "Supprimer la réservation")}
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
@@ -747,8 +747,8 @@ export default function AdminServicesBookingsPage() {
             </div>
 
             <div className="text-xs text-[var(--foreground)]/70 space-y-1">
-              <p>Client : <strong className="text-[var(--foreground)]">{editingNotesBooking.client_name}</strong></p>
-              <p>Prestation : <strong className="text-[var(--foreground)]">{editingNotesBooking.service_title}</strong></p>
+              <p>{t("client_colon", "Client :")} <strong className="text-[var(--foreground)]">{editingNotesBooking.client_name}</strong></p>
+              <p>{t("service_colon", "Prestation :")} <strong className="text-[var(--foreground)]">{editingNotesBooking.service_title}</strong></p>
             </div>
 
             <div>
@@ -759,7 +759,7 @@ export default function AdminServicesBookingsPage() {
                 rows={4}
                 value={notesDraft}
                 onChange={(e) => setNotesDraft(e.target.value)}
-                placeholder="Ex: Acte trouvé aux archives de Sfax le 12/11. En attente de paiement ou de signature..."
+                placeholder={t("booking_admin_note_ph", "Ex: Acte trouvé aux archives de Sfax le 12/11. En attente de paiement ou de signature...")}
                 className="w-full p-3 rounded-lg border border-[var(--gold)]/35 bg-[var(--background)] text-xs focus:outline-none focus:border-[var(--gold)]"
               />
             </div>
@@ -779,7 +779,7 @@ export default function AdminServicesBookingsPage() {
                 className="px-4 py-2 rounded-lg bg-[var(--gold)] hover:bg-[var(--gold)]/90 text-[var(--card)] text-xs font-bold transition-colors flex items-center gap-1.5 shadow-md"
               >
                 {savingNotes ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
-                <span>Enregistrer la note</span>
+                <span>{t("save_note_btn", "Enregistrer la note")}</span>
               </button>
             </div>
           </div>

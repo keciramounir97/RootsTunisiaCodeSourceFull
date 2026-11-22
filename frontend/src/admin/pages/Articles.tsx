@@ -351,7 +351,7 @@ export default function AdminArticles() {
                       <input
                         value={src.title}
                         onChange={(e) => updateSource(index, "title", e.target.value)}
-                        placeholder="Dépôt / Institution (ex: Archives Nationales)"
+                        placeholder={t("ph_archive_deposit", "Dépôt / Institution (ex: Archives Nationales)")}
                         className="w-full text-xs p-1.5 rounded border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)]"
                       />
                     </div>
@@ -359,7 +359,7 @@ export default function AdminArticles() {
                       <input
                         value={src.cote || ""}
                         onChange={(e) => updateSource(index, "cote", e.target.value)}
-                        placeholder="Cote d'archive (ex: Série Majba n°12)"
+                        placeholder={t("ph_archive_call_num", "Cote d'archive (ex: Série Majba n°12)")}
                         className="w-full text-xs p-1.5 rounded border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] font-mono"
                       />
                     </div>
@@ -367,7 +367,7 @@ export default function AdminArticles() {
                       <input
                         value={src.url || ""}
                         onChange={(e) => updateSource(index, "url", e.target.value)}
-                        placeholder="Lien web (ex: http://www.archives.nat.tn)"
+                        placeholder={t("ph_web_link_ex", "Lien web (ex: http://www.archives.nat.tn)")}
                         className="w-full text-xs p-1.5 rounded border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)]"
                       />
                     </div>

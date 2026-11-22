@@ -639,7 +639,7 @@ export default function AdminSourcesArchivesContent() {
             </span>
             <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-500">
               <Check className="w-3.5 h-3.5" />
-              <span>Base Dynamique Active</span>
+              <span>{t("live_sync_active", "Base Dynamique Active")}</span>
             </span>
           </div>
           <h1 className="text-xl sm:text-2xl font-bold font-serif text-[var(--foreground)] tracking-wide">
@@ -660,7 +660,7 @@ export default function AdminSourcesArchivesContent() {
           className="btn-base btn-outline px-4 py-2.5 rounded-xl text-xs flex items-center gap-2 shrink-0 cursor-pointer"
         >
           <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? "animate-spin text-[var(--gold)]" : ""}`} />
-          <span>Actualiser</span>
+          <span>{t("refresh", "Actualiser")}</span>
         </button>
       </div>
 
@@ -759,7 +759,7 @@ export default function AdminSourcesArchivesContent() {
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Rechercher par nom, mot-clé, tags..."
+                  placeholder={t("search_archives_ph", "Rechercher par nom, mot-clé, tags...")}
                   className="w-full bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] rounded-lg ps-9 pe-3 py-2 text-xs focus:border-[var(--gold)] outline-none"
                 />
               </div>
@@ -788,7 +788,7 @@ export default function AdminSourcesArchivesContent() {
               className="btn-base btn-gold text-xs py-2 px-4 inline-flex items-center gap-2 justify-center cursor-pointer font-bold shadow-md shrink-0"
             >
               <Plus className="w-4 h-4" />
-              <span>Ajouter une Fiche d'Archives</span>
+              <span>{t("add_archive_card", "Ajouter une Fiche d'Archives")}</span>
             </button>
           </div>
 
@@ -796,13 +796,13 @@ export default function AdminSourcesArchivesContent() {
           {loading ? (
             <div className="text-center py-16 text-[var(--muted-foreground)]">
               <Loader2 className="w-8 h-8 animate-spin mx-auto mb-2 text-[var(--gold)]" />
-              <p className="text-xs">Chargement des fiches d'archives...</p>
+              <p className="text-xs">{t("loading_archive_cards", "Chargement des fiches d'archives...")}</p>
             </div>
           ) : filteredCards.length === 0 ? (
             <div className="text-center py-12 rounded-xl bg-[var(--card)] border border-[var(--border)] text-[var(--muted-foreground)] space-y-2">
               <FolderArchive className="w-10 h-10 mx-auto text-[var(--muted-foreground)]/60" />
               <p className="text-sm font-semibold text-[var(--foreground)]">Aucune fiche trouvée</p>
-              <p className="text-xs">Modifiez votre recherche ou ajoutez une nouvelle fiche.</p>
+              <p className="text-xs">{t("no_archives_found_hint", "Modifiez votre recherche ou ajoutez une nouvelle fiche.")}</p>
             </div>
           ) : (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -866,7 +866,7 @@ export default function AdminSourcesArchivesContent() {
                           target="_blank"
                           rel="noopener noreferrer"
                           className="p-1.5 rounded-lg bg-[var(--background)] border border-[var(--border)] text-[var(--gold)] hover:bg-[var(--gold)] hover:text-black transition cursor-pointer"
-                          title="Tester l'adresse web officielle"
+                          title={t("test_link", "Tester l'adresse web officielle")}
                         >
                           <ExternalLink className="w-3.5 h-3.5" />
                         </a>
@@ -892,14 +892,14 @@ export default function AdminSourcesArchivesContent() {
                           className="px-2.5 py-1.5 rounded-lg bg-[var(--background)] border border-[var(--border)] hover:border-[var(--gold)] text-[var(--foreground)] text-xs font-semibold inline-flex items-center gap-1 cursor-pointer"
                         >
                           <Pencil className="w-3 h-3 text-[var(--gold)]" />
-                          <span>Modifier</span>
+                          <span>{t("edit", "Modifier")}</span>
                         </button>
 
                         <button
                           type="button"
                           onClick={() => handleDeleteCard(card)}
                           className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-500/10 transition cursor-pointer"
-                          title="Supprimer la fiche"
+                          title={t("delete_card", "Supprimer la fiche")}
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
@@ -932,7 +932,7 @@ export default function AdminSourcesArchivesContent() {
               className="btn-base btn-gold text-xs py-2 px-3.5 inline-flex items-center gap-1.5 cursor-pointer font-bold shadow-md shrink-0"
             >
               <Plus className="w-3.5 h-3.5" />
-              <span>Ajouter un Emplacement</span>
+              <span>{t("add_location", "Ajouter un Emplacement")}</span>
             </button>
           </div>
 
@@ -971,13 +971,13 @@ export default function AdminSourcesArchivesContent() {
                       className="px-2 py-1 rounded bg-[var(--background)] border border-[var(--border)] hover:border-[var(--gold)] text-xs text-[var(--foreground)] inline-flex items-center gap-1 cursor-pointer"
                     >
                       <Pencil className="w-3 h-3 text-[var(--gold)]" />
-                      <span>Modifier</span>
+                      <span>{t("edit", "Modifier")}</span>
                     </button>
                     <button
                       type="button"
                       onClick={() => handleDeleteLocation(loc.key)}
                       className="p-1 rounded text-rose-500 hover:bg-rose-500/10 cursor-pointer"
-                      title="Supprimer l'emplacement"
+                      title={t("delete_location", "Supprimer l'emplacement")}
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
@@ -1012,7 +1012,7 @@ export default function AdminSourcesArchivesContent() {
                   type="text"
                   value={heroEyebrow}
                   onChange={(e) => setHeroEyebrow(e.target.value)}
-                  placeholder="ex: RÉPERTOIRE DES INSTITUTIONS & DÉPÔTS"
+                  placeholder={t("ph_repo_category_ex", "ex: RÉPERTOIRE DES INSTITUTIONS & DÉPÔTS")}
                   className="w-full bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] rounded-lg px-3.5 py-2 text-xs focus:border-[var(--gold)] outline-none"
                 />
               </div>
@@ -1025,7 +1025,7 @@ export default function AdminSourcesArchivesContent() {
                   type="text"
                   value={heroTitle}
                   onChange={(e) => setHeroTitle(e.target.value)}
-                  placeholder="ex: Sources & Archives pour la Tunisie"
+                  placeholder={t("ph_sources_title_ex", "ex: Sources & Archives pour la Tunisie")}
                   className="w-full bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] rounded-lg px-3.5 py-2 text-xs focus:border-[var(--gold)] outline-none font-bold"
                 />
               </div>
@@ -1038,7 +1038,7 @@ export default function AdminSourcesArchivesContent() {
                   rows={3}
                   value={heroSubtitle}
                   onChange={(e) => setHeroSubtitle(e.target.value)}
-                  placeholder="Description détaillée visible par les généalogistes..."
+                  placeholder={t("ph_sources_desc_ex", "Description détaillée visible par les généalogistes...")}
                   className="w-full bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] rounded-lg p-3 text-xs focus:border-[var(--gold)] outline-none leading-relaxed"
                 />
               </div>
@@ -1051,7 +1051,7 @@ export default function AdminSourcesArchivesContent() {
                   type="text"
                   value={heroImage}
                   onChange={(e) => setHeroImage(e.target.value)}
-                  placeholder="/assets/slider-kairouan.jpg ou URL personnalisée"
+                  placeholder={t("ph_sources_hero_img_ex", "/assets/slider-kairouan.jpg ou URL personnalisée")}
                   className="w-full bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] rounded-lg px-3.5 py-2 text-xs focus:border-[var(--gold)] outline-none font-mono"
                 />
               </div>
@@ -1064,7 +1064,7 @@ export default function AdminSourcesArchivesContent() {
                 className="btn-base btn-gold text-xs py-2.5 px-5 inline-flex items-center gap-2 cursor-pointer font-bold shadow-md"
               >
                 {savingHero ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
-                <span>Enregistrer les Textes de la Page</span>
+                <span>{t("save_page_texts", "Enregistrer les Textes de la Page")}</span>
               </button>
             </div>
           </div>
@@ -1140,7 +1140,7 @@ export default function AdminSourcesArchivesContent() {
                     rel="noopener noreferrer"
                     className="btn-base btn-gold text-xs py-2 px-4 inline-flex items-center justify-center gap-2 w-full font-bold shadow-sm"
                   >
-                    <span>Visiter l'Archive</span>
+                    <span>{t("visit_archive", "Visiter l'Archive")}</span>
                     <ExternalLink className="w-3.5 h-3.5" />
                   </a>
                 </div>
@@ -1192,7 +1192,7 @@ export default function AdminSourcesArchivesContent() {
                   required
                   value={cardTitle}
                   onChange={(e) => setCardTitle(e.target.value)}
-                  placeholder="ex: Archives Nationales de Tunisie (ANT)"
+                  placeholder={t("ph_archive_name_ex", "ex: Archives Nationales de Tunisie (ANT)")}
                   className="w-full bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] rounded-lg px-3.5 py-2 text-xs focus:border-[var(--gold)] outline-none"
                 />
               </div>
@@ -1223,7 +1223,7 @@ export default function AdminSourcesArchivesContent() {
                     type="text"
                     value={cardBadge}
                     onChange={(e) => setCardBadge(e.target.value)}
-                    placeholder="ex: Archives d'État • Tunis"
+                    placeholder={t("ph_archive_inst_ex", "ex: Archives d'État • Tunis")}
                     className="w-full bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] rounded-lg px-3.5 py-2 text-xs focus:border-[var(--gold)] outline-none"
                   />
                 </div>
@@ -1248,7 +1248,7 @@ export default function AdminSourcesArchivesContent() {
                       target="_blank"
                       rel="noopener noreferrer"
                       className="absolute end-2 top-1/2 -translate-y-1/2 p-1 text-[var(--gold)] hover:text-[var(--foreground)]"
-                      title="Ouvrir dans un nouvel onglet"
+                      title={t("open_in_new_tab", "Ouvrir dans un nouvel onglet")}
                     >
                       <ExternalLink className="w-3.5 h-3.5" />
                     </a>
@@ -1264,7 +1264,7 @@ export default function AdminSourcesArchivesContent() {
                   rows={4}
                   value={cardDescription}
                   onChange={(e) => setCardDescription(e.target.value)}
-                  placeholder="Décrivez les fonds conservés, registres matricules, actes d'état civil, décrets beylicaux..."
+                  placeholder={t("ph_archive_fonds_desc", "Décrivez les fonds conservés, registres matricules, actes d'état civil, décrets beylicaux...")}
                   className="w-full bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] rounded-lg p-3 text-xs focus:border-[var(--gold)] outline-none leading-relaxed"
                 />
               </div>
@@ -1277,7 +1277,7 @@ export default function AdminSourcesArchivesContent() {
                   type="text"
                   value={cardTags}
                   onChange={(e) => setCardTags(e.target.value)}
-                  placeholder="ex: Majba 1860, Décrets Beylicaux, Notariats 'Udul"
+                  placeholder={t("ph_archive_tags_ex", "ex: Majba 1860, Décrets Beylicaux, Notariats 'Udul")}
                   className="w-full bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] rounded-lg px-3.5 py-2 text-xs focus:border-[var(--gold)] outline-none"
                 />
               </div>
@@ -1309,7 +1309,7 @@ export default function AdminSourcesArchivesContent() {
                   className="btn-base btn-gold text-xs py-2 px-5 inline-flex items-center gap-1.5 font-bold cursor-pointer"
                 >
                   {savingCard && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                  <span>Enregistrer la Fiche</span>
+                  <span>{t("save_archive_card", "Enregistrer la Fiche")}</span>
                 </button>
               </div>
             </form>
@@ -1358,7 +1358,7 @@ export default function AdminSourcesArchivesContent() {
                       setLocKey(e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, "_"));
                     }
                   }}
-                  placeholder="ex: Espagne & Andalousie"
+                  placeholder={t("ph_loc_country_ex", "ex: Espagne & Andalousie")}
                   className="w-full bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] rounded-lg px-3.5 py-2 text-xs focus:border-[var(--gold)] outline-none"
                 />
               </div>
@@ -1372,7 +1372,7 @@ export default function AdminSourcesArchivesContent() {
                   required
                   value={locKey}
                   onChange={(e) => setLocKey(e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, "_"))}
-                  placeholder="ex: spain"
+                  placeholder={t("ph_loc_key_ex", "ex: spain")}
                   className="w-full bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] rounded-lg px-3.5 py-2 text-xs focus:border-[var(--gold)] outline-none font-mono"
                 />
               </div>
@@ -1406,7 +1406,7 @@ export default function AdminSourcesArchivesContent() {
                   rows={2}
                   value={locDescription}
                   onChange={(e) => setLocDescription(e.target.value)}
-                  placeholder="ex: Fonds d'archives diplomatiques et notariales..."
+                  placeholder={t("ph_loc_desc_ex", "ex: Fonds d'archives diplomatiques et notariales...")}
                   className="w-full bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] rounded-lg p-3 text-xs focus:border-[var(--gold)] outline-none leading-relaxed"
                 />
               </div>
@@ -1425,7 +1425,7 @@ export default function AdminSourcesArchivesContent() {
                   className="btn-base btn-gold text-xs py-2 px-5 inline-flex items-center gap-1.5 font-bold cursor-pointer"
                 >
                   {savingLocation && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                  <span>Enregistrer l'Emplacement</span>
+                  <span>{t("save_location_btn", "Enregistrer l'Emplacement")}</span>
                 </button>
               </div>
             </form>

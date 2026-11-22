@@ -241,7 +241,7 @@ export default function Currencies() {
               type="text"
               required
               maxLength={10}
-              placeholder="TND"
+              placeholder={t("ph_currency_code", "TND")}
               value={newCode}
               onChange={(e) => setNewCode(e.target.value.toUpperCase())}
               className="w-full px-3 py-2 text-sm rounded-lg border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] uppercase font-mono font-bold outline-none focus:border-[var(--gold)]"
@@ -254,7 +254,7 @@ export default function Currencies() {
             </label>
             <input
               type="text"
-              placeholder="Dinar Tunisien"
+              placeholder={t("ph_currency_name", "Dinar Tunisien")}
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
               className="w-full px-3 py-2 text-sm rounded-lg border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] outline-none focus:border-[var(--gold)]"
@@ -283,7 +283,7 @@ export default function Currencies() {
               step="0.0001"
               min="0.0001"
               required
-              placeholder="3.1500"
+              placeholder={t("ph_currency_rate", "3.1500")}
               value={newRate}
               onChange={(e) => setNewRate(e.target.value)}
               className="w-full px-3 py-2 text-sm rounded-lg border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] font-mono font-bold outline-none focus:border-[var(--gold)]"

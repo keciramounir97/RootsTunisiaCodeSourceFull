@@ -1,3 +1,4 @@
+import { useTranslation } from "../../context/TranslationContext";
 import React, { useState, useMemo } from "react";
 import {
   HelpCircle,
@@ -24,6 +25,7 @@ import {
 } from "../../utils/helpCenterCmsConfig";
 
 export default function AdminFaqContent() {
+  const { t } = useTranslation();
   const [selectedLocale, setSelectedLocale] = useState<string>("fr");
   const { config, setConfig } = useHelpCenterCmsConfig(selectedLocale);
   const [saving, setSaving] = useState(false);
@@ -432,7 +434,7 @@ export default function AdminFaqContent() {
                   type="text"
                   value={newCategoryLabel}
                   onChange={(e) => setNewCategoryLabel(e.target.value)}
-                  placeholder="Nouvelle catégorie FAQ..."
+                  placeholder={t("new_faq_category_ph", "Nouvelle catégorie FAQ...")}
                   className="flex-1 px-3 py-1.5 rounded-xl border border-[var(--gold)]/30 bg-[var(--background)] text-xs"
                 />
                 <button
@@ -441,7 +443,7 @@ export default function AdminFaqContent() {
                   className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-[var(--gold)]/20 border border-[var(--gold)]/50 text-xs font-bold text-[var(--gold)] cursor-pointer"
                 >
                   <Plus className="w-3.5 h-3.5" />
-                  <span>Ajouter</span>
+                  <span>{t("add", "Ajouter")}</span>
                 </button>
               </div>
             </div>
@@ -458,7 +460,7 @@ export default function AdminFaqContent() {
                   className="btn-base btn-gold inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold cursor-pointer"
                 >
                   <Plus className="w-3.5 h-3.5" />
-                  <span>Nouvelle Question</span>
+                  <span>{t("new_question_btn", "Nouvelle Question")}</span>
                 </button>
               </div>
 
@@ -510,7 +512,7 @@ export default function AdminFaqContent() {
                         type="text"
                         value={item.badge || ""}
                         onChange={(e) => updateQuestion(item.id, "badge", e.target.value)}
-                        placeholder="Badge (optionnel)"
+                        placeholder={t("badge_optional_ph", "Badge (optionnel)")}
                         className="w-36 px-2.5 py-1 rounded-lg border border-[var(--gold)]/25 bg-[var(--background)] text-[11px]"
                       />
 
@@ -541,7 +543,7 @@ export default function AdminFaqContent() {
                       type="text"
                       value={item.q}
                       onChange={(e) => updateQuestion(item.id, "q", e.target.value)}
-                      placeholder="Question..."
+                      placeholder={t("question_ph", "Question...")}
                       className="w-full px-3 py-1.5 rounded-lg border border-[var(--gold)]/30 bg-[var(--background)] text-xs font-bold"
                     />
 
@@ -549,7 +551,7 @@ export default function AdminFaqContent() {
                       rows={3}
                       value={item.a}
                       onChange={(e) => updateQuestion(item.id, "a", e.target.value)}
-                      placeholder="Réponse..."
+                      placeholder={t("answer_ph", "Réponse...")}
                       className="w-full px-3 py-1.5 rounded-lg border border-[var(--gold)]/30 bg-[var(--background)] text-xs leading-relaxed"
                     />
                   </div>

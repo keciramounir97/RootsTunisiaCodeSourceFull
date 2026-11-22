@@ -459,7 +459,7 @@ export default function Subscriptions() {
                           type="text"
                           value={tier.badge || ""}
                           onChange={(e) => handleUpdateTierField(tier.id, "badge", e.target.value)}
-                          placeholder="مثال: الخطة النشطة الحالية"
+                          placeholder={t("ph_active_tier_ex", "مثال: الخطة النشطة الحالية")}
                           className="w-full px-3 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--background)]"
                         />
                       </div>

@@ -1,3 +1,4 @@
+import { useTranslation } from "../../context/TranslationContext";
 import React, { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import {
@@ -90,6 +91,7 @@ const CATEGORY_ICONS: Record<string, any> = {
 };
 
 export default function AdminPeriods() {
+  const { t } = useTranslation();
   const [selectedLocale, setSelectedLocale] = useState<string>("fr");
   const { config, saveConfig, refresh, loading } = usePeriodsCmsConfig(selectedLocale);
 
@@ -659,7 +661,7 @@ export default function AdminPeriods() {
             </span>
             <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-500">
               <Check className="w-3.5 h-3.5" />
-              <span>Base Dynamique Active</span>
+              <span>{t("live_sync_active", "Base Dynamique Active")}</span>
             </span>
           </div>
           <h1 className="text-xl sm:text-2xl font-bold font-serif text-[var(--foreground)] tracking-wide">
@@ -677,7 +679,7 @@ export default function AdminPeriods() {
             className="btn-base btn-outline px-3.5 py-2.5 rounded-xl text-xs flex items-center gap-1.5"
           >
             <ExternalLink className="w-3.5 h-3.5 text-[var(--gold)]" />
-            <span>Voir Page Publique</span>
+            <span>{t("view_public_page", "Voir Page Publique")}</span>
           </Link>
           <button
             type="button"
@@ -692,7 +694,7 @@ export default function AdminPeriods() {
             className="btn-base btn-outline px-4 py-2.5 rounded-xl text-xs flex items-center gap-2 cursor-pointer"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? "animate-spin text-[var(--gold)]" : ""}`} />
-            <span>Actualiser</span>
+            <span>{t("refresh", "Actualiser")}</span>
           </button>
         </div>
       </div>
@@ -791,7 +793,7 @@ export default function AdminPeriods() {
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Rechercher par époque, capitale, dynastie, souverain..."
+                  placeholder={t("search_periods_ph", "Rechercher par époque, capitale, dynastie, souverain...")}
                   className="w-full bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] rounded-lg ps-9 pe-3 py-2 text-xs focus:border-[var(--gold)] outline-none"
                 />
               </div>
@@ -817,7 +819,7 @@ export default function AdminPeriods() {
               <button
                 type="button"
                 onClick={handleResetDefaultPeriods}
-                title="Restaurer les 12 époques par défaut"
+                title={t("restore_default_periods", "Restaurer les 12 époques par défaut")}
                 className="btn-base btn-outline text-xs py-2 px-3 inline-flex items-center gap-1.5 cursor-pointer"
               >
                 <RotateCcw className="w-3.5 h-3.5 text-[var(--gold)]" />
@@ -913,7 +915,7 @@ export default function AdminPeriods() {
                           to={`/periods/${period.id}`}
                           target="_blank"
                           className="p-1.5 rounded-lg bg-[var(--background)] border border-[var(--border)] text-[var(--gold)] hover:bg-[var(--gold)] hover:text-black transition cursor-pointer"
-                          title="Ouvrir la page publique de cette période"
+                          title={t("open_period_public_page", "Ouvrir la page publique de cette période")}
                         >
                           <ExternalLink className="w-3.5 h-3.5" />
                         </Link>
@@ -938,7 +940,7 @@ export default function AdminPeriods() {
                             setActiveTab("categories");
                           }}
                           className="px-2 py-1 rounded-lg bg-[var(--background)] border border-[var(--border)] hover:border-[var(--gold)] text-[10px] font-mono text-[var(--foreground)] inline-flex items-center gap-1 cursor-pointer"
-                          title="Gérer les pièces de la galerie associées"
+                          title={t("manage_associated_gallery", "Gérer les pièces de la galerie associées")}
                         >
                           <Link2 className="w-3 h-3 text-[var(--gold)]" />
                           <span>Sources ({linkedCount})</span>
@@ -952,14 +954,14 @@ export default function AdminPeriods() {
                           className="px-2.5 py-1.5 rounded-lg bg-[var(--background)] border border-[var(--border)] hover:border-[var(--gold)] text-[var(--foreground)] text-xs font-semibold inline-flex items-center gap-1 cursor-pointer"
                         >
                           <Pencil className="w-3 h-3 text-[var(--gold)]" />
-                          <span>Modifier</span>
+                          <span>{t("edit", "Modifier")}</span>
                         </button>
 
                         <button
                           type="button"
                           onClick={() => handleDeletePeriod(period)}
                           className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-500/10 transition cursor-pointer"
-                          title="Supprimer la période"
+                          title={t("delete_period", "Supprimer la période")}
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
@@ -1035,13 +1037,13 @@ export default function AdminPeriods() {
                         className="px-2 py-1 rounded bg-[var(--background)] border border-[var(--border)] hover:border-[var(--gold)] text-xs text-[var(--foreground)] inline-flex items-center gap-1 cursor-pointer"
                       >
                         <Pencil className="w-3 h-3 text-[var(--gold)]" />
-                        <span>Modifier</span>
+                        <span>{t("edit", "Modifier")}</span>
                       </button>
                       <button
                         type="button"
                         onClick={() => handleDeleteCategory(cat.key)}
                         className="p-1 rounded text-rose-500 hover:bg-rose-500/10 cursor-pointer"
-                        title="Supprimer la macro-époque"
+                        title={t("delete_macro_period", "Supprimer la macro-époque")}
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
@@ -1264,7 +1266,7 @@ export default function AdminPeriods() {
                   type="text"
                   value={heroForm.image}
                   onChange={(e) => setHeroForm({ ...heroForm, image: e.target.value })}
-                  placeholder="Laisser vide pour utiliser l'amphithéâtre d'El Jem par défaut"
+                  placeholder={t("default_el_jem_ph", "Laisser vide pour utiliser l'amphithéâtre d'El Jem par défaut")}
                   className="w-full bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] rounded-lg px-3.5 py-2 text-xs font-mono focus:border-[var(--gold)] outline-none"
                 />
               </div>
@@ -1530,7 +1532,7 @@ export default function AdminPeriods() {
                       required
                       value={formPeriod.title}
                       onChange={(e) => setFormPeriod({ ...formPeriod, title: e.target.value })}
-                      placeholder="ex: 9. Régence Ottomane de Tunis & Dynastie Mouradite"
+                      placeholder={t("ph_period_title_ex", "ex: 9. Régence Ottomane de Tunis & Dynastie Mouradite")}
                       className="w-full bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] rounded-lg px-3.5 py-2 text-xs font-bold focus:border-[var(--gold)] outline-none"
                     />
                   </div>
@@ -1570,7 +1572,7 @@ export default function AdminPeriods() {
                       required
                       value={formPeriod.displayPeriod}
                       onChange={(e) => setFormPeriod({ ...formPeriod, displayPeriod: e.target.value })}
-                      placeholder="ex: 1574 – 1705"
+                      placeholder={t("ph_period_dates_ex", "ex: 1574 – 1705")}
                       className="w-full bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] rounded-lg px-3.5 py-2 text-xs focus:border-[var(--gold)] outline-none"
                     />
                   </div>
@@ -1661,7 +1663,7 @@ export default function AdminPeriods() {
                       type="text"
                       value={formPeriod.cardButtonLabel || ""}
                       onChange={(e) => setFormPeriod({ ...formPeriod, cardButtonLabel: e.target.value })}
-                      placeholder="DÉCOUVRIR LA PÉRIODE"
+                      placeholder={t("discover_period", "DÉCOUVRIR LA PÉRIODE")}
                       className="w-full bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] rounded-lg px-3.5 py-2 text-xs focus:border-[var(--gold)] outline-none"
                     />
                   </div>
@@ -1674,7 +1676,7 @@ export default function AdminPeriods() {
                       type="text"
                       value={customTagsInput}
                       onChange={(e) => setCustomTagsInput(e.target.value)}
-                      placeholder="ex: 1574 – 1705, Capitale : Tunis, Régence Ottomane, Dey Othman"
+                      placeholder={t("ph_period_tags_ex", "ex: 1574 – 1705, Capitale : Tunis, Régence Ottomane, Dey Othman")}
                       className="w-full bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] rounded-lg px-3.5 py-2 text-xs focus:border-[var(--gold)] outline-none"
                     />
                   </div>
@@ -1810,7 +1812,7 @@ export default function AdminPeriods() {
                         className="btn-base btn-gold text-[11px] py-1 px-3 inline-flex items-center gap-1 cursor-pointer font-bold"
                       >
                         <Plus className="w-3 h-3" />
-                        <span>Ajouter un Dirigeant</span>
+                        <span>{t("add_ruler", "Ajouter un Dirigeant")}</span>
                       </button>
                     </div>
 
@@ -1824,14 +1826,14 @@ export default function AdminPeriods() {
                             type="text"
                             value={leader.name}
                             onChange={(e) => updateLeader(idx, "name", e.target.value)}
-                            placeholder="Nom du dirigeant"
+                            placeholder={t("ruler_name", "Nom du dirigeant")}
                             className="bg-[var(--card)] border border-[var(--border)] rounded-lg px-2.5 py-1.5 text-xs font-bold text-[var(--foreground)]"
                           />
                           <input
                             type="text"
                             value={leader.role}
                             onChange={(e) => updateLeader(idx, "role", e.target.value)}
-                            placeholder="Titre / Fonction"
+                            placeholder={t("ruler_title", "Titre / Fonction")}
                             className="bg-[var(--card)] border border-[var(--border)] rounded-lg px-2.5 py-1.5 text-xs text-[var(--foreground)]"
                           />
                           <div className="flex items-center gap-1.5">
@@ -1839,7 +1841,7 @@ export default function AdminPeriods() {
                               type="text"
                               value={leader.reignOrDates}
                               onChange={(e) => updateLeader(idx, "reignOrDates", e.target.value)}
-                              placeholder="Dates de règne"
+                              placeholder={t("ruler_dates", "Dates de règne")}
                               className="flex-1 bg-[var(--card)] border border-[var(--border)] rounded-lg px-2.5 py-1.5 text-xs font-mono text-[var(--foreground)]"
                             />
                             <button
@@ -1855,7 +1857,7 @@ export default function AdminPeriods() {
                           rows={2}
                           value={leader.achievements}
                           onChange={(e) => updateLeader(idx, "achievements", e.target.value)}
-                          placeholder="Réalisations historiques et administratives..."
+                          placeholder={t("ruler_achievements_ph", "Réalisations historiques et administratives...")}
                           className="w-full bg-[var(--card)] border border-[var(--border)] rounded-lg p-2 text-xs text-[var(--foreground)]"
                         />
                       </div>
@@ -1874,7 +1876,7 @@ export default function AdminPeriods() {
                         className="btn-base btn-gold text-[11px] py-1 px-3 inline-flex items-center gap-1 cursor-pointer font-bold"
                       >
                         <Plus className="w-3 h-3" />
-                        <span>Ajouter une Famille</span>
+                        <span>{t("add_family", "Ajouter une Famille")}</span>
                       </button>
                     </div>
 
@@ -1888,14 +1890,14 @@ export default function AdminPeriods() {
                             type="text"
                             value={fam.name}
                             onChange={(e) => updateFamily(idx, "name", e.target.value)}
-                            placeholder="Nom de la dynastie / famille"
+                            placeholder={t("dynasty_family_name", "Nom de la dynastie / famille")}
                             className="bg-[var(--card)] border border-[var(--border)] rounded-lg px-2.5 py-1.5 text-xs font-bold text-[var(--foreground)]"
                           />
                           <input
                             type="text"
                             value={fam.role}
                             onChange={(e) => updateFamily(idx, "role", e.target.value)}
-                            placeholder="Statut / Rôle"
+                            placeholder={t("dynasty_status_role", "Statut / Rôle")}
                             className="bg-[var(--card)] border border-[var(--border)] rounded-lg px-2.5 py-1.5 text-xs text-[var(--foreground)]"
                           />
                           <div className="flex items-center gap-1.5">
@@ -1903,7 +1905,7 @@ export default function AdminPeriods() {
                               type="text"
                               value={fam.origin}
                               onChange={(e) => updateFamily(idx, "origin", e.target.value)}
-                              placeholder="Origine géographique"
+                              placeholder={t("dynasty_origin", "Origine géographique")}
                               className="flex-1 bg-[var(--card)] border border-[var(--border)] rounded-lg px-2.5 py-1.5 text-xs text-[var(--foreground)]"
                             />
                             <button
@@ -1919,7 +1921,7 @@ export default function AdminPeriods() {
                           rows={2}
                           value={fam.lineageNotes}
                           onChange={(e) => updateFamily(idx, "lineageNotes", e.target.value)}
-                          placeholder="Notes généalogiques et fonds d'archives associés..."
+                          placeholder={t("notes_and_archives_ph", "Notes généalogiques et fonds d'archives associés...")}
                           className="w-full bg-[var(--card)] border border-[var(--border)] rounded-lg p-2 text-xs text-[var(--foreground)]"
                         />
                       </div>
@@ -1943,7 +1945,7 @@ export default function AdminPeriods() {
                         className="btn-base btn-gold text-[11px] py-1 px-3 inline-flex items-center gap-1 cursor-pointer font-bold"
                       >
                         <Plus className="w-3 h-3" />
-                        <span>Ajouter une Division</span>
+                        <span>{t("add_division", "Ajouter une Division")}</span>
                       </button>
                     </div>
 
@@ -1957,7 +1959,7 @@ export default function AdminPeriods() {
                             type="text"
                             value={div.name}
                             onChange={(e) => updateDivision(idx, "name", e.target.value)}
-                            placeholder="Nom de la division"
+                            placeholder={t("division_name", "Nom de la division")}
                             className="bg-[var(--card)] border border-[var(--border)] rounded-lg px-2.5 py-1.5 text-xs font-bold text-[var(--foreground)]"
                           />
                           <input
@@ -1965,7 +1967,7 @@ export default function AdminPeriods() {
                             dir="rtl"
                             value={div.arabicName}
                             onChange={(e) => updateDivision(idx, "arabicName", e.target.value)}
-                            placeholder="Nom en arabe"
+                            placeholder={t("arabic_name", "Nom en arabe")}
                             className="bg-[var(--card)] border border-[var(--border)] rounded-lg px-2.5 py-1.5 text-xs text-[var(--foreground)]"
                           />
                           <div className="flex items-center gap-1.5">
@@ -1973,7 +1975,7 @@ export default function AdminPeriods() {
                               type="text"
                               value={div.seat}
                               onChange={(e) => updateDivision(idx, "seat", e.target.value)}
-                              placeholder="Chef-lieu / Siège"
+                              placeholder={t("division_seat", "Chef-lieu / Siège")}
                               className="flex-1 bg-[var(--card)] border border-[var(--border)] rounded-lg px-2.5 py-1.5 text-xs text-[var(--foreground)]"
                             />
                             <button
@@ -1989,7 +1991,7 @@ export default function AdminPeriods() {
                           rows={2}
                           value={div.description}
                           onChange={(e) => updateDivision(idx, "description", e.target.value)}
-                          placeholder="Description de la juridiction..."
+                          placeholder={t("jurisdiction_desc_ph", "Description de la juridiction...")}
                           className="w-full bg-[var(--card)] border border-[var(--border)] rounded-lg p-2 text-xs text-[var(--foreground)]"
                         />
                       </div>
@@ -2021,14 +2023,14 @@ export default function AdminPeriods() {
                           type="text"
                           value={site.name}
                           onChange={(e) => updateKeySite(idx, "name", e.target.value)}
-                          placeholder="Nom de la cité"
+                          placeholder={t("city_name", "Nom de la cité")}
                           className="bg-[var(--card)] border border-[var(--border)] rounded-lg px-2.5 py-1.5 text-xs font-bold text-[var(--foreground)]"
                         />
                         <input
                           type="text"
                           value={site.role}
                           onChange={(e) => updateKeySite(idx, "role", e.target.value)}
-                          placeholder="Rôle historique / Monument"
+                          placeholder={t("historical_monument_role", "Rôle historique / Monument")}
                           className="sm:col-span-2 bg-[var(--card)] border border-[var(--border)] rounded-lg px-2.5 py-1.5 text-xs text-[var(--foreground)]"
                         />
                         <div className="sm:col-span-3 flex justify-end">
@@ -2038,7 +2040,7 @@ export default function AdminPeriods() {
                             className="text-xs text-rose-500 hover:underline inline-flex items-center gap-1 cursor-pointer"
                           >
                             <Trash2 className="w-3 h-3" />
-                            <span>Retirer ce site</span>
+                            <span>{t("remove_site", "Retirer ce site")}</span>
                           </button>
                         </div>
                       </div>
@@ -2113,7 +2115,7 @@ export default function AdminPeriods() {
                       setCatKey(e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, "_"));
                     }
                   }}
-                  placeholder="ex: Antiquité & Byzance"
+                  placeholder={t("ph_macro_period_ex", "ex: Antiquité & Byzance")}
                   className="w-full bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] rounded-lg px-3.5 py-2 text-xs focus:border-[var(--gold)] outline-none"
                 />
               </div>
@@ -2174,7 +2176,7 @@ export default function AdminPeriods() {
                   className="btn-base btn-gold text-xs py-2 px-5 inline-flex items-center gap-1.5 font-bold cursor-pointer"
                 >
                   {savingCategory && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                  <span>Enregistrer</span>
+                  <span>{t("save", "Enregistrer")}</span>
                 </button>
               </div>
             </form>
@@ -2214,7 +2216,7 @@ export default function AdminPeriods() {
                   type="text"
                   value={availSearch}
                   onChange={(e) => setAvailSearch(e.target.value)}
-                  placeholder="Rechercher dans la galerie..."
+                  placeholder={t("search_gallery_ph", "Rechercher dans la galerie...")}
                   className="flex-1 bg-[var(--background)] border border-[var(--border)] rounded-lg px-3 py-2 text-xs text-[var(--foreground)]"
                 />
                 <select
@@ -2222,11 +2224,11 @@ export default function AdminPeriods() {
                   onChange={(e) => setAvailTypeFilter(e.target.value)}
                   className="bg-[var(--background)] border border-[var(--border)] rounded-lg px-3 py-2 text-xs text-[var(--foreground)]"
                 >
-                  <option value="all">Tous les types</option>
-                  <option value="document">Documents</option>
+                  <option value="all">{t("all_types", "Tous les types")}</option>
+                  <option value="document">{t("documents", "Documents")}</option>
                   <option value="book">Livres & Manuscrits</option>
                   <option value="tree">Arbres Généalogiques</option>
-                  <option value="gallery">Photos Galerie</option>
+                  <option value="gallery">{t("gallery_photos", "Photos Galerie")}</option>
                   <option value="audio">Récits Audio</option>
                 </select>
               </div>
@@ -2320,7 +2322,7 @@ export default function AdminPeriods() {
                 className="btn-base btn-gold text-xs py-2 px-5 inline-flex items-center gap-1.5 font-bold cursor-pointer"
               >
                 {linkingSubmitting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                <span>Confirmer l'Association</span>
+                <span>{t("confirm_association", "Confirmer l'Association")}</span>
               </button>
             </div>
           </div>

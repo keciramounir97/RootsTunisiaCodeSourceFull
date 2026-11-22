@@ -1,3 +1,4 @@
+import { useTranslation } from "../../context/TranslationContext";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ExternalLink,
@@ -136,6 +137,7 @@ function writeImage(
 }
 
 export default function SiteImagePlaceholders() {
+  const { t } = useTranslation();
   const [doc, setDoc] = useState<SiteContentDocument | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -327,7 +329,7 @@ export default function SiteImagePlaceholders() {
           <input
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
-            placeholder="Filtrer page ou section…"
+            placeholder={t("ph_filter_page_section", "Filtrer page ou section…")}
             className="min-w-[180px] rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-xs text-[var(--foreground)] outline-none focus:border-[var(--gold)]"
           />
           <button
@@ -381,7 +383,7 @@ export default function SiteImagePlaceholders() {
               </h2>
               {activeSlot ? (
                 <div className="flex items-center gap-2 text-xs font-semibold text-[var(--gold)] bg-[var(--gold)]/10 px-2.5 py-1 rounded-md border border-[var(--gold)]/30">
-                  <span>Cible active :</span>
+                  <span>{t("active_target_label", "Cible active :")}</span>
                   <span className="font-bold underline">{activeSlot.pageLabel} → {activeSlot.fieldLabel}</span>
                   <button
                     type="button"
@@ -514,7 +516,7 @@ export default function SiteImagePlaceholders() {
                               value={value}
                               onChange={(val) => setSlotImage(slot, val)}
                               options={mediaOptions}
-                              placeholder="— Choisir une image patrimoniale —"
+                              placeholder={t("ph_choose_heritage_img", "— Choisir une image patrimoniale —")}
                             />
                           </div>
 
@@ -604,7 +606,7 @@ export default function SiteImagePlaceholders() {
                       type="text"
                       value={gallerySearch}
                       onChange={(e) => setGallerySearch(e.target.value)}
-                      placeholder="Rechercher par mot-clé, région, nom…"
+                      placeholder={t("ph_search_keyword_reg", "Rechercher par mot-clé, région, nom…")}
                       className="w-full rounded-md border border-[var(--border)] bg-[var(--background)] ps-8 pe-3 py-1.5 text-xs text-[var(--foreground)] outline-none focus:border-[var(--gold)]"
                     />
                   </div>

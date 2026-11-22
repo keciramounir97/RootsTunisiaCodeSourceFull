@@ -244,7 +244,7 @@ export default function AdminServicesPage() {
   return (
     <div className={`p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto ${isRtl ? "rtl" : "ltr"}`}>
       <SEO
-        title="Création & Gestion des Prestations de Services — Super Admin | Roots Tunisia"
+        title={t("services_mgmt_page_title", "Création & Gestion des Prestations de Services — Super Admin | Roots Tunisia")}
         description="Créez et configurez vos offres de services généalogiques, prix multi-devises et coordonnées de réservation."
       />
 
@@ -296,7 +296,7 @@ export default function AdminServicesPage() {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
         <div className="surface-card p-4 rounded-xl border border-[var(--gold)]/25 flex flex-col justify-between">
           <div className="flex items-center justify-between">
-            <span className="text-[0.7rem] uppercase font-bold text-[var(--foreground)]/60">Services Actifs</span>
+            <span className="text-[0.7rem] uppercase font-bold text-[var(--foreground)]/60">{t("active_services", "Services Actifs")}</span>
             <Briefcase className="w-4 h-4 text-[var(--gold)]" />
           </div>
           <p className="text-2xl font-bold font-cinzel text-[var(--gold)] mt-2">
@@ -371,14 +371,14 @@ export default function AdminServicesPage() {
             className="p-2 rounded-lg border border-[var(--gold)]/30 hover:bg-[var(--gold)]/10 text-xs text-[var(--foreground)] flex items-center gap-1.5 cursor-pointer"
           >
             <RefreshCw className={`w-3.5 h-3.5 text-[var(--gold)] ${loading ? "animate-spin" : ""}`} />
-            <span>Actualiser</span>
+            <span>{t("refresh", "Actualiser")}</span>
           </button>
         </div>
 
         {loading ? (
           <div className="py-16 text-center space-y-2">
             <RefreshCw className="w-8 h-8 text-[var(--gold)] animate-spin mx-auto" />
-            <p className="text-xs text-[var(--foreground)]/70">Chargement des prestations...</p>
+            <p className="text-xs text-[var(--foreground)]/70">{t("loading_services", "Chargement des prestations...")}</p>
           </div>
         ) : services.length === 0 ? (
           <div className="p-12 text-center border border-dashed border-[var(--gold)]/30 rounded-2xl space-y-3">
@@ -459,7 +459,7 @@ export default function AdminServicesPage() {
                       {hasMeeting && (
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/25">
                           <Video className="w-3 h-3" />
-                          <span>RDV en direct</span>
+                          <span>{t("live_meeting", "RDV en direct")}</span>
                         </span>
                       )}
                     </div>
@@ -486,14 +486,14 @@ export default function AdminServicesPage() {
                         to={`/services/${svc.slug || svc.id}`}
                         target="_blank"
                         className="p-1.5 rounded-lg border border-[var(--gold)]/30 hover:bg-[var(--gold)]/10 text-[var(--foreground)]"
-                        title="Voir la page publique"
+                        title={t("view_public_page", "Voir la page publique")}
                       >
                         <Eye className="w-3.5 h-3.5" />
                       </Link>
 
                       <button
                         onClick={() => handleOpenEdit(svc)}
-                        title="Modifier cette offre"
+                        title={t("edit_service_offer", "Modifier cette offre")}
                         className="p-1.5 rounded-lg border border-[var(--gold)]/30 hover:bg-[var(--gold)]/15 text-[var(--gold)] cursor-pointer"
                       >
                         <Edit2 className="w-3.5 h-3.5" />
@@ -501,7 +501,7 @@ export default function AdminServicesPage() {
 
                       <button
                         onClick={() => handleDeleteService(svc.id, svc.title)}
-                        title="Supprimer cette offre"
+                        title={t("delete_service_offer", "Supprimer cette offre")}
                         className="p-1.5 rounded-lg border border-red-500/30 hover:bg-red-500/15 text-red-500 cursor-pointer"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -545,7 +545,7 @@ export default function AdminServicesPage() {
                     required
                     value={formData.title}
                     onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    placeholder="Ex: Recherche In Situ aux Archives"
+                    placeholder={t("ph_service_title_ex", "Ex: Recherche In Situ aux Archives")}
                     className="w-full px-3 py-2 rounded-lg border border-[var(--gold)]/35 bg-[var(--background)] focus:outline-none focus:border-[var(--gold)]"
                   />
                 </div>
@@ -555,7 +555,7 @@ export default function AdminServicesPage() {
                     type="text"
                     value={formData.slug}
                     onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-                    placeholder="recherche-in-situ-archives"
+                    placeholder={t("ph_service_slug_ex", "recherche-in-situ-archives")}
                     className="w-full px-3 py-2 rounded-lg border border-[var(--gold)]/35 bg-[var(--background)] focus:outline-none focus:border-[var(--gold)]"
                   />
                 </div>
@@ -569,17 +569,17 @@ export default function AdminServicesPage() {
                     type="text"
                     value={formData.category}
                     onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                    placeholder="Paléographie, Recherche In Situ, Notarié..."
+                    placeholder={t("ph_service_cat_ex", "Paléographie, Recherche In Situ, Notarié...")}
                     className="w-full px-3 py-2 rounded-lg border border-[var(--gold)]/35 bg-[var(--background)] focus:outline-none focus:border-[var(--gold)]"
                   />
                 </div>
                 <div>
-                  <label className="block font-semibold mb-1">Ordre d'affichage</label>
+                  <label className="block font-semibold mb-1">{t("display_order", "Ordre d'affichage")}</label>
                   <input
                     type="number"
                     value={formData.order_index}
                     onChange={(e) => setFormData({ ...formData, order_index: Number(e.target.value) || 0 })}
-                    placeholder="0, 1, 2..."
+                    placeholder={t("ph_service_order_ex", "0, 1, 2...")}
                     className="w-full px-3 py-2 rounded-lg border border-[var(--gold)]/35 bg-[var(--background)] focus:outline-none focus:border-[var(--gold)]"
                   />
                 </div>
@@ -592,7 +592,7 @@ export default function AdminServicesPage() {
                   rows={2}
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="Résumé percutant affiché sur la carte du catalogue..."
+                  placeholder={t("ph_service_summary_ex", "Résumé percutant affiché sur la carte du catalogue...")}
                   className="w-full p-2.5 rounded-lg border border-[var(--gold)]/35 bg-[var(--background)]"
                 />
               </div>
@@ -604,7 +604,7 @@ export default function AdminServicesPage() {
                   rows={3}
                   value={formData.full_offer}
                   onChange={(e) => setFormData({ ...formData, full_offer: e.target.value })}
-                  placeholder="Expliquez la démarche archivistique, les dépôts consultés, le mandat du chercheur..."
+                  placeholder={t("ph_service_scope_ex", "Expliquez la démarche archivistique, les dépôts consultés, le mandat du chercheur...")}
                   className="w-full p-2.5 rounded-lg border border-[var(--gold)]/35 bg-[var(--background)]"
                 />
               </div>
@@ -637,17 +637,17 @@ export default function AdminServicesPage() {
                       type="text"
                       value={formData.contact_phone}
                       onChange={(e) => setFormData({ ...formData, contact_phone: e.target.value })}
-                      placeholder="Laisser vide jusqu'à configuration (ex : +216 …)"
+                      placeholder={t("ph_service_phone_ex", "Laisser vide jusqu'à configuration (ex : +216 …)")}
                       className="w-full px-3 py-2 rounded-lg border border-[var(--gold)]/35 bg-[var(--background)]"
                     />
                   </div>
                   <div>
-                    <label className="block font-semibold mb-1">Email de contact</label>
+                    <label className="block font-semibold mb-1">{t("contact_email_label", "Email de contact")}</label>
                     <input
                       type="email"
                       value={formData.contact_email}
                       onChange={(e) => setFormData({ ...formData, contact_email: e.target.value })}
-                      placeholder="services@rootstunisia.com"
+                      placeholder={t("ph_service_email_ex", "services@rootstunisia.com")}
                       className="w-full px-3 py-2 rounded-lg border border-[var(--gold)]/35 bg-[var(--background)]"
                     />
                   </div>
@@ -676,7 +676,7 @@ export default function AdminServicesPage() {
                   type="text"
                   value={formData.whatsapp_prefill}
                   onChange={(e) => setFormData({ ...formData, whatsapp_prefill: e.target.value })}
-                  placeholder="Bonjour Roots Tunisia, je souhaite commander la prestation..."
+                  placeholder={t("ph_service_msg_ex", "Bonjour Roots Tunisia, je souhaite commander la prestation...")}
                   className="w-full px-3 py-2 rounded-lg border border-[var(--gold)]/35 bg-[var(--background)]"
                 />
               </div>
@@ -712,10 +712,10 @@ export default function AdminServicesPage() {
                   {formSaving ? (
                     <>
                       <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                      <span>Enregistrement...</span>
+                      <span>{t("saving", "Enregistrement...")}</span>
                     </>
                   ) : (
-                    <span>Enregistrer la Prestation</span>
+                    <span>{t("save_service_btn", "Enregistrer la Prestation")}</span>
                   )}
                 </button>
               </div>
