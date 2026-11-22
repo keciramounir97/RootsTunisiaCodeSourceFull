@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { useThemeStore } from "../../store/theme";
+import { useTheme } from "../../context/ThemeContext";
 import logoLight from "../../assets/roots-tunisia-logo-light.png";
 import logoDark from "../../assets/roots-tunisia-logo-dark.png";
 
@@ -11,7 +11,7 @@ type LogoProps = {
 
 /**
  * Official Roots Tunisia wordmark + mosaic emblem.
- * Switches light/dark artwork with the site theme so it blends on both backgrounds.
+ * Uses crisp public SVG artwork for light and dark modes with automatic asset fallback.
  */
 export type LogoSize = "sm" | "md" | "lg";
 
@@ -26,9 +26,10 @@ export function Logo({
   size = "md",
   className = "",
 }: LogoProps & { size?: LogoSize }) {
-  const { theme } = useThemeStore();
+  const { theme } = useTheme();
   const useDarkArtwork = light || theme === "dark";
-  const src = useDarkArtwork ? logoDark : logoLight;
+  const svgSrc = useDarkArtwork ? "/logo-dark.svg" : "/logo.svg";
+  const fallbackSrc = useDarkArtwork ? logoDark : logoLight;
 
   return (
     <Link
@@ -37,12 +38,18 @@ export function Logo({
       aria-label="Roots Tunisia"
     >
       <img
-        src={src}
+        src={svgSrc}
         alt="Roots Tunisia"
         className={`block ${LOGO_SIZE_CLASSES[size]} w-auto object-contain object-left rtl:object-right shrink-0 transition-[height,max-width] duration-200`}
         width={290}
         height={148}
         decoding="async"
+        onError={(e) => {
+          const target = e.currentTarget;
+          if (target.src !== fallbackSrc) {
+            target.src = fallbackSrc;
+          }
+        }}
       />
     </Link>
   );

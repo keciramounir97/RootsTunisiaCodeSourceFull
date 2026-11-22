@@ -5250,4 +5250,15 @@ table.easy-admin-table tr:hover td, table.admin-table tr:hover td {
   animation-play-state: paused !important;
 }
 
+/* =========================================================================
+   Banner Overlay High-Contrast Rules (WCAG AAA & Theme Parity)
+   ========================================================================= */
+.banner-overlay-dark h1,
+.banner-overlay-dark h2,
+.banner-overlay-dark h3,
+.banner-overlay-dark p {
+  color: #ffffff !important;
+  text-shadow: 1px 1px 3px rgba(17, 17, 17, 0.8), 0 0 6px rgba(17, 17, 17, 0.6) !important;
+}
+
 

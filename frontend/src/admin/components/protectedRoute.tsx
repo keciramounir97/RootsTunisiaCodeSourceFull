@@ -42,14 +42,35 @@ export default function ProtectedRoute({
     );
   }
 
-  const normalizedRole = Number(user.role);
-  if (roles.length > 0 && !roles.includes(normalizedRole)) {
-    return <Navigate to={redirectTo} replace />;
+  const normalizedRole = (() => {
+    const r = user.role ?? (user as any).role_id ?? (user as any).roleId;
+    if (typeof r === "number" && !isNaN(r) && r > 0) return r;
+    const s = String(r || (user as any).roleName || (user as any).role_name || "").toLowerCase().trim();
+    if (s.includes("super")) return 3;
+    if (s.includes("admin")) return 1;
+    if (s.includes("user")) return 2;
+    return Number(r) || 1;
+  })();
+
+  const granted = Array.isArray(user.permissions) ? user.permissions : [];
+  const isAdminOrSuper =
+    normalizedRole === 3 ||
+    (normalizedRole === 1 && (granted.length === 0 || granted.includes("all") || granted.includes("*")));
+
+  // In admin section, NEVER kick an authenticated user to homepage ("/")
+  const fallbackRedirect = location.pathname.startsWith("/admin") ? "/admin" : redirectTo;
+
+  if (roles.length > 0 && !roles.includes(normalizedRole) && !isAdminOrSuper) {
+    return <Navigate to={fallbackRedirect} replace />;
   }
 
-  const userAllowedPrivileges = ["usage", "trees", "gallery", "audios", "documents", "sources-archives", "tasks", "notes", "user-upgrade", "subscriptions", "support", "user-settings"];
+  const userAllowedPrivileges = [
+    "usage", "trees", "gallery", "audios", "documents",
+    "sources-archives", "tasks", "notes", "user-upgrade",
+    "subscriptions", "support", "user-settings"
+  ];
 
-  if (privileges.length > 0 && normalizedRole !== 3) {
+  if (privileges.length > 0 && !isAdminOrSuper) {
     if (normalizedRole === 2) {
       const isAllowedForUser = privileges.some((p) => userAllowedPrivileges.includes(p));
       if (isAllowedForUser) return children;
@@ -58,15 +79,13 @@ export default function ProtectedRoute({
     if (privileges.includes("dashboard")) {
       return children;
     }
-    const granted = Array.isArray(user.permissions) ? user.permissions : [];
-    if (normalizedRole === 1 && granted.length === 0) {
-      return children;
-    }
-    const hasPrivilege = privileges.some((p) => granted.includes(p));
+    const hasPrivilege = privileges.some(
+      (p) => granted.includes(p) || granted.includes("all") || granted.includes("*")
+    );
     if (!hasPrivilege) {
       return <Navigate to="/admin" replace />;
     }
   }
 
-  return children;
+  return <>{children}</>;
 }

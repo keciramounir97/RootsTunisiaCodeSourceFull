@@ -93,7 +93,6 @@ export async function sendFirstPartyPageview(payload: {
   referrer?: string;
   locale?: string;
 }) {
-  if (!hasAnalyticsConsent()) return;
   if (payload.path.startsWith("/admin") || payload.path.startsWith("/api")) return;
 
   const body = JSON.stringify({

@@ -5,42 +5,39 @@ import { useAuth } from "./AuthContext";
 import { Logo } from "../../components/site/Logo";
 import {
   LayoutDashboard,
-  Layout,
-  Network,
-  Image,
-  BookOpen,
-  Settings,
+  Gauge,
+  Radio,
   Activity,
-  Users,
+  ArchiveRestore,
+  Network,
   UserRound,
-  LogOut,
-  PanelLeftClose,
-  Music,
-  FileText,
-  MessageSquare,
-  Mail,
-  Shield,
-  Crown,
+  Archive,
+  Landmark,
   ListChecks,
   StickyNote,
+  Image,
+  Music,
+  FileText,
+  BookOpen,
   Newspaper,
-  Scale,
-  Wallet,
-  ArchiveRestore,
-  Archive,
-  Globe,
-  Gauge,
-  Coins,
-  Flag,
-  MapPinned,
-  Home,
+  MessageSquare,
+  Mail,
   Info,
-  Clock,
+  HelpCircle,
+  MapPinned,
+  Scale,
+  Globe,
+  Users,
+  Shield,
   Briefcase,
   Calendar,
-  Landmark,
-  HelpCircle,
-  Radio,
+  Crown,
+  Wallet,
+  Flag,
+  Coins,
+  Settings,
+  PanelLeftClose,
+  LogOut,
 } from "lucide-react";
 
 interface SidebarLink {
@@ -143,7 +140,6 @@ const CATEGORIES: SidebarCategory[] = [
   },
 ];
 
-/** Routes guarded by roles={[3]} — hidden from non-super-admins. */
 const superAdminOnlyRoutes = [
   "/admin/services",
   "/admin/services-bookings",
@@ -179,29 +175,32 @@ const superAdminOnlyRoutes = [
 const labelFallbacks: Record<string, string> = {
   dashboard: "Tableau de Bord",
   usage_quotas: "Quotas d'Utilisation",
-  usage_and_quotas: "Quotas d'Utilisation",
   live_analytics: "Analytique en direct",
+  activity: "Journal d'Activité",
+  backups: "Sauvegardes & Snapshots",
   trees: "Arbres Généalogiques",
   individuals: "Individus & Ancêtres",
   my_sources: "Mes Sources & Archives",
+  periods_sources_management: "Périodes Historiques & Sources",
   tasks: "Mes Tâches",
-  admin_tasks: "Mes Tâches",
   notes: "Mes Notes & Références d'Archives",
-  admin_notes: "Mes Notes & Références d'Archives",
   gallery: "Galerie",
-  diaporama: "Diaporama de la Bannière",
-  site_image_placeholders: "Emplacements d'Images (Pages)",
   audios: "Audio & Récits Oraux",
   documents: "Documents Numérisés",
   books: "Livres & Manuscrits",
   articles: "Articles & Chroniques",
   social_comments_moderation: "Commentaires & Modération",
+  sources_archives_content: "Sources & Archives Publiques",
+  periods_content: "Périodes Historiques Publiques",
+  contact_direct_content: "Contact Direct (Centre d'Aide)",
+  about_mission_content: "À Propos & Mission",
+  faq_content: "Foire Aux Questions (FAQ)",
+  site_image_placeholders: "Emplacements d'Images (Pages)",
+  legal_content: "Contenu Juridique",
+  footer_settings: "Paramètres du Pied de Page",
   users: "Utilisateurs",
   admins_roles: "Administrateurs & Rôles",
-  admins: "Administrateurs & Accès aux Pages",
-  super_admins: "Super Administrateurs",
   contact_messages: "Messages de Contact",
-  contactMessages: "Messages de Contact",
   newsletter: "Lettre d'Information",
   services_management: "Création des Services & Offres",
   services_bookings: "Réservations & Rendez-vous Clients",
@@ -210,35 +209,10 @@ const labelFallbacks: Record<string, string> = {
   flagged_payments: "Paiements Signalés",
   payment_settings: "Moyens de Paiement",
   currencies_exchange: "Devises & Taux de Change",
-  legal_content: "Contenu Juridique",
-  public_content_manager: "Gestion du Contenu Public",
-  home_public_content: "Accueil Public Content",
-  about_public_content: "À Propos Public Content",
-  gallery_public_content: "Galerie Public Content",
-  library_public_content: "Bibliothèque Public Content",
-  audio_public_content: "Audio & Récits Public Content",
-  documents_public_content: "Documents Public Content",
-  periods_public_content: "Périodes Historiques Public Content",
-  contact_public_content: "Contact Public Content",
-  archives_public_content: "Archives Public Content",
-  sources_public_content: "Sources Public Content",
-  sources_archives_content: "Sources & Archives Publiques",
-  periods_content: "Périodes Historiques Publiques",
-  periods_sources_management: "Périodes Historiques & Sources",
-  contact_direct_content: "Contact Direct (Centre d'Aide)",
-  about_mission_content: "À Propos & Mission",
-  faq_content: "Foire Aux Questions (FAQ)",
-  help_center_content: "Centre d'Aide",
   settings: "Paramètres",
-  role_distribution: "Distribution des Rôles",
-  activity: "Journal d'Activité",
-  footer_settings: "Paramètres du Pied de Page",
-  backups: "Sauvegardes & Snapshots",
   user_upgrade: "Mon Abonnement & Mise à Niveau",
   contact_support: "Contacter le Support",
   user_settings: "Paramètres du Compte",
-  suggestions: "Suggestions & Idées",
-  download_requests: "Demandes de Téléchargement",
 };
 
 export default function AdminSidebar({
@@ -255,10 +229,29 @@ export default function AdminSidebar({
   const isRtl = Boolean(contextIsRtl || dir === "rtl");
 
   const granted = Array.isArray(user?.permissions) ? user.permissions : [];
-  const normalizedRole = Number(user?.role);
-  const isSuperAdmin = normalizedRole === 3;
+  const normalizedRole = (() => {
+    const r = user?.role ?? (user as any)?.role_id ?? (user as any)?.roleId;
+    if (typeof r === "number" && !isNaN(r) && r > 0) return r;
+    const s = String(r || (user as any)?.roleName || (user as any)?.role_name || "").toLowerCase().trim();
+    if (s.includes("super")) return 3;
+    if (s.includes("admin")) return 1;
+    if (s.includes("user") || s.includes("member")) return 2;
+    return Number(r) || 1;
+  })();
+  const isSuperAdmin =
+    normalizedRole === 3 ||
+    String(user?.role || "").toLowerCase().includes("super") ||
+    String((user as any)?.roleName || "").toLowerCase().includes("super") ||
+    String((user as any)?.role_name || "").toLowerCase().includes("super");
+
+  const hasAllPermissions =
+    isSuperAdmin ||
+    granted.length === 0 ||
+    granted.includes("all") ||
+    granted.includes("*");
 
   const userAllowedRoutes = [
+    "/admin",
     "/admin/usage",
     "/admin/trees",
     "/admin/individuals",
@@ -278,9 +271,13 @@ export default function AdminSidebar({
     if (normalizedRole === 2) {
       return userAllowedRoutes.includes(link.to);
     }
-    if (superAdminOnlyRoutes.includes(link.to)) return false;
-    if (normalizedRole === 1 && granted.length === 0) return true;
-    if (link.to === "/admin") return granted.includes("dashboard");
+    if (hasAllPermissions) {
+      return true;
+    }
+    if (superAdminOnlyRoutes.includes(link.to) || (link.roles && !link.roles.includes(normalizedRole))) {
+      return false;
+    }
+    if (link.to === "/admin") return true;
     const key = (link as { permissionKey?: string }).permissionKey || link.to.replace("/admin/", "");
     if (key === "admins-roles") return granted.includes("admins") || granted.includes("admins-roles");
     return granted.includes(key);
@@ -309,7 +306,7 @@ export default function AdminSidebar({
             onClick={onToggle}
             aria-label={t("close_sidebar", "Fermer le menu latéral")}
             title={t("close_sidebar", "Fermer le menu latéral")}
-            className="rounded p-1.5 text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-[var(--gold)]/10 transition-colors"
+            className="rounded p-1.5 text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-[var(--gold)]/10 transition-colors cursor-pointer"
           >
             <PanelLeftClose className={`h-5 w-5 ${isRtl ? "rotate-180" : ""}`} />
           </button>
@@ -323,7 +320,11 @@ export default function AdminSidebar({
             <div className="flex-1 min-w-0">
               <p className="text-xs font-bold text-[var(--foreground)] truncate">{user?.name || "Admin"}</p>
               <p className="text-[0.65rem] text-[var(--gold)] uppercase tracking-[0.14em] font-semibold">
-                {isSuperAdmin ? t("super_admin", "Super Admin") : t("researcher", "Researcher")}
+                {isSuperAdmin
+                  ? t("super_admin", "Super Admin")
+                  : normalizedRole === 2
+                  ? t("user_account", "Espace Utilisateur")
+                  : t("researcher", "Researcher")}
               </p>
             </div>
           </div>

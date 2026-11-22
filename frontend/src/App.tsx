@@ -441,6 +441,36 @@ function AppRoutes() {
           }
         />
         <Route
+          path="live-visitors"
+          element={
+            <Suspense fallback={<AdminLoadingFallback />}>
+              <ProtectedRoute privileges={["activity", "dashboard"]}>
+                <LiveAnalytics />
+              </ProtectedRoute>
+            </Suspense>
+          }
+        />
+        <Route
+          path="visitors"
+          element={
+            <Suspense fallback={<AdminLoadingFallback />}>
+              <ProtectedRoute privileges={["activity", "dashboard"]}>
+                <LiveAnalytics />
+              </ProtectedRoute>
+            </Suspense>
+          }
+        />
+        <Route
+          path="live"
+          element={
+            <Suspense fallback={<AdminLoadingFallback />}>
+              <ProtectedRoute privileges={["activity", "dashboard"]}>
+                <LiveAnalytics />
+              </ProtectedRoute>
+            </Suspense>
+          }
+        />
+        <Route
           path="audios"
           element={
             <Suspense fallback={<AdminLoadingFallback />}>

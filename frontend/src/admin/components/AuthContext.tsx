@@ -1,31 +1,24 @@
-/* eslint-disable react-hooks/set-state-in-effect */
-/* eslint-disable react-refresh/only-export-components */
 import {
   createContext,
-  useCallback,
   useContext,
-  useEffect,
   useState,
+  useEffect,
+  useCallback,
   ReactNode,
 } from "react";
 import { api } from "../../api/client";
-import { encodeAuthFormBody } from "../../utils/authFormCredentials";
 
 export interface User {
   id: number;
-  email: string;
-  fullName: string;
   name?: string;
+  fullName?: string;
   full_name?: string;
-  phone?: string;
-  role: number; // roleId mapped to role
+  email: string;
+  role: number;
   roleName?: string;
-  status: string;
+  role_name?: string;
   permissions?: string[];
-  tier_id?: number;
-  tier?: string | number;
-  subscription_status?: string;
-  subscription_plan?: string;
+  [key: string]: any;
 }
 
 interface AuthContextType {
@@ -34,7 +27,7 @@ interface AuthContextType {
   isAdmin: boolean;
   signup: (fullName: string, param2?: string, param3?: string, param4?: string) => Promise<any>;
   register: (fullName: string, param2?: string, param3?: string, param4?: string) => Promise<any>;
-  login: (email: string, password: string) => Promise<User>;
+  login: (email: string, password: string) => Promise<User | null>;
   requestReset: (email: string) => Promise<any>;
   verifyReset: (email: string, code: string, newPassword: string) => Promise<any>;
   logout: () => Promise<void>;
@@ -55,6 +48,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const normalizeUser = (raw: any): User | null => {
     if (!raw) return null;
     const roleId = raw.roleId ?? raw.role_id ?? raw.role;
+    let roleNum = 0;
+    if (typeof roleId === "number" && !isNaN(roleId) && roleId > 0) {
+      roleNum = roleId;
+    } else {
+      const s = String(roleId || raw.roleName || raw.role_name || "").toLowerCase().trim();
+      if (s.includes("super")) roleNum = 3;
+      else if (s.includes("admin")) roleNum = 1;
+      else if (s.includes("user") || s.includes("member") || s.includes("client")) roleNum = 2;
+      else roleNum = Number(roleId) || 1;
+    }
+
     const privilegesRaw =
       raw.permissions ?? raw.privileges ?? raw.adminPrivileges ?? raw.admin_privileges;
     let permissions: string[] = [];
@@ -70,7 +74,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     return {
       ...raw,
-      role: typeof roleId === "number" ? roleId : Number(roleId) || 0,
+      role: roleNum,
       permissions,
     };
   };
@@ -84,10 +88,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     try {
       const res = await api.get("/auth/me");
-      const data = res.data.data || res.data;
-      const user = normalizeUser(data);
-      setUser(user);
-      return user;
+      const data = res.data?.data || res.data;
+      const u = normalizeUser(data);
+      setUser(u);
+      return u;
     } catch {
       localStorage.removeItem("token");
       setUser(null);
@@ -103,30 +107,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    refreshMe().finally(() => setLoading(false));
-  }, [refreshMe]);
+    (async () => {
+      try {
+        const res = await api.get("/auth/me");
+        const data = res.data?.data || res.data;
+        setUser(normalizeUser(data));
+      } catch {
+        localStorage.removeItem("token");
+        setUser(null);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
 
+  /* LISTEN TO LOGOUT ACROSS TABS */
   useEffect(() => {
-    const onAuthExpired = () => {
-      localStorage.removeItem("token");
-      setUser(null);
-      setLoading(false);
+    const handler = (e: StorageEvent) => {
+      if (e.key === "token" && !e.newValue) {
+        setUser(null);
+      }
     };
-
-    const onAuthMissing = () => {
-      setUser(null);
-      setLoading(false);
-    };
-
-    window.addEventListener("auth:expired", onAuthExpired);
-    // @ts-ignore - custom event
-    window.addEventListener("auth:missing", onAuthMissing);
+    window.addEventListener("storage", handler);
     return () => {
-      window.removeEventListener("auth:expired", onAuthExpired);
-      // @ts-ignore
-      window.removeEventListener("auth:missing", onAuthMissing);
+      window.removeEventListener("storage", handler);
     };
   }, []);
+
+  const encodeAuthFormBody = (params: Record<string, string | undefined>) => {
+    const sp = new URLSearchParams();
+    for (const [k, v] of Object.entries(params)) {
+      if (v !== undefined && v !== null && v !== "") {
+        sp.set(k, String(v));
+      }
+    }
+    return sp.toString();
+  };
 
   /* SIGNUP & REGISTER */
   const signup = async (...args: any[]) => {
@@ -149,7 +165,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (emailIdx > 0) {
           fullName = strArgs[0];
         }
-        // Password is the non-email string parameter
         const pwdCand = strArgs.find((a, idx) => idx !== emailIdx && a !== fullName && a.length > 0 && !/^\d+$/.test(a));
         password = pwdCand || (emailIdx + 1 < strArgs.length ? strArgs[emailIdx + 1] : "");
       } else {
@@ -169,65 +184,49 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }),
     );
 
-    const data = res.data.data || res.data;
+    const data = res.data?.data || res.data;
     if (data && data.token) {
       localStorage.setItem("token", data.token);
       if (data.refreshToken) {
         localStorage.setItem("refreshToken", data.refreshToken);
       }
-      const user = normalizeUser(data.user);
-      if (user) setUser(user);
+      const u = normalizeUser(data.user);
+      if (u) setUser(u);
     }
     return data;
   };
 
   /* LOGIN */
   const login = async (email: string, password: string) => {
-    const normalized = normalizeEmail(email);
-    if (!normalized) {
-      throw new Error("Email is required");
-    }
-    if (!password) {
-      throw new Error("Password is required");
-    }
     const res = await api.post(
       "/auth/login",
       encodeAuthFormBody({
-        email: normalized,
-        password: String(password),
+        email: normalizeEmail(email),
+        password,
       }),
     );
-    // Backend returns wrapped response: { data: { token, user, ... } }
-    const data = res.data.data || res.data;
+
+    const data = res.data?.data || res.data;
     localStorage.setItem("token", data.token);
     if (data.refreshToken) {
       localStorage.setItem("refreshToken", data.refreshToken);
     }
 
-    const user = normalizeUser(data.user);
-    if (!user) {
-      throw new Error("Invalid user data received from login");
-    }
-    setUser(user);
-    return user;
+    const u = normalizeUser(data.user);
+    setUser(u);
+    return u;
   };
 
   /* PASSWORD RESET */
   const requestReset = (email: string) =>
-    api.post(
-      "/auth/reset",
-      encodeAuthFormBody({ email: normalizeEmail(email) }),
-    );
+    api.post("/auth/request-reset", { email: normalizeEmail(email) });
 
   const verifyReset = (email: string, code: string, newPassword: string) =>
-    api.post(
-      "/auth/reset/verify",
-      encodeAuthFormBody({
-        email: normalizeEmail(email),
-        code: String(code || "").trim(),
-        newPassword,
-      }),
-    );
+    api.post("/auth/verify-reset", {
+      email: normalizeEmail(email),
+      code,
+      newPassword,
+    });
 
   /* LOGOUT */
   const logout = async () => {
@@ -242,7 +241,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const isAdmin = !!(user && (user.role === 1 || user.role === 3));
+  const isAdmin = user?.role === 1 || user?.role === 3;
 
   return (
     <AuthContext.Provider

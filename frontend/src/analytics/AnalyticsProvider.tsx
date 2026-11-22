@@ -43,12 +43,14 @@ export default function AnalyticsProvider() {
   }, []);
 
   useEffect(() => {
-    if (!hasAnalyticsConsent()) return;
-    const id = getGaMeasurementId();
-    if (id) ensureGtagLoaded(id);
+    if (hasAnalyticsConsent()) {
+      const id = getGaMeasurementId();
+      if (id) ensureGtagLoaded(id);
 
-    const pagePath = `${location.pathname}${location.search || ""}`;
-    trackGaPageview(pagePath, document.title);
+      const pagePath = `${location.pathname}${location.search || ""}`;
+      trackGaPageview(pagePath, document.title);
+    }
+
     void sendFirstPartyPageview({
       path: path || location.pathname,
       title: document.title,
