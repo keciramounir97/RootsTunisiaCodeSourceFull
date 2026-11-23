@@ -244,8 +244,8 @@ export default function AdminServicesPage() {
   return (
     <div className={`p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto ${isRtl ? "rtl" : "ltr"}`}>
       <SEO
-        title={t("services_mgmt_page_title", "Création & Gestion des Prestations de Services — Super Admin | Roots Tunisia")}
-        description="Créez et configurez vos offres de services généalogiques, prix multi-devises et coordonnées de réservation."
+        title={t("seo_super_admin_services_title", "Création & Gestion des Prestations de Services — Super Admin | Roots Tunisia")}
+        description={t("seo_super_admin_services_desc", "Créez et configurez vos offres de services généalogiques, prix multi-devises et coordonnées de réservation.")}
       />
 
       {/* Page Header */}
@@ -253,13 +253,13 @@ export default function AdminServicesPage() {
         <div>
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-[var(--gold)]/15 text-[var(--gold)] border border-[var(--gold)]/30 mb-2">
             <Sparkles className="w-3.5 h-3.5" />
-            <span>SUPER ADMIN • CRÉATION DES SERVICES & OFFRES</span>
+            <span>{t("badge_super_admin_services", "SUPER ADMIN • CRÉATION DES SERVICES & OFFRES")}</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-cinzel font-bold text-[var(--foreground)] tracking-wide">
-            Catalogue des Prestations de Services
+            {t("title_services_catalog", "Catalogue des Prestations de Services")}
           </h1>
           <p className="text-xs sm:text-sm text-[var(--foreground)]/70 mt-1 max-w-2xl">
-            Créez vos offres de recherche, définissez vos livrables, activez les rendez-vous en direct et paramétrez vos coordonnées de contact.
+            {t("desc_services_catalog", "Créez vos offres de recherche, définissez vos livrables, activez les rendez-vous en direct et paramétrez vos coordonnées de contact.")}
           </p>
         </div>
 
@@ -269,7 +269,7 @@ export default function AdminServicesPage() {
             className="px-4 py-2.5 rounded-xl border border-[var(--gold)]/40 bg-[var(--gold)]/10 hover:bg-[var(--gold)]/20 text-xs font-bold text-[var(--gold)] transition-all flex items-center gap-2 shadow-sm"
           >
             <Calendar className="w-4 h-4" />
-            <span>Voir les Réservations & Rendez-vous ({bookings.length}) →</span>
+            <span>{t("btn_view_bookings_and_meetings", "Voir les Réservations & Rendez-vous")} ({bookings.length}) →</span>
           </Link>
 
           <Link
@@ -278,7 +278,7 @@ export default function AdminServicesPage() {
             className="px-3.5 py-2.5 rounded-xl border border-[var(--gold)]/30 hover:bg-[var(--gold)]/10 text-xs font-semibold text-[var(--foreground)] transition-all flex items-center gap-2"
           >
             <Eye className="w-4 h-4 text-[var(--gold)]" />
-            <span>Aperçu Public</span>
+            <span>{t("preview_public", "Aperçu Public")}</span>
             <ExternalLink className="w-3 h-3 text-[var(--foreground)]/50" />
           </Link>
 
@@ -287,7 +287,7 @@ export default function AdminServicesPage() {
             className="px-4 py-2.5 rounded-xl bg-[var(--gold)] hover:bg-[var(--gold)]/90 text-[var(--card)] font-bold text-xs inline-flex items-center gap-2 shadow-md transition-all cursor-pointer"
           >
             <Plus className="w-4 h-4" />
-            <span>+ Nouveau Service</span>
+            <span>{t("btn_new_service", "+ Nouveau Service")}</span>
           </button>
         </div>
       </div>
@@ -296,7 +296,7 @@ export default function AdminServicesPage() {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
         <div className="surface-card p-4 rounded-xl border border-[var(--gold)]/25 flex flex-col justify-between">
           <div className="flex items-center justify-between">
-            <span className="text-[0.7rem] uppercase font-bold text-[var(--foreground)]/60">{t("active_services", "Services Actifs")}</span>
+            <span className="text-[0.7rem] uppercase font-bold text-[var(--foreground)]/60">{t("lbl_active_services", "Services Actifs")}</span>
             <Briefcase className="w-4 h-4 text-[var(--gold)]" />
           </div>
           <p className="text-2xl font-bold font-cinzel text-[var(--gold)] mt-2">
@@ -306,7 +306,7 @@ export default function AdminServicesPage() {
 
         <div className="surface-card p-4 rounded-xl border border-[var(--gold)]/25 flex flex-col justify-between">
           <div className="flex items-center justify-between">
-            <span className="text-[0.7rem] uppercase font-bold text-[var(--foreground)]/60">Total Réservations</span>
+            <span className="text-[0.7rem] uppercase font-bold text-[var(--foreground)]/60">{t("lbl_total_bookings", "Total Réservations")}</span>
             <Calendar className="w-4 h-4 text-[var(--gold)]" />
           </div>
           <p className="text-2xl font-bold font-cinzel text-[var(--gold)] mt-2">
@@ -316,7 +316,7 @@ export default function AdminServicesPage() {
 
         <div className="surface-card p-4 rounded-xl border border-blue-500/30 bg-blue-500/5 flex flex-col justify-between">
           <div className="flex items-center justify-between">
-            <span className="text-[0.7rem] uppercase font-bold text-blue-600 dark:text-blue-400">Rendez-vous Prévus</span>
+            <span className="text-[0.7rem] uppercase font-bold text-blue-600 dark:text-blue-400">{t("lbl_scheduled_meetings", "Rendez-vous Prévus")}</span>
             <Video className="w-4 h-4 text-blue-500" />
           </div>
           <p className="text-2xl font-bold font-cinzel text-blue-600 dark:text-blue-400 mt-2">
@@ -326,7 +326,7 @@ export default function AdminServicesPage() {
 
         <div className="surface-card p-4 rounded-xl border border-amber-500/30 bg-amber-500/5 flex flex-col justify-between">
           <div className="flex items-center justify-between">
-            <span className="text-[0.7rem] uppercase font-bold text-amber-600 dark:text-amber-400">Dossiers à Traiter</span>
+            <span className="text-[0.7rem] uppercase font-bold text-amber-600 dark:text-amber-400">{t("lbl_folders_to_process", "Dossiers à Traiter")}</span>
             <AlertCircle className="w-4 h-4 text-amber-500" />
           </div>
           <p className="text-2xl font-bold font-cinzel text-amber-600 dark:text-amber-400 mt-2">
@@ -343,10 +343,10 @@ export default function AdminServicesPage() {
           </div>
           <div>
             <h3 className="font-cinzel text-sm sm:text-base font-bold text-[var(--foreground)]">
-              Espace Réception des Réservations & Rendez-vous
+              {t("title_reception_space", "Espace Réception des Réservations & Rendez-vous")}
             </h3>
             <p className="text-xs text-[var(--foreground)]/70 mt-0.5">
-              Consultez tous les dossiers reçus, les créneaux réservés, les coordonnées clients et mettez à jour leurs statuts.
+              {t("desc_reception_space", "Consultez tous les dossiers reçus, les créneaux réservés, les coordonnées clients et mettez à jour leurs statuts.")}
             </p>
           </div>
         </div>
@@ -354,7 +354,7 @@ export default function AdminServicesPage() {
           to="/admin/services-bookings"
           className="px-4 py-2.5 rounded-xl bg-[var(--gold)] hover:bg-[var(--gold)]/90 text-[var(--card)] font-bold text-xs inline-flex items-center gap-2 shadow-md transition-all shrink-0"
         >
-          <span>Accéder aux Réservations</span>
+          <span>{t("btn_access_bookings", "Accéder aux Réservations")}</span>
           <ChevronRight className="w-4 h-4" />
         </Link>
       </div>
@@ -364,7 +364,7 @@ export default function AdminServicesPage() {
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-cinzel font-bold text-[var(--foreground)] flex items-center gap-2">
             <Briefcase className="w-4 h-4 text-[var(--gold)]" />
-            <span>Cartes de Prestations Actives ({services.length})</span>
+            <span>{t("title_active_service_cards", "Cartes de Prestations Actives")} ({services.length})</span>
           </h2>
           <button
             onClick={fetchData}
@@ -384,16 +384,16 @@ export default function AdminServicesPage() {
           <div className="p-12 text-center border border-dashed border-[var(--gold)]/30 rounded-2xl space-y-3">
             <Briefcase className="w-12 h-12 text-[var(--gold)]/40 mx-auto" />
             <h3 className="font-cinzel text-base font-bold text-[var(--foreground)]">
-              Aucune prestation de service créée
+              {t("no_services_created", "Aucune prestation de service créée")}
             </h3>
             <p className="text-xs text-[var(--foreground)]/60 max-w-sm mx-auto">
-              Cliquez ci-dessous pour ajouter votre première offre de recherche ou d'archives.
+              {t("desc_no_services_prompt", "Cliquez ci-dessous pour ajouter votre première offre de recherche ou d'archives.")}
             </p>
             <button
               onClick={handleOpenCreate}
               className="px-4 py-2 rounded-xl bg-[var(--gold)] text-[var(--card)] text-xs font-bold"
             >
-              + Créer une Prestation
+              {t("btn_create_service", "+ Créer une Prestation")}
             </button>
           </div>
         ) : (
@@ -419,7 +419,7 @@ export default function AdminServicesPage() {
                             : "bg-red-500/15 text-red-500 border border-red-500/30"
                         }`}
                       >
-                        {svc.is_active ? "En ligne" : "Désactivé"}
+                        {svc.is_active ? t("status_online", "En ligne") : t("status_disabled", "Désactivé")}
                       </span>
                     </div>
 
@@ -431,10 +431,10 @@ export default function AdminServicesPage() {
                     <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/25 text-xs font-bold text-emerald-600 dark:text-emerald-400 flex items-center justify-between">
                       <span className="flex items-center gap-1.5">
                         <Video className="w-3.5 h-3.5" />
-                        <span>{t("free_consultation_appointment", "Rendez-vous & Consultation Gratuite")}</span>
+                        <span>{t("meeting_and_free_consultation", "Rendez-vous & Consultation Gratuite")}</span>
                       </span>
                       <span className="text-[0.7rem] font-semibold text-[var(--foreground)]/70">
-                        {t("quote_on_demand", "Sur Devis")}
+                        {t("on_quote", "Sur Devis")}
                       </span>
                     </div>
 
@@ -459,15 +459,15 @@ export default function AdminServicesPage() {
                       {hasMeeting && (
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/25">
                           <Video className="w-3 h-3" />
-                          <span>{t("live_meeting", "RDV en direct")}</span>
+                          <span>{t("badge_live_meeting", "RDV en direct")}</span>
                         </span>
                       )}
                     </div>
 
                     {/* Booking Count Info */}
                     <div className="pt-2 flex items-center justify-between text-xs text-[var(--foreground)]/70">
-                      <span>{t("received_bookings", "Réservations reçues :")}</span>
-                      <strong className="text-[var(--gold)] font-mono">{bCount} {bCount > 1 ? t("service_files_plural", "dossiers") : t("service_file_singular", "dossier")}</strong>
+                      <span>{t("lbl_received_bookings", "Réservations reçues :")}</span>
+                      <strong className="text-[var(--gold)] font-mono">{bCount} dossier{bCount > 1 ? "s" : ""}</strong>
                     </div>
                   </div>
 
@@ -478,7 +478,7 @@ export default function AdminServicesPage() {
                       className="px-3 py-1.5 rounded-lg bg-[var(--gold)]/15 hover:bg-[var(--gold)]/25 text-[var(--gold)] text-xs font-bold inline-flex items-center gap-1.5 transition-all"
                     >
                       <Calendar className="w-3.5 h-3.5" />
-                      <span>Réservations ({bCount})</span>
+                      <span>{t("bookings", "Réservations")} ({bCount})</span>
                     </Link>
 
                     <div className="flex items-center gap-1.5">
@@ -493,7 +493,7 @@ export default function AdminServicesPage() {
 
                       <button
                         onClick={() => handleOpenEdit(svc)}
-                        title={t("edit_service_offer", "Modifier cette offre")}
+                        title={t("edit_this_offer", "Modifier cette offre")}
                         className="p-1.5 rounded-lg border border-[var(--gold)]/30 hover:bg-[var(--gold)]/15 text-[var(--gold)] cursor-pointer"
                       >
                         <Edit2 className="w-3.5 h-3.5" />
@@ -501,7 +501,7 @@ export default function AdminServicesPage() {
 
                       <button
                         onClick={() => handleDeleteService(svc.id, svc.title)}
-                        title={t("delete_service_offer", "Supprimer cette offre")}
+                        title={t("delete_this_offer", "Supprimer cette offre")}
                         className="p-1.5 rounded-lg border border-red-500/30 hover:bg-red-500/15 text-red-500 cursor-pointer"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -527,10 +527,10 @@ export default function AdminServicesPage() {
             </button>
 
             <h2 className="text-xl font-cinzel font-bold text-[var(--foreground)] mb-1">
-              {editingService ? "Modifier l'Offre de Service" : "Créer une Nouvelle Prestation"}
+              {editingService ? t("title_edit_service_offer", "Modifier l'Offre de Service") : t("title_create_new_service", "Créer une Nouvelle Prestation")}
             </h2>
             <p className="text-xs text-[var(--foreground)]/70 mb-5">
-              Remplissez les informations de l'offre. Vous recevrez toutes les réservations clients dans la page dédiée aux réservations.
+              {t("desc_service_form_instructions", "Remplissez les informations de l'offre. Vous recevrez toutes les réservations clients dans la page dédiée aux réservations.")}
             </p>
 
             <form onSubmit={handleSaveService} className="space-y-4 text-xs">
@@ -538,7 +538,7 @@ export default function AdminServicesPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block font-semibold mb-1">
-                    Titre du Service <span className="text-red-500">*</span>
+                    {t("lbl_service_title", "Titre du Service")} <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
@@ -550,12 +550,12 @@ export default function AdminServicesPage() {
                   />
                 </div>
                 <div>
-                  <label className="block font-semibold mb-1">{t("service_slug_optional", "Identifiant URL (Slug optionnel)")}</label>
+                  <label className="block font-semibold mb-1">{t("lbl_slug_optional", "Identifiant URL (Slug optionnel)")}</label>
                   <input
                     type="text"
                     value={formData.slug}
                     onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-                    placeholder={t("ph_service_slug_ex", "recherche-in-situ-archives")}
+                    placeholder={t("ph_slug_ex", "recherche-in-situ-archives")}
                     className="w-full px-3 py-2 rounded-lg border border-[var(--gold)]/35 bg-[var(--background)] focus:outline-none focus:border-[var(--gold)]"
                   />
                 </div>
@@ -564,22 +564,22 @@ export default function AdminServicesPage() {
               {/* Category & Order Index */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-semibold mb-1">{t("service_category_label", "Catégorie de la Prestation")}</label>
+                  <label className="block font-semibold mb-1">{t("lbl_service_category", "Catégorie de la Prestation")}</label>
                   <input
                     type="text"
                     value={formData.category}
                     onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                    placeholder={t("ph_service_cat_ex", "Paléographie, Recherche In Situ, Notarié...")}
+                    placeholder={t("ph_service_category_ex", "Paléographie, Recherche In Situ, Notarié...")}
                     className="w-full px-3 py-2 rounded-lg border border-[var(--gold)]/35 bg-[var(--background)] focus:outline-none focus:border-[var(--gold)]"
                   />
                 </div>
                 <div>
-                  <label className="block font-semibold mb-1">{t("display_order", "Ordre d'affichage")}</label>
+                  <label className="block font-semibold mb-1">{t("lbl_display_order", "Ordre d'affichage")}</label>
                   <input
                     type="number"
                     value={formData.order_index}
                     onChange={(e) => setFormData({ ...formData, order_index: Number(e.target.value) || 0 })}
-                    placeholder={t("ph_service_order_ex", "0, 1, 2...")}
+                    placeholder={t("ph_display_order_ex", "0, 1, 2...")}
                     className="w-full px-3 py-2 rounded-lg border border-[var(--gold)]/35 bg-[var(--background)] focus:outline-none focus:border-[var(--gold)]"
                   />
                 </div>
@@ -587,24 +587,24 @@ export default function AdminServicesPage() {
 
               {/* Short Description */}
               <div>
-                <label className="block font-semibold mb-1">{t("service_short_desc_label", "Description courte (affichée sur la carte)")}</label>
+                <label className="block font-semibold mb-1">{t("lbl_short_description_card", "Description courte (affichée sur la carte)")}</label>
                 <textarea
                   rows={2}
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder={t("ph_service_summary_ex", "Résumé percutant affiché sur la carte du catalogue...")}
+                  placeholder={t("ph_short_description_ex", "Résumé percutant affiché sur la carte du catalogue...")}
                   className="w-full p-2.5 rounded-lg border border-[var(--gold)]/35 bg-[var(--background)]"
                 />
               </div>
 
               {/* Full Offer Description */}
               <div>
-                <label className="block font-semibold mb-1">{t("service_full_offer_label", "Présentation détaillée de l'offre")}</label>
+                <label className="block font-semibold mb-1">{t("lbl_full_offer_presentation", "Présentation détaillée de l'offre")}</label>
                 <textarea
                   rows={3}
                   value={formData.full_offer}
                   onChange={(e) => setFormData({ ...formData, full_offer: e.target.value })}
-                  placeholder={t("ph_service_scope_ex", "Expliquez la démarche archivistique, les dépôts consultés, le mandat du chercheur...")}
+                  placeholder={t("ph_full_offer_ex", "Expliquez la démarche archivistique, les dépôts consultés, le mandat du chercheur...")}
                   className="w-full p-2.5 rounded-lg border border-[var(--gold)]/35 bg-[var(--background)]"
                 />
               </div>
@@ -612,13 +612,13 @@ export default function AdminServicesPage() {
               {/* Deliverables (One per line) */}
               <div>
                 <label className="block font-semibold mb-1">
-                  {t("service_deliverables_label", "Livrables & Engagements inclus (un point par ligne)")}
+                  {t("lbl_deliverables_included", "Livrables & Engagements inclus (un point par ligne)")}
                 </label>
                 <textarea
                   rows={3}
                   value={formData.deliverablesText}
                   onChange={(e) => setFormData({ ...formData, deliverablesText: e.target.value })}
-                  placeholder={t("ph_service_deliv_ex", "Ex:\nConsultation préliminaire de faisabilité\nVérification des cotes physiques\nRapport archivistique officiel")}
+                  placeholder={t("ph_deliverables_ex", "Ex:\nConsultation préliminaire de faisabilité\nVérification des cotes physiques\nRapport archivistique officiel")}
                   className="w-full p-2.5 rounded-lg border border-[var(--gold)]/35 bg-[var(--background)] font-mono text-[0.75rem]"
                 />
               </div>
@@ -627,27 +627,27 @@ export default function AdminServicesPage() {
               <div className="p-3.5 rounded-xl border border-[var(--gold)]/30 bg-[var(--gold)]/5 space-y-3">
                 <p className="font-bold text-[var(--gold)] uppercase tracking-wider text-[0.7rem] flex items-center gap-1.5">
                   <Phone className="w-3.5 h-3.5" />
-                  <span>{t("contact_booking_channels", "Canaux de Contact & Réservation de Rendez-vous")}</span>
+                  <span>{t("title_contact_booking_channels", "Canaux de Contact & Réservation de Rendez-vous")}</span>
                 </p>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="block font-semibold mb-1">{t("whatsapp_contact_number", "Numéro WhatsApp de contact")}</label>
+                    <label className="block font-semibold mb-1">{t("lbl_whatsapp_contact_num", "Numéro WhatsApp de contact")}</label>
                     <input
                       type="text"
                       value={formData.contact_phone}
                       onChange={(e) => setFormData({ ...formData, contact_phone: e.target.value })}
-                      placeholder={t("ph_service_phone_ex", "Laisser vide jusqu'à configuration (ex : +216 …)")}
+                      placeholder={t("ph_contact_phone_tunis", "Laisser vide jusqu'à configuration (ex : +216 …)")}
                       className="w-full px-3 py-2 rounded-lg border border-[var(--gold)]/35 bg-[var(--background)]"
                     />
                   </div>
                   <div>
-                    <label className="block font-semibold mb-1">{t("contact_email_label", "Email de contact")}</label>
+                    <label className="block font-semibold mb-1">{t("lbl_contact_email", "Email de contact")}</label>
                     <input
                       type="email"
                       value={formData.contact_email}
                       onChange={(e) => setFormData({ ...formData, contact_email: e.target.value })}
-                      placeholder={t("ph_service_email_ex", "services@rootstunisia.com")}
+                      placeholder={t("ph_contact_email_ex", "services@rootstunisia.com")}
                       className="w-full px-3 py-2 rounded-lg border border-[var(--gold)]/35 bg-[var(--background)]"
                     />
                   </div>
@@ -662,7 +662,7 @@ export default function AdminServicesPage() {
                     className="rounded border-[var(--gold)]/40 text-[var(--gold)] focus:ring-[var(--gold)]"
                   />
                   <label htmlFor="service-meeting-enabled" className="font-semibold select-none cursor-pointer">
-                    Activer la prise de rendez-vous consultation (Appel Zoom, WhatsApp ou Email)
+                    {t("lbl_enable_meeting_booking", "Activer la prise de rendez-vous consultation (Appel Zoom, WhatsApp ou Email)")}
                   </label>
                 </div>
               </div>
@@ -670,13 +670,13 @@ export default function AdminServicesPage() {
               {/* WhatsApp prefill */}
               <div>
                 <label className="block font-semibold mb-1">
-                  Message prérempli WhatsApp pour commander
+                  {t("lbl_whatsapp_prefill_msg", "Message prérempli WhatsApp pour commander")}
                 </label>
                 <input
                   type="text"
                   value={formData.whatsapp_prefill}
                   onChange={(e) => setFormData({ ...formData, whatsapp_prefill: e.target.value })}
-                  placeholder={t("ph_service_msg_ex", "Bonjour Roots Tunisia, je souhaite commander la prestation...")}
+                  placeholder={t("ph_whatsapp_prefill_ex", "Bonjour Roots Tunisia, je souhaite commander la prestation...")}
                   className="w-full px-3 py-2 rounded-lg border border-[var(--gold)]/35 bg-[var(--background)]"
                 />
               </div>
@@ -691,7 +691,7 @@ export default function AdminServicesPage() {
                   className="rounded border-[var(--gold)]/40 text-[var(--gold)] focus:ring-[var(--gold)]"
                 />
                 <label htmlFor="service-is-active" className="font-semibold select-none cursor-pointer">
-                  Actif et visible sur la page publique des services
+                  {t("lbl_active_and_visible_services", "Actif et visible sur la page publique des services")}
                 </label>
               </div>
 
@@ -702,7 +702,7 @@ export default function AdminServicesPage() {
                   onClick={() => setIsModalOpen(false)}
                   className="px-4 py-2 rounded-lg border border-[var(--gold)]/30 hover:bg-[var(--gold)]/10 font-semibold"
                 >
-                  Annuler
+                  {t("cancel", "Annuler")}
                 </button>
                 <button
                   type="submit"
@@ -715,7 +715,7 @@ export default function AdminServicesPage() {
                       <span>{t("saving", "Enregistrement...")}</span>
                     </>
                   ) : (
-                    <span>{t("save_service_btn", "Enregistrer la Prestation")}</span>
+                    <span>{t("btn_save_service", "Enregistrer la Prestation")}</span>
                   )}
                 </button>
               </div>

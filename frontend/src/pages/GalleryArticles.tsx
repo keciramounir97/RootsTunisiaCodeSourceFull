@@ -207,7 +207,7 @@ export default function GalleryArticles() {
   };
 
   const handleDelete = async (id: number | string) => {
-    const confirmed = window.confirm("Êtes-vous sûr de vouloir supprimer cet article ?");
+    const confirmed = window.confirm(t("confirm_delete_article", "Êtes-vous sûr de vouloir supprimer cet article ?"));
     if (!confirmed) return;
     try {
       try {
@@ -426,7 +426,7 @@ export default function GalleryArticles() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Rechercher un article, une source d'archive, un cadi ou un patronyme..."
+              placeholder={t("articles_search_placeholder", "Rechercher un article, une source d'archive, un cadi ou un patronyme...")}
               className="w-full rounded-lg border border-[var(--border)] bg-[var(--background)] ps-10 pe-9 py-2 text-xs text-[var(--foreground)] outline-none focus:border-[var(--gold)]"
             />
             {searchQuery && (
@@ -447,7 +447,7 @@ export default function GalleryArticles() {
             className="btn-base btn-gold text-xs py-2.5 px-5 flex items-center justify-center gap-2 font-bold shrink-0 cursor-pointer shadow-sm"
           >
             <Plus className="w-4 h-4" />
-            <span>{showCreate ? "Fermer le formulaire" : "Publier un Article"}</span>
+            <span>{showCreate ? t("close_form", "Fermer le formulaire") : t("publish_article_btn", "Publier un Article")}</span>
           </button>
         </div>
 
@@ -463,7 +463,7 @@ export default function GalleryArticles() {
                 : "bg-[var(--card)] text-[var(--foreground)]/80 hover:bg-[var(--gold)]/15 border border-[var(--border)]"
             }`}
           >
-            Tous les articles ({posts.length})
+            {t("all_articles_count", "Tous les articles")} ({posts.length})
           </button>
           {ARTICLE_CATEGORIES.map((cat) => (
             <button
@@ -476,7 +476,7 @@ export default function GalleryArticles() {
                   : "bg-[var(--card)] text-[var(--foreground)]/80 hover:bg-[var(--gold)]/15 border border-[var(--border)]"
               }`}
             >
-              {cat.fallback}
+              {t(cat.id, cat.fallback)}
             </button>
           ))}
         </div>
@@ -488,14 +488,14 @@ export default function GalleryArticles() {
               <div className="flex items-center gap-2">
                 <BookOpen className="w-5 h-5 text-[var(--gold)]" />
                 <h3 className="font-display text-lg font-bold text-[var(--foreground)]">
-                  {editingArticleId ? "Modifier l'Article Historique & Généalogique" : "Rédiger et Publier un Article Historique & Généalogique"}
+                  {editingArticleId ? t("edit_article_title", "Modifier l'Article Historique & Généalogique") : t("create_article_title", "Rédiger et Publier un Article Historique & Généalogique")}
                 </h3>
               </div>
               <button
                 type="button"
                 onClick={resetForm}
                 className="text-[var(--muted-foreground)] hover:text-[var(--foreground)] p-1 cursor-pointer"
-                title="Fermer"
+                title={t("close_form", "Fermer")}
               >
                 <X className="w-5 h-5" />
               </button>
@@ -512,32 +512,32 @@ export default function GalleryArticles() {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="sm:col-span-2 space-y-1">
                   <label className="text-xs font-bold uppercase tracking-wider text-[var(--gold)]">
-                    Titre de l&apos;Article *
+                    {t("article_title_label", "Titre de l'Article *")}
                   </label>
                   <input
                     type="text"
                     value={newTitle}
                     onChange={(e) => setNewTitle(e.target.value)}
-                    placeholder="Ex: Les registres notariés des cadis de Kairouan au XIXe siècle..."
+                    placeholder={t("article_form_title_ph", "Ex: Les registres notariés des cadis de Kairouan au XIXe siècle...")}
                     className="w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3.5 py-2 text-xs text-[var(--foreground)] outline-none focus:border-[var(--gold)] font-medium"
                   />
                 </div>
 
                 <div className="space-y-1">
                   <label className="text-xs font-bold uppercase tracking-wider text-[var(--gold)]">
-                    Thématique / Catégorie
+                    {t("article_category_label", "Thématique / Catégorie")}
                   </label>
                   <select
                     value={newCategory}
                     onChange={(e) => setNewCategory(e.target.value)}
                     className="w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-xs text-[var(--foreground)] outline-none focus:border-[var(--gold)]"
                   >
-                    <option value="Sijillats & Notariats">Sijillats & Notariats</option>
-                    <option value="État Civil & Décrets">État Civil & Décrets</option>
-                    <option value="Habous & Waqf">Habous & Waqf</option>
-                    <option value="Lignées & Nasab">Lignées & Nasab</option>
-                    <option value="Monographies Régionales">Monographies Régionales</option>
-                    <option value="Archives Photographiques">Archives Photographiques</option>
+                    <option value="Sijillats & Notariats">{t("cat_sijillats_notariats", "Sijillats & Notariats")}</option>
+                    <option value="État Civil & Décrets">{t("cat_etat_civil_decrets", "État Civil & Décrets")}</option>
+                    <option value="Habous & Waqf">{t("cat_habous_waqf", "Habous & Waqf")}</option>
+                    <option value="Lignées & Nasab">{t("cat_lignees_nasab", "Lignées & Nasab")}</option>
+                    <option value="Monographies Régionales">{t("cat_monographies_regionales", "Monographies Régionales")}</option>
+                    <option value="Archives Photographiques">{t("cat_archives_photographiques", "Archives Photographiques")}</option>
                   </select>
                 </div>
               </div>
@@ -545,13 +545,13 @@ export default function GalleryArticles() {
               {/* Row 2: Article Body */}
               <div className="space-y-1">
                 <label className="text-xs font-bold uppercase tracking-wider text-[var(--gold)]">
-                  Corps de l&apos;Article & Analyse Historique *
+                  {t("article_content_label", "Corps de l'Article & Analyse Historique *")}
                 </label>
                 <textarea
                   rows={6}
                   value={newContent}
                   onChange={(e) => setNewContent(e.target.value)}
-                  placeholder="Rédigez votre étude, vos transcriptions d'actes ou votre analyse documentaire..."
+                  placeholder={t("article_form_content_ph", "Rédigez votre étude, vos transcriptions d'actes ou votre analyse documentaire...")}
                   className="w-full rounded-lg border border-[var(--border)] bg-[var(--background)] p-3.5 text-xs text-[var(--foreground)] outline-none focus:border-[var(--gold)] font-serif leading-relaxed"
                 />
               </div>
@@ -559,13 +559,13 @@ export default function GalleryArticles() {
               {/* Row 3: Image URL */}
               <div className="space-y-1">
                 <label className="text-xs font-bold uppercase tracking-wider text-[var(--gold)]">
-                  Image Principale / Scan d&apos;Archive (Optionnel URL)
+                  {t("article_image_label", "Image Principale / Scan d'Archive (Optionnel URL)")}
                 </label>
                 <input
                   type="text"
                   value={newImageUrl}
                   onChange={(e) => setNewImageUrl(e.target.value)}
-                  placeholder="https://... ou /assets/family-archive.jpg"
+                  placeholder={t("article_form_img_ph", "https://... ou /assets/family-archive.jpg")}
                   className="w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-xs text-[var(--foreground)] outline-none focus:border-[var(--gold)]"
                 />
               </div>
@@ -576,7 +576,7 @@ export default function GalleryArticles() {
                   <div className="flex items-center gap-2">
                     <FileText className="w-4 h-4 text-[var(--gold)]" />
                     <span className="text-xs font-bold uppercase tracking-wider text-[var(--gold)]">
-                      Sources & Documents d&apos;Archives Rattachés
+                      {t("attached_sources_label", "Sources & Documents d'Archives Rattachés")}
                     </span>
                   </div>
                   <button
@@ -585,7 +585,7 @@ export default function GalleryArticles() {
                     className="text-xs font-bold text-[var(--gold)] hover:underline inline-flex items-center gap-1 cursor-pointer"
                   >
                     <PlusCircle className="w-3.5 h-3.5" />
-                    <span>Ajouter une source</span>
+                    <span>{t("add_source_btn", "Ajouter une source")}</span>
                   </button>
                 </div>
 
@@ -600,7 +600,7 @@ export default function GalleryArticles() {
                           type="text"
                           value={source.title}
                           onChange={(e) => updateSourceRow(index, "title", e.target.value)}
-                          placeholder="Institution / Dépôt (ex: Archives Nationales)"
+                          placeholder={t("article_form_depot_ph", "Institution / Dépôt (ex: Archives Nationales de Tunisie)")}
                           className="w-full rounded border border-[var(--border)] bg-[var(--background)] px-2.5 py-1.5 text-xs text-[var(--foreground)] outline-none focus:border-[var(--gold)]"
                         />
                       </div>
@@ -610,7 +610,7 @@ export default function GalleryArticles() {
                           type="text"
                           value={source.cote || ""}
                           onChange={(e) => updateSourceRow(index, "cote", e.target.value)}
-                          placeholder="Cote d'archive (ex: Série Majba n°12)"
+                          placeholder={t("article_form_cote_ph", "Cote d'archive (ex: Série Majba n°12)")}
                           className="w-full rounded border border-[var(--border)] bg-[var(--background)] px-2.5 py-1.5 text-xs text-[var(--foreground)] outline-none focus:border-[var(--gold)] font-mono"
                         />
                       </div>
@@ -620,7 +620,7 @@ export default function GalleryArticles() {
                           type="text"
                           value={source.url || ""}
                           onChange={(e) => updateSourceRow(index, "url", e.target.value)}
-                          placeholder="Lien web (ex: http://www.archives.nat.tn)"
+                          placeholder={t("article_form_url_ph", "Lien web (ex: http://www.archives.nat.tn)")}
                           className="w-full rounded border border-[var(--border)] bg-[var(--background)] px-2.5 py-1.5 text-xs text-[var(--foreground)] outline-none focus:border-[var(--gold)]"
                         />
                       </div>
@@ -630,7 +630,7 @@ export default function GalleryArticles() {
                           type="button"
                           onClick={() => removeSourceRow(index)}
                           className="p-1 text-slate-400 hover:text-rose-500 cursor-pointer"
-                          title="Supprimer cette source"
+                          title={t("delete_source", "Supprimer cette source")}
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -644,7 +644,7 @@ export default function GalleryArticles() {
             {/* Actions Bar */}
             <div className="pt-3 border-t border-[var(--border)] flex items-center justify-between gap-3">
               <span className="text-xs text-[var(--muted-foreground)]">
-                Publié sous le label institutionnel vérifié.
+                {t("published_institutional_badge", "Publié sous le label institutionnel vérifié Roots.")}
               </span>
 
               <div className="flex items-center gap-3">
@@ -653,7 +653,7 @@ export default function GalleryArticles() {
                   onClick={resetForm}
                   className="btn-base btn-outline text-xs py-2 px-4 cursor-pointer"
                 >
-                  Annuler
+                  {t("cancel", "Annuler")}
                 </button>
                 <button
                   type="button"
@@ -662,7 +662,7 @@ export default function GalleryArticles() {
                   className="btn-base btn-gold text-xs py-2 px-6 flex items-center gap-2 font-bold cursor-pointer disabled:opacity-50"
                 >
                   <Send className="w-3.5 h-3.5" />
-                  <span>{posting ? "Enregistrement..." : editingArticleId ? "Enregistrer les Modifications" : "Publier l'Article"}</span>
+                  <span>{posting ? t("saving", "Enregistrement...") : editingArticleId ? t("save_changes", "Enregistrer les Modifications") : t("publish_article_action", "Publier l'Article")}</span>
                 </button>
               </div>
             </div>
@@ -678,10 +678,10 @@ export default function GalleryArticles() {
           <div className="surface-card frame-gold p-12 text-center rounded-xl space-y-4 max-w-xl mx-auto my-8">
             <BookOpen className="w-12 h-12 text-[var(--gold)] mx-auto opacity-70" />
             <h3 className="text-xl font-serif font-bold text-[var(--foreground)]">
-              Aucun article trouvé
+              {t("no_articles_found", "Aucun article trouvé")}
             </h3>
             <p className="text-sm text-[var(--muted-foreground)] leading-relaxed">
-              Aucun article ne correspond à vos filtres de recherche.
+              {t("no_articles_desc", "Aucun article ne correspond à vos filtres de recherche.")}
             </p>
           </div>
         ) : (
@@ -707,7 +707,7 @@ export default function GalleryArticles() {
                   <h3
                     onClick={() => setSelectedArticle(article)}
                     className="text-lg sm:text-xl font-display font-bold text-[var(--foreground)] leading-snug cursor-pointer hover:text-[var(--gold)] transition-colors"
-                    title="Cliquer pour lire l'article complet et ses sources"
+                    title={t("click_to_read", "Cliquer pour lire l'article complet et ses sources")}
                   >
                     {article.title}
                   </h3>
@@ -723,11 +723,11 @@ export default function GalleryArticles() {
                   <div className="grid grid-cols-2 gap-2 text-xs font-mono bg-[var(--background)] p-3 rounded-md border border-[var(--border)]">
                     <div className="flex items-center gap-1.5 text-[var(--foreground)]">
                       <FileText className="w-3.5 h-3.5 text-[var(--gold)] shrink-0" />
-                      <span><strong>Sources:</strong> {article.sources?.length || 0} doc{(article.sources?.length || 0) > 1 ? "s" : ""}</span>
+                      <span><strong>{t("sources_label", "Sources :")}</strong> {article.sources?.length || 0} doc{(article.sources?.length || 0) > 1 ? "s" : ""}</span>
                     </div>
                     <div className="flex items-center gap-1.5 text-[var(--foreground)]">
                       <Clock className="w-3.5 h-3.5 text-[var(--gold)] shrink-0" />
-                      <span><strong>Lecture:</strong> {article.readingTime || "5 min"}</span>
+                      <span><strong>{t("reading_time_label", "Lecture :")}</strong> {article.readingTime || "5 min"}</span>
                     </div>
                   </div>
 
@@ -739,7 +739,7 @@ export default function GalleryArticles() {
                       className="btn-base btn-gold flex-1 text-xs py-2 flex items-center justify-center gap-2 cursor-pointer font-bold"
                     >
                       <BookOpen className="w-3.5 h-3.5" />
-                      <span>LIRE L&apos;ARTICLE</span>
+                      <span>{t("read_article_cta", "LIRE L'ARTICLE")}</span>
                     </button>
 
                     {canManage(article) && (

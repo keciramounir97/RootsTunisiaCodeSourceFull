@@ -661,7 +661,7 @@ export default function AdminPeriods() {
             </span>
             <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-500">
               <Check className="w-3.5 h-3.5" />
-              <span>{t("live_sync_active", "Base Dynamique Active")}</span>
+              <span>{t("dynamic_base_active", "Base Dynamique Active")}</span>
             </span>
           </div>
           <h1 className="text-xl sm:text-2xl font-bold font-serif text-[var(--foreground)] tracking-wide">
@@ -703,7 +703,7 @@ export default function AdminPeriods() {
       <div className="flex items-center gap-2 flex-wrap surface-card rounded-2xl px-5 py-3.5 bg-[var(--card)]/90 border border-[var(--gold)]/25 shadow-sm">
         <span className="text-xs font-bold text-[var(--muted-foreground)] flex items-center gap-1.5 me-2">
           <Globe className="w-4 h-4 text-[var(--gold)]" />
-          <span>Langue d'édition :</span>
+          <span>{t("edit_language_colon", "Langue d'édition :")}</span>
         </span>
         <div className="flex items-center gap-1.5 flex-wrap">
           {PERIODS_CMS_LOCALES.map((loc) => (
@@ -762,7 +762,7 @@ export default function AdminPeriods() {
           }`}
         >
           <FileText className="w-4 h-4" />
-          <span>En-tête, KPI & Textes Publics</span>
+          <span>{t("header_kpi_public_texts", "En-tête, KPI & Textes Publics")}</span>
         </button>
 
         <button
@@ -775,7 +775,7 @@ export default function AdminPeriods() {
           }`}
         >
           <Eye className="w-4 h-4" />
-          <span>Aperçu en Direct</span>
+          <span>{t("live_preview", "Aperçu en Direct")}</span>
         </button>
       </div>
 
@@ -793,7 +793,7 @@ export default function AdminPeriods() {
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder={t("search_periods_ph", "Rechercher par époque, capitale, dynastie, souverain...")}
+                  placeholder={t("ph_search_periods", "Rechercher par époque, capitale, dynastie, souverain...")}
                   className="w-full bg-[var(--background)] border border-[var(--border)] text-[var(--foreground)] rounded-lg ps-9 pe-3 py-2 text-xs focus:border-[var(--gold)] outline-none"
                 />
               </div>
@@ -823,7 +823,7 @@ export default function AdminPeriods() {
                 className="btn-base btn-outline text-xs py-2 px-3 inline-flex items-center gap-1.5 cursor-pointer"
               >
                 <RotateCcw className="w-3.5 h-3.5 text-[var(--gold)]" />
-                <span className="hidden md:inline">Par défaut</span>
+                <span className="hidden md:inline">{t("default_val", "Par défaut")}</span>
               </button>
 
               <button
@@ -832,7 +832,7 @@ export default function AdminPeriods() {
                 className="btn-base btn-gold text-xs py-2 px-4 inline-flex items-center gap-2 justify-center cursor-pointer font-bold shadow-md"
               >
                 <Plus className="w-4 h-4" />
-                <span>Ajouter une Période Historique</span>
+                <span>{t("btn_add_period", "Ajouter une Période Historique")}</span>
               </button>
             </div>
           </div>
@@ -841,13 +841,13 @@ export default function AdminPeriods() {
           {loading && filteredPeriods.length === 0 ? (
             <div className="text-center py-16 text-[var(--muted-foreground)]">
               <Loader2 className="w-8 h-8 animate-spin mx-auto mb-2 text-[var(--gold)]" />
-              <p className="text-xs">Chargement des périodes historiques...</p>
+              <p className="text-xs">{t("loading_periods", "Chargement des périodes historiques...")}</p>
             </div>
           ) : filteredPeriods.length === 0 ? (
             <div className="text-center py-12 rounded-xl bg-[var(--card)] border border-[var(--border)] text-[var(--muted-foreground)] space-y-2">
               <Landmark className="w-10 h-10 mx-auto text-[var(--muted-foreground)]/60" />
-              <p className="text-sm font-semibold text-[var(--foreground)]">Aucune période trouvée</p>
-              <p className="text-xs">Modifiez votre filtre ou ajoutez une nouvelle période historique.</p>
+              <p className="text-sm font-semibold text-[var(--foreground)]">{t("no_periods_found", "Aucune période trouvée")}</p>
+              <p className="text-xs">{t("desc_no_periods_filter", "Modifiez votre filtre ou ajoutez une nouvelle période historique.")}</p>
             </div>
           ) : (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -998,7 +998,7 @@ export default function AdminPeriods() {
                 className="btn-base btn-gold text-xs py-2 px-3.5 inline-flex items-center gap-1.5 cursor-pointer font-bold shadow-md shrink-0"
               >
                 <Plus className="w-3.5 h-3.5" />
-                <span>Ajouter une Macro-Époque</span>
+                <span>{t("btn_add_macro_epoch", "Ajouter une Macro-Époque")}</span>
               </button>
             </div>
 
@@ -1060,7 +1060,7 @@ export default function AdminPeriods() {
               <div>
                 <h2 className="text-base font-bold font-serif text-[var(--foreground)] flex items-center gap-2">
                   <Link2 className="w-4 h-4 text-[var(--gold)]" />
-                  <span>Pièces de la Galerie Rattachées aux Périodes</span>
+                  <span>{t("title_gallery_pieces_attached", "Pièces de la Galerie Rattachées aux Périodes")}</span>
                 </h2>
                 <p className="text-xs text-[var(--muted-foreground)]">
                   Sélectionnez une période pour associer ou détacher des actes, manuscrits, arbres généalogiques, livres, photos ou récits audio.
@@ -1086,7 +1086,7 @@ export default function AdminPeriods() {
                   className="btn-base btn-gold text-xs py-2 px-4 inline-flex items-center gap-1.5 font-bold cursor-pointer shadow-md"
                 >
                   <Plus className="w-3.5 h-3.5" />
-                  <span>Associer une Pièce</span>
+                  <span>{t("btn_attach_piece", "Associer une Pièce")}</span>
                 </button>
               </div>
             </div>
@@ -1094,7 +1094,7 @@ export default function AdminPeriods() {
             {loadingLinked ? (
               <div className="py-10 text-center text-xs text-[var(--muted-foreground)]">
                 <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2 text-[var(--gold)]" />
-                <span>Chargement des sources associées...</span>
+                <span>{t("loading_associated_sources", "Chargement des sources associées...")}</span>
               </div>
             ) : linkedSources.length === 0 ? (
               <div className="py-10 text-center rounded-xl bg-[var(--background)]/60 border border-dashed border-[var(--border)] space-y-2">
@@ -1108,7 +1108,7 @@ export default function AdminPeriods() {
                   className="btn-base btn-gold text-xs py-1.5 px-3.5 inline-flex items-center gap-1.5 font-bold cursor-pointer"
                 >
                   <Plus className="w-3.5 h-3.5" />
-                  <span>Associer la Première Pièce</span>
+                  <span>{t("btn_attach_first_piece", "Associer la Première Pièce")}</span>
                 </button>
               </div>
             ) : (
@@ -1149,7 +1149,7 @@ export default function AdminPeriods() {
                           className="px-2.5 py-1 rounded-lg text-xs text-rose-500 hover:bg-rose-500/10 inline-flex items-center gap-1 cursor-pointer"
                         >
                           <Trash2 className="w-3 h-3" />
-                          <span>Détacher</span>
+                          <span>{t("detach", "Détacher")}</span>
                         </button>
                       </div>
                     </div>
@@ -1170,7 +1170,7 @@ export default function AdminPeriods() {
           <div className="surface-card p-6 rounded-xl bg-[var(--card)] border border-[var(--gold)]/30 shadow-md space-y-4">
             <h2 className="text-sm font-bold text-[var(--foreground)] flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-[var(--gold)]" />
-              <span>1. Bannière Hero de la Page Périodes (`/periods`)</span>
+              <span>{t("title_banner_hero_periods", "1. Bannière Hero de la Page Périodes (`/periods`)")}</span>
             </h2>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1277,7 +1277,7 @@ export default function AdminPeriods() {
           <div className="surface-card p-6 rounded-xl bg-[var(--card)] border border-[var(--gold)]/30 shadow-md space-y-4">
             <h2 className="text-sm font-bold text-[var(--foreground)] flex items-center gap-2">
               <History className="w-4 h-4 text-[var(--gold)]" />
-              <span>2. Ruban KPI Chronologique & Bouton des Cartes</span>
+              <span>{t("title_kpi_ribbon_and_buttons", "2. Ruban KPI Chronologique & Bouton des Cartes")}</span>
             </h2>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1350,7 +1350,7 @@ export default function AdminPeriods() {
               className="btn-base btn-gold text-xs py-2.5 px-6 inline-flex items-center gap-2 cursor-pointer font-bold shadow-md"
             >
               {savingTexts ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
-              <span>Enregistrer tous les Textes de la Page Périodes</span>
+              <span>{t("btn_save_all_period_texts", "Enregistrer tous les Textes de la Page Périodes")}</span>
             </button>
           </div>
         </form>
@@ -2010,7 +2010,7 @@ export default function AdminPeriods() {
                         className="btn-base btn-gold text-[11px] py-1 px-3 inline-flex items-center gap-1 cursor-pointer font-bold"
                       >
                         <Plus className="w-3 h-3" />
-                        <span>Ajouter une Cité / Site</span>
+                        <span>{t("btn_add_city_site", "Ajouter une Cité / Site")}</span>
                       </button>
                     </div>
 
@@ -2064,7 +2064,7 @@ export default function AdminPeriods() {
                   className="btn-base btn-gold text-xs py-2 px-5 inline-flex items-center gap-1.5 font-bold cursor-pointer"
                 >
                   {savingPeriod && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                  <span>Enregistrer la Période</span>
+                  <span>{t("btn_save_period", "Enregistrer la Période")}</span>
                 </button>
               </div>
             </form>
@@ -2199,7 +2199,7 @@ export default function AdminPeriods() {
             <div className="px-6 py-4 border-b border-[var(--border)] flex items-center justify-between">
               <h3 className="font-serif font-bold text-base text-[var(--foreground)] flex items-center gap-2">
                 <Link2 className="w-4 h-4 text-[var(--gold)]" />
-                <span>Associer une Pièce de la Galerie à la Période</span>
+                <span>{t("title_attach_gallery_modal", "Associer une Pièce de la Galerie à la Période")}</span>
               </h3>
               <button
                 type="button"

@@ -172,7 +172,7 @@ export default function AdminContactContent() {
                   rel="noreferrer"
                   className="inline-flex items-center gap-1 text-[10px] font-semibold text-[var(--gold)]/80 hover:text-[var(--gold)] underline"
                 >
-                  <span>Voir /helpcenter#contact</span>
+                  <span>{t("view_helpcenter_contact", "Voir /helpcenter#contact")}</span>
                   <ExternalLink className="w-2.5 h-2.5" />
                 </a>
               </div>
@@ -198,7 +198,7 @@ export default function AdminContactContent() {
                 }`}
               >
                 <Columns className="w-3.5 h-3.5" />
-                <span>Éditeur + Aperçu Direct</span>
+                <span>{t("editor_and_direct_preview", "Éditeur + Aperçu Direct")}</span>
               </button>
               <button
                 type="button"
@@ -210,7 +210,7 @@ export default function AdminContactContent() {
                 }`}
               >
                 <Eye className="w-3.5 h-3.5" />
-                <span>Aperçu Plein Écran</span>
+                <span>{t("full_screen_preview", "Aperçu Plein Écran")}</span>
               </button>
             </div>
 
@@ -220,7 +220,7 @@ export default function AdminContactContent() {
               className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-[var(--gold)]/30 bg-[var(--background)]/60 text-xs font-semibold text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:border-[var(--gold)] transition cursor-pointer"
             >
               <RotateCcw className="w-3.5 h-3.5" />
-              <span>Par défaut</span>
+              <span>{t("default_val", "Par défaut")}</span>
             </button>
 
             <button
@@ -240,7 +240,7 @@ export default function AdminContactContent() {
       <div className="flex items-center gap-2 flex-wrap surface-card rounded-2xl px-5 py-3.5 bg-[var(--card)]/90 border border-[var(--gold)]/25 shadow-sm">
         <span className="text-xs font-bold text-[var(--muted-foreground)] flex items-center gap-1.5 me-2">
           <Globe className="w-4 h-4 text-[var(--gold)]" />
-          <span>Langue d'édition :</span>
+          <span>{t("edit_language_colon", "Langue d'édition :")}</span>
         </span>
         <div className="flex items-center gap-1.5 flex-wrap">
           {CMS_LOCALES.map((loc) => (
@@ -356,7 +356,7 @@ export default function AdminContactContent() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {/* Téléphone */}
                 <div className="p-3 rounded-xl border border-[var(--gold)]/20 bg-[var(--background)]/40 space-y-2">
-                  <span className="text-[10px] font-bold uppercase text-[var(--gold)]">Carte 1 • Téléphone</span>
+                  <span className="text-[10px] font-bold uppercase text-[var(--gold)]">{t("card_phone_label", "Carte 1 • Téléphone")}</span>
                   <input
                     type="text"
                     value={config.contact.cards.phoneLabel}
@@ -406,7 +406,7 @@ export default function AdminContactContent() {
 
                 {/* WhatsApp */}
                 <div className="p-3 rounded-xl border border-emerald-500/25 bg-[var(--background)]/40 space-y-2">
-                  <span className="text-[10px] font-bold uppercase text-emerald-400">Carte 2 • WhatsApp</span>
+                  <span className="text-[10px] font-bold uppercase text-emerald-400">{t("card_whatsapp_label", "Carte 2 • WhatsApp")}</span>
                   <input
                     type="text"
                     value={config.contact.cards.whatsappLabel}
@@ -456,7 +456,7 @@ export default function AdminContactContent() {
 
                 {/* Email */}
                 <div className="p-3 rounded-xl border border-[var(--gold)]/20 bg-[var(--background)]/40 space-y-2">
-                  <span className="text-[10px] font-bold uppercase text-[var(--gold)]">Carte 3 • Email Officiel</span>
+                  <span className="text-[10px] font-bold uppercase text-[var(--gold)]">{t("card_email_label", "Carte 3 • Email Officiel")}</span>
                   <input
                     type="text"
                     value={config.contact.cards.emailLabel}
@@ -484,7 +484,7 @@ export default function AdminContactContent() {
                         },
                       })
                     }
-                    placeholder="contact@rootstunisia.com"
+                    placeholder={t("ph_email_support_ex", "contact@rootstunisia.com")}
                     className="w-full px-2.5 py-1.5 rounded-lg border border-[var(--gold)]/30 bg-[var(--background)] text-xs font-bold"
                   />
                   <input
@@ -506,7 +506,7 @@ export default function AdminContactContent() {
 
                 {/* Horaires */}
                 <div className="p-3 rounded-xl border border-[var(--gold)]/20 bg-[var(--background)]/40 space-y-2">
-                  <span className="text-[10px] font-bold uppercase text-[var(--gold)]">Carte 4 • Horaires</span>
+                  <span className="text-[10px] font-bold uppercase text-[var(--gold)]">{t("card_hours_label", "Carte 4 • Horaires")}</span>
                   <input
                     type="text"
                     value={config.contact.cards.hoursLabel}
@@ -534,7 +534,7 @@ export default function AdminContactContent() {
                         },
                       })
                     }
-                    placeholder="09:00 – 17:00 (GMT+1)"
+                    placeholder={t("ph_hours_val_egypt", "09:00 – 17:00 (GMT+1)")}
                     className="w-full px-2.5 py-1.5 rounded-lg border border-[var(--gold)]/30 bg-[var(--background)] text-xs font-bold"
                   />
                   <input

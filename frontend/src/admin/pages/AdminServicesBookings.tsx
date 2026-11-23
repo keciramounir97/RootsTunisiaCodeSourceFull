@@ -285,8 +285,8 @@ export default function AdminServicesBookingsPage() {
   return (
     <div className={`p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto ${isRtl ? "rtl" : "ltr"}`}>
       <SEO
-        title={t("bookings_page_title", "Réception des Réservations & Rendez-vous — Super Admin | Roots Tunisia")}
-        description="Consultez et gérez l'ensemble des réservations et rendez-vous clients reçus par volet de service."
+        title={t("seo_super_admin_services_bookings_title", "Réception des Réservations & Rendez-vous — Super Admin | Roots Tunisia")}
+        description={t("seo_super_admin_services_bookings_desc", "Consultez et gérez l'ensemble des réservations et rendez-vous clients reçus par volet de service.")}
       />
 
       {/* Page Header */}
@@ -294,13 +294,13 @@ export default function AdminServicesBookingsPage() {
         <div>
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-[var(--gold)]/15 text-[var(--gold)] border border-[var(--gold)]/30 mb-2">
             <Calendar className="w-3.5 h-3.5" />
-            <span>SUPER ADMIN • RÉCEPTION DES RÉSERVATIONS & RENDEZ-VOUS</span>
+            <span>{t("badge_super_admin_bookings", "SUPER ADMIN • RÉCEPTION DES RÉSERVATIONS & RENDEZ-VOUS")}</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-cinzel font-bold text-[var(--foreground)] tracking-wide">
-            Réservations & Rendez-vous Clients
+            {t("title_client_bookings_and_meetings", "Réservations & Rendez-vous Clients")}
           </h1>
           <p className="text-xs sm:text-sm text-[var(--foreground)]/70 mt-1 max-w-2xl">
-            Toutes les demandes de prestations et rendez-vous généalogiques reçus sont centralisés ici par volet de service.
+            {t("desc_client_bookings_and_meetings", "Toutes les demandes de prestations et rendez-vous généalogiques reçus sont centralisés ici par volet de service.")}
           </p>
         </div>
 
@@ -310,7 +310,7 @@ export default function AdminServicesBookingsPage() {
             className="px-4 py-2.5 rounded-xl border border-[var(--gold)]/40 hover:bg-[var(--gold)]/10 text-xs font-semibold text-[var(--foreground)] transition-all flex items-center gap-2 shadow-sm"
           >
             <Briefcase className="w-4 h-4 text-[var(--gold)]" />
-            <span>Gérer les Cartes d'Offres</span>
+            <span>{t("btn_manage_service_cards", "Gérer les Cartes d'Offres")}</span>
           </Link>
 
           <button
@@ -319,7 +319,7 @@ export default function AdminServicesBookingsPage() {
             className="px-4 py-2.5 rounded-xl border border-emerald-500/40 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-bold transition-all flex items-center gap-2 shadow-sm cursor-pointer"
           >
             <Download className="w-4 h-4" />
-            <span>{t("export_csv", "Exporter en CSV")}</span>
+            <span>{t("btn_export_csv", "Exporter en CSV")}</span>
           </button>
 
           <button
@@ -336,42 +336,42 @@ export default function AdminServicesBookingsPage() {
       {/* KPI Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3.5">
         <div className="surface-card p-4 rounded-xl border border-[var(--gold)]/25 flex flex-col justify-between">
-          <span className="text-[0.7rem] uppercase font-bold text-[var(--foreground)]/60">{t("total_received", "Total Reçu")}</span>
+          <span className="text-[0.7rem] uppercase font-bold text-[var(--foreground)]/60">{t("kpi_total_received", "Total Reçu")}</span>
           <div className="flex items-baseline gap-2 mt-2">
             <span className="text-2xl font-cinzel font-bold text-[var(--foreground)]">{stats.total}</span>
-            <span className="text-[0.65rem] text-[var(--foreground)]/50">{t("folders_count", "dossiers")}</span>
+            <span className="text-[0.65rem] text-[var(--foreground)]/50">{t("lbl_dossiers", "dossiers")}</span>
           </div>
         </div>
 
         <div className="surface-card p-4 rounded-xl border border-amber-500/30 bg-amber-500/5 flex flex-col justify-between">
-          <span className="text-[0.7rem] uppercase font-bold text-amber-600 dark:text-amber-400">{t("new_status", "Nouveaux")}</span>
+          <span className="text-[0.7rem] uppercase font-bold text-amber-600 dark:text-amber-400">{t("kpi_new", "Nouveaux")}</span>
           <div className="flex items-baseline gap-2 mt-2">
             <span className="text-2xl font-cinzel font-bold text-amber-600 dark:text-amber-400">{stats.newCount}</span>
-            <span className="text-[0.65rem] text-amber-600/70">{t("to_process", "à traiter")}</span>
+            <span className="text-[0.65rem] text-amber-600/70">{t("lbl_to_process", "à traiter")}</span>
           </div>
         </div>
 
         <div className="surface-card p-4 rounded-xl border border-blue-500/30 bg-blue-500/5 flex flex-col justify-between">
-          <span className="text-[0.7rem] uppercase font-bold text-blue-600 dark:text-blue-400">{t("appointments", "Rendez-vous")}</span>
+          <span className="text-[0.7rem] uppercase font-bold text-blue-600 dark:text-blue-400">{t("kpi_meetings", "Rendez-vous")}</span>
           <div className="flex items-baseline gap-2 mt-2">
             <span className="text-2xl font-cinzel font-bold text-blue-600 dark:text-blue-400">{stats.meetings}</span>
-            <span className="text-[0.65rem] text-blue-600/70">{t("interviews", "entretiens")}</span>
+            <span className="text-[0.65rem] text-blue-600/70">{t("lbl_interviews", "entretiens")}</span>
           </div>
         </div>
 
         <div className="surface-card p-4 rounded-xl border border-purple-500/30 bg-purple-500/5 flex flex-col justify-between">
-          <span className="text-[0.7rem] uppercase font-bold text-purple-600 dark:text-purple-400">{t("in_progress", "En Cours")}</span>
+          <span className="text-[0.7rem] uppercase font-bold text-purple-600 dark:text-purple-400">{t("kpi_in_progress", "En Cours")}</span>
           <div className="flex items-baseline gap-2 mt-2">
             <span className="text-2xl font-cinzel font-bold text-purple-600 dark:text-purple-400">{stats.inProgress}</span>
-            <span className="text-[0.65rem] text-purple-600/70">{t("under_study", "en étude")}</span>
+            <span className="text-[0.65rem] text-purple-600/70">{t("lbl_under_study", "en étude")}</span>
           </div>
         </div>
 
         <div className="surface-card p-4 rounded-xl border border-emerald-500/30 bg-emerald-500/5 flex flex-col justify-between col-span-2 sm:col-span-1">
-          <span className="text-[0.7rem] uppercase font-bold text-emerald-600 dark:text-emerald-400">Confirmés</span>
+          <span className="text-[0.7rem] uppercase font-bold text-emerald-600 dark:text-emerald-400">{t("kpi_confirmed", "Confirmés")}</span>
           <div className="flex items-baseline gap-2 mt-2">
             <span className="text-2xl font-cinzel font-bold text-emerald-600 dark:text-emerald-400">{stats.confirmed}</span>
-            <span className="text-[0.65rem] text-emerald-600/70">validés</span>
+            <span className="text-[0.65rem] text-emerald-600/70">{t("lbl_validated", "validés")}</span>
           </div>
         </div>
       </div>
@@ -381,10 +381,10 @@ export default function AdminServicesBookingsPage() {
         <div className="flex items-center justify-between">
           <p className="text-xs uppercase font-bold tracking-wider text-[var(--gold)] flex items-center gap-1.5">
             <Layers className="w-4 h-4" />
-            <span>Volets de réception par prestation :</span>
+            <span>{t("lbl_volet_tabs_intro", "Volets de réception par prestation :")}</span>
           </p>
           <span className="text-xs text-[var(--foreground)]/60">
-            {services.length} volets créés
+            {services.length} {t("lbl_volets_created", "volets créés")}
           </span>
         </div>
 
@@ -399,7 +399,7 @@ export default function AdminServicesBookingsPage() {
             }`}
           >
             <Layers className="w-3.5 h-3.5" />
-            <span>Toutes les Réservations ({bookings.length})</span>
+            <span>{t("btn_all_bookings", "Toutes les Réservations")} ({bookings.length})</span>
           </button>
 
           {services.map((svc) => {
@@ -441,7 +441,7 @@ export default function AdminServicesBookingsPage() {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-[var(--gold)]/20">
           <div>
             <h2 className="text-lg font-cinzel font-bold text-[var(--foreground)] flex items-center gap-2">
-              <span>{activeServiceObj ? activeServiceObj.title : "Toutes les Réservations & Rendez-vous"}</span>
+              <span>{activeServiceObj ? activeServiceObj.title : t("title_all_bookings_meetings", "Toutes les Réservations & Rendez-vous")}</span>
               <span className="text-xs px-2 py-0.5 rounded-md bg-[var(--gold)]/15 text-[var(--gold)] font-mono font-bold">
                 {filteredBookings.length}
               </span>
@@ -449,7 +449,7 @@ export default function AdminServicesBookingsPage() {
             <p className="text-xs text-[var(--foreground)]/65 mt-0.5">
               {activeServiceObj
                 ? `Volet dédié à l'offre "${activeServiceObj.title}" (${activeServiceObj.billing_unit} • ${activeServiceObj.price_eur} € / ${activeServiceObj.price_tnd} TND)`
-                : "Vue d'ensemble centralisée de tous les dossiers reçus sur Roots Tunisia"}
+                : t("desc_all_bookings_overview", "Vue d'ensemble centralisée de tous les dossiers reçus sur Roots Tunisia")}
             </p>
           </div>
 
@@ -461,7 +461,7 @@ export default function AdminServicesBookingsPage() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder={t("search_bookings_ph", "Rechercher nom, ancêtre, tel...")}
+                placeholder={t("ph_search_bookings", "Rechercher nom, ancêtre, tel...")}
                 className="w-full ps-8 pe-3 py-1.5 rounded-lg border border-[var(--gold)]/30 bg-[var(--background)] text-xs focus:outline-none focus:border-[var(--gold)]"
               />
             </div>
@@ -473,9 +473,9 @@ export default function AdminServicesBookingsPage() {
                 onChange={(e) => setTypeFilter(e.target.value)}
                 className="px-2.5 py-1.5 rounded-lg border border-[var(--gold)]/30 bg-[var(--background)] text-xs font-semibold focus:outline-none focus:border-[var(--gold)] cursor-pointer"
               >
-                <option value="all">{t("all_types", "Tous types")}</option>
-                <option value="service">{t("service_only", "Prestation seule")}</option>
-                <option value="meeting">{t("meeting_interview", "Rendez-vous / Entretien")}</option>
+                <option value="all">{t("opt_all_types", "Tous types")}</option>
+                <option value="service">{t("opt_type_service_only", "Prestation seule")}</option>
+                <option value="meeting">{t("opt_type_meeting", "Rendez-vous / Entretien")}</option>
               </select>
             </div>
 
@@ -487,12 +487,12 @@ export default function AdminServicesBookingsPage() {
                 onChange={(e) => setStatusFilter(e.target.value)}
                 className="px-2.5 py-1.5 rounded-lg border border-[var(--gold)]/30 bg-[var(--background)] text-xs font-semibold focus:outline-none focus:border-[var(--gold)] cursor-pointer"
               >
-                <option value="all">{t("all_statuses", "Tous statuts")}</option>
-                <option value="nouveau">{t("status_new", "Nouveau")}</option>
-                <option value="en_cours">{t("status_in_progress", "En cours")}</option>
-                <option value="confirme">{t("status_confirmed", "Confirmé")}</option>
-                <option value="termine">{t("status_completed", "Terminé")}</option>
-                <option value="annule">{t("status_cancelled", "Annulé")}</option>
+                <option value="all">{t("opt_all_statuses", "Tous statuts")}</option>
+                <option value="nouveau">{t("opt_status_nouveau", "Nouveau")}</option>
+                <option value="en_cours">{t("opt_status_en_cours", "En cours")}</option>
+                <option value="confirme">{t("opt_status_confirme", "Confirmé")}</option>
+                <option value="termine">{t("opt_status_termine", "Terminé")}</option>
+                <option value="annule">{t("opt_status_annule", "Annulé")}</option>
               </select>
             </div>
           </div>
@@ -502,18 +502,18 @@ export default function AdminServicesBookingsPage() {
         {loading ? (
           <div className="py-16 text-center space-y-3">
             <RefreshCw className="w-8 h-8 text-[var(--gold)] animate-spin mx-auto" />
-            <p className="text-xs text-[var(--foreground)]/70">{t("loading_bookings", "Chargement des réservations...")}</p>
+            <p className="text-xs text-[var(--foreground)]/70">{t("lbl_loading_bookings", "Chargement des réservations...")}</p>
           </div>
         ) : filteredBookings.length === 0 ? (
           <div className="py-14 text-center space-y-3 border border-dashed border-[var(--gold)]/30 rounded-xl">
             <Calendar className="w-10 h-10 text-[var(--gold)]/40 mx-auto" />
             <h3 className="font-cinzel text-base font-bold text-[var(--foreground)]">
-              {t("no_bookings_found_title", "Aucune réservation trouvée pour ce volet")}
+              {t("title_no_bookings_for_volet", "Aucune réservation trouvée pour ce volet")}
             </h3>
             <p className="text-xs text-[var(--foreground)]/60 max-w-md mx-auto">
               {searchQuery || statusFilter !== "all" || typeFilter !== "all"
-                ? "Aucun résultat ne correspond à vos filtres actuels."
-                : "Les réservations et rendez-vous pris par vos clients pour cette prestation apparaîtront automatiquement ici."}
+                ? t("desc_no_bookings_matching_filter", "Aucun résultat ne correspond à vos filtres actuels.")
+                : t("desc_no_bookings_auto_appear", "Les réservations et rendez-vous pris par vos clients pour cette prestation apparaîtront automatiquement ici.")}
             </p>
           </div>
         ) : (
@@ -521,13 +521,13 @@ export default function AdminServicesBookingsPage() {
             <table className="w-full text-xs text-start">
               <thead className="bg-[var(--gold)]/10 border-b border-[var(--gold)]/25 text-[var(--foreground)]/80 uppercase text-[0.68rem] tracking-wider font-bold">
                 <tr>
-                  <th className="p-3 text-start">{t("ref_and_date", "Réf. & Date")}</th>
-                  {activeVolet === "all" && <th className="p-3 text-start">{t("service", "Prestation")}</th>}
-                  <th className="p-3 text-start">{t("client_and_contact", "Client & Contact")}</th>
-                  <th className="p-3 text-start">{t("type_or_appointment", "Type / Rendez-vous")}</th>
-                  <th className="p-3 text-start">{t("ancestor_and_msg", "Ancêtre Ciblé & Message")}</th>
-                  <th className="p-3 text-start">{t("status", "Statut")}</th>
-                  <th className="p-3 text-end">{t("quick_actions", "Actions Rapides")}</th>
+                  <th className="p-3 text-start">{t("th_ref_and_date", "Réf. & Date")}</th>
+                  {activeVolet === "all" && <th className="p-3 text-start">{t("th_service_offering", "Prestation")}</th>}
+                  <th className="p-3 text-start">{t("th_client_and_contact", "Client & Contact")}</th>
+                  <th className="p-3 text-start">{t("th_type_and_meeting", "Type / Rendez-vous")}</th>
+                  <th className="p-3 text-start">{t("th_target_ancestor_and_msg", "Ancêtre Ciblé & Message")}</th>
+                  <th className="p-3 text-start">{t("th_status", "Statut")}</th>
+                  <th className="p-3 text-end">{t("th_quick_actions", "Actions Rapides")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[var(--gold)]/15">
@@ -553,14 +553,10 @@ export default function AdminServicesBookingsPage() {
                           <span>{new Date(b.created_at).toLocaleDateString("fr-FR")}</span>
                         </div>
                         {b.urgency === "urgent" && (
-                          <span className="mt-1 inline-block px-1.5 py-0.5 rounded text-[0.6rem] font-bold bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30">
-                            Urgent
-                          </span>
+                          <span className="mt-1 inline-block px-1.5 py-0.5 rounded text-[0.6rem] font-bold bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30">{t("badge_urgent", "Urgent")}</span>
                         )}
                         {b.urgency === "express" && (
-                          <span className="mt-1 inline-block px-1.5 py-0.5 rounded text-[0.6rem] font-bold bg-red-500/20 text-red-500 border border-red-500/30">
-                            Express
-                          </span>
+                          <span className="mt-1 inline-block px-1.5 py-0.5 rounded text-[0.6rem] font-bold bg-red-500/20 text-red-500 border border-red-500/30">{t("badge_express", "Express")}</span>
                         )}
                       </td>
 
@@ -597,7 +593,7 @@ export default function AdminServicesBookingsPage() {
                           <div className="space-y-1">
                             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[0.68rem] font-bold bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/30">
                               <Video className="w-3 h-3" />
-                              <span>Rendez-vous réservé</span>
+                              <span>{t("badge_booked_meeting", "Rendez-vous réservé")}</span>
                             </span>
                             {b.meeting_date && (
                               <div className="font-semibold text-xs text-[var(--foreground)] flex items-center gap-1">
@@ -608,7 +604,7 @@ export default function AdminServicesBookingsPage() {
                             )}
                             {b.meeting_type && (
                               <div className="text-[0.68rem] text-[var(--foreground)]/60">
-                                Format: <span className="font-medium text-[var(--foreground)]">{b.meeting_type}</span>
+                                {t("lbl_format_prefix", "Format :")} <span className="font-medium text-[var(--foreground)]">{b.meeting_type}</span>
                               </div>
                             )}
                           </div>
@@ -619,7 +615,7 @@ export default function AdminServicesBookingsPage() {
                               <span>{t("order_service", "Commande Prestation")}</span>
                             </span>
                             <div className="text-[0.68rem] text-[var(--foreground)]/60">
-                              Contact: <span className="capitalize font-medium">{b.preferred_contact || "WhatsApp"}</span>
+                              {t("lbl_contact_prefix", "Contact :")} <span className="capitalize font-medium">{b.preferred_contact || "WhatsApp"}</span>
                             </div>
                           </div>
                         )}
@@ -633,13 +629,13 @@ export default function AdminServicesBookingsPage() {
                           </div>
                         )}
                         <p className="text-[0.72rem] text-[var(--foreground)]/80 line-clamp-3 leading-relaxed">
-                          {b.message || "Aucun message spécifique."}
+                          {b.message || t("msg_no_specific_message", "Aucun message spécifique.")}
                         </p>
                         {b.admin_notes && (
                           <div className="mt-2 p-1.5 rounded bg-[var(--gold)]/10 border border-[var(--gold)]/20 text-[0.68rem] text-[var(--foreground)]/80 flex items-start gap-1">
                             <FileText className="w-3 h-3 text-[var(--gold)] shrink-0 mt-0.5" />
                             <span className="line-clamp-2">
-                              <strong>{t("note_colon", "Note :")}</strong> {b.admin_notes}
+                              <strong>{t("lbl_note_prefix", "Note :")}</strong> {b.admin_notes}
                             </span>
                           </div>
                         )}
@@ -679,7 +675,7 @@ export default function AdminServicesBookingsPage() {
                             target="_blank"
                             rel="noopener noreferrer"
                             className="p-1.5 rounded-lg border border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/25 transition-all"
-                            title={t("contact_whatsapp_1click", "Contacter sur WhatsApp en 1 clic")}
+                            title={t("tip_contact_whatsapp", "Contacter sur WhatsApp en 1 clic")}
                           >
                             <MessageCircle className="w-3.5 h-3.5" />
                           </a>
@@ -690,7 +686,7 @@ export default function AdminServicesBookingsPage() {
                               `Roots Tunisia - Réservation #${b.id} (${b.service_title || ""})`
                             )}`}
                             className="p-1.5 rounded-lg border border-blue-500/40 bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-500/25 transition-all"
-                            title={t("send_email", "Envoyer un email")}
+                            title={t("tip_send_email", "Envoyer un email")}
                           >
                             <Mail className="w-3.5 h-3.5" />
                           </a>
@@ -703,7 +699,7 @@ export default function AdminServicesBookingsPage() {
                               setNotesDraft(b.admin_notes || "");
                             }}
                             className="p-1.5 rounded-lg border border-[var(--gold)]/40 hover:bg-[var(--gold)]/15 text-[var(--gold)] transition-all cursor-pointer"
-                            title={t("add_progress_note", "Ajouter une note d'administration")}
+                            title={t("tip_add_admin_note", "Ajouter une note d'administration")}
                           >
                             <FileText className="w-3.5 h-3.5" />
                           </button>
@@ -713,7 +709,7 @@ export default function AdminServicesBookingsPage() {
                             type="button"
                             onClick={() => handleDeleteBooking(b.id)}
                             className="p-1.5 rounded-lg border border-red-500/30 text-red-500 hover:bg-red-500/15 transition-all cursor-pointer"
-                            title={t("delete_booking", "Supprimer la réservation")}
+                            title={t("tip_delete_booking", "Supprimer la réservation")}
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
@@ -735,7 +731,7 @@ export default function AdminServicesBookingsPage() {
             <div className="flex items-center justify-between pb-3 border-b border-[var(--gold)]/20">
               <h3 className="font-cinzel text-base font-bold text-[var(--foreground)] flex items-center gap-2">
                 <FileText className="w-4 h-4 text-[var(--gold)]" />
-                <span>Notes Administrateur • Dossier #BK-{editingNotesBooking.id}</span>
+                <span>{t("title_admin_notes_modal", "Notes Administrateur • Dossier")} #BK-{editingNotesBooking.id}</span>
               </h3>
               <button
                 type="button"
@@ -747,13 +743,13 @@ export default function AdminServicesBookingsPage() {
             </div>
 
             <div className="text-xs text-[var(--foreground)]/70 space-y-1">
-              <p>{t("client_colon", "Client :")} <strong className="text-[var(--foreground)]">{editingNotesBooking.client_name}</strong></p>
-              <p>{t("service_colon", "Prestation :")} <strong className="text-[var(--foreground)]">{editingNotesBooking.service_title}</strong></p>
+              <p>{t("lbl_client_colon", "Client :")} <strong className="text-[var(--foreground)]">{editingNotesBooking.client_name}</strong></p>
+              <p>{t("lbl_service_colon", "Prestation :")} <strong className="text-[var(--foreground)]">{editingNotesBooking.service_title}</strong></p>
             </div>
 
             <div>
               <label className="block text-xs font-semibold text-[var(--foreground)]/85 mb-1.5">
-                Note interne (visible uniquement par les administrateurs) :
+                {t("lbl_internal_note_desc", "Note interne (visible uniquement par les administrateurs) :")}
               </label>
               <textarea
                 rows={4}
@@ -770,7 +766,7 @@ export default function AdminServicesBookingsPage() {
                 onClick={() => setEditingNotesBooking(null)}
                 className="px-4 py-2 rounded-lg border border-[var(--gold)]/30 text-xs font-semibold text-[var(--foreground)] hover:bg-[var(--gold)]/10 transition-colors"
               >
-                Annuler
+                {t("cancel", "Annuler")}
               </button>
               <button
                 type="button"
@@ -779,7 +775,7 @@ export default function AdminServicesBookingsPage() {
                 className="px-4 py-2 rounded-lg bg-[var(--gold)] hover:bg-[var(--gold)]/90 text-[var(--card)] text-xs font-bold transition-colors flex items-center gap-1.5 shadow-md"
               >
                 {savingNotes ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
-                <span>{t("save_note_btn", "Enregistrer la note")}</span>
+                <span>{t("btn_save_note", "Enregistrer la note")}</span>
               </button>
             </div>
           </div>
