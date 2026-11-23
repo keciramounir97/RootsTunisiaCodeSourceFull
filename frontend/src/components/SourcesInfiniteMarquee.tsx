@@ -158,7 +158,7 @@ export const SourcesInfiniteMarquee: React.FC = () => {
               <button
                 type="button"
                 onClick={() => handleManualNudge("left")}
-                aria-label="Défiler vers la gauche"
+                aria-label={t("marquee_scroll_left", "Défiler vers la gauche")}
                 className="p-1.5 rounded-lg hover:bg-[var(--gold)]/20 text-[var(--foreground)] transition-colors cursor-pointer"
               >
                 <ChevronLeft className="w-4 h-4 text-[var(--gold)]" />
@@ -166,7 +166,7 @@ export const SourcesInfiniteMarquee: React.FC = () => {
               <button
                 type="button"
                 onClick={() => handleManualNudge("right")}
-                aria-label="Défiler vers la droite"
+                aria-label={t("marquee_scroll_right", "Défiler vers la droite")}
                 className="p-1.5 rounded-lg hover:bg-[var(--gold)]/20 text-[var(--foreground)] transition-colors cursor-pointer"
               >
                 <ChevronRight className="w-4 h-4 text-[var(--gold)]" />
@@ -198,7 +198,7 @@ export const SourcesInfiniteMarquee: React.FC = () => {
           className="w-full overflow-x-auto no-scrollbar scroll-smooth py-3"
           tabIndex={0}
           role="region"
-          aria-label="Inventaire continu des 28 fonds d'archives"
+          aria-label={t("sources_marquee_aria_desc", "Inventaire continu des 28 fonds d'archives")}
         >
           <div
             dir="ltr"

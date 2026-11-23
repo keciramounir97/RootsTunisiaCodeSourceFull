@@ -195,7 +195,7 @@ export default function AdminFaqContent() {
                   rel="noreferrer"
                   className="inline-flex items-center gap-1 text-[10px] font-semibold text-[var(--gold)]/80 hover:text-[var(--gold)] underline"
                 >
-                  <span>Voir /helpcenter#faq</span>
+                  <span>{t("view_helpcenter_faq", "Voir /helpcenter#faq")}</span>
                   <ExternalLink className="w-2.5 h-2.5" />
                 </a>
               </div>
@@ -220,7 +220,7 @@ export default function AdminFaqContent() {
                 }`}
               >
                 <Columns className="w-3.5 h-3.5" />
-                <span>Éditeur + Aperçu Direct</span>
+                <span>{t("editor_and_direct_preview", "Éditeur + Aperçu Direct")}</span>
               </button>
               <button
                 type="button"
@@ -232,7 +232,7 @@ export default function AdminFaqContent() {
                 }`}
               >
                 <Eye className="w-3.5 h-3.5" />
-                <span>Aperçu Plein Écran</span>
+                <span>{t("full_screen_preview", "Aperçu Plein Écran")}</span>
               </button>
             </div>
 
@@ -242,7 +242,7 @@ export default function AdminFaqContent() {
               className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-[var(--gold)]/30 bg-[var(--background)]/60 text-xs font-semibold text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:border-[var(--gold)] transition cursor-pointer"
             >
               <RotateCcw className="w-3.5 h-3.5" />
-              <span>Par défaut</span>
+              <span>{t("default_val", "Par défaut")}</span>
             </button>
 
             <button
@@ -262,7 +262,7 @@ export default function AdminFaqContent() {
       <div className="flex items-center gap-2 flex-wrap surface-card rounded-2xl px-5 py-3.5 bg-[var(--card)]/90 border border-[var(--gold)]/25 shadow-sm">
         <span className="text-xs font-bold text-[var(--muted-foreground)] flex items-center gap-1.5 me-2">
           <Globe className="w-4 h-4 text-[var(--gold)]" />
-          <span>Langue d'édition :</span>
+          <span>{t("edit_language_colon", "Langue d'édition :")}</span>
         </span>
         <div className="flex items-center gap-1.5 flex-wrap">
           {CMS_LOCALES.map((loc) => (

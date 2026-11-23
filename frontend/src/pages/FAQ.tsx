@@ -316,9 +316,9 @@ export default function FAQPage() {
         {filteredFaqs.length === 0 && (
           <div className="py-16 text-center surface-card rounded-xl border border-[var(--gold)]/25 p-8 max-w-md mx-auto">
             <HelpCircle className="w-12 h-12 text-[var(--gold)]/40 mx-auto mb-3" />
-            <h3 className="font-cinzel text-base font-bold">Aucune réponse correspondante</h3>
+            <h3 className="font-cinzel text-base font-bold">{t("no_matching_answer", "Aucune réponse correspondante")}</h3>
             <p className="text-xs text-[var(--foreground)]/70 mt-1">
-              Essayez un autre terme de recherche ou explorez une autre catégorie.
+              {t("no_matching_answer_desc", "Essayez un autre terme de recherche ou explorez une autre catégorie.")}
             </p>
             <button
               onClick={() => {

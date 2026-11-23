@@ -127,7 +127,7 @@ export const PeriodsInfiniteMarquee: React.FC = () => {
               <button
                 type="button"
                 onClick={() => handleManualNudge("left")}
-                aria-label="Défiler vers la gauche"
+                aria-label={t("marquee_scroll_left", "Défiler vers la gauche")}
                 className="p-1.5 rounded-lg hover:bg-[var(--gold)]/20 text-[var(--foreground)] transition-colors cursor-pointer"
               >
                 <ChevronLeft className="w-4 h-4 text-[var(--gold)]" />
@@ -135,7 +135,7 @@ export const PeriodsInfiniteMarquee: React.FC = () => {
               <button
                 type="button"
                 onClick={() => handleManualNudge("right")}
-                aria-label="Défiler vers la droite"
+                aria-label={t("marquee_scroll_right", "Défiler vers la droite")}
                 className="p-1.5 rounded-lg hover:bg-[var(--gold)]/20 text-[var(--foreground)] transition-colors cursor-pointer"
               >
                 <ChevronRight className="w-4 h-4 text-[var(--gold)]" />
@@ -167,7 +167,7 @@ export const PeriodsInfiniteMarquee: React.FC = () => {
           className="w-full overflow-x-auto no-scrollbar scroll-smooth py-3"
           tabIndex={0}
           role="region"
-          aria-label="Frise chronologique animée des 12 périodes"
+          aria-label={t("periods_marquee_aria_desc", "Frise chronologique animée des 12 périodes")}
         >
           <div
             dir="ltr"

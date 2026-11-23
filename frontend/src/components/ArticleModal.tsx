@@ -90,7 +90,7 @@ export default function ArticleModal({
                 title="Modifier mon article"
               >
                 <Edit className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Modifier</span>
+                <span className="hidden sm:inline">{t("edit_btn", "Modifier")}</span>
               </button>
             )}
 
@@ -105,7 +105,7 @@ export default function ArticleModal({
                 title="Supprimer mon article"
               >
                 <Trash2 className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Supprimer</span>
+                <span className="hidden sm:inline">{t("delete_btn", "Supprimer")}</span>
               </button>
             )}
 
@@ -205,7 +205,7 @@ export default function ArticleModal({
 
                       {src.cote && (
                         <p className="text-[11px] font-mono text-[var(--gold)] bg-[var(--card)] px-2 py-1 rounded border border-[var(--border)]">
-                          <strong>Cote :</strong> {src.cote}
+                          <strong>{t("shelfmark_label", "Cote :")}</strong> {src.cote}
                         </p>
                       )}
 
@@ -224,7 +224,7 @@ export default function ArticleModal({
                           rel="noopener noreferrer"
                           className="btn-base btn-gold text-[11px] py-1.5 px-3 inline-flex items-center gap-1.5 w-full justify-center"
                         >
-                          <span>Consulter la Source en Ligne</span>
+                          <span>{t("view_source_online", "Consulter la Source en Ligne")}</span>
                           <ExternalLink className="w-3 h-3" />
                         </a>
                       </div>
@@ -295,7 +295,7 @@ export default function ArticleModal({
                   className="btn-base btn-gold text-xs py-2 px-4 flex items-center gap-1.5 cursor-pointer font-bold"
                 >
                   <Send className="w-3.5 h-3.5" />
-                  <span>Envoyer</span>
+                  <span>{t("send_btn", "Envoyer")}</span>
                 </button>
               </form>
             )}

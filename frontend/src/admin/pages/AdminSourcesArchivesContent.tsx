@@ -668,7 +668,7 @@ export default function AdminSourcesArchivesContent() {
       <div className="flex items-center gap-2 flex-wrap surface-card rounded-2xl px-5 py-3.5 bg-[var(--card)]/90 border border-[var(--gold)]/25 shadow-sm">
         <span className="text-xs font-bold text-[var(--muted-foreground)] flex items-center gap-1.5 me-2">
           <Globe className="w-4 h-4 text-[var(--gold)]" />
-          <span>Langue d'édition :</span>
+          <span>{t("edit_language_colon", "Langue d'édition :")}</span>
         </span>
         <div className="flex items-center gap-1.5 flex-wrap">
           {SOURCES_CMS_LOCALES.map((loc) => (
@@ -727,7 +727,7 @@ export default function AdminSourcesArchivesContent() {
           }`}
         >
           <FileText className="w-4 h-4" />
-          <span>En-tête & Textes Publics</span>
+          <span>{t("header_public_texts", "En-tête & Textes Publics")}</span>
         </button>
 
         <button
@@ -740,7 +740,7 @@ export default function AdminSourcesArchivesContent() {
           }`}
         >
           <Eye className="w-4 h-4" />
-          <span>Aperçu en Direct</span>
+          <span>{t("live_preview", "Aperçu en Direct")}</span>
         </button>
       </div>
 
@@ -920,7 +920,7 @@ export default function AdminSourcesArchivesContent() {
         <div className="space-y-4">
           <div className="flex items-center justify-between p-4 rounded-xl bg-[var(--card)] border border-[var(--border)] shadow-sm">
             <div>
-              <h2 className="text-sm font-bold text-[var(--foreground)]">Pays & Emplacements Référencés</h2>
+              <h2 className="text-sm font-bold text-[var(--foreground)]">{t("title_countries_referenced_locations", "Pays & Emplacements Référencés")}</h2>
               <p className="text-xs text-[var(--muted-foreground)]">
                 Gérez les catégories de classement géographique et institutionnel des fonds d'archives.
               </p>
@@ -997,7 +997,7 @@ export default function AdminSourcesArchivesContent() {
           <div className="surface-card p-6 rounded-xl bg-[var(--card)] border border-[var(--gold)]/30 shadow-md space-y-4">
             <h2 className="text-sm font-bold text-[var(--foreground)] flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-[var(--gold)]" />
-              <span>En-tête & Textes de la Page Publique (Bannière Hero)</span>
+              <span>{t("title_banner_hero_sources", "En-tête & Textes de la Page Publique (Bannière Hero)")}</span>
             </h2>
             <p className="text-xs text-[var(--muted-foreground)] leading-relaxed">
               Modifiez ici le titre, le sous-titre et les textes d'introduction de la page Sources & Archives. Les changements sont enregistrés directement en base et apparaissent instantanément aux visiteurs.

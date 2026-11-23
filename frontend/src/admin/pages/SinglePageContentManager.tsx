@@ -963,7 +963,7 @@ export default function SinglePageContentManager({ pageId }: { pageId: string })
               title={t("studio_interactive_mode", "Studio Interactif avec modification en direct")}
             >
               <Layout className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Studio Éditeur</span>
+              <span className="hidden sm:inline">{t("studio_editor", "Studio Éditeur")}</span>
             </button>
             <button
               type="button"
@@ -1165,7 +1165,7 @@ export default function SinglePageContentManager({ pageId }: { pageId: string })
                 <Sparkles className="w-4 h-4 text-[var(--gold)] shrink-0 mt-0.5" />
                 <div>
                   <strong className="block font-bold">{t("admin_help_notice", "Aide pour les Administrateurs :")}</strong>
-                  Cliquez sur n'importe quelle section ci-dessous ou directement sur le texte de l'aperçu à droite pour le modifier.
+                  {t("help_admins_content_tip", "Cliquez sur n'importe quelle section ci-dessous ou directement sur le texte de l'aperçu à droite pour le modifier.")}
                 </div>
               </div>
 
@@ -1287,7 +1287,7 @@ export default function SinglePageContentManager({ pageId }: { pageId: string })
 
                             <label className="px-3 py-2 rounded-xl border border-slate-700 bg-slate-800 hover:bg-slate-750 text-xs font-semibold text-slate-300 flex items-center justify-center gap-1.5 cursor-pointer transition">
                               <Upload className="w-3.5 h-3.5 text-slate-400" />
-                              <span>Téléverser</span>
+                              <span>{t("upload_image", "Téléverser")}</span>
                               <input
                                 type="file"
                                 accept="image/*"
@@ -1355,7 +1355,7 @@ export default function SinglePageContentManager({ pageId }: { pageId: string })
                   className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
                 >
                   <RefreshCw className="w-3.5 h-3.5 text-[var(--gold)]" />
-                  <span>Recharger l'aperçu</span>
+                  <span>{t("reload_preview", "Recharger l'aperçu")}</span>
                 </button>
               </div>
 

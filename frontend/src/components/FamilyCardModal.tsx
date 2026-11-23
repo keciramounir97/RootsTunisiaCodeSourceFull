@@ -741,12 +741,12 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
               <div className="p-2 sm:p-2.5 rounded-xl sm:rounded-2xl bg-[var(--background)]/90 border border-[var(--gold)]/40 shadow-md space-y-2">
                 <div className="flex items-center justify-between px-1">
                   <span className="text-[9px] sm:text-[10px] font-mono font-bold uppercase tracking-wider sm:tracking-widest text-[var(--gold)] block text-start">
-                    Navigation des 3 Volets
+                    {t("three_volets_navigation", "Navigation des 3 Volets")}
                   </span>
                   <div className="flex items-center gap-2 text-[10px] font-mono md:hidden text-[var(--muted-foreground)]">
-                    <span>Gén: <strong className="text-[var(--gold)]">{generations}</strong></span>
+                    <span>{t("gen_abbr", "Gén:")} <strong className="text-[var(--gold)]">{generations}</strong></span>
                     <span>•</span>
-                    <span>Ind: <strong className="text-[var(--gold)]">{membersCount}</strong></span>
+                    <span>{t("ind_abbr", "Ind:")} <strong className="text-[var(--gold)]">{membersCount}</strong></span>
                   </div>
                 </div>
 
@@ -774,9 +774,9 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                       <GitBranch className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                     </div>
                     <div className="text-center sm:text-start min-w-0 flex-1">
-                      <div className="font-bold text-[10px] sm:text-xs leading-tight sm:leading-snug truncate">Schéma Graphique</div>
+                      <div className="font-bold text-[10px] sm:text-xs leading-tight sm:leading-snug truncate">{t("tab_schema_graphique", "Schéma Graphique")}</div>
                       <div className={`hidden md:block text-[10px] truncate ${activeTab === "schema" ? "text-black/80 font-medium" : "text-[var(--muted-foreground)]"}`}>
-                        Arbre interactif & liens
+                        {t("tab_schema_hint", "Arbre interactif & liens")}
                       </div>
                     </div>
                   </button>
@@ -806,9 +806,9 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                       <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                     </div>
                     <div className="text-center sm:text-start min-w-0 flex-1">
-                      <div className="font-bold text-[10px] sm:text-xs leading-tight sm:leading-snug truncate">Fiche & GEDCOM</div>
+                      <div className="font-bold text-[10px] sm:text-xs leading-tight sm:leading-snug truncate">{t("tab_fiche_gedcom", "Fiche & GEDCOM")}</div>
                       <div className={`hidden md:block text-[10px] truncate ${activeTab === "details" ? "text-black/80 font-medium" : "text-[var(--muted-foreground)]"}`}>
-                        Personnes & Détails
+                        {t("tab_details_hint", "Personnes & Détails")}
                       </div>
                     </div>
                   </button>
@@ -835,9 +835,9 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                       <FileText className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                     </div>
                     <div className="text-center sm:text-start min-w-0 flex-1">
-                      <div className="font-bold text-[10px] sm:text-xs leading-tight sm:leading-snug truncate">Aperçu Sources</div>
+                      <div className="font-bold text-[10px] sm:text-xs leading-tight sm:leading-snug truncate">{t("tab_sources_preview", "Aperçu Sources")}</div>
                       <div className={`hidden md:block text-[10px] truncate ${activeTab === "sources" ? "text-black/80 font-medium" : "text-[var(--muted-foreground)]"}`}>
-                        Documents & Liens réels
+                        {t("tab_sources_hint", "Documents & Liens réels")}
                       </div>
                     </div>
                   </button>
@@ -846,11 +846,11 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                 {/* Symmetrical Tree Metrics Footer (desktop) */}
                 <div className="hidden md:grid pt-2.5 border-t border-[var(--border)] grid-cols-2 gap-1.5 text-center font-mono text-[11px]">
                   <div className="p-2 rounded-lg bg-[var(--card)] border border-[var(--border)]">
-                    <span className="text-[10px] text-[var(--muted-foreground)] block">Générations</span>
+                    <span className="text-[10px] text-[var(--muted-foreground)] block">{t("generations_count_label", "Générations")}</span>
                     <strong className="text-[var(--gold)] font-bold">{generations}</strong>
                   </div>
                   <div className="p-2 rounded-lg bg-[var(--card)] border border-[var(--border)]">
-                    <span className="text-[10px] text-[var(--muted-foreground)] block">Individus</span>
+                    <span className="text-[10px] text-[var(--muted-foreground)] block">{t("individuals_count_label", "Individus")}</span>
                     <strong className="text-[var(--gold)] font-bold">{membersCount}</strong>
                   </div>
                 </div>
@@ -886,7 +886,7 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                     {loadingGedcom && displayPeople.length === 0 ? (
                       <div className="flex-1 flex flex-col items-center justify-center gap-3 text-slate-300 p-6 text-center">
                         <RefreshCcw className="h-7 w-7 text-[var(--gold)] animate-spin" />
-                        <span className="text-xs font-mono">Chargement de la structure généalogique...</span>
+                        <span className="text-xs font-mono">{t("loading_genealogical_structure", "Chargement de la structure généalogique...")}</span>
                       </div>
                     ) : displayPeople.length === 0 ? (
                       <div className="flex-1 flex flex-col items-center justify-center gap-3 text-slate-300 p-6 text-center max-w-md mx-auto">
@@ -894,10 +894,10 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                           <GitBranch className="h-6 w-6" />
                         </div>
                         <h4 className="font-serif text-base font-bold text-white">
-                          Aucun individu enregistré dans cet arbre
+                          {t("no_individuals_in_tree_title", "Aucun individu enregistré dans cet arbre")}
                         </h4>
                         <p className="text-xs text-slate-400 leading-relaxed">
-                          Cet arbre ne contient pas encore d&apos;individus ni de fichier GEDCOM importé. Ajoutez des personnes dans l&apos;éditeur pour visualiser la lignée et ses sources.
+                          {t("no_individuals_in_tree_desc", "Cet arbre ne contient pas encore d'individus ni de fichier GEDCOM importé. Ajoutez des personnes dans l'éditeur pour visualiser la lignée et ses sources.")}
                         </p>
                       </div>
                     ) : (
@@ -922,7 +922,7 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                   <div className="rounded-2xl bg-gradient-to-br from-[#1e293b] via-[#0f172a] to-[#020617] p-5 text-white border-2 border-[var(--gold)]/70 shadow-2xl relative overflow-hidden space-y-3">
                     <div className="flex items-center justify-between border-b border-[var(--gold)]/30 pb-2.5">
                       <span className="text-xs text-amber-200/90 font-mono font-bold uppercase tracking-wider">
-                        Fonds Patronyme & Lignée
+                        {t("fonds_patronyme_lignee", "Fonds Patronyme & Lignée")}
                       </span>
                     </div>
 
@@ -935,7 +935,7 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                       <div className="p-2.5 rounded-lg bg-black/40 border border-[var(--gold)]/30 flex items-center gap-2">
                         <Layers className="h-4 w-4 text-[var(--gold)] shrink-0" />
                         <div>
-                          <span className="text-[0.65rem] text-slate-400 block uppercase font-bold">Générations</span>
+                          <span className="text-[0.65rem] text-slate-400 block uppercase font-bold">{t("generations_count_label", "Générations")}</span>
                           <strong className="text-sm text-white">{generations}</strong>
                         </div>
                       </div>
@@ -943,7 +943,7 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                       <div className="p-2.5 rounded-lg bg-black/40 border border-[var(--gold)]/30 flex items-center gap-2">
                         <Users className="h-4 w-4 text-sky-400 shrink-0" />
                         <div>
-                          <span className="text-[0.65rem] text-slate-400 block uppercase font-bold">Individus</span>
+                          <span className="text-[0.65rem] text-slate-400 block uppercase font-bold">{t("individuals_count_label", "Individus")}</span>
                           <strong className="text-sm text-white">{membersCount}</strong>
                         </div>
                       </div>
@@ -951,7 +951,7 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                       <div className="p-2.5 rounded-lg bg-black/40 border border-[var(--gold)]/30 flex items-center gap-2">
                         <ScrollText className="h-4 w-4 text-emerald-400 shrink-0" />
                         <div>
-                          <span className="text-[0.65rem] text-slate-400 block uppercase font-bold">Alliances</span>
+                          <span className="text-[0.65rem] text-slate-400 block uppercase font-bold">{t("couples_count_label", "Alliances")}</span>
                           <strong className="text-sm text-white">{treeMetrics.couplesCount}</strong>
                         </div>
                       </div>
@@ -959,7 +959,7 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                       <div className="p-2.5 rounded-lg bg-black/40 border border-[var(--gold)]/30 flex items-center gap-2">
                         <Award className="h-4 w-4 text-purple-400 shrink-0" />
                         <div>
-                          <span className="text-[0.65rem] text-slate-400 block uppercase font-bold">Sources</span>
+                          <span className="text-[0.65rem] text-slate-400 block uppercase font-bold">{t("sources_count_label", "Sources")}</span>
                           <strong className="text-sm text-white">{treeMetrics.sourcesCount}</strong>
                         </div>
                       </div>
@@ -1084,9 +1084,9 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                               {/* VITAL DATES GRID */}
                               <div className="grid grid-cols-2 gap-2 text-xs pt-2 font-mono">
                                 <div className="p-2.5 rounded-lg bg-black/40 border border-[var(--gold)]/30 space-y-0.5">
-                                  <span className="text-[0.65rem] text-slate-400 block uppercase font-bold">Naissance</span>
+                                  <span className="text-[0.65rem] text-slate-400 block uppercase font-bold">{t("birth_label", "Naissance")}</span>
                                   <strong className="text-white block">
-                                    {(currentPerson.birthYear || currentPerson.birthDate) ? `° ${currentPerson.birthYear || currentPerson.birthDate}` : "Date non précisée"}
+                                    {(currentPerson.birthYear || currentPerson.birthDate) ? `° ${currentPerson.birthYear || currentPerson.birthDate}` : t("date_unspecified", "Date non précisée")}
                                   </strong>
                                   <span className="text-slate-300 block text-[11px] truncate">
                                     {currentPerson.birthPlace || "—"}
@@ -1094,9 +1094,9 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                                 </div>
 
                                 <div className="p-2.5 rounded-lg bg-black/40 border border-[var(--gold)]/30 space-y-0.5">
-                                  <span className="text-[0.65rem] text-slate-400 block uppercase font-bold">Décès</span>
+                                  <span className="text-[0.65rem] text-slate-400 block uppercase font-bold">{t("death_label", "Décès")}</span>
                                   <strong className="text-white block">
-                                    {(currentPerson.deathDate || currentPerson.deathYear) ? `+ ${currentPerson.deathDate || currentPerson.deathYear}` : "Non répertorié"}
+                                    {(currentPerson.deathDate || currentPerson.deathYear) ? `+ ${currentPerson.deathDate || currentPerson.deathYear}` : t("not_recorded", "Non répertorié")}
                                   </strong>
                                   <span className="text-slate-300 block text-[11px] truncate">
                                     {currentPerson.deathPlace || "—"}
@@ -1105,30 +1105,30 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                               </div>
 
                               <div className="text-[10px] uppercase tracking-[0.2em] text-center text-slate-400 pt-1">
-                                Glissez pour faire pivoter la carte en 3D
+                                {t("drag_to_rotate_3d", "Glissez pour faire pivoter la carte en 3D")}
                               </div>
                             </div>
 
                             {/* RELATIONS DE FAMILLE */}
                             <div className="space-y-2 pt-1 text-xs">
                               <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-[var(--gold)] block">
-                                Filiation & Famille Directe
+                                {t("filiation_direct_family", "Filiation & Famille Directe")}
                               </span>
                               <div className="grid grid-cols-2 gap-2 font-mono">
                                 <div className="p-2 rounded-lg bg-[var(--card)] border border-[var(--border)]">
-                                  <span className="text-[10px] text-[var(--muted-foreground)] block">Père déclaré</span>
+                                  <span className="text-[10px] text-[var(--muted-foreground)] block">{t("father_declared", "Père déclaré")}</span>
                                   <span className="font-semibold text-[var(--foreground)] truncate block">
                                     {currentPerson.father
                                       ? nameOf(displayPeople.find((x: any) => String(x.id) === String(currentPerson.father))) || `ID: ${currentPerson.father}`
-                                      : "Non renseigné"}
+                                      : t("not_specified", "Non renseigné")}
                                   </span>
                                 </div>
                                 <div className="p-2 rounded-lg bg-[var(--card)] border border-[var(--border)]">
-                                  <span className="text-[10px] text-[var(--muted-foreground)] block">Mère déclarée</span>
+                                  <span className="text-[10px] text-[var(--muted-foreground)] block">{t("mother_declared", "Mère déclarée")}</span>
                                   <span className="font-semibold text-[var(--foreground)] truncate block">
                                     {currentPerson.mother
                                       ? nameOf(displayPeople.find((x: any) => String(x.id) === String(currentPerson.mother))) || `ID: ${currentPerson.mother}`
-                                      : "Non renseigné"}
+                                      : t("not_specified", "Non renseigné")}
                                   </span>
                                 </div>
                               </div>
@@ -1140,7 +1140,7 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                   {cleanArchText(currentPerson.archiveSource) && (
                                     <div className="p-2.5 rounded-lg bg-[var(--card)] border border-[var(--border)] sm:col-span-2">
-                                      <span className="text-[10px] font-mono font-bold uppercase text-[var(--muted-foreground)] block">Source d&apos;archive</span>
+                                      <span className="text-[10px] font-mono font-bold uppercase text-[var(--muted-foreground)] block">{t("archival_source_label", "Source d'archive")}</span>
                                       <span className="text-xs font-medium text-[var(--foreground)] break-words">
                                         {cleanArchText(currentPerson.archiveSource)}
                                       </span>
@@ -1148,7 +1148,7 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                                   )}
                                   {cleanArchText(currentPerson.documentCode) && (
                                     <div className="p-2.5 rounded-lg bg-[var(--card)] border border-[var(--border)]">
-                                      <span className="text-[10px] font-mono font-bold uppercase text-[var(--muted-foreground)] block">Cote du document</span>
+                                      <span className="text-[10px] font-mono font-bold uppercase text-[var(--muted-foreground)] block">{t("document_cote_label", "Cote du document")}</span>
                                       <span className="text-xs font-medium text-[var(--foreground)] break-words">
                                         {cleanArchText(currentPerson.documentCode)}
                                       </span>
@@ -1156,7 +1156,7 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                                   )}
                                   {cleanArchText(currentPerson.reliability) && (
                                     <div className="p-2.5 rounded-lg bg-[var(--card)] border border-[var(--border)]">
-                                      <span className="text-[10px] font-mono font-bold uppercase text-[var(--muted-foreground)] block">Fiabilité</span>
+                                      <span className="text-[10px] font-mono font-bold uppercase text-[var(--muted-foreground)] block">{t("reliability_label", "Fiabilité")}</span>
                                       <span className="text-xs font-medium text-[var(--foreground)]">
                                         {cleanArchText(currentPerson.reliability)}
                                       </span>
@@ -1165,7 +1165,7 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                                 </div>
                                 {currentPerson.details && (
                                   <div className="p-2.5 rounded-lg bg-[var(--card)] border border-[var(--border)]">
-                                    <span className="text-[10px] font-mono font-bold uppercase text-[var(--muted-foreground)] block">Détails / Biographie</span>
+                                    <span className="text-[10px] font-mono font-bold uppercase text-[var(--muted-foreground)] block">{t("details_biography_label", "Détails / Biographie")}</span>
                                     <p className="text-xs text-[var(--foreground)]/90 whitespace-pre-line leading-relaxed mt-0.5">
                                       {currentPerson.details}
                                     </p>
@@ -1342,7 +1342,7 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                         title="Situer dans le schéma de l'arbre interactif"
                       >
                         <GitBranch className="h-3.5 w-3.5" />
-                        <span>Voir l'Arbre</span>
+                        <span>{t("view_tree_btn", "Voir l'Arbre")}</span>
                       </button>
                     </div>
                   </div>
@@ -1426,7 +1426,7 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                           className="btn-base btn-gold text-xs py-2 px-4 flex items-center gap-1.5 cursor-pointer shadow-sm font-semibold"
                         >
                           <GitBranch className="h-3.5 w-3.5" />
-                          <span>Explorer le Schéma Graphique</span>
+                          <span>{t("explore_schema_btn", "Explorer le Schéma Graphique")}</span>
                         </button>
                         <button
                           type="button"
@@ -1434,7 +1434,7 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                           className="btn-base btn-outline text-xs py-2 px-4 flex items-center gap-1.5 cursor-pointer"
                         >
                           <User className="h-3.5 w-3.5 text-[var(--gold)]" />
-                          <span>Inspecter les Fiches & GEDCOM</span>
+                          <span>{t("inspect_fiches_gedcom_btn", "Inspecter les Fiches & GEDCOM")}</span>
                         </button>
                       </div>
                     </div>
@@ -1446,7 +1446,7 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                         <div className="flex items-center gap-2 overflow-x-auto pb-1.5 custom-scrollbar text-xs">
                           <span className="text-[11px] font-mono font-bold text-[var(--muted-foreground)] uppercase shrink-0 flex items-center gap-1">
                             <Users className="h-3.5 w-3.5 text-[var(--gold)]" />
-                            <span>Membre :</span>
+                            <span>{t("member_colon_label", "Membre :")}</span>
                           </span>
 
                           <button
@@ -1652,7 +1652,7 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                                       className="btn-base btn-gold flex-1 text-xs py-1.5 px-3 flex items-center justify-center gap-1.5 cursor-pointer shadow-sm font-semibold"
                                     >
                                       <ExternalLink className="h-3.5 w-3.5" />
-                                      <span>Ouvrir la source</span>
+                                      <span>{t("open_source_btn", "Ouvrir la source")}</span>
                                     </button>
                                   ) : (
                                     <button
@@ -1664,7 +1664,7 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                                       className="btn-base btn-outline flex-1 text-xs py-1.5 px-3 flex items-center justify-center gap-1.5 cursor-pointer"
                                     >
                                       <User className="h-3.5 w-3.5 text-[var(--gold)]" />
-                                      <span>Voir la fiche</span>
+                                      <span>{t("view_fiche_btn", "Voir la fiche")}</span>
                                     </button>
                                   )}
 
@@ -1747,7 +1747,7 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                     )}
                     <span className="inline-flex items-center gap-1 text-[10px] text-emerald-400 font-bold shrink-0">
                       <ShieldCheck className="h-3 w-3" />
-                      <span>Archive Certifiée</span>
+                      <span>{t("certified_archive_badge", "Archive Certifiée")}</span>
                     </span>
                   </div>
                 </div>
@@ -1816,7 +1816,7 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                   className="btn-base btn-outline text-xs py-2 px-3 flex items-center gap-1.5 cursor-pointer hover:border-[var(--gold)] hover:text-[var(--gold)]"
                 >
                   <GitBranch className="w-3.5 h-3.5 text-[var(--gold)]" />
-                  <span>Voir dans l'Arbre</span>
+                  <span>{t("view_in_tree_btn", "Voir dans l'Arbre")}</span>
                 </button>
 
                 <div className="flex items-center gap-2">
@@ -1827,7 +1827,7 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
                       className="btn-base btn-gold text-xs py-2 px-4 flex items-center gap-1.5 shadow-sm font-semibold cursor-pointer"
                     >
                       <Download className="w-3.5 h-3.5" />
-                      <span>Télécharger le Document</span>
+                      <span>{t("download_document_btn", "Télécharger le Document")}</span>
                     </button>
                   ) : null}
                   <button
