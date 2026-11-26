@@ -18,11 +18,11 @@ export function getGoogleSiteVerification(): string {
 export function hasAnalyticsConsent(): boolean {
   try {
     const raw = localStorage.getItem(CONSENT_KEY);
-    if (!raw) return false;
+    if (!raw) return true;
     const parsed = JSON.parse(raw);
-    return Boolean(parsed?.analytics);
+    return parsed?.analytics !== false;
   } catch {
-    return false;
+    return true;
   }
 }
 

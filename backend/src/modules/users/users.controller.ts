@@ -1,5 +1,4 @@
-
-import { Controller, Get, Post, Patch, Delete, Body, Param, UseGuards, Request, ParseIntPipe, Inject } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Put, Delete, Body, Param, Query, UseGuards, Request, ParseIntPipe, Inject } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -17,6 +16,16 @@ export class UsersController {
         return this.usersService.findAll();
     }
 
+    @Get('pending')
+    async findPendingUsers() {
+        return this.usersService.findValidationUsers('pending');
+    }
+
+    @Get('validation')
+    async findValidationUsers(@Query('status') status?: string) {
+        return this.usersService.findValidationUsers(status);
+    }
+
     @Get(':id')
     async findOne(@Param('id', ParseIntPipe) id: number) {
         return this.usersService.findOne(id);
@@ -30,6 +39,20 @@ export class UsersController {
     @Patch(':id')
     async update(@Param('id', ParseIntPipe) id: number, @Body() body: UpdateUserDto, @Request() req) {
         return this.usersService.update(id, body, req.user.id);
+    }
+
+    @Patch(':id/validate')
+    @Put(':id/approve')
+    @Patch(':id/approve')
+    async validate(@Param('id', ParseIntPipe) id: number, @Request() req) {
+        return this.usersService.validateUser(id, req.user.id);
+    }
+
+    @Patch(':id/reject-validation')
+    @Put(':id/reject')
+    @Patch(':id/reject')
+    async reject(@Param('id', ParseIntPipe) id: number, @Request() req) {
+        return this.usersService.rejectValidation(id, req.user.id);
     }
 
     @Delete(':id')
@@ -69,11 +92,19 @@ export class AdminManagementController {
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles('admin', 'super_admin')
 export class AdminRolesController {
-    constructor(@Inject('KnexConnection') private readonly knex) {}
+    constructor(
+        @Inject('KnexConnection') private readonly knex,
+        private readonly usersService: UsersService,
+    ) {}
 
     @Get('roles')
     async listRoles() {
         return this.knex('roles').select('id', 'name');
+    }
+
+    @Post('send-email')
+    async sendEmail(@Body() body: { to: string; subject: string; body: string }, @Request() req) {
+        return this.usersService.sendUserEmail(body.to, body.subject, body.body, req.user?.id);
     }
 }
 

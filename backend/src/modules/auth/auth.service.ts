@@ -119,7 +119,7 @@ export class AuthService {
                 if (['pending', 'unvalidated'].includes(status)) {
                     throw new ForbiddenException('Your account is pending validation');
                 }
-                if (status === 'rejected' || status === 'banned') {
+                if (status === 'rejected' || status === 'banned' || status === 'disabled') {
                     throw new ForbiddenException('Your account is not allowed to log in');
                 }
                 const { password, ...result } = user;
@@ -210,7 +210,7 @@ export class AuthService {
             roleId: user.role_id || user.roleId || 1,
             role_id: user.role_id || user.roleId || 1,
             role: user.role_id || user.roleId || 1,
-            roleName: user.roleName || ((user.role_id === 3 || user.roleId === 3) ? 'super_admin' : 'admin'),
+            roleName: user.roleName || ((user.role_id === 3 || user.roleId === 3) ? 'super_admin' : (user.role_id === 2 || user.roleId === 2) ? 'user' : 'admin'),
             status: user.status || 'active',
             createdAt: user.created_at || user.createdAt,
             lastLogin: user.last_login || user.lastLogin,

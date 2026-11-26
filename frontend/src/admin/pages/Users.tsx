@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   Search,
   UserPlus,
@@ -35,6 +36,7 @@ import {
   Settings as SettingsIcon,
   Users as UsersIcon,
   CheckCircle2,
+  XCircle,
   Clock,
   CheckSquare,
   Square,
@@ -154,9 +156,11 @@ export default function UsersPage() {
   };
 
   const [q, setQ] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "validated" | "rejected">("all");
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [actionUserId, setActionUserId] = useState<number | null>(null);
 
   const [showAdd, setShowAdd] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
@@ -227,12 +231,18 @@ export default function UsersPage() {
         const userList = Array.isArray(data)
           ? data.map((u) => {
               const privs = parsePrivileges(u);
-              const isVerified = Boolean(u.isVerified ?? u.is_verified ?? false);
-              const isValidated = Boolean(u.isValidated ?? isVerified ?? (u.status === "active"));
+              const st = String(u.status || "active").toLowerCase();
+              const isValidated =
+                u.isValidated === true ||
+                u.isVerified === true ||
+                u.is_verified === true ||
+                u.is_verified === 1 ||
+                ["active", "validated", "approved"].includes(st);
               return {
                 ...u,
+                status: st,
                 privileges: privs,
-                isVerified,
+                isVerified: isValidated,
                 isValidated,
               };
             })
@@ -254,19 +264,59 @@ export default function UsersPage() {
   );
 
   useEffect(() => {
-    void loadUsers({ notify: true });
+    void loadUsers({ notify: false });
   }, [loadUsers]);
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && !saving && !sendingEmail) {
+        if (emailModalUser) setEmailModalUser(null);
+        else if (showEdit) setShowEdit(false);
+        else if (showAdd) setShowAdd(false);
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [showAdd, showEdit, emailModalUser, saving, sendingEmail]);
+
+  const statusCounts = useMemo(() => {
+    let pending = 0;
+    let validated = 0;
+    let rejected = 0;
+    for (const u of users) {
+      const st = String(u.status || "").toLowerCase();
+      if (["pending", "unvalidated"].includes(st) || (!u.isValidated && !["rejected", "disabled", "banned"].includes(st))) {
+        pending++;
+      } else if (["rejected", "disabled", "banned"].includes(st)) {
+        rejected++;
+      } else {
+        validated++;
+      }
+    }
+    return { all: users.length, pending, validated, rejected };
+  }, [users]);
 
   const filtered = useMemo(() => {
     const query = q.trim().toLowerCase();
-    if (!query) return users;
-    return users.filter(
-      (u) =>
+    return users.filter((u) => {
+      const st = String(u.status || "").toLowerCase();
+      if (statusFilter === "pending") {
+        const isPending = ["pending", "unvalidated"].includes(st) || (!u.isValidated && !["rejected", "disabled", "banned"].includes(st));
+        if (!isPending) return false;
+      } else if (statusFilter === "validated") {
+        const isVal = u.isValidated || ["active", "validated", "approved"].includes(st);
+        if (!isVal || ["rejected", "disabled", "banned"].includes(st)) return false;
+      } else if (statusFilter === "rejected") {
+        if (!["rejected", "disabled", "banned"].includes(st)) return false;
+      }
+      if (!query) return true;
+      return (
         String(u.fullName || "").toLowerCase().includes(query) ||
         String(u.email || "").toLowerCase().includes(query) ||
         String(u.phone || u.phoneNumber || "").toLowerCase().includes(query)
-    );
-  }, [users, q]);
+      );
+    });
+  }, [users, q, statusFilter]);
 
   const loadRoles = useCallback(async () => {
     try {
@@ -310,9 +360,11 @@ export default function UsersPage() {
     setShowEditPassword(false);
     setEditTarget(u);
     const userPrivs = parsePrivileges(u);
-    const isValidated = Boolean(
-      u.isValidated ?? u.isVerified ?? u.is_verified ?? (u.status === "active")
-    );
+    const st = String(u.status || "active").toLowerCase();
+    const isValidated =
+      u.isValidated === true ||
+      u.isVerified === true ||
+      ["active", "validated", "approved"].includes(st);
     setEditForm({
       fullName: String(u.fullName || ""),
       email: String(u.email || ""),
@@ -320,7 +372,7 @@ export default function UsersPage() {
       password: "",
       roleId: Number(u.roleId || u.role_id || u.role) || 2,
       isValidated,
-      status: String(u.status || (isValidated ? "active" : "pending")),
+      status: st === "validated" || st === "approved" ? "active" : st || (isValidated ? "active" : "pending"),
       privileges: userPrivs,
     });
     setShowEdit(true);
@@ -454,18 +506,20 @@ export default function UsersPage() {
       }
 
       const { data } = await api.patch(`/admin/users/${editTarget.id}`, payload);
+      const updated = data?.user || data || {};
 
       setUsers((prev) =>
         prev.map((u) =>
           u.id === editTarget.id
             ? {
                 ...u,
-                ...data,
+                ...updated,
                 fullName: payload.fullName,
                 phone: payload.phone || null,
                 roleId: payload.roleId,
                 roleName:
                   roles.find((r) => Number(r.id) === Number(payload.roleId))?.name ||
+                  updated.roleName ||
                   u.roleName,
                 status: payload.status,
                 isValidated: payload.isValidated,
@@ -484,6 +538,88 @@ export default function UsersPage() {
       notify(message, "error");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleQuickValidate = async (targetUser: any) => {
+    if (!targetUser?.id) return;
+    setActionUserId(Number(targetUser.id));
+    setError("");
+    try {
+      let resData: any = null;
+      try {
+        const res = await api.patch(`/admin/users/${targetUser.id}/validate`);
+        resData = res.data?.user || res.data;
+      } catch {
+        const res = await api.patch(`/admin/users/${targetUser.id}`, {
+          status: "active",
+          isValidated: true,
+          isVerified: true,
+        });
+        resData = res.data?.user || res.data;
+      }
+      setUsers((prev) =>
+        prev.map((u) =>
+          u.id === targetUser.id
+            ? {
+                ...u,
+                ...(resData || {}),
+                status: resData?.status || "active",
+                isValidated: true,
+                isVerified: true,
+              }
+            : u
+        )
+      );
+      notify(t("user_validated", "Compte utilisateur validé et activé avec succès."));
+    } catch (err) {
+      const message = getApiErrorMessage(err, "Échec de validation de l'utilisateur");
+      notify(message, "error");
+    } finally {
+      setActionUserId(null);
+    }
+  };
+
+  const handleQuickReject = async (targetUser: any) => {
+    if (!targetUser?.id) return;
+    if (Number(targetUser.id) === Number(currentUser?.id)) {
+      notify(t("cannot_reject_self", "Vous ne pouvez pas refuser votre propre compte."), "error");
+      return;
+    }
+    setActionUserId(Number(targetUser.id));
+    setError("");
+    try {
+      let resData: any = null;
+      try {
+        const res = await api.patch(`/admin/users/${targetUser.id}/reject-validation`);
+        resData = res.data?.user || res.data;
+      } catch {
+        const res = await api.patch(`/admin/users/${targetUser.id}`, {
+          status: "rejected",
+          isValidated: false,
+          isVerified: false,
+        });
+        resData = res.data?.user || res.data;
+      }
+      setUsers((prev) =>
+        prev.map((u) =>
+          u.id === targetUser.id
+            ? {
+                ...u,
+                ...(resData || {}),
+                status: "rejected",
+                isValidated: false,
+                isVerified: false,
+              }
+            : u
+        )
+      );
+      notify(t("user_rejected", "Compte utilisateur refusé / désactivé."));
+    } catch (err) {
+      const message = getApiErrorMessage(err, "Échec du refus de l'utilisateur");
+      notify(message, "error");
+    } finally {
+      setActionUserId(null);
     }
   };
 
@@ -621,17 +757,57 @@ export default function UsersPage() {
           </button>
         </div>
 
-        {/* Search Bar */}
-        <div className="mt-5 relative">
-          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--text-color)]/60" />
-          <input
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            className={`heritage-input w-full pl-10 pr-4 py-2.5 rounded-xl border text-sm
-            focus:outline-none focus:ring-2 focus:ring-[var(--brand-gold)]/30 focus:border-[var(--brand-gold)]/60 transition-all
-            ${inputBg} ${inputText} ${border}`}
-            placeholder={t("search_users", "Rechercher par nom, email ou numéro de téléphone...")}
-          />
+        {/* Search Bar & Validation Filter Pills */}
+        <div className="mt-5 flex flex-col sm:flex-row gap-3 sm:items-center">
+          <div className="relative flex-1">
+            <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--text-color)]/60" />
+            <input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              className={`heritage-input w-full pl-10 pr-4 py-2.5 rounded-xl border text-sm
+              focus:outline-none focus:ring-2 focus:ring-[var(--brand-gold)]/30 focus:border-[var(--brand-gold)]/60 transition-all
+              ${inputBg} ${inputText} ${border}`}
+              placeholder={t("search_users", "Rechercher par nom, email ou numéro de téléphone...")}
+            />
+          </div>
+
+          <div className="flex flex-wrap items-center gap-1.5">
+            {(
+              [
+                { id: "all", label: t("all", "Tous"), count: statusCounts.all },
+                { id: "pending", label: t("pending_validation", "En attente"), count: statusCounts.pending },
+                { id: "validated", label: t("validated", "Validés"), count: statusCounts.validated },
+                { id: "rejected", label: t("rejected", "Refusés"), count: statusCounts.rejected },
+              ] as const
+            ).map((tab) => {
+              const active = statusFilter === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setStatusFilter(tab.id)}
+                  className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${
+                    active
+                      ? "bg-[var(--brand-teal)] text-white border-[var(--brand-teal)] shadow-sm"
+                      : `${card} ${border} hover:border-[var(--brand-gold)]/60`
+                  }`}
+                >
+                  <span>{tab.label}</span>
+                  <span
+                    className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+                      active
+                        ? "bg-white/20 text-white"
+                        : tab.id === "pending" && tab.count > 0
+                        ? "bg-amber-500/20 text-amber-600 dark:text-amber-400"
+                        : "bg-black/5 dark:bg-white/10"
+                    }`}
+                  >
+                    {tab.count}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
 
@@ -690,10 +866,15 @@ export default function UsersPage() {
               <tbody className="divide-y divide-[var(--border)]">
                 {filtered.map((u) => {
                   const userPrivs = u.privileges || [];
-                  const isVerified = Boolean(
-                    u.isValidated ?? u.isVerified ?? u.is_verified ?? (u.status === "active")
-                  );
+                  const rowStatus = String(u.status || "active").toLowerCase();
+                  const isRejectedOrDisabled = ["rejected", "disabled", "banned"].includes(rowStatus);
+                  const isVerified =
+                    !isRejectedOrDisabled &&
+                    (u.isValidated === true ||
+                      u.isVerified === true ||
+                      ["active", "validated", "approved"].includes(rowStatus));
                   const isCurrentUser = Number(u.id) === Number(currentUser?.id);
+                  const isRowBusy = saving || actionUserId === Number(u.id);
 
                   return (
                     <tr
@@ -772,7 +953,14 @@ export default function UsersPage() {
 
                       <td className="py-3.5 px-5 text-start">
                         <div className="flex flex-wrap items-center gap-1.5">
-                          {isVerified ? (
+                          {isRejectedOrDisabled ? (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-500/15 text-red-600 dark:text-red-400 border border-red-500/25">
+                              <XCircle className="w-3 h-3" />
+                              {rowStatus === "rejected"
+                                ? t("rejected", "Refusé")
+                                : t("disabled", "Désactivé")}
+                            </span>
+                          ) : isVerified ? (
                             <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25">
                               <CheckCircle2 className="w-3 h-3" />
                               {t("validated", "Validé")}
@@ -786,16 +974,24 @@ export default function UsersPage() {
 
                           <span
                             className={`inline-flex items-center px-2 py-0.5 rounded-full text-[0.7rem] font-medium ${
-                              u.status === "active"
+                              isVerified
                                 ? isDark
                                   ? "bg-green-500/15 text-green-400"
                                   : "bg-green-100 text-green-700"
+                                : isRejectedOrDisabled
+                                ? isDark
+                                  ? "bg-red-500/15 text-red-400"
+                                  : "bg-red-100 text-red-700"
                                 : isDark
-                                ? "bg-red-500/15 text-red-400"
-                                : "bg-red-100 text-red-700"
+                                ? "bg-amber-500/15 text-amber-400"
+                                : "bg-amber-100 text-amber-700"
                             }`}
                           >
-                            {u.status === "active" ? t("active", "Actif") : t("inactive", "Inactif")}
+                            {isVerified
+                              ? t("active", "Actif")
+                              : isRejectedOrDisabled
+                              ? t("inactive", "Inactif")
+                              : t("pending", "En attente")}
                           </span>
                         </div>
                       </td>
@@ -818,11 +1014,37 @@ export default function UsersPage() {
 
                       {canManageUsers ? (
                         <td className="py-3.5 px-5 text-end">
-                          <div className="flex items-center justify-end gap-1.5">
+                          <div className="flex items-center justify-end gap-1.5 flex-wrap">
+                            {!isVerified && (
+                              <button
+                                type="button"
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600 text-white hover:bg-emerald-700 transition-all shadow-sm disabled:opacity-50 cursor-pointer"
+                                onClick={() => void handleQuickValidate(u)}
+                                disabled={isRowBusy}
+                                title={t("validate_user", "Valider et activer ce compte")}
+                              >
+                                <CheckCircle2 className="w-3.5 h-3.5" />
+                                <span>{t("validate", "Valider")}</span>
+                              </button>
+                            )}
+
+                            {!isRejectedOrDisabled && !isCurrentUser && (
+                              <button
+                                type="button"
+                                className="p-2 rounded-lg transition-all hover:shadow-sm disabled:opacity-50 bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-600 hover:text-white border border-amber-500/25 cursor-pointer"
+                                onClick={() => void handleQuickReject(u)}
+                                disabled={isRowBusy}
+                                title={t("reject_user", "Refuser / suspendre ce compte")}
+                              >
+                                <XCircle className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+
                             <button
                               type="button"
                               className={`p-2 rounded-lg border ${border} transition-all hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 cursor-pointer`}
                               onClick={() => openEmailModal(u)}
+                              disabled={isRowBusy}
                               title={t("send_email", "Envoyer un email SMTP")}
                             >
                               <Mail className="w-3.5 h-3.5" />
@@ -833,7 +1055,7 @@ export default function UsersPage() {
                               className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border ${border} 
                               transition-all hover:shadow-sm disabled:opacity-50 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-xs font-semibold cursor-pointer`}
                               onClick={() => openEdit(u)}
-                              disabled={saving}
+                              disabled={isRowBusy}
                             >
                               <Pencil className="w-3.5 h-3.5 text-[var(--brand-teal)]" />
                               <span>{t("edit", "Modifier")}</span>
@@ -843,7 +1065,7 @@ export default function UsersPage() {
                               type="button"
                               className={`p-2 rounded-lg transition-all hover:shadow-sm disabled:opacity-50 bg-red-600/10 text-red-600 hover:bg-red-600 hover:text-white border border-red-500/20 cursor-pointer`}
                               onClick={() => deleteUser(u)}
-                              disabled={saving || isCurrentUser}
+                              disabled={isRowBusy || isCurrentUser}
                               title={
                                 isCurrentUser
                                   ? t("cannot_delete_self", "Impossible de supprimer votre propre compte")
@@ -865,8 +1087,8 @@ export default function UsersPage() {
       </div>
 
       {/* ===================== ADD USER MODAL ===================== */}
-      {showAdd ? (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-3 sm:p-4 backdrop-blur-sm bg-black/60">
+      {showAdd ? createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-4 backdrop-blur-sm bg-black/65">
           <div
             className="absolute inset-0"
             onClick={() => (saving ? null : setShowAdd(false))}
@@ -1144,12 +1366,13 @@ export default function UsersPage() {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       ) : null}
 
       {/* ===================== EDIT USER MODAL ===================== */}
-      {showEdit ? (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-3 sm:p-4 backdrop-blur-sm bg-black/60">
+      {showEdit ? createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-4 backdrop-blur-sm bg-black/65">
           <div
             className="absolute inset-0"
             onClick={() => (saving ? null : setShowEdit(false))}
@@ -1408,12 +1631,16 @@ export default function UsersPage() {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       ) : null}
 
       {/* ===================== SEND EMAIL VIA SMTP MODAL ===================== */}
-      {emailModalUser && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 backdrop-blur-sm bg-black/60">
+      {emailModalUser ? createPortal(
+        <div
+          className="fixed inset-0 z-[9999] flex items-center justify-center p-4 backdrop-blur-sm bg-black/65"
+          onClick={() => (sendingEmail ? null : setEmailModalUser(null))}
+        >
           <div
             className={`w-full max-w-lg rounded-2xl border ${border} ${card} p-6 shadow-2xl space-y-4 text-start`}
             onClick={(e) => e.stopPropagation()}
@@ -1510,8 +1737,9 @@ export default function UsersPage() {
               </div>
             </div>
           </div>
-        </div>
-      )}
+        </div>,
+        document.body
+      ) : null}
     </div>
   );
 }

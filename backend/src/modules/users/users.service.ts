@@ -45,15 +45,17 @@ export class UsersService {
             row.privileges ?? row.adminPrivileges ?? row.admin_privileges,
         );
         const isVerified = Boolean(row.isVerified ?? row.is_verified ?? false);
+        const st = String(row.status || '').toLowerCase();
+        const isValidated = isVerified || ['active', 'validated', 'approved'].includes(st);
         return {
             ...row,
             role: roleId,
             roleId,
             role_id: roleId,
             phone: row.phone ?? row.phoneNumber ?? row.phone_number ?? null,
-            isVerified,
-            is_verified: isVerified,
-            isValidated: isVerified || row.status === 'active',
+            isVerified: isValidated,
+            is_verified: isValidated,
+            isValidated,
             privileges,
             permissions: privileges,
             adminPrivileges: privileges,
@@ -208,6 +210,49 @@ export class UsersService {
         await this.activityService.log(adminId, 'users', `Updated user #${id}`);
 
         return this.findOne(id);
+    }
+
+    async findValidationUsers(status?: string) {
+        const rows = await this.findAll();
+        const normalized = String(status || 'pending').toLowerCase();
+
+        return rows.filter((user: any) => {
+            const userStatus = String(user.status || 'active').toLowerCase();
+            if (normalized === 'all') return true;
+            if (normalized === 'pending') return ['pending', 'unvalidated'].includes(userStatus);
+            if (normalized === 'validated' || normalized === 'approved') {
+                return ['validated', 'approved', 'active'].includes(userStatus);
+            }
+            return userStatus === normalized;
+        });
+    }
+
+    async validateUser(id: number, adminId: number) {
+        const actor = await User.query(this.knex).findById(adminId);
+        if (!actor || ![1, 3].includes(Number(actor.role_id))) {
+            throw new ForbiddenException('Only admins can validate accounts');
+        }
+
+        const user = await User.query(this.knex).findById(id);
+        if (!user) throw new NotFoundException('User not found');
+
+        await this.knex('users').where('id', id).update({ status: 'active', is_verified: 1 });
+        await this.activityService.log(adminId, 'users', `Validated user #${id}`);
+        return { message: 'User validated', user: await this.findOne(id) };
+    }
+
+    async rejectValidation(id: number, adminId: number) {
+        const actor = await User.query(this.knex).findById(adminId);
+        if (!actor || ![1, 3].includes(Number(actor.role_id))) {
+            throw new ForbiddenException('Only admins can reject account validation');
+        }
+
+        const user = await User.query(this.knex).findById(id);
+        if (!user) throw new NotFoundException('User not found');
+
+        await this.knex('users').where('id', id).update({ status: 'rejected', is_verified: 0 });
+        await this.activityService.log(adminId, 'users', `Rejected user validation #${id}`);
+        return { message: 'User validation rejected', user: await this.findOne(id) };
     }
 
     async delete(id: number, adminId: number) {

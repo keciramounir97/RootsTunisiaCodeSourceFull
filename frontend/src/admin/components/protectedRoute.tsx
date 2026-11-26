@@ -65,7 +65,7 @@ export default function ProtectedRoute({
   }
 
   const userAllowedPrivileges = [
-    "usage", "trees", "gallery", "audios", "documents",
+    "dashboard", "usage", "trees", "individuals", "gallery", "audios", "documents",
     "sources-archives", "tasks", "notes", "user-upgrade",
     "subscriptions", "support", "user-settings"
   ];
@@ -73,11 +73,11 @@ export default function ProtectedRoute({
   if (privileges.length > 0 && !isAdminOrSuper) {
     if (normalizedRole === 2) {
       const isAllowedForUser = privileges.some((p) => userAllowedPrivileges.includes(p));
-      if (isAllowedForUser) return children;
-      return <Navigate to="/admin/trees" replace />;
+      if (isAllowedForUser) return <>{children}</>;
+      return <Navigate to="/admin" replace />;
     }
     if (privileges.includes("dashboard")) {
-      return children;
+      return <>{children}</>;
     }
     const hasPrivilege = privileges.some(
       (p) => granted.includes(p) || granted.includes("all") || granted.includes("*")
