@@ -645,6 +645,15 @@ export default function SourcesAndArchives() {
   }, [dbCards, locationMap, cleanLocale, sourcesStore]);
 
   const categories = useMemo(() => {
+    const locationCats = baseLocations
+      .map((loc) => ({
+        key: loc.key,
+        label: loc.label,
+        count: allArchives.filter((a) => a.category === loc.key).length,
+        Icon: (loc.icon && LOCATION_ICONS[loc.icon]) || FolderArchive,
+      }))
+      .filter((cat) => cat.count > 0);
+
     return [
       {
         key: "all",
@@ -652,12 +661,7 @@ export default function SourcesAndArchives() {
         count: allArchives.length,
         Icon: FolderArchive,
       },
-      ...baseLocations.map((loc) => ({
-        key: loc.key,
-        label: loc.label,
-        count: allArchives.filter((a) => a.category === loc.key).length,
-        Icon: (loc.icon && LOCATION_ICONS[loc.icon]) || FolderArchive,
-      })),
+      ...locationCats,
     ];
   }, [baseLocations, allArchives, ui.allFunds]);
 

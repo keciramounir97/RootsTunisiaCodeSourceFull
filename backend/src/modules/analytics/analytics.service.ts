@@ -72,7 +72,10 @@ export class AnalyticsService {
     if (windowMin <= 7 * 24 * 60) {
       return "DATE_FORMAT(created_at, '%Y-%m-%d')";
     }
-    return "DATE_FORMAT(created_at, '%x-%v')";
+    if (windowMin <= 45 * 24 * 60) {
+      return "DATE_FORMAT(created_at, '%x-%v')";
+    }
+    return "DATE_FORMAT(created_at, '%Y-%m')";
   }
 
   async getLive(minutes = 30) {
@@ -128,7 +131,9 @@ export class AnalyticsService {
             ? "hour"
             : windowMin <= 7 * 24 * 60
               ? "day"
-              : "week",
+              : windowMin <= 45 * 24 * 60
+                ? "week"
+                : "month",
       source: "first_party",
       generatedAt: new Date().toISOString(),
     };
