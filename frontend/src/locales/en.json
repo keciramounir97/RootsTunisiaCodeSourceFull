@@ -2845,6 +2845,7 @@
   "ga_range_month": "Month",
   "ga_range_year": "Year",
   "ga_not_configured": "Not configured",
+  "ga_configured": "Configured",
   "ga_tag_active": "Tracking tag active",
   "ga_realtime_service_account": "Realtime needs a service account",
   "ga_calendar_prev": "Previous month",

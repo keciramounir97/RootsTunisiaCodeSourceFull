@@ -2845,6 +2845,7 @@
   "ga_range_month": "شهر",
   "ga_range_year": "سنة",
   "ga_not_configured": "غير مُعد",
+  "ga_configured": "مُعد",
   "ga_tag_active": "وسم التتبع مفعّل",
   "ga_realtime_service_account": "البيانات اللحظية تحتاج حساب خدمة",
   "ga_calendar_prev": "الشهر السابق",

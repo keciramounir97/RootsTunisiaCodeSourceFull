@@ -45,8 +45,24 @@ type LivePayload = {
   };
 };
 
-const SEARCH_CONSOLE_HINT =
-  "Set VITE_GOOGLE_SITE_VERIFICATION on the frontend and GOOGLE_SITE_VERIFICATION on the backend, then verify rootstunisia.com in Search Console.";
+const ANALYTICS_HOME_URL = "https://analytics.google.com/";
+const SEARCH_CONSOLE_HOME_URL = "https://search.google.com/search-console";
+const SENSITIVE_CONFIG_TEXT =
+  /\b(?:VITE|GA4?|GOOGLE)_[A-Z0-9_]+\b|\bG-[A-Z0-9]{4,}\b|service account|compte de service|cuenta de servicio|account di servizio|kont tas-servizz/i;
+
+function isPresent(value: unknown): boolean {
+  return Boolean(String(value ?? "").trim());
+}
+
+/** Drop setup instructions, env keys, and raw Google IDs from admin copy. */
+export function publicAnalyticsNotice(...parts: Array<string | null | undefined>): string | null {
+  for (const part of parts) {
+    const text = String(part || "").trim();
+    if (!text || SENSITIVE_CONFIG_TEXT.test(text)) continue;
+    return text;
+  }
+  return null;
+}
 
 function isLiveStats(value: unknown): value is NonNullable<LivePayload["live"]> {
   if (!value || typeof value !== "object") return false;
@@ -138,10 +154,15 @@ export default function LiveAnalytics() {
   const ga = data?.googleAnalytics;
   const config = data?.config;
   const hasLive = Boolean(live);
-  const measurementId = String(config?.measurementId || getGaMeasurementId() || "").trim();
-  const propertyId = String(config?.propertyId || "").trim();
-  const verification = String(config?.searchConsoleVerification || "").trim();
+  const measurementConfigured =
+    config?.measurementConfigured === true || isPresent(config?.measurementId) || isPresent(getGaMeasurementId());
+  const propertyConfigured = config?.propertyConfigured === true || isPresent(config?.propertyId);
+  const searchConsoleConfigured =
+    config?.searchConsoleConfigured === true || isPresent(config?.searchConsoleVerification);
   const dataApi = Boolean(config?.dataApiConfigured);
+  const configuredLabel = t("ga_configured", "Configured");
+  const missingLabel = t("ga_not_configured", "Not configured");
+  const analyticsNotice = publicAnalyticsNotice(ga?.message, ga?.error);
   const series = live?.series || [];
   const maxSeries = Math.max(1, ...series.map((point) => point.views || 0));
   const seriesTotal = series.reduce((sum, point) => sum + (point.views || 0), 0);
@@ -265,19 +286,13 @@ export default function LiveAnalytics() {
                 {dataApi ? (
                   <strong>{ga?.activeUsers ?? 0}</strong>
                 ) : (
-                  <strong className="!text-base font-mono break-all">
-                    {measurementId || t("ga_not_configured", "Not configured")}
-                  </strong>
+                  <strong className="!text-base">{measurementConfigured ? configuredLabel : missingLabel}</strong>
                 )}
-                <span>
-                  {dataApi
-                    ? "Google Analytics"
-                    : measurementId
-                      ? t("ga_tag_active", "Tracking tag active")
-                      : propertyId
-                        ? t("ga_realtime_service_account", "Realtime needs a service account")
-                        : t("ga_not_configured", "Not configured")}
-                </span>
+                {dataApi ? (
+                  <span>Google Analytics</span>
+                ) : measurementConfigured ? (
+                  <span>{t("ga_tag_active", "Tracking tag active")}</span>
+                ) : null}
               </div>
             </article>
           </div>
@@ -347,57 +362,22 @@ export default function LiveAnalytics() {
         <dl className="grid gap-2 text-sm sm:grid-cols-2">
           <div className="flex items-start justify-between gap-3 rounded-lg bg-[var(--background)]/50 px-3 py-2">
             <dt className="text-[var(--muted-foreground)]">{t("measurement_id", "Measurement ID")}</dt>
-            <dd className="text-end">
-              {measurementId ? (
-                <span className="font-mono">{measurementId}</span>
-              ) : (
-                <>
-                  <span>{t("ga_not_configured", "Not configured")}</span>
-                  <span className="mt-0.5 block text-[10px] text-[var(--muted-foreground)]">GA_MEASUREMENT_ID</span>
-                </>
-              )}
-            </dd>
+            <dd className="text-end">{measurementConfigured ? configuredLabel : missingLabel}</dd>
           </div>
           <div className="flex items-start justify-between gap-3 rounded-lg bg-[var(--background)]/50 px-3 py-2">
             <dt className="text-[var(--muted-foreground)]">{t("ga4_property_id", "GA4 Property ID")}</dt>
-            <dd className="text-end">
-              {propertyId ? (
-                <span className="font-mono">{propertyId}</span>
-              ) : (
-                <>
-                  <span>{t("ga_not_configured", "Not configured")}</span>
-                  <span className="mt-0.5 block text-[10px] text-[var(--muted-foreground)]">GA4_PROPERTY_ID</span>
-                </>
-              )}
-            </dd>
+            <dd className="text-end">{propertyConfigured ? configuredLabel : missingLabel}</dd>
           </div>
           <div className="flex items-start justify-between gap-3 rounded-lg bg-[var(--background)]/50 px-3 py-2">
             <dt className="text-[var(--muted-foreground)]">{t("data_api", "Data API")}</dt>
-            <dd className="text-end">
-              {dataApi
-                ? t("connected", "Connected")
-                : propertyId
-                  ? t("ga_realtime_service_account", "Realtime needs a service account")
-                  : t("ga_not_configured", "Not configured")}
-            </dd>
+            <dd className="text-end">{dataApi ? configuredLabel : missingLabel}</dd>
           </div>
           <div className="flex items-start justify-between gap-3 rounded-lg bg-[var(--background)]/50 px-3 py-2">
             <dt className="text-[var(--muted-foreground)]">{t("search_console_title", "Google Search Console")}</dt>
-            <dd className="text-end">
-              {verification ? (
-                <span className="font-mono break-all">{verification}</span>
-              ) : (
-                <>
-                  <span>{t("ga_not_configured", "Not configured")}</span>
-                  <span className="mt-0.5 block text-[10px] text-[var(--muted-foreground)]">GOOGLE_SITE_VERIFICATION</span>
-                </>
-              )}
-            </dd>
+            <dd className="text-end">{searchConsoleConfigured ? configuredLabel : missingLabel}</dd>
           </div>
         </dl>
-        {ga?.message || ga?.error ? (
-          <p className="text-xs text-[var(--muted-foreground)]">{ga.message || ga.error}</p>
-        ) : null}
+        {analyticsNotice ? <p className="text-xs text-[var(--muted-foreground)]">{analyticsNotice}</p> : null}
         {(ga?.topScreens || []).length > 0 ? (
           <ul className="space-y-1 text-sm">
             {ga!.topScreens!.map((row) => (
@@ -410,27 +390,24 @@ export default function LiveAnalytics() {
         ) : null}
         <div className="flex flex-wrap gap-2 pt-1">
           <a
-            href="https://analytics.google.com/"
+            href={ANALYTICS_HOME_URL}
             target="_blank"
-            rel="noreferrer"
+            rel="noopener noreferrer"
             className="btn-base btn-outline-ink inline-flex items-center gap-1.5 px-3 py-2 text-xs"
           >
-            <ExternalLink className="h-3.5 w-3.5" />
+            <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
             Google Analytics
           </a>
           <a
-            href="https://search.google.com/search-console"
+            href={SEARCH_CONSOLE_HOME_URL}
             target="_blank"
-            rel="noreferrer"
+            rel="noopener noreferrer"
             className="btn-base btn-outline-ink inline-flex items-center gap-1.5 px-3 py-2 text-xs"
           >
-            <ExternalLink className="h-3.5 w-3.5" />
+            <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
             Search Console
           </a>
         </div>
-        <p className="text-xs leading-relaxed text-[var(--muted-foreground)]">
-          {t("search_console_setup_hint", SEARCH_CONSOLE_HINT)}
-        </p>
       </section>
     </div>
   );

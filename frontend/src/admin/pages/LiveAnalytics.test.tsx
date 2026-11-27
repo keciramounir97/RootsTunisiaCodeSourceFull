@@ -50,7 +50,7 @@ describe("Google Analytics admin page", () => {
           measurementId: "G-X750JBGTXR",
           propertyId: "566029672",
           dataApiConfigured: false,
-          searchConsoleVerification: null,
+          searchConsoleVerification: "google-site-verification-secret-token",
         },
       },
     });
@@ -66,10 +66,35 @@ describe("Google Analytics admin page", () => {
     });
     expect(String(mockGet.mock.calls[0][0])).toContain("range=day");
     expect(screen.queryByText("Non défini")).not.toBeInTheDocument();
-    expect(screen.getAllByText("G-X750JBGTXR").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("566029672").length).toBeGreaterThan(0);
-    expect(screen.getByText("Non configuré")).toBeInTheDocument();
-    expect(screen.getAllByText("Le temps réel nécessite un compte de service").length).toBeGreaterThan(0);
+    expect(screen.queryByText("G-X750JBGTXR")).not.toBeInTheDocument();
+    expect(screen.queryByText("566029672")).not.toBeInTheDocument();
+    expect(screen.queryByText("google-site-verification-secret-token")).not.toBeInTheDocument();
+    expect(screen.queryByText("GOOGLE_SITE_VERIFICATION")).not.toBeInTheDocument();
+    expect(screen.queryByText("GA_MEASUREMENT_ID")).not.toBeInTheDocument();
+    expect(screen.queryByText("GA4_PROPERTY_ID")).not.toBeInTheDocument();
+    expect(screen.queryByText("GA_SERVICE_ACCOUNT_JSON")).not.toBeInTheDocument();
+    expect(screen.queryByText(/VITE_GOOGLE_SITE_VERIFICATION/)).not.toBeInTheDocument();
+    expect(screen.queryByText("Le temps réel nécessite un compte de service")).not.toBeInTheDocument();
+    expect(screen.queryByText("service account missing")).not.toBeInTheDocument();
+    expect(screen.getAllByText("Configuré").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Non configuré").length).toBeGreaterThan(0);
+    expect(screen.getByText("Balise de suivi active")).toBeInTheDocument();
+
+    const analyticsLink = screen.getByRole("link", { name: "Google Analytics" });
+    expect(analyticsLink).toHaveAttribute("href", "https://analytics.google.com/");
+    expect(analyticsLink).toHaveAttribute("target", "_blank");
+    expect(analyticsLink).toHaveAttribute("rel", "noopener noreferrer");
+    expect(analyticsLink).toHaveTextContent("Google Analytics");
+    expect(analyticsLink).not.toHaveTextContent("http");
+
+    const consoleLink = screen.getByRole("link", { name: "Search Console" });
+    expect(consoleLink).toHaveAttribute("href", "https://search.google.com/search-console");
+    expect(consoleLink).toHaveAttribute("target", "_blank");
+    expect(consoleLink).toHaveAttribute("rel", "noopener noreferrer");
+    expect(consoleLink).toHaveTextContent("Search Console");
+    expect(consoleLink).not.toHaveTextContent("http");
+    expect(screen.queryByText("https://analytics.google.com/")).not.toBeInTheDocument();
+    expect(screen.queryByText("https://search.google.com/search-console")).not.toBeInTheDocument();
 
     const selected = screen.getByRole("gridcell", { selected: true });
     expect(selected.className).toContain("bg-[#e08a72]");
@@ -151,7 +176,10 @@ describe("Google Analytics admin page", () => {
     });
     expect(screen.getByText("231")).toBeInTheDocument();
     expect(screen.getAllByText("476").length).toBeGreaterThan(0);
-    expect(screen.getByText("566029672")).toBeInTheDocument();
+    expect(screen.queryByText("566029672")).not.toBeInTheDocument();
+    expect(screen.queryByText("G-X750JBGTXR")).not.toBeInTheDocument();
+    expect(screen.queryByText("Add GA_SERVICE_ACCOUNT_JSON")).not.toBeInTheDocument();
+    expect(screen.getAllByText("Configuré").length).toBeGreaterThan(0);
     expect(screen.queryByText("Aucune donnée pour l'instant")).not.toBeInTheDocument();
   });
 });

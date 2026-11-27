@@ -2845,6 +2845,7 @@
   "ga_range_month": "Mese",
   "ga_range_year": "Anno",
   "ga_not_configured": "Non configurato",
+  "ga_configured": "Configurato",
   "ga_tag_active": "Tag di monitoraggio attivo",
   "ga_realtime_service_account": "Il tempo reale richiede un account di servizio",
   "ga_calendar_prev": "Mese precedente",
