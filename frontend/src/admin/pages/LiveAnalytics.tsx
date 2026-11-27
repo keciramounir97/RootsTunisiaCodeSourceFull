@@ -48,6 +48,22 @@ type LivePayload = {
 const SEARCH_CONSOLE_HINT =
   "Set VITE_GOOGLE_SITE_VERIFICATION on the frontend and GOOGLE_SITE_VERIFICATION on the backend, then verify rootstunisia.com in Search Console.";
 
+function isLivePayload(value: unknown): value is LivePayload {
+  if (!value || typeof value !== "object") return false;
+  const record = value as LivePayload;
+  return Boolean(record.live || record.config || record.googleAnalytics);
+}
+
+/** Tunisia's API client leaves the `{ statusCode, data }` envelope in place. */
+export function readLivePayload(body: unknown): LivePayload {
+  if (isLivePayload(body)) return body;
+  if (body && typeof body === "object" && "data" in body) {
+    const nested = (body as { data?: unknown }).data;
+    if (isLivePayload(nested)) return nested;
+  }
+  return {};
+}
+
 function metricValue(value: number | undefined, hasData: boolean, loading: boolean): number | string {
   if (!hasData && loading) return "…";
   return value ?? 0;
@@ -84,7 +100,7 @@ export default function LiveAnalytics() {
       }
       try {
         const res = await api.get(`/admin/analytics/live?${params.toString()}`);
-        setData((res.data || res) as LivePayload);
+        setData(readLivePayload(res.data ?? res));
       } catch (err: any) {
         setError(err?.userMessage || err?.message || t("live_analytics_load_error", "Failed to load Google Analytics"));
       } finally {

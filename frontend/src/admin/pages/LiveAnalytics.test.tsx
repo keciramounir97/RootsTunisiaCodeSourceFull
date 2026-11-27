@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import LiveAnalytics from "./LiveAnalytics";
+import LiveAnalytics, { readLivePayload } from "./LiveAnalytics";
 import { TranslationProvider } from "../../context/TranslationContext";
 
 const mockGet = vi.fn();
@@ -113,5 +113,45 @@ describe("Google Analytics admin page", () => {
     expect(screen.queryByText("Non défini")).not.toBeInTheDocument();
     expect(screen.queryByText("Non lié pour le moment")).not.toBeInTheDocument();
     expect(screen.getAllByText("0").length).toBeGreaterThan(0);
+  });
+
+  it("shows year totals when the API envelope is still wrapped", async () => {
+    const wrapped = {
+      statusCode: 200,
+      message: "Success",
+      data: {
+        live: {
+          activeVisitors: 210,
+          activeSessions: 231,
+          pageviews: 476,
+          topPages: [{ path: "/", views: 476 }],
+          recent: [{ path: "/", created_at: "2026-11-27T10:00:00.000Z" }],
+          series: [{ t: "2026-11", views: 476 }],
+          seriesGranularity: "month",
+          source: "first_party",
+          range: "year",
+        },
+        googleAnalytics: { configured: false, message: "Add GA_SERVICE_ACCOUNT_JSON" },
+        config: {
+          measurementId: "G-X750JBGTXR",
+          propertyId: "566029672",
+          dataApiConfigured: false,
+          searchConsoleVerification: null,
+        },
+      },
+      meta: null,
+      timestamp: "2026-11-27T00:00:00.000Z",
+    };
+    expect(readLivePayload(wrapped).live?.activeVisitors).toBe(210);
+    mockGet.mockResolvedValue({ data: wrapped });
+
+    renderPage();
+    await waitFor(() => {
+      expect(screen.getByText("210")).toBeInTheDocument();
+    });
+    expect(screen.getByText("231")).toBeInTheDocument();
+    expect(screen.getAllByText("476").length).toBeGreaterThan(0);
+    expect(screen.getByText("566029672")).toBeInTheDocument();
+    expect(screen.queryByText("Aucune donnée pour l'instant")).not.toBeInTheDocument();
   });
 });
