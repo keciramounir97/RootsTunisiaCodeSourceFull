@@ -94,6 +94,14 @@ export class AnalyticsService {
       .orderBy("views", "desc")
       .limit(12);
 
+    const byLocaleRows = await this.knex("analytics_pageviews")
+      .select(this.knex.raw("COALESCE(NULLIF(TRIM(locale), ''), '—') as locale"))
+      .count({ views: "*" })
+      .whereRaw(inWindow, bounds)
+      .groupByRaw("COALESCE(NULLIF(TRIM(locale), ''), '—')")
+      .orderBy("views", "desc")
+      .limit(12);
+
     const recent = await this.knex("analytics_pageviews")
       .select("path", "title", "locale", "referrer", "created_at")
       .whereRaw(inWindow, bounds)
@@ -120,6 +128,10 @@ export class AnalyticsService {
       activeVisitors: Number((activeVisitorsRow as any)?.c || 0),
       pageviews: Number((pageviewsRow as any)?.c || 0),
       topPages: topPages.map((r: any) => ({ path: r.path, views: Number(r.views || 0) })),
+      byLocale: byLocaleRows.map((r: any) => ({
+        locale: String(r.locale || "—"),
+        views: Number(r.views || 0),
+      })),
       recent,
       series: fillSeries(sparse, window.from, window.to, window.granularity, window.tzOffsetMinutes),
       seriesGranularity: window.granularity,
@@ -196,36 +208,66 @@ export class AnalyticsService {
     try {
       const token = await this.getGoogleAccessToken();
       const propertyId = String(status.propertyId || "").replace(/^properties\//, "");
-      const res = await fetch(
-        `https://analyticsdata.googleapis.com/v1beta/properties/${propertyId}:runRealtimeReport`,
-        {
+      const endpoint = `https://analyticsdata.googleapis.com/v1beta/properties/${propertyId}:runRealtimeReport`;
+      const headers = {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      };
+
+      const [screensRes, countryRes] = await Promise.all([
+        fetch(endpoint, {
           method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
+          headers,
           body: JSON.stringify({
             dimensions: [{ name: "unifiedScreenName" }],
             metrics: [{ name: "activeUsers" }],
             limit: 12,
           }),
-        },
-      );
-      const json: any = await res.json();
-      if (!res.ok) {
-        return { configured: true, error: json?.error?.message || `GA API HTTP ${res.status}`, status };
+        }),
+        fetch(endpoint, {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            dimensions: [{ name: "country" }],
+            metrics: [{ name: "activeUsers" }],
+            limit: 12,
+          }),
+        }),
+      ]);
+
+      const screensJson: any = await screensRes.json();
+      if (!screensRes.ok) {
+        return {
+          configured: true,
+          error: screensJson?.error?.message || `GA API HTTP ${screensRes.status}`,
+          status,
+        };
       }
-      const rows = Array.isArray(json.rows)
-        ? json.rows.map((row: any) => ({
+
+      const rows = Array.isArray(screensJson.rows)
+        ? screensJson.rows.map((row: any) => ({
             page: row.dimensionValues?.[0]?.value || "(not set)",
             activeUsers: Number(row.metricValues?.[0]?.value || 0),
           }))
         : [];
       const activeUsers = rows.reduce((sum: number, r: any) => sum + (r.activeUsers || 0), 0);
+
+      let byCountry: { country: string; activeUsers: number }[] = [];
+      if (countryRes.ok) {
+        const countryJson: any = await countryRes.json();
+        byCountry = Array.isArray(countryJson.rows)
+          ? countryJson.rows.map((row: any) => ({
+              country: row.dimensionValues?.[0]?.value || "(not set)",
+              activeUsers: Number(row.metricValues?.[0]?.value || 0),
+            }))
+          : [];
+      }
+
       return {
         configured: true,
         activeUsers,
         topScreens: rows,
+        byCountry,
         status,
         generatedAt: new Date().toISOString(),
         source: "google_analytics_realtime",

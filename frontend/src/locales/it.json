@@ -11229,5 +11229,13 @@
   "status_online": "Online",
   "bookings": "Prenotazioni",
   "published": "Pubblicato",
-  "ph_url_https": "https://..."
+  "ph_url_https": "https://...",
+  "first_party": "First-party",
+  "legacy.first_party": "First-party",
+  "google_analytics_realtime": "Google Analytics",
+  "legacy.google_analytics_realtime": "Google Analytics",
+  "traffic_by_locale": "Traffico per lingua",
+  "legacy.traffic_by_locale": "Traffico per lingua",
+  "traffic_by_country": "Traffico per paese",
+  "legacy.traffic_by_country": "Traffico per paese"
 }

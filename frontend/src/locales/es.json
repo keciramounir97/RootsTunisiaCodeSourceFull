@@ -11229,5 +11229,13 @@
   "status_online": "En línea",
   "bookings": "Reservas",
   "published": "Publicado",
-  "ph_url_https": "https://..."
+  "ph_url_https": "https://...",
+  "first_party": "Primera parte",
+  "legacy.first_party": "Primera parte",
+  "google_analytics_realtime": "Google Analytics",
+  "legacy.google_analytics_realtime": "Google Analytics",
+  "traffic_by_locale": "Tráfico por idioma",
+  "legacy.traffic_by_locale": "Tráfico por idioma",
+  "traffic_by_country": "Tráfico por país",
+  "legacy.traffic_by_country": "Tráfico por país"
 }

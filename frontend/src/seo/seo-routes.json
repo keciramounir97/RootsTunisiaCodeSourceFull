@@ -19,6 +19,13 @@
     "logo": "/logo-512.png",
     "sameAs": []
   },
+  "geo": {
+    "region": "TN",
+    "placename": "Tunisia",
+    "position": "36.8065;10.1815",
+    "countryName": "Tunisia",
+    "countryCode": "TN"
+  },
   "routes": [
     {
       "path": "/",

@@ -11229,5 +11229,13 @@
   "status_online": "Online",
   "bookings": "Bookings",
   "published": "Published",
-  "ph_url_https": "https://..."
+  "ph_url_https": "https://...",
+  "first_party": "First-party",
+  "legacy.first_party": "First-party",
+  "google_analytics_realtime": "Google Analytics",
+  "legacy.google_analytics_realtime": "Google Analytics",
+  "traffic_by_locale": "Traffic by locale",
+  "legacy.traffic_by_locale": "Traffic by locale",
+  "traffic_by_country": "Traffic by country",
+  "legacy.traffic_by_country": "Traffic by country"
 }

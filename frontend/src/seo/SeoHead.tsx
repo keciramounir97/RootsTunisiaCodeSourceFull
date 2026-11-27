@@ -78,6 +78,34 @@ export default function SeoHead() {
       }, (el) => el.setAttribute("content", siteVerification));
     }
 
+    const geo = (seo as { geo?: { region?: string; placename?: string; position?: string } }).geo;
+    if (geo?.region) {
+      upsert('meta[name="geo.region"]', () => {
+        const m = document.createElement("meta");
+        m.setAttribute("name", "geo.region");
+        return m;
+      }, (el) => el.setAttribute("content", geo.region!));
+    }
+    if (geo?.placename) {
+      upsert('meta[name="geo.placename"]', () => {
+        const m = document.createElement("meta");
+        m.setAttribute("name", "geo.placename");
+        return m;
+      }, (el) => el.setAttribute("content", geo.placename!));
+    }
+    if (geo?.position) {
+      upsert('meta[name="geo.position"]', () => {
+        const m = document.createElement("meta");
+        m.setAttribute("name", "geo.position");
+        return m;
+      }, (el) => el.setAttribute("content", geo.position!));
+      upsert('meta[name="ICBM"]', () => {
+        const m = document.createElement("meta");
+        m.setAttribute("name", "ICBM");
+        return m;
+      }, (el) => el.setAttribute("content", geo.position!.replace(";", ", ")));
+    }
+
     upsert('link[rel="canonical"]', () => {
       const l = document.createElement("link");
       l.setAttribute("rel", "canonical");
@@ -132,6 +160,9 @@ export default function SeoHead() {
                 url: `${SEO_ORIGIN}/`,
                 logo: `${SEO_ORIGIN}${(seo.organization as { logo?: string })?.logo || "/logo-512.png"}`,
                 email: (seo.organization as { email?: string })?.email,
+                areaServed: geo?.region
+                  ? { "@type": "Country", name: (seo as { geo?: { countryName?: string } }).geo?.countryName || geo.placename }
+                  : undefined,
               },
               {
                 "@type": "WebSite",

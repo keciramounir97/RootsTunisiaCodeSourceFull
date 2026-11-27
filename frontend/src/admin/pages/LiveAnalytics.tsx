@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Activity, BarChart3, ExternalLink, Eye, RefreshCcw, Users } from "lucide-react";
+import { Activity, BarChart3, Eye, Globe2, RefreshCcw, Users } from "lucide-react";
 import { api } from "../../api/client";
-import { getGaMeasurementId } from "../../analytics/ga";
 import { useTranslation } from "../../context/TranslationContext";
 import AnalyticsCalendar, {
   todayYmd,
@@ -20,6 +19,7 @@ type LivePayload = {
     activeVisitors?: number;
     pageviews?: number;
     topPages?: { path: string; views: number }[];
+    byLocale?: { locale: string; views: number }[];
     recent?: { path: string; title?: string; locale?: string; referrer?: string; created_at: string }[];
     series?: { t: string; views: number }[];
     source?: string;
@@ -30,6 +30,7 @@ type LivePayload = {
     configured?: boolean;
     activeUsers?: number;
     topScreens?: { page: string; activeUsers: number }[];
+    byCountry?: { country: string; activeUsers: number }[];
     error?: string;
     message?: string;
     source?: string;
@@ -45,14 +46,8 @@ type LivePayload = {
   };
 };
 
-const ANALYTICS_HOME_URL = "https://analytics.google.com/";
-const SEARCH_CONSOLE_HOME_URL = "https://search.google.com/search-console";
 const SENSITIVE_CONFIG_TEXT =
   /\b(?:VITE|GA4?|GOOGLE)_[A-Z0-9_]+\b|\bG-[A-Z0-9]{4,}\b|service account|compte de service|cuenta de servicio|account di servizio|kont tas-servizz/i;
-
-function isPresent(value: unknown): boolean {
-  return Boolean(String(value ?? "").trim());
-}
 
 /** Drop setup instructions, env keys, and raw Google IDs from admin copy. */
 export function publicAnalyticsNotice(...parts: Array<string | null | undefined>): string | null {
@@ -92,6 +87,16 @@ export function readLivePayload(payload: unknown): LivePayload {
 function metricValue(value: number | undefined, hasData: boolean, loading: boolean): number | string {
   if (!hasData && loading) return "…";
   return value ?? 0;
+}
+
+function sourceLabel(
+  t: (key: string, fallback?: string) => string,
+  source?: string,
+): string {
+  const key = String(source || "first_party").trim() || "first_party";
+  if (key === "first_party") return t("first_party", "First-party");
+  if (key === "google_analytics_realtime") return t("google_analytics_realtime", "Google Analytics");
+  return t(key, key);
 }
 
 export default function LiveAnalytics() {
@@ -154,18 +159,16 @@ export default function LiveAnalytics() {
   const ga = data?.googleAnalytics;
   const config = data?.config;
   const hasLive = Boolean(live);
-  const measurementConfigured =
-    config?.measurementConfigured === true || isPresent(config?.measurementId) || isPresent(getGaMeasurementId());
-  const propertyConfigured = config?.propertyConfigured === true || isPresent(config?.propertyId);
-  const searchConsoleConfigured =
-    config?.searchConsoleConfigured === true || isPresent(config?.searchConsoleVerification);
   const dataApi = Boolean(config?.dataApiConfigured);
-  const configuredLabel = t("ga_configured", "Configured");
-  const missingLabel = t("ga_not_configured", "Not configured");
+  const gaConfigured = ga?.configured === true || dataApi;
+  const gaActiveUsers =
+    gaConfigured && typeof ga?.activeUsers === "number" ? ga.activeUsers : live?.activeVisitors;
   const analyticsNotice = publicAnalyticsNotice(ga?.message, ga?.error);
   const series = live?.series || [];
   const maxSeries = Math.max(1, ...series.map((point) => point.views || 0));
   const seriesTotal = series.reduce((sum, point) => sum + (point.views || 0), 0);
+  const byLocale = live?.byLocale || [];
+  const byCountry = ga?.byCountry || [];
 
   const summary = useMemo(() => {
     if (range === "live") return liveMinutesLabel;
@@ -264,7 +267,7 @@ export default function LiveAnalytics() {
               <div>
                 <p>{t("active_sessions", "Active sessions")}</p>
                 <strong>{metricValue(live?.activeSessions, hasLive, loading)}</strong>
-                <span>{live?.source || "first_party"}</span>
+                <span>{sourceLabel(t, live?.source)}</span>
               </div>
             </article>
             <article className="easy-stat-card">
@@ -283,16 +286,12 @@ export default function LiveAnalytics() {
               </div>
               <div>
                 <p>{t("ga_active_users", "GA active users")}</p>
-                {dataApi ? (
-                  <strong>{ga?.activeUsers ?? 0}</strong>
-                ) : (
-                  <strong className="!text-base">{measurementConfigured ? configuredLabel : missingLabel}</strong>
-                )}
-                {dataApi ? (
-                  <span>Google Analytics</span>
-                ) : measurementConfigured ? (
-                  <span>{t("ga_tag_active", "Tracking tag active")}</span>
-                ) : null}
+                <strong>{metricValue(gaActiveUsers, hasLive || gaConfigured, loading)}</strong>
+                <span>
+                  {gaConfigured
+                    ? t("google_analytics_realtime", "Google Analytics")
+                    : sourceLabel(t, "first_party")}
+                </span>
               </div>
             </article>
           </div>
@@ -357,56 +356,56 @@ export default function LiveAnalytics() {
         </div>
       </section>
 
-      <section className="surface-card space-y-3 rounded-xl border border-[var(--border)] p-4">
-        <h2 className="font-semibold">{t("live_analytics", "Google Analytics")}</h2>
-        <dl className="grid gap-2 text-sm sm:grid-cols-2">
-          <div className="flex items-start justify-between gap-3 rounded-lg bg-[var(--background)]/50 px-3 py-2">
-            <dt className="text-[var(--muted-foreground)]">{t("measurement_id", "Measurement ID")}</dt>
-            <dd className="text-end">{measurementConfigured ? configuredLabel : missingLabel}</dd>
+      <section className="grid gap-4 lg:grid-cols-2">
+        <div className="surface-card rounded-xl border border-[var(--border)] p-4">
+          <div className="mb-3 flex items-center gap-2">
+            <Globe2 className="h-4 w-4 text-[var(--gold)]" aria-hidden="true" />
+            <h2 className="font-semibold">{t("traffic_by_locale", "Traffic by locale")}</h2>
           </div>
-          <div className="flex items-start justify-between gap-3 rounded-lg bg-[var(--background)]/50 px-3 py-2">
-            <dt className="text-[var(--muted-foreground)]">{t("ga4_property_id", "GA4 Property ID")}</dt>
-            <dd className="text-end">{propertyConfigured ? configuredLabel : missingLabel}</dd>
-          </div>
-          <div className="flex items-start justify-between gap-3 rounded-lg bg-[var(--background)]/50 px-3 py-2">
-            <dt className="text-[var(--muted-foreground)]">{t("data_api", "Data API")}</dt>
-            <dd className="text-end">{dataApi ? configuredLabel : missingLabel}</dd>
-          </div>
-          <div className="flex items-start justify-between gap-3 rounded-lg bg-[var(--background)]/50 px-3 py-2">
-            <dt className="text-[var(--muted-foreground)]">{t("search_console_title", "Google Search Console")}</dt>
-            <dd className="text-end">{searchConsoleConfigured ? configuredLabel : missingLabel}</dd>
-          </div>
-        </dl>
-        {analyticsNotice ? <p className="text-xs text-[var(--muted-foreground)]">{analyticsNotice}</p> : null}
-        {(ga?.topScreens || []).length > 0 ? (
-          <ul className="space-y-1 text-sm">
-            {ga!.topScreens!.map((row) => (
-              <li key={row.page} className="flex justify-between gap-2">
-                <span className="truncate">{row.page}</span>
-                <span className="text-[var(--gold)]">{row.activeUsers ?? 0}</span>
-              </li>
-            ))}
+          <ul className="space-y-2">
+            {byLocale.length === 0 ? (
+              <li className="text-sm text-[var(--muted-foreground)]">{t("no_data_yet", "No data yet")}</li>
+            ) : (
+              byLocale.map((row) => (
+                <li key={row.locale} className="flex items-center justify-between gap-3 text-sm">
+                  <span className="truncate uppercase">{row.locale || "—"}</span>
+                  <span className="shrink-0 font-semibold text-[var(--gold)]">{row.views ?? 0}</span>
+                </li>
+              ))
+            )}
           </ul>
-        ) : null}
-        <div className="flex flex-wrap gap-2 pt-1">
-          <a
-            href={ANALYTICS_HOME_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn-base btn-outline-ink inline-flex items-center gap-1.5 px-3 py-2 text-xs"
-          >
-            <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
-            Google Analytics
-          </a>
-          <a
-            href={SEARCH_CONSOLE_HOME_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn-base btn-outline-ink inline-flex items-center gap-1.5 px-3 py-2 text-xs"
-          >
-            <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
-            Search Console
-          </a>
+        </div>
+
+        <div className="surface-card rounded-xl border border-[var(--border)] p-4">
+          <div className="mb-3 flex items-center gap-2">
+            <Globe2 className="h-4 w-4 text-[var(--gold)]" aria-hidden="true" />
+            <h2 className="font-semibold">{t("traffic_by_country", "Traffic by country")}</h2>
+          </div>
+          {analyticsNotice && byCountry.length === 0 ? (
+            <p className="mb-2 text-xs text-[var(--muted-foreground)]">{analyticsNotice}</p>
+          ) : null}
+          <ul className="space-y-2">
+            {byCountry.length === 0 ? (
+              <li className="text-sm text-[var(--muted-foreground)]">{t("no_data_yet", "No data yet")}</li>
+            ) : (
+              byCountry.map((row) => (
+                <li key={row.country} className="flex items-center justify-between gap-3 text-sm">
+                  <span className="truncate">{row.country}</span>
+                  <span className="shrink-0 font-semibold text-[var(--gold)]">{row.activeUsers ?? 0}</span>
+                </li>
+              ))
+            )}
+          </ul>
+          {(ga?.topScreens || []).length > 0 ? (
+            <ul className="mt-4 space-y-1 border-t border-[var(--border)]/60 pt-3 text-sm">
+              {ga!.topScreens!.map((row) => (
+                <li key={row.page} className="flex justify-between gap-2">
+                  <span className="truncate">{row.page}</span>
+                  <span className="text-[var(--gold)]">{row.activeUsers ?? 0}</span>
+                </li>
+              ))}
+            </ul>
+          ) : null}
         </div>
       </section>
     </div>

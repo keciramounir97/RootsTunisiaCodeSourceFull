@@ -11229,5 +11229,13 @@
   "status_online": "Online",
   "bookings": "Prenotazzjonijiet",
   "published": "Ippubblikat",
-  "ph_url_https": "https://..."
+  "ph_url_https": "https://...",
+  "first_party": "First-party",
+  "legacy.first_party": "First-party",
+  "google_analytics_realtime": "Google Analytics",
+  "legacy.google_analytics_realtime": "Google Analytics",
+  "traffic_by_locale": "Traffiku skont il-lingwa",
+  "legacy.traffic_by_locale": "Traffiku skont il-lingwa",
+  "traffic_by_country": "Traffiku skont il-pajjiż",
+  "legacy.traffic_by_country": "Traffiku skont il-pajjiż"
 }

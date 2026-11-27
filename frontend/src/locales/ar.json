@@ -11229,5 +11229,13 @@
   "status_online": "متصل / نشط",
   "bookings": "الحجوزات",
   "published": "تم النشر",
-  "ph_url_https": "https://..."
+  "ph_url_https": "https://...",
+  "first_party": "الطرف الأول",
+  "legacy.first_party": "الطرف الأول",
+  "google_analytics_realtime": "Google Analytics",
+  "legacy.google_analytics_realtime": "Google Analytics",
+  "traffic_by_locale": "الزيارات حسب اللغة",
+  "legacy.traffic_by_locale": "الزيارات حسب اللغة",
+  "traffic_by_country": "الزيارات حسب البلد",
+  "legacy.traffic_by_country": "الزيارات حسب البلد"
 }

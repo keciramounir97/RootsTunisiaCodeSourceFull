@@ -39,6 +39,7 @@ describe("Google Analytics admin page", () => {
           activeSessions: 3,
           pageviews: 9,
           topPages: [{ path: "/trees", views: 9 }],
+          byLocale: [{ locale: "fr", views: 6 }, { locale: "en", views: 3 }],
           recent: [],
           series: [{ t: "2026-11-27 10:00", views: 9 }],
           seriesGranularity: "hour",
@@ -76,25 +77,18 @@ describe("Google Analytics admin page", () => {
     expect(screen.queryByText(/VITE_GOOGLE_SITE_VERIFICATION/)).not.toBeInTheDocument();
     expect(screen.queryByText("Le temps réel nécessite un compte de service")).not.toBeInTheDocument();
     expect(screen.queryByText("service account missing")).not.toBeInTheDocument();
-    expect(screen.getAllByText("Configuré").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Non configuré").length).toBeGreaterThan(0);
-    expect(screen.getByText("Balise de suivi active")).toBeInTheDocument();
+    expect(screen.queryByText("Non configuré")).not.toBeInTheDocument();
+    expect(screen.queryByText("Identifiant de mesure")).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Google Analytics" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Search Console" })).not.toBeInTheDocument();
 
-    const analyticsLink = screen.getByRole("link", { name: "Google Analytics" });
-    expect(analyticsLink).toHaveAttribute("href", "https://analytics.google.com/");
-    expect(analyticsLink).toHaveAttribute("target", "_blank");
-    expect(analyticsLink).toHaveAttribute("rel", "noopener noreferrer");
-    expect(analyticsLink).toHaveTextContent("Google Analytics");
-    expect(analyticsLink).not.toHaveTextContent("http");
-
-    const consoleLink = screen.getByRole("link", { name: "Search Console" });
-    expect(consoleLink).toHaveAttribute("href", "https://search.google.com/search-console");
-    expect(consoleLink).toHaveAttribute("target", "_blank");
-    expect(consoleLink).toHaveAttribute("rel", "noopener noreferrer");
-    expect(consoleLink).toHaveTextContent("Search Console");
-    expect(consoleLink).not.toHaveTextContent("http");
-    expect(screen.queryByText("https://analytics.google.com/")).not.toBeInTheDocument();
-    expect(screen.queryByText("https://search.google.com/search-console")).not.toBeInTheDocument();
+    expect(screen.getAllByText("4").some((el) => el.tagName === "STRONG")).toBe(true);
+    expect(screen.getAllByText("3").some((el) => el.tagName === "STRONG")).toBe(true);
+    expect(screen.getAllByText("9").some((el) => el.tagName === "STRONG")).toBe(true);
+    expect(screen.getAllByText("Première partie").length).toBeGreaterThan(0);
+    expect(screen.getByText("Trafic par langue")).toBeInTheDocument();
+    expect(screen.getByText("fr")).toBeInTheDocument();
+    expect(screen.getAllByText("6").some((el) => el.tagName === "SPAN")).toBe(true);
 
     const selected = screen.getByRole("gridcell", { selected: true });
     expect(selected.className).toContain("bg-[#e08a72]");
@@ -123,21 +117,30 @@ describe("Google Analytics admin page", () => {
     });
   });
 
-  it("shows Not configured instead of an undefined measurement id", async () => {
+  it("shows first-party GA active users instead of Not configured", async () => {
     mockGet.mockResolvedValue({
       data: {
-        live: { activeVisitors: 0, activeSessions: 0, pageviews: 0, topPages: [], recent: [], series: [], source: "first_party" },
+        live: {
+          activeVisitors: 7,
+          activeSessions: 2,
+          pageviews: 11,
+          topPages: [],
+          byLocale: [],
+          recent: [],
+          series: [],
+          source: "first_party",
+        },
         googleAnalytics: { configured: false },
         config: { measurementId: null, propertyId: null, dataApiConfigured: false, searchConsoleVerification: null },
       },
     });
     renderPage();
     await waitFor(() => {
-      expect(screen.getAllByText("Non configuré").length).toBeGreaterThan(0);
+      expect(screen.getAllByText("7").length).toBeGreaterThanOrEqual(2);
     });
+    expect(screen.queryByText("Non configuré")).not.toBeInTheDocument();
     expect(screen.queryByText("Non défini")).not.toBeInTheDocument();
-    expect(screen.queryByText("Non lié pour le moment")).not.toBeInTheDocument();
-    expect(screen.getAllByText("0").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Première partie").length).toBeGreaterThan(0);
   });
 
   it("shows year totals when the API envelope is still wrapped", async () => {
@@ -146,20 +149,21 @@ describe("Google Analytics admin page", () => {
       message: "Success",
       data: {
         live: {
-          activeVisitors: 210,
-          activeSessions: 231,
-          pageviews: 476,
-          topPages: [{ path: "/", views: 476 }],
+          activeVisitors: 131,
+          activeSessions: 165,
+          pageviews: 565,
+          topPages: [{ path: "/", views: 565 }],
+          byLocale: [{ locale: "ar", views: 200 }],
           recent: [{ path: "/", created_at: "2026-11-27T10:00:00.000Z" }],
-          series: [{ t: "2026-11", views: 476 }],
+          series: [{ t: "2026-11", views: 565 }],
           seriesGranularity: "month",
           source: "first_party",
           range: "year",
         },
         googleAnalytics: { configured: false, message: "Add GA_SERVICE_ACCOUNT_JSON" },
         config: {
-          measurementId: "G-X750JBGTXR",
-          propertyId: "566029672",
+          measurementId: null,
+          propertyId: null,
           dataApiConfigured: false,
           searchConsoleVerification: null,
         },
@@ -167,19 +171,18 @@ describe("Google Analytics admin page", () => {
       meta: null,
       timestamp: "2026-11-27T00:00:00.000Z",
     };
-    expect(readLivePayload(wrapped).live?.activeVisitors).toBe(210);
+    expect(readLivePayload(wrapped).live?.activeVisitors).toBe(131);
     mockGet.mockResolvedValue({ data: wrapped });
 
     renderPage();
     await waitFor(() => {
-      expect(screen.getByText("210")).toBeInTheDocument();
+      expect(screen.getAllByText("131").length).toBeGreaterThanOrEqual(2);
     });
-    expect(screen.getByText("231")).toBeInTheDocument();
-    expect(screen.getAllByText("476").length).toBeGreaterThan(0);
-    expect(screen.queryByText("566029672")).not.toBeInTheDocument();
-    expect(screen.queryByText("G-X750JBGTXR")).not.toBeInTheDocument();
+    expect(screen.getByText("165")).toBeInTheDocument();
+    expect(screen.getAllByText("565").length).toBeGreaterThan(0);
+    expect(screen.getByText("ar")).toBeInTheDocument();
+    expect(screen.getByText("200")).toBeInTheDocument();
     expect(screen.queryByText("Add GA_SERVICE_ACCOUNT_JSON")).not.toBeInTheDocument();
-    expect(screen.getAllByText("Configuré").length).toBeGreaterThan(0);
-    expect(screen.queryByText("Aucune donnée pour l'instant")).not.toBeInTheDocument();
+    expect(screen.queryByText("Non configuré")).not.toBeInTheDocument();
   });
 });
