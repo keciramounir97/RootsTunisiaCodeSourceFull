@@ -274,7 +274,9 @@ export default function LiveAnalytics() {
                     ? "Google Analytics"
                     : measurementId
                       ? t("ga_tag_active", "Tracking tag active")
-                      : t("ga_realtime_service_account", "Realtime needs a service account")}
+                      : propertyId
+                        ? t("ga_realtime_service_account", "Realtime needs a service account")
+                        : t("ga_not_configured", "Not configured")}
                 </span>
               </div>
             </article>
