@@ -25,7 +25,7 @@ describe("whatsAppContact helpers", () => {
     expect(DEFAULT_FOOTER_CONFIG.whatsapp).toBe("");
   });
 
-  it("reads WhatsApp from footer settings when configured", () => {
+  it("ignores a stored footer WhatsApp until the contact env var is set", () => {
     localStorage.setItem(
       FOOTER_STORAGE_KEY,
       JSON.stringify({
@@ -33,7 +33,8 @@ describe("whatsAppContact helpers", () => {
         whatsapp: "+216 22 333 444",
       }),
     );
-    expect(buildConfiguredWhatsAppUrl("Ping")).toBe(
+    expect(buildConfiguredWhatsAppUrl("Ping")).toBe("");
+    expect(buildConfiguredWhatsAppUrl("Ping", "+216 22 333 444")).toBe(
       "https://wa.me/21622333444?text=Ping",
     );
   });

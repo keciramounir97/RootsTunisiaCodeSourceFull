@@ -258,10 +258,17 @@ export default function Subscriptions() {
         FALLBACK_API_TIERS.find((f) => f.id === apiTier.id) ||
         FALLBACK_API_TIERS[index] ||
         FALLBACK_API_TIERS[0];
-      const monthlyUSD = safeNumber(apiTier.price, safeNumber(fallback.price, 0));
+      const id = Number(apiTier.id) || fallback.id || index + 1;
+      const rawMonthly = safeNumber(apiTier.price, safeNumber(fallback.price, 0));
+      const roundedMonthly = Math.round(rawMonthly * 100) / 100;
+      const monthlyUSD =
+        id === 2 && roundedMonthly === 9.99
+          ? 1.99
+          : id === 3 && roundedMonthly === 19.99
+            ? 3.99
+            : rawMonthly;
       const priceUSD = isAnnual && monthlyUSD > 0 ? monthlyUSD * 10 : monthlyUSD;
       const converted = convertPrice(priceUSD);
-      const id = Number(apiTier.id) || fallback.id || index + 1;
       const limits = limitsFromApi(apiTier, fallback);
       const rawBadge =
         apiTier.badge ||

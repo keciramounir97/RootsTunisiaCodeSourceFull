@@ -15,6 +15,7 @@ import {
 } from "../utils/footerConfig";
 import { useSiteContent } from "../hooks/useSiteContent";
 import SiteCustomBlocks from "./cms/SiteCustomBlocks";
+import { publicSitePhone, publicSiteWhatsApp } from "../constants/contact";
 
 interface FooterProps {
   data?: {
@@ -225,7 +226,9 @@ export default function Footer({ data }: FooterProps) {
     localizedFineprintOverride ||
     (isLocaleSafeSingleString(rawSingleFineprint, cleanLocale, isRtl) ? rawSingleFineprint.trim() : null);
 
-  const activeSocialLinks = getActiveSocialLinks(mergedFooter);
+  const activeSocialLinks = getActiveSocialLinks(mergedFooter).filter(
+    (link) => link.icon !== "whatsapp" || publicSiteWhatsApp() !== null,
+  );
 
   const siteLocation = getText("footer", "config", "location")?.trim();
   const resolvedLocation = localizeFooterLocation(
@@ -234,9 +237,9 @@ export default function Footer({ data }: FooterProps) {
   );
   const resolvedEmail =
     mergedFooter.email?.trim() || getText("footer", "config", "email")?.trim() || "contact@rootstunisia.com";
-  const resolvedPhone =
-    mergedFooter.phone?.trim() || getText("footer", "config", "phone")?.trim() || "";
-  const cleanTelHref = resolvedPhone ? resolvedPhone.replace(/[^\d+]/g, "") : "";
+  const configuredPhone = publicSitePhone();
+  const resolvedPhone = configuredPhone?.display ?? "";
+  const cleanTelHref = configuredPhone?.tel ?? "";
 
   return (
     <footer

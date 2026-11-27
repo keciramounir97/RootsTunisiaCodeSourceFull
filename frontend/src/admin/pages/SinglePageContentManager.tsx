@@ -1661,7 +1661,7 @@ export default function SinglePageContentManager({ pageId }: { pageId: string })
                           Téléphone
                         </span>
                         <strong className="text-xs text-[var(--gold)] block font-mono">
-                          {getSectionFieldVal("details", "phone") || "+216 71 000 000"}
+                          {getSectionFieldVal("details", "phone") || t("footer_no_phone", "Aucun téléphone")}
                         </strong>
                       </div>
 

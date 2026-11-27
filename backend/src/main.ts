@@ -383,13 +383,21 @@ async function ensureCriticalSchema(knex: Knex) {
         const existingTierIds = new Set(existingTiers.map((t: any) => t.id));
         const defaultTiers = [
             { id: 1, name: 'Basic', price: 0, interval: 'month' },
-            { id: 2, name: 'Premium', price: 9.99, interval: 'month' },
-            { id: 3, name: 'Family Historian', price: 19.99, interval: 'month' },
+            { id: 2, name: 'Premium', price: 1.99, interval: 'month' },
+            { id: 3, name: 'Family Historian', price: 3.99, interval: 'month' },
         ];
         for (const tier of defaultTiers) {
             if (!existingTierIds.has(tier.id)) {
                 await knex('subscription_tiers').insert(tier);
             }
+        }
+        // Correct legacy seed prices (9.99 / 19.99 → 1.99 / 3.99) without clobbering custom admin prices
+        const legacyPremium = await knex('subscription_tiers').where({ id: 2 }).whereIn('price', [9.99, '9.99']).update({ price: 1.99 });
+        const legacyHistorian = await knex('subscription_tiers').where({ id: 3 }).whereIn('price', [19.99, '19.99']).update({ price: 3.99 });
+        const roundedPremium = await knex('subscription_tiers').where({ id: 2 }).whereRaw('ROUND(price, 2) = ?', [9.99]).update({ price: 1.99 });
+        const roundedHistorian = await knex('subscription_tiers').where({ id: 3 }).whereRaw('ROUND(price, 2) = ?', [19.99]).update({ price: 3.99 });
+        if (legacyPremium || legacyHistorian || roundedPremium || roundedHistorian) {
+            console.log('🟡 Schema patch: corrected subscription_tiers prices to 1.99 / 3.99');
         }
 
         // Seed default tier quota limits ONLY when max_trees is NULL

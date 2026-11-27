@@ -56,6 +56,7 @@ import {
   type FooterConfig,
 } from "../utils/footerConfig";
 import { useHelpCenterCmsConfig } from "../utils/helpCenterCmsConfig";
+import { publicSitePhone, publicSiteWhatsApp } from "../constants/contact";
 
 type ContactTab = "contact" | "about" | "faq" | "legal";
 
@@ -184,7 +185,10 @@ export default function ContactUs() {
     [footerConfig, siteContent, cleanLocale],
   );
   const activeSocialLinks = useMemo(
-    () => getActiveSocialLinks(resolvedFooterConfig),
+    () =>
+      getActiveSocialLinks(resolvedFooterConfig).filter(
+        (link) => link.icon !== "whatsapp" || publicSiteWhatsApp() !== null,
+      ),
     [resolvedFooterConfig],
   );
 
@@ -194,26 +198,25 @@ export default function ContactUs() {
     hcConfig.contact.cards.emailValue?.trim() ||
     getText("contact", "details", "email")?.trim() ||
     "contact@rootstunisia.com";
-  // Contact Direct cards follow Contact CMS. Empty admin values must stay empty
-  // (do not resurrect footer/site-content fallbacks after an intentional clear).
-  const phone = String(hcConfig.contact.cards.phoneValue ?? "").trim();
-  const phoneHref = phone ? phone.replace(/[^\d+]/g, "") : "";
+  // Public phone is env-only. CMS values stay hidden until VITE_CONTACT_PHONE is set.
+  const configuredPhone = publicSitePhone();
+  const phone = configuredPhone?.display ?? "";
+  const phoneHref = configuredPhone?.tel ?? "";
   const hours =
     hcConfig.contact.cards.hoursValue?.trim() ||
     getText("contact", "details", "hours") ||
     "09:00 – 17:00 (GMT+1)";
 
   // Social links — unified with Footer Settings
-  const whatsappLink = activeSocialLinks.find((link) => link.icon === "whatsapp");
-  const waNumber = String(hcConfig.contact.cards.whatsappValue ?? "").trim();
-  const waDisplay = waNumber;
-  const rawWa = waNumber.replace(/[^\d]/g, "");
+  const configuredWa = publicSiteWhatsApp();
+  const waDisplay = configuredWa?.display ?? "";
+  const rawWa = (configuredWa?.tel ?? "").replace(/[^\d]/g, "");
   const prefillWa =
     hcConfig.contact.cards.whatsappPrefillMessage ||
     t("whatsapp_prefill_message");
   const whatsappUrl = rawWa
     ? `https://wa.me/${rawWa}?text=${encodeURIComponent(prefillWa)}`
-    : whatsappLink?.resolvedHref || "";
+    : "";
 
   // Form states
   const topics = hcConfig.contact.form.topics;

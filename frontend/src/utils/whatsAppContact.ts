@@ -1,9 +1,5 @@
-import {
-  getActiveSocialLinks,
-  loadFooterConfig,
-  resolveSocialHref,
-} from "./footerConfig";
-import { loadHelpCenterCmsConfig } from "./helpCenterCmsConfig";
+import { resolveSocialHref } from "./footerConfig";
+import { publicSiteWhatsApp } from "../constants/contact";
 
 /**
  * Build a WhatsApp deep link from an admin-configured number/URL.
@@ -23,34 +19,15 @@ export function buildWhatsAppUrl(
 }
 
 /**
- * Resolve the public WhatsApp contact from admin sources only.
- * Priority: explicit override → Contact CMS → Footer WhatsApp field → Footer social link.
+ * Site-wide WhatsApp comes only from VITE_CONTACT_WHATSAPP / VITE_CONTACT_PHONE.
+ * An explicit per-service number still wins when the caller passes one.
  */
 export function resolveConfiguredWhatsAppContact(
   explicitPhoneOrUrl?: string | null,
 ): string {
   const override = String(explicitPhoneOrUrl || "").trim();
   if (override) return override;
-
-  try {
-    const hc = loadHelpCenterCmsConfig();
-    const cmsWa = String(hc.contact?.cards?.whatsappValue || "").trim();
-    if (cmsWa) return cmsWa;
-  } catch {
-    // ignore
-  }
-
-  try {
-    const footer = loadFooterConfig();
-    const footerWa = String(footer.whatsapp || "").trim();
-    if (footerWa) return footerWa;
-    const socialWa = getActiveSocialLinks(footer).find((l) => l.icon === "whatsapp");
-    if (socialWa?.url?.trim()) return socialWa.url.trim();
-  } catch {
-    // ignore
-  }
-
-  return "";
+  return publicSiteWhatsApp()?.tel ?? "";
 }
 
 export function buildConfiguredWhatsAppUrl(

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import ContactUs from "../contactUs";
@@ -65,6 +65,10 @@ describe("Help Center (/helpcenter) & Footer 6-Language Translation & RTL", () =
     localStorage.clear();
     mockGet.mockResolvedValue({ data: null });
     mockPost.mockResolvedValue({ data: { ok: true } });
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
   });
 
   it("provides complete translated HelpCenter CMS defaults for all 6 locales without French leftovers or competitor mentions", () => {
@@ -194,6 +198,10 @@ describe("Help Center (/helpcenter) & Footer 6-Language Translation & RTL", () =
   });
 
   it("renders all 4 Help Center tabs in all 6 languages with Arabic RTL and zero French leakage", async () => {
+    vi.stubEnv("VITE_CONTACT_PHONE", "+21692225533");
+    vi.stubEnv("VITE_CONTACT_PHONE_DISPLAY", "+216 92 225 533");
+    vi.stubEnv("VITE_CONTACT_WHATSAPP", "+21692225533");
+    vi.stubEnv("VITE_CONTACT_WHATSAPP_DISPLAY", "+216 92 225 533");
     const frenchSnippets = [
       "Centre d'Aide & Informations",
       "Cadre Réglementaire & Déontologique",

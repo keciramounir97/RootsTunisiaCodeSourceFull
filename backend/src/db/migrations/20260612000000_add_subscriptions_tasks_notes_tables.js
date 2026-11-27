@@ -33,7 +33,7 @@ exports.up = async function (knex) {
         {
             id: 2,
             name: 'Premium',
-            price: 9.99,
+            price: 1.99,
             interval: 'monthly',
             features: '["Unlimited family trees","Advanced tree visualization","Unlimited people per tree","Archive document uploads","GEDCOM import/export","Priority email support","Advanced search & filters"]',
             sort_order: 2,
@@ -41,7 +41,7 @@ exports.up = async function (knex) {
         {
             id: 3,
             name: 'Family Historian',
-            price: 19.99,
+            price: 3.99,
             interval: 'monthly',
             features: '["Everything in Premium","AI-powered tree suggestions","AI note summarization","Task management & reminders","WhatsApp priority support","Early access to new features","Contribute to archive database"]',
             sort_order: 3,
