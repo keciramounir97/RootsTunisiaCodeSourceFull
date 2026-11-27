@@ -107,8 +107,8 @@ export class AnalyticsService {
   }
 
   getGaConfigStatus() {
-    const measurementId = process.env.GA_MEASUREMENT_ID || process.env.VITE_GA_MEASUREMENT_ID || "";
-    const propertyId = process.env.GA4_PROPERTY_ID || "";
+    const measurementId = process.env.GA_MEASUREMENT_ID || process.env.VITE_GA_MEASUREMENT_ID || "G-X750JBGTXR";
+    const propertyId = process.env.GA4_PROPERTY_ID || "566029672";
     const hasServiceAccount = Boolean(
       process.env.GA_SERVICE_ACCOUNT_JSON || process.env.GOOGLE_APPLICATION_CREDENTIALS,
     );

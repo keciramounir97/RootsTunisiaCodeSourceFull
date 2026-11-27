@@ -6,9 +6,10 @@ declare global {
 }
 
 const CONSENT_KEY = "roots_cookie_consent_v1";
+const DEFAULT_GA_MEASUREMENT_ID = "G-X750JBGTXR";
 
 export function getGaMeasurementId(): string {
-  return String(import.meta.env.VITE_GA_MEASUREMENT_ID || "").trim();
+  return String(import.meta.env.VITE_GA_MEASUREMENT_ID || DEFAULT_GA_MEASUREMENT_ID).trim();
 }
 
 export function getGoogleSiteVerification(): string {
@@ -28,7 +29,7 @@ export function hasAnalyticsConsent(): boolean {
 
 export function ensureGtagLoaded(measurementId: string) {
   if (!measurementId || typeof document === "undefined") return;
-  if (document.getElementById("ga4-gtag")) return;
+  if (document.getElementById("ga4-gtag") || typeof window.gtag === "function") return;
 
   window.dataLayer = window.dataLayer || [];
   window.gtag = function gtag(...args: unknown[]) {
