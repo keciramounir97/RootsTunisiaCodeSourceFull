@@ -1,6 +1,12 @@
 import { Inject, Injectable, Logger } from "@nestjs/common";
 import type { Knex } from "knex";
 import * as crypto from "crypto";
+import {
+  fillSeries,
+  resolveAnalyticsWindow,
+  type AnalyticsGranularity,
+  type AnalyticsQuery,
+} from "./analytics-window";
 
 type CollectPayload = {
   path?: string;
@@ -59,97 +65,115 @@ export class AnalyticsService {
     return { ok: true };
   }
 
-  /** Max ~365 days of minute-based windows (first-party aggregates). */
-  private static readonly MAX_LIVE_WINDOW_MINUTES = 525_600;
-
-  private seriesBucketSql(windowMin: number): string {
-    if (windowMin <= 3 * 60) {
-      return "DATE_FORMAT(created_at, '%Y-%m-%d %H:%i')";
-    }
-    if (windowMin <= 24 * 60) {
-      return "DATE_FORMAT(created_at, '%Y-%m-%d %H:00')";
-    }
-    if (windowMin <= 7 * 24 * 60) {
-      return "DATE_FORMAT(created_at, '%Y-%m-%d')";
-    }
-    if (windowMin <= 45 * 24 * 60) {
-      return "DATE_FORMAT(created_at, '%x-%v')";
-    }
-    return "DATE_FORMAT(created_at, '%Y-%m')";
-  }
-
-  async getLive(minutes = 30) {
+  async getLive(input: number | AnalyticsQuery = 30) {
     await this.ensureTable();
-    const windowMin = Math.min(
-      Math.max(Number(minutes) || 30, 5),
-      AnalyticsService.MAX_LIVE_WINDOW_MINUTES,
-    );
-    const bucketSql = this.seriesBucketSql(windowMin);
+    const query: AnalyticsQuery = typeof input === "number" ? { minutes: input } : input || {};
+    const window = resolveAnalyticsWindow(query);
+    const fromSec = Math.floor(window.from.getTime() / 1000);
+    const toSec = Math.floor(window.to.getTime() / 1000);
+    const sessionOffset = await this.sessionOffsetMinutes();
+    const bucketSql = this.bucketSql(window.granularity, window.tzOffsetMinutes - sessionOffset);
+    const inWindow = "UNIX_TIMESTAMP(created_at) >= ? AND UNIX_TIMESTAMP(created_at) < ?";
+    const bounds = [fromSec, toSec];
 
     const [activeSessionsRow] = await this.knex("analytics_pageviews")
-      .whereRaw("created_at >= DATE_SUB(NOW(), INTERVAL ? MINUTE)", [windowMin])
+      .whereRaw(inWindow, bounds)
       .countDistinct({ c: "session_id" });
     const [activeVisitorsRow] = await this.knex("analytics_pageviews")
-      .whereRaw("created_at >= DATE_SUB(NOW(), INTERVAL ? MINUTE)", [windowMin])
+      .whereRaw(inWindow, bounds)
       .countDistinct({ c: "visitor_hash" });
     const [pageviewsRow] = await this.knex("analytics_pageviews")
-      .whereRaw("created_at >= DATE_SUB(NOW(), INTERVAL ? MINUTE)", [windowMin])
+      .whereRaw(inWindow, bounds)
       .count({ c: "*" });
 
     const topPages = await this.knex("analytics_pageviews")
       .select("path")
       .count({ views: "*" })
-      .whereRaw("created_at >= DATE_SUB(NOW(), INTERVAL ? MINUTE)", [windowMin])
+      .whereRaw(inWindow, bounds)
       .groupBy("path")
       .orderBy("views", "desc")
       .limit(12);
 
     const recent = await this.knex("analytics_pageviews")
       .select("path", "title", "locale", "referrer", "created_at")
+      .whereRaw(inWindow, bounds)
       .orderBy("created_at", "desc")
       .limit(25);
 
     const byBucket = await this.knex("analytics_pageviews")
       .select(this.knex.raw(`${bucketSql} as bucket`))
       .count({ views: "*" })
-      .whereRaw("created_at >= DATE_SUB(NOW(), INTERVAL ? MINUTE)", [windowMin])
+      .whereRaw(inWindow, bounds)
       .groupBy("bucket")
       .orderBy("bucket", "asc");
 
+    const sparse = byBucket.map((r: any) => ({ t: String(r.bucket ?? ""), views: Number(r.views || 0) }));
+
     return {
-      windowMinutes: windowMin,
+      windowMinutes: window.windowMinutes,
+      range: window.range,
+      from: window.from.toISOString(),
+      to: window.to.toISOString(),
+      anchorDate: window.anchorDate,
+      tzOffsetMinutes: window.tzOffsetMinutes,
       activeSessions: Number((activeSessionsRow as any)?.c || 0),
       activeVisitors: Number((activeVisitorsRow as any)?.c || 0),
       pageviews: Number((pageviewsRow as any)?.c || 0),
       topPages: topPages.map((r: any) => ({ path: r.path, views: Number(r.views || 0) })),
       recent,
-      series: byBucket.map((r: any) => ({ t: r.bucket, views: Number(r.views || 0) })),
-      seriesGranularity:
-        windowMin <= 3 * 60
-          ? "minute"
-          : windowMin <= 24 * 60
-            ? "hour"
-            : windowMin <= 7 * 24 * 60
-              ? "day"
-              : windowMin <= 45 * 24 * 60
-                ? "week"
-                : "month",
+      series: fillSeries(sparse, window.from, window.to, window.granularity, window.tzOffsetMinutes),
+      seriesGranularity: window.granularity,
       source: "first_party",
       generatedAt: new Date().toISOString(),
     };
   }
 
+  private async sessionOffsetMinutes(): Promise<number> {
+    try {
+      const raw = await this.knex.raw("SELECT TIMESTAMPDIFF(MINUTE, UTC_TIMESTAMP(), NOW()) AS off");
+      const rows = Array.isArray(raw) ? raw[0] : raw?.rows;
+      const first = Array.isArray(rows) ? rows[0] : rows;
+      const off = Number(first?.off);
+      return Number.isFinite(off) ? off : 0;
+    } catch (err: any) {
+      this.logger.warn(`analytics timezone lookup failed: ${err?.message || err}`);
+      return 0;
+    }
+  }
+
+  private bucketSql(granularity: AnalyticsGranularity, shiftMinutes: number): string {
+    const shift = Math.trunc(Number.isFinite(shiftMinutes) ? shiftMinutes : 0);
+    const expr = shift === 0 ? "created_at" : `DATE_ADD(created_at, INTERVAL ${shift} MINUTE)`;
+    const fmt =
+      granularity === "minute"
+        ? "%Y-%m-%d %H:%i"
+        : granularity === "hour"
+          ? "%Y-%m-%d %H:00"
+          : granularity === "day"
+            ? "%Y-%m-%d"
+            : "%Y-%m";
+    return `DATE_FORMAT(${expr}, '${fmt}')`;
+  }
+
   getGaConfigStatus() {
-    const measurementId = process.env.GA_MEASUREMENT_ID || process.env.VITE_GA_MEASUREMENT_ID || "G-X750JBGTXR";
-    const propertyId = process.env.GA4_PROPERTY_ID || "566029672";
+    const measurementId = String(
+      process.env.GA_MEASUREMENT_ID || process.env.VITE_GA_MEASUREMENT_ID || "G-X750JBGTXR",
+    ).trim();
+    const propertyId = String(process.env.GA4_PROPERTY_ID || "566029672")
+      .trim()
+      .replace(/^properties\//, "");
+    const searchConsoleVerification = String(process.env.GOOGLE_SITE_VERIFICATION || "").trim();
     const hasServiceAccount = Boolean(
       process.env.GA_SERVICE_ACCOUNT_JSON || process.env.GOOGLE_APPLICATION_CREDENTIALS,
     );
     return {
       measurementId: measurementId || null,
       propertyId: propertyId || null,
+      measurementConfigured: Boolean(measurementId),
+      propertyConfigured: Boolean(propertyId),
       dataApiConfigured: Boolean(propertyId && hasServiceAccount),
-      searchConsoleVerification: process.env.GOOGLE_SITE_VERIFICATION || null,
+      searchConsoleVerification: searchConsoleVerification || null,
+      searchConsoleConfigured: Boolean(searchConsoleVerification),
     };
   }
 
@@ -162,15 +186,16 @@ export class AnalyticsService {
     if (!status.dataApiConfigured) {
       return {
         configured: false,
-        message:
-          "Set GA4_PROPERTY_ID and GA_SERVICE_ACCOUNT_JSON on the backend to stream Google Analytics realtime metrics.",
+        message: status.propertyId
+          ? "Google Analytics property is configured. Add GA_SERVICE_ACCOUNT_JSON to load realtime users from the Data API."
+          : "Set GA_MEASUREMENT_ID, GA4_PROPERTY_ID, and GA_SERVICE_ACCOUNT_JSON to connect Google Analytics realtime metrics.",
         status,
       };
     }
 
     try {
       const token = await this.getGoogleAccessToken();
-      const propertyId = String(process.env.GA4_PROPERTY_ID).replace(/^properties\//, "");
+      const propertyId = String(status.propertyId || "").replace(/^properties\//, "");
       const res = await fetch(
         `https://analyticsdata.googleapis.com/v1beta/properties/${propertyId}:runRealtimeReport`,
         {

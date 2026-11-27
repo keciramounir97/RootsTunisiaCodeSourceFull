@@ -1,11 +1,21 @@
-import { useEffect, useMemo, useState } from "react";
-import { Activity, BarChart3, ExternalLink, RefreshCcw, Users, Eye, Radio } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Activity, BarChart3, ExternalLink, Eye, RefreshCcw, Users } from "lucide-react";
 import { api } from "../../api/client";
+import { getGaMeasurementId } from "../../analytics/ga";
 import { useTranslation } from "../../context/TranslationContext";
+import AnalyticsCalendar, {
+  todayYmd,
+  tzOffsetMinutesForYmd,
+  type AnalyticsRangeMode,
+} from "../components/AnalyticsCalendar";
 
 type LivePayload = {
   live?: {
     windowMinutes?: number;
+    range?: string;
+    from?: string;
+    to?: string;
+    anchorDate?: string | null;
     activeSessions?: number;
     activeVisitors?: number;
     pageviews?: number;
@@ -27,103 +37,137 @@ type LivePayload = {
   config?: {
     measurementId?: string | null;
     propertyId?: string | null;
+    measurementConfigured?: boolean;
+    propertyConfigured?: boolean;
     dataApiConfigured?: boolean;
     searchConsoleVerification?: string | null;
+    searchConsoleConfigured?: boolean;
   };
 };
 
+const SEARCH_CONSOLE_HINT =
+  "Set VITE_GOOGLE_SITE_VERIFICATION on the frontend and GOOGLE_SITE_VERIFICATION on the backend, then verify rootstunisia.com in Search Console.";
+
+function metricValue(value: number | undefined, hasData: boolean, loading: boolean): number | string {
+  if (!hasData && loading) return "…";
+  return value ?? 0;
+}
+
 export default function LiveAnalytics() {
-  const { t, isRtl } = useTranslation();
+  const { t, isRtl, locale } = useTranslation();
   const [data, setData] = useState<LivePayload | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [minutes, setMinutes] = useState(30);
+  const [anchor, setAnchor] = useState(todayYmd);
+  const [range, setRange] = useState<AnalyticsRangeMode>("day");
 
-  const windowLabel = useMemo(() => {
-    if (minutes < 60) {
-      return t("last_n_minutes", "Last {n} minutes").replace("{n}", String(minutes));
-    }
-    if (minutes < 1440) {
-      const hours = Math.round(minutes / 60);
-      return t("last_n_hours", "Last {n} hours").replace("{n}", String(hours));
-    }
-    if (minutes < 10_080) {
-      const days = Math.round(minutes / 1440);
-      return t("last_n_days", "Last {n} days").replace("{n}", String(days));
-    }
-    if (minutes < 43_200) {
-      return t("live_window_week", "Last 7 days");
-    }
-    if (minutes < 525_600) {
-      return t("live_window_month", "Last 30 days");
-    }
-    return t("live_window_year", "Last 365 days");
+  const liveMinutesLabel = useMemo(() => {
+    if (minutes < 60) return t("last_n_minutes", "Last {n} minutes").replace("{n}", String(minutes));
+    const hours = Math.round(minutes / 60);
+    return t("last_n_hours", "Last {n} hours").replace("{n}", String(hours));
   }, [minutes, t]);
 
-  const load = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await api.get(`/admin/analytics/live?minutes=${minutes}`);
-      setData((res.data || res) as LivePayload);
-    } catch (err: any) {
-      setError(err?.userMessage || err?.message || t("live_analytics_load_error", "Failed to load live analytics"));
-    } finally {
-      setLoading(false);
-    }
-  };
+  const load = useCallback(
+    async (silent = false) => {
+      if (!silent) setLoading(true);
+      setError(null);
+      const tzAnchor = range === "live" ? todayYmd() : anchor;
+      const params = new URLSearchParams();
+      params.set("tzOffset", String(tzOffsetMinutesForYmd(tzAnchor)));
+      if (range === "live") {
+        params.set("minutes", String(minutes));
+        params.set("range", "live");
+      } else {
+        params.set("date", anchor);
+        params.set("range", range);
+      }
+      try {
+        const res = await api.get(`/admin/analytics/live?${params.toString()}`);
+        setData((res.data || res) as LivePayload);
+      } catch (err: any) {
+        setError(err?.userMessage || err?.message || t("live_analytics_load_error", "Failed to load Google Analytics"));
+      } finally {
+        if (!silent) setLoading(false);
+      }
+    },
+    [anchor, minutes, range, t],
+  );
 
   useEffect(() => {
     void load();
-    const id = window.setInterval(() => void load(), 15000);
+    const pollMs = range === "live" || anchor === todayYmd() ? 15000 : 60000;
+    const id = window.setInterval(() => void load(true), pollMs);
     return () => window.clearInterval(id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [minutes]);
+  }, [anchor, load, range]);
+
+  useEffect(() => {
+    const previous = document.title;
+    document.title = `${t("live_analytics", "Google Analytics")} · ${t("map_breadcrumb_roots", "Roots Tunisia")}`;
+    return () => {
+      document.title = previous;
+    };
+  }, [t]);
 
   const live = data?.live;
   const ga = data?.googleAnalytics;
   const config = data?.config;
-  const maxSeries = Math.max(1, ...(live?.series || []).map((s) => s.views || 0));
+  const hasLive = Boolean(live);
+  const measurementId = String(config?.measurementId || getGaMeasurementId() || "").trim();
+  const propertyId = String(config?.propertyId || "").trim();
+  const verification = String(config?.searchConsoleVerification || "").trim();
+  const dataApi = Boolean(config?.dataApiConfigured);
+  const series = live?.series || [];
+  const maxSeries = Math.max(1, ...series.map((point) => point.views || 0));
+  const seriesTotal = series.reduce((sum, point) => sum + (point.views || 0), 0);
+
+  const summary = useMemo(() => {
+    if (range === "live") return liveMinutesLabel;
+    const [year, month, day] = anchor.split("-").map(Number);
+    const anchorDate = new Date(year, (month || 1) - 1, day || 1);
+    const format = new Intl.DateTimeFormat(locale, { day: "numeric", month: "short", year: "numeric" });
+    if (range === "day") return format.format(anchorDate);
+    if (range === "week") {
+      const start = new Date(anchorDate);
+      const weekday = start.getDay();
+      start.setDate(start.getDate() + (weekday === 0 ? -6 : 1 - weekday));
+      const end = new Date(start);
+      end.setDate(start.getDate() + 6);
+      return `${format.format(start)} – ${format.format(end)}`;
+    }
+    if (range === "month") {
+      return new Intl.DateTimeFormat(locale, { month: "long", year: "numeric" }).format(anchorDate);
+    }
+    return String(year);
+  }, [anchor, liveMinutesLabel, locale, range]);
+
+  const granularityLabel = t(
+    `ga_bucket_${live?.seriesGranularity || "hour"}`,
+    live?.seriesGranularity || "hour",
+  );
 
   return (
     <div dir={isRtl ? "rtl" : "ltr"} className="space-y-6">
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="font-display text-2xl font-bold text-[var(--foreground)] flex items-center gap-2">
-            <Radio className="h-6 w-6 text-[var(--gold)]" />
-            {t("live_analytics", "Live Analytics")}
+          <h1 className="font-display text-2xl font-bold text-[var(--foreground)]">
+            {t("live_analytics", "Google Analytics")}
           </h1>
-          <p className="text-sm text-[var(--muted-foreground)] mt-1">
+          <p className="mt-1 max-w-2xl text-sm text-[var(--muted-foreground)]">
             {t(
               "live_analytics_desc",
-              "Realtime first-party traffic plus Google Analytics when configured.",
+              "Visitors by day, week, month, or year, plus the Google Analytics configuration.",
             )}
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <select
-            value={minutes}
-            onChange={(e) => setMinutes(Number(e.target.value))}
-            className="rounded-md border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-sm"
-          >
-            <option value={15}>15 min</option>
-            <option value={30}>30 min</option>
-            <option value={60}>60 min</option>
-            <option value={180}>3 h</option>
-            <option value={1440}>24 {t("time_unit_hours_short", "h")}</option>
-            <option value={10080}>{t("live_range_week", "7 days")}</option>
-            <option value={43200}>{t("live_range_month", "30 days")}</option>
-            <option value={525600}>{t("live_range_year", "365 days")}</option>
-          </select>
-          <button
-            type="button"
-            onClick={() => void load()}
-            className="btn-base btn-outline-ink text-sm py-2 px-3 inline-flex items-center gap-2"
-          >
-            <RefreshCcw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
-            {t("refresh", "Refresh")}
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={() => void load()}
+          className="btn-base btn-outline-ink inline-flex items-center gap-2 px-3 py-2 text-sm"
+        >
+          <RefreshCcw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+          {t("refresh", "Refresh")}
+        </button>
       </header>
 
       {error ? (
@@ -132,72 +176,111 @@ export default function LiveAnalytics() {
         </div>
       ) : null}
 
-      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <article className="easy-stat-card">
-          <div className="easy-stat-icon gold">
-            <Users className="w-5 h-5" />
+      <section className="grid items-start gap-4 xl:grid-cols-[320px_minmax(0,1fr)]">
+        <AnalyticsCalendar
+          anchor={anchor}
+          range={range}
+          locale={locale}
+          isRtl={isRtl}
+          summary={summary}
+          minutes={minutes}
+          labels={{
+            live: t("ga_range_live", "Live"),
+            day: t("ga_range_day", "Day"),
+            week: t("ga_range_week", "Week"),
+            month: t("ga_range_month", "Month"),
+            year: t("ga_range_year", "Year"),
+            prev: t("ga_calendar_prev", "Previous month"),
+            next: t("ga_calendar_next", "Next month"),
+            pick: t("ga_pick_date", "Choose a date"),
+          }}
+          onAnchorChange={setAnchor}
+          onRangeChange={setRange}
+          onMinutesChange={setMinutes}
+        />
+
+        <div className="space-y-4">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <article className="easy-stat-card">
+              <div className="easy-stat-icon gold">
+                <Users className="h-5 w-5" />
+              </div>
+              <div>
+                <p>{t("active_visitors", "Active visitors")}</p>
+                <strong>{metricValue(live?.activeVisitors, hasLive, loading)}</strong>
+                <span>{summary}</span>
+              </div>
+            </article>
+            <article className="easy-stat-card">
+              <div className="easy-stat-icon teal">
+                <Activity className="h-5 w-5" />
+              </div>
+              <div>
+                <p>{t("active_sessions", "Active sessions")}</p>
+                <strong>{metricValue(live?.activeSessions, hasLive, loading)}</strong>
+                <span>{live?.source || "first_party"}</span>
+              </div>
+            </article>
+            <article className="easy-stat-card">
+              <div className="easy-stat-icon blue">
+                <Eye className="h-5 w-5" />
+              </div>
+              <div>
+                <p>{t("pageviews", "Pageviews")}</p>
+                <strong>{metricValue(live?.pageviews, hasLive, loading)}</strong>
+                <span>{granularityLabel}</span>
+              </div>
+            </article>
+            <article className="easy-stat-card">
+              <div className="easy-stat-icon purple">
+                <BarChart3 className="h-5 w-5" />
+              </div>
+              <div>
+                <p>{t("ga_active_users", "GA active users")}</p>
+                {dataApi ? (
+                  <strong>{ga?.activeUsers ?? 0}</strong>
+                ) : (
+                  <strong className="!text-base font-mono break-all">
+                    {measurementId || t("ga_not_configured", "Not configured")}
+                  </strong>
+                )}
+                <span>
+                  {dataApi
+                    ? "Google Analytics"
+                    : measurementId
+                      ? t("ga_tag_active", "Tracking tag active")
+                      : t("ga_realtime_service_account", "Realtime needs a service account")}
+                </span>
+              </div>
+            </article>
           </div>
-          <div>
-            <p>{t("active_visitors", "Active visitors")}</p>
-            <strong>{live?.activeVisitors ?? "—"}</strong>
-            <span>{windowLabel}</span>
+
+          <div className="surface-card rounded-xl border border-[var(--border)] p-4">
+            <div className="mb-3 flex items-baseline justify-between gap-3">
+              <h2 className="font-semibold">{t("traffic_over_time", "Traffic over time")}</h2>
+              <span className="text-xs text-[var(--muted-foreground)]">{summary}</span>
+            </div>
+            {seriesTotal === 0 ? (
+              <p className="text-sm text-[var(--muted-foreground)]">{t("no_data_yet", "No data yet")}</p>
+            ) : (
+              <div className="flex h-40 items-end gap-1">
+                {series.map((point) => (
+                  <div
+                    key={point.t}
+                    title={`${point.t}: ${point.views}`}
+                    className="min-w-[3px] flex-1 rounded-t bg-[var(--gold)]/80"
+                    style={{ height: `${Math.max(point.views > 0 ? 8 : 0, (point.views / maxSeries) * 100)}%` }}
+                  />
+                ))}
+              </div>
+            )}
           </div>
-        </article>
-        <article className="easy-stat-card">
-          <div className="easy-stat-icon teal">
-            <Activity className="w-5 h-5" />
-          </div>
-          <div>
-            <p>{t("active_sessions", "Active sessions")}</p>
-            <strong>{live?.activeSessions ?? "—"}</strong>
-            <span>{live?.source || "first_party"}</span>
-          </div>
-        </article>
-        <article className="easy-stat-card">
-          <div className="easy-stat-icon blue">
-            <Eye className="w-5 h-5" />
-          </div>
-          <div>
-            <p>{t("pageviews", "Pageviews")}</p>
-            <strong>{live?.pageviews ?? "—"}</strong>
-            <span>{live?.generatedAt ? new Date(live.generatedAt).toLocaleTimeString() : ""}</span>
-          </div>
-        </article>
-        <article className="easy-stat-card">
-          <div className="easy-stat-icon purple">
-            <BarChart3 className="w-5 h-5" />
-          </div>
-          <div>
-            <p>{t("ga_active_users", "GA active users")}</p>
-            <strong>{ga?.configured ? ga.activeUsers ?? 0 : "—"}</strong>
-            <span>{ga?.configured ? "Google Analytics" : t("ga_not_linked", "Not linked yet")}</span>
-          </div>
-        </article>
+        </div>
       </section>
 
       <section className="grid gap-4 lg:grid-cols-2">
         <div className="surface-card rounded-xl border border-[var(--border)] p-4">
-          <h2 className="font-semibold mb-3">{t("traffic_over_time", "Traffic over time")}</h2>
-          <div className="flex items-end gap-1 h-40">
-            {(live?.series || []).length === 0 ? (
-              <p className="text-sm text-[var(--muted-foreground)]">{t("no_data_yet", "No data yet")}</p>
-            ) : (
-              (live?.series || []).map((point) => (
-                <div
-                  key={point.t}
-                  title={`${point.t}: ${point.views}`}
-                  className="flex-1 min-w-[4px] rounded-t bg-[var(--gold)]/80"
-                  style={{
-                    height: `${Math.max(6, ((point.views ?? 0) / maxSeries) * 100)}%`,
-                  }}
-                />
-              ))
-            )}
-          </div>
-        </div>
-
-        <div className="surface-card rounded-xl border border-[var(--border)] p-4">
-          <h2 className="font-semibold mb-3">{t("top_pages", "Top pages")}</h2>
+          <h2 className="mb-3 font-semibold">{t("top_pages", "Top pages")}</h2>
           <ul className="space-y-2">
             {(live?.topPages || []).length === 0 ? (
               <li className="text-sm text-[var(--muted-foreground)]">{t("no_data_yet", "No data yet")}</li>
@@ -205,107 +288,122 @@ export default function LiveAnalytics() {
               (live?.topPages || []).map((row) => (
                 <li key={row.path} className="flex items-center justify-between gap-3 text-sm">
                   <span className="truncate font-mono">{row.path}</span>
-                  <span className="shrink-0 text-[var(--gold)] font-semibold">{row.views ?? 0}</span>
+                  <span className="shrink-0 font-semibold text-[var(--gold)]">{row.views ?? 0}</span>
                 </li>
               ))
             )}
           </ul>
         </div>
-      </section>
 
-      <section className="grid gap-4 lg:grid-cols-2">
         <div className="surface-card rounded-xl border border-[var(--border)] p-4">
-          <h2 className="font-semibold mb-3">{t("recent_pageviews", "Recent pageviews")}</h2>
-          <div className="max-h-80 overflow-auto space-y-2">
+          <h2 className="mb-3 font-semibold">{t("recent_pageviews", "Recent pageviews")}</h2>
+          <div className="max-h-80 space-y-2 overflow-auto">
             {(live?.recent || []).length === 0 ? (
               <p className="text-sm text-[var(--muted-foreground)]">{t("no_data_yet", "No data yet")}</p>
             ) : (
               (live?.recent || []).map((row, idx) => (
-                <div key={`${row.created_at}-${idx}`} className="text-sm border-b border-[var(--border)]/60 pb-2">
-                  <div className="font-mono truncate">{row.path || "—"}</div>
-                  <div className="text-[var(--muted-foreground)] text-xs">
+                <div key={`${row.created_at}-${idx}`} className="border-b border-[var(--border)]/60 pb-2 text-sm">
+                  <div className="truncate font-mono">{row.path || "/"}</div>
+                  <div className="text-xs text-[var(--muted-foreground)]">
                     {row.locale || "—"}
-                    {row.created_at ? ` · ${new Date(row.created_at).toLocaleString()}` : ""}
+                    {row.created_at ? ` · ${new Date(row.created_at).toLocaleString(locale)}` : ""}
                   </div>
                 </div>
               ))
             )}
           </div>
         </div>
+      </section>
 
-        <div className="surface-card rounded-xl border border-[var(--border)] p-4 space-y-3">
-          <h2 className="font-semibold">{t("google_analytics_title", "Google Analytics")}</h2>
-          <dl className="text-sm space-y-2">
-            <div className="flex justify-between gap-3">
-              <dt className="text-[var(--muted-foreground)]">{t("measurement_id", "Measurement ID")}</dt>
-              <dd className="font-mono">{config?.measurementId || t("not_set", "Not set")}</dd>
-            </div>
-            <div className="flex justify-between gap-3">
-              <dt className="text-[var(--muted-foreground)]">{t("ga4_property_id", "GA4 Property ID")}</dt>
-              <dd className="font-mono">{config?.propertyId || t("not_set", "Not set")}</dd>
-            </div>
-            <div className="flex justify-between gap-3">
-              <dt className="text-[var(--muted-foreground)]">{t("data_api", "Data API")}</dt>
-              <dd>{config?.dataApiConfigured ? t("connected", "Connected") : t("pending_setup", "Pending setup")}</dd>
-            </div>
-          </dl>
-          {ga?.message || ga?.error ? (
-            <p className="text-xs text-[var(--muted-foreground)]">{ga?.message || ga?.error || ""}</p>
-          ) : null}
-          {(ga?.topScreens || []).length > 0 ? (
-            <ul className="space-y-1 text-sm">
-              {ga!.topScreens!.map((row) => (
-                <li key={row.page} className="flex justify-between gap-2">
-                  <span className="truncate">{row.page}</span>
-                  <span className="text-[var(--gold)]">{row.activeUsers ?? 0}</span>
-                </li>
-              ))}
-            </ul>
-          ) : null}
-          <div className="flex flex-wrap gap-2 pt-2">
-            <a
-              href="https://analytics.google.com/"
-              target="_blank"
-              rel="noreferrer"
-              className="btn-base btn-outline-ink text-xs py-2 px-3 inline-flex items-center gap-1.5"
-            >
-              <ExternalLink className="h-3.5 w-3.5" />
-              Google Analytics
-            </a>
-            <a
-              href="https://search.google.com/search-console"
-              target="_blank"
-              rel="noreferrer"
-              className="btn-base btn-outline-ink text-xs py-2 px-3 inline-flex items-center gap-1.5"
-            >
-              <ExternalLink className="h-3.5 w-3.5" />
-              Search Console
-            </a>
-          </div>
-          <div className="rounded-lg border border-[var(--border)] bg-[var(--background)]/50 p-3 space-y-1.5">
-            <p className="text-xs font-semibold text-[var(--foreground)]">
-              {t("search_console_title", "Google Search Console")}
-            </p>
-            <p className="text-xs text-[var(--muted-foreground)]">
-              {t("search_console_verification_label", "HTML verification meta")}:{" "}
-              <span className="font-mono text-[var(--foreground)]">
-                {config?.searchConsoleVerification || t("not_set", "Not set")}
-              </span>
-            </p>
-            <p className="text-[11px] text-[var(--muted-foreground)] leading-relaxed">
-              {t(
-                "search_console_setup_hint",
-                "Set VITE_GOOGLE_SITE_VERIFICATION on the frontend and GOOGLE_SITE_VERIFICATION on the backend, then verify the site in Search Console.",
+      <section className="surface-card space-y-3 rounded-xl border border-[var(--border)] p-4">
+        <h2 className="font-semibold">{t("live_analytics", "Google Analytics")}</h2>
+        <dl className="grid gap-2 text-sm sm:grid-cols-2">
+          <div className="flex items-start justify-between gap-3 rounded-lg bg-[var(--background)]/50 px-3 py-2">
+            <dt className="text-[var(--muted-foreground)]">{t("measurement_id", "Measurement ID")}</dt>
+            <dd className="text-end">
+              {measurementId ? (
+                <span className="font-mono">{measurementId}</span>
+              ) : (
+                <>
+                  <span>{t("ga_not_configured", "Not configured")}</span>
+                  <span className="mt-0.5 block text-[10px] text-[var(--muted-foreground)]">GA_MEASUREMENT_ID</span>
+                </>
               )}
-            </p>
+            </dd>
           </div>
-          <p className="text-xs text-[var(--muted-foreground)] leading-relaxed">
-            {t(
-              "live_analytics_ga_hint",
-              "Google Analytics realtime tracking and first-party visit counter are active.",
-            )}
-          </p>
+          <div className="flex items-start justify-between gap-3 rounded-lg bg-[var(--background)]/50 px-3 py-2">
+            <dt className="text-[var(--muted-foreground)]">{t("ga4_property_id", "GA4 Property ID")}</dt>
+            <dd className="text-end">
+              {propertyId ? (
+                <span className="font-mono">{propertyId}</span>
+              ) : (
+                <>
+                  <span>{t("ga_not_configured", "Not configured")}</span>
+                  <span className="mt-0.5 block text-[10px] text-[var(--muted-foreground)]">GA4_PROPERTY_ID</span>
+                </>
+              )}
+            </dd>
+          </div>
+          <div className="flex items-start justify-between gap-3 rounded-lg bg-[var(--background)]/50 px-3 py-2">
+            <dt className="text-[var(--muted-foreground)]">{t("data_api", "Data API")}</dt>
+            <dd className="text-end">
+              {dataApi
+                ? t("connected", "Connected")
+                : propertyId
+                  ? t("ga_realtime_service_account", "Realtime needs a service account")
+                  : t("ga_not_configured", "Not configured")}
+            </dd>
+          </div>
+          <div className="flex items-start justify-between gap-3 rounded-lg bg-[var(--background)]/50 px-3 py-2">
+            <dt className="text-[var(--muted-foreground)]">{t("search_console_title", "Google Search Console")}</dt>
+            <dd className="text-end">
+              {verification ? (
+                <span className="font-mono break-all">{verification}</span>
+              ) : (
+                <>
+                  <span>{t("ga_not_configured", "Not configured")}</span>
+                  <span className="mt-0.5 block text-[10px] text-[var(--muted-foreground)]">GOOGLE_SITE_VERIFICATION</span>
+                </>
+              )}
+            </dd>
+          </div>
+        </dl>
+        {ga?.message || ga?.error ? (
+          <p className="text-xs text-[var(--muted-foreground)]">{ga.message || ga.error}</p>
+        ) : null}
+        {(ga?.topScreens || []).length > 0 ? (
+          <ul className="space-y-1 text-sm">
+            {ga!.topScreens!.map((row) => (
+              <li key={row.page} className="flex justify-between gap-2">
+                <span className="truncate">{row.page}</span>
+                <span className="text-[var(--gold)]">{row.activeUsers ?? 0}</span>
+              </li>
+            ))}
+          </ul>
+        ) : null}
+        <div className="flex flex-wrap gap-2 pt-1">
+          <a
+            href="https://analytics.google.com/"
+            target="_blank"
+            rel="noreferrer"
+            className="btn-base btn-outline-ink inline-flex items-center gap-1.5 px-3 py-2 text-xs"
+          >
+            <ExternalLink className="h-3.5 w-3.5" />
+            Google Analytics
+          </a>
+          <a
+            href="https://search.google.com/search-console"
+            target="_blank"
+            rel="noreferrer"
+            className="btn-base btn-outline-ink inline-flex items-center gap-1.5 px-3 py-2 text-xs"
+          >
+            <ExternalLink className="h-3.5 w-3.5" />
+            Search Console
+          </a>
         </div>
+        <p className="text-xs leading-relaxed text-[var(--muted-foreground)]">
+          {t("search_console_setup_hint", SEARCH_CONSOLE_HINT)}
+        </p>
       </section>
     </div>
   );

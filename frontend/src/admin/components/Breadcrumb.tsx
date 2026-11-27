@@ -47,6 +47,8 @@ const SEGMENT_KEY_MAP: Record<string, string> = {
   currencies: "currencies_exchange",
   settings: "settings",
   activity: "activity",
+  "live-analytics": "live_analytics",
+  live_analytics: "live_analytics",
   backups: "backups",
   "footer-settings": "footer_settings",
   footer_settings: "footer_settings",
@@ -76,6 +78,8 @@ const LABELS: Record<string, string> = {
   gallery: "Galerie",
   settings: "Paramètres",
   activity: "Journal d'Activité",
+  "live-analytics": "Google Analytics",
+  live_analytics: "Google Analytics",
 };
 
 export default function Breadcrumb() {

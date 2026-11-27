@@ -29,9 +29,25 @@ export class AnalyticsController {
   @Get("admin/analytics/live")
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles("admin", "super_admin", "1", "3")
-  async live(@Query("minutes") minutes?: string) {
+  async live(
+    @Query("minutes") minutes?: string,
+    @Query("date") date?: string,
+    @Query("range") range?: string,
+    @Query("from") from?: string,
+    @Query("to") to?: string,
+    @Query("tzOffset") tzOffset?: string,
+  ) {
+    const parsedOffset = Number(tzOffset);
+    const parsedMinutes = minutes !== undefined && minutes !== "" ? Number(minutes) : undefined;
     const [live, ga] = await Promise.all([
-      this.analyticsService.getLive(Number(minutes) || 30),
+      this.analyticsService.getLive({
+        minutes: Number.isFinite(parsedMinutes) ? parsedMinutes : undefined,
+        date,
+        range,
+        from,
+        to,
+        tzOffsetMinutes: Number.isFinite(parsedOffset) ? parsedOffset : undefined,
+      }),
       this.analyticsService.getGaRealtime(),
     ]);
     return {

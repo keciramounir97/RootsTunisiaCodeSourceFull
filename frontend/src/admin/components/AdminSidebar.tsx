@@ -170,7 +170,7 @@ const superAdminOnlyRoutes = [
 const labelFallbacks: Record<string, string> = {
   dashboard: "Tableau de Bord",
   usage_quotas: "Quotas d'Utilisation",
-  live_analytics: "Analytique en direct",
+  live_analytics: "Google Analytics",
   activity: "Journal d'Activité",
   backups: "Sauvegardes & Snapshots",
   trees: "Arbres Généalogiques",
