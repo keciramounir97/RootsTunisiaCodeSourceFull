@@ -59,9 +59,29 @@ export class AnalyticsService {
     return { ok: true };
   }
 
+  /** Max ~365 days of minute-based windows (first-party aggregates). */
+  private static readonly MAX_LIVE_WINDOW_MINUTES = 525_600;
+
+  private seriesBucketSql(windowMin: number): string {
+    if (windowMin <= 3 * 60) {
+      return "DATE_FORMAT(created_at, '%Y-%m-%d %H:%i')";
+    }
+    if (windowMin <= 24 * 60) {
+      return "DATE_FORMAT(created_at, '%Y-%m-%d %H:00')";
+    }
+    if (windowMin <= 7 * 24 * 60) {
+      return "DATE_FORMAT(created_at, '%Y-%m-%d')";
+    }
+    return "DATE_FORMAT(created_at, '%x-%v')";
+  }
+
   async getLive(minutes = 30) {
     await this.ensureTable();
-    const windowMin = Math.min(Math.max(Number(minutes) || 30, 5), 24 * 60);
+    const windowMin = Math.min(
+      Math.max(Number(minutes) || 30, 5),
+      AnalyticsService.MAX_LIVE_WINDOW_MINUTES,
+    );
+    const bucketSql = this.seriesBucketSql(windowMin);
 
     const [activeSessionsRow] = await this.knex("analytics_pageviews")
       .whereRaw("created_at >= DATE_SUB(NOW(), INTERVAL ? MINUTE)", [windowMin])
@@ -86,8 +106,8 @@ export class AnalyticsService {
       .orderBy("created_at", "desc")
       .limit(25);
 
-    const byMinute = await this.knex("analytics_pageviews")
-      .select(this.knex.raw("DATE_FORMAT(created_at, '%Y-%m-%d %H:%i') as bucket"))
+    const byBucket = await this.knex("analytics_pageviews")
+      .select(this.knex.raw(`${bucketSql} as bucket`))
       .count({ views: "*" })
       .whereRaw("created_at >= DATE_SUB(NOW(), INTERVAL ? MINUTE)", [windowMin])
       .groupBy("bucket")
@@ -100,7 +120,15 @@ export class AnalyticsService {
       pageviews: Number((pageviewsRow as any)?.c || 0),
       topPages: topPages.map((r: any) => ({ path: r.path, views: Number(r.views || 0) })),
       recent,
-      series: byMinute.map((r: any) => ({ t: r.bucket, views: Number(r.views || 0) })),
+      series: byBucket.map((r: any) => ({ t: r.bucket, views: Number(r.views || 0) })),
+      seriesGranularity:
+        windowMin <= 3 * 60
+          ? "minute"
+          : windowMin <= 24 * 60
+            ? "hour"
+            : windowMin <= 7 * 24 * 60
+              ? "day"
+              : "week",
       source: "first_party",
       generatedAt: new Date().toISOString(),
     };

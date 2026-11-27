@@ -62,7 +62,7 @@ export interface CustomService {
 }
 
 export default function ServicesPage() {
-  const { locale, isRtl } = useTranslation();
+  const { locale, isRtl, t } = useTranslation();
   const cleanLocale = (locale || "fr").toLowerCase();
   const ui = SERVICES_UI_BY_LOCALE[cleanLocale] || SERVICES_UI_BY_LOCALE.fr;
   const [rawServices, setRawServices] = useState<CustomService[]>([]);
@@ -257,7 +257,11 @@ export default function ServicesPage() {
                 <Landmark className="h-3.5 w-3.5 shrink-0" />
                 <span className="min-w-0">{ui[SERVICES_HERO_SLIDES[activeSlide]?.captionKey || "pill1"]}</span>
               </span>
-              <div className="flex flex-wrap items-center justify-center gap-1 mt-1" role="tablist" aria-label="Diaporama services">
+              <div
+                className="flex flex-wrap items-center justify-center gap-1 mt-1"
+                role="tablist"
+                aria-label={t("services_slideshow", "Diaporama services")}
+              >
                 {SERVICES_HERO_SLIDES.map((slide, i) => (
                   <button
                     key={slide.image}

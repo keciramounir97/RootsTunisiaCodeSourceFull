@@ -497,7 +497,7 @@ export default function InteractiveMap() {
     return currentTribesList.filter(
       (t) =>
         t.name.toLowerCase().includes(q) ||
-        t.arabicName.includes(q) ||
+        t.arabicName?.includes(q) ||
         t.caidat1881?.toLowerCase().includes(q) ||
         t.capital.toLowerCase().includes(q) ||
         t.fractions.some((f) => f.toLowerCase().includes(q))
@@ -2533,9 +2533,18 @@ export default function InteractiveMap() {
                   </p>
                   <div className="space-y-1 pt-1">
                     {selectedTribe.archivalCotes.map((cote, i) => (
-                      <div key={i} className="text-[10px] font-mono text-[var(--muted-foreground)] flex items-start gap-1.5">
-                        <Archive className="h-3 w-3 text-[var(--gold)] shrink-0 mt-0.5" />
-                        <span>{cote}</span>
+                      <div
+                        key={i}
+                        className="p-2 rounded-xl border border-[var(--gold)]/20 bg-[var(--background)]/70 text-[10px] font-mono text-[var(--muted-foreground)] flex items-center justify-between gap-2"
+                      >
+                        <span className="font-bold text-[var(--gold)]">{cote}</span>
+                        <Link
+                          to={`/sources?q=${encodeURIComponent(cote)}`}
+                          className="text-[10px] text-[var(--gold)] hover:underline inline-flex items-center gap-1 shrink-0"
+                        >
+                          <span>{t("map_search_cote_action", "Rechercher")}</span>
+                          <ExternalLink className="h-3 w-3" />
+                        </Link>
                       </div>
                     ))}
                   </div>
@@ -2580,6 +2589,18 @@ export default function InteractiveMap() {
                         {t("map_gov_archives_empty", "Fonds en cours d'indexation aux Archives Nationales.")}
                       </div>
                     )}
+
+                    <Link
+                      to={`/sources?q=${encodeURIComponent(formatGovName(selectedGov.id))}`}
+                      className="btn-base btn-gold w-full py-2.5 text-xs font-bold flex items-center justify-center gap-2 shadow-sm"
+                    >
+                      <Search className="h-3.5 w-3.5" />
+                      <span>
+                        {tf("map_gov_search_all_archives", "Rechercher tous les actes de {gov}", {
+                          gov: formatGovName(selectedGov.id),
+                        })}
+                      </span>
+                    </Link>
                   </div>
                 )}
 

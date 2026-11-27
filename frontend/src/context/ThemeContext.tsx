@@ -58,19 +58,14 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 }
 
 export function useTheme(): ThemeContextType {
+  const store = useThemeStore();
   const context = useContext(ThemeContext);
-  if (!context) {
-    // Fallback using Zustand store if context is missing
-    const { theme, toggleTheme } = useThemeStore();
-    return {
-      theme: (theme === "dark" ? "dark" : "light") as Theme,
-      toggleTheme,
-      setTheme: (t: Theme) => {
-        if (useThemeStore.getState().theme !== t) {
-          useThemeStore.getState().toggleTheme();
-        }
-      },
-    };
+  if (context) {
+    return context;
   }
-  return context;
+  return {
+    theme: (store.theme === "dark" ? "dark" : "light") as Theme,
+    toggleTheme: store.toggleTheme,
+    setTheme: store.setTheme,
+  };
 }

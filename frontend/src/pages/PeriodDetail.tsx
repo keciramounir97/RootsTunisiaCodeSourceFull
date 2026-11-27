@@ -895,6 +895,65 @@ export default function PeriodDetail() {
     return sources.filter((s) => s.source_type === activeFilter);
   }, [sources, activeFilter]);
 
+  const sourceTypeCounts = useMemo(() => {
+    const counts: Record<string, number> = { all: sources.length };
+    for (const s of sources) {
+      const type = s.source_type || "unknown";
+      counts[type] = (counts[type] ?? 0) + 1;
+    }
+    return counts;
+  }, [sources]);
+
+  const sourceFilterOptions = useMemo(
+    () =>
+      (
+        [
+          { key: "all", label: detailUi.filterAll },
+          { key: "document", label: detailUi.filterDocuments },
+          { key: "tree", label: detailUi.filterTrees },
+          { key: "book", label: detailUi.filterBooks },
+          { key: "gallery", label: detailUi.filterPhotos },
+          { key: "audio", label: detailUi.filterAudios },
+        ] as const
+      ).filter((f) => f.key === "all" || (sourceTypeCounts[f.key] ?? 0) > 0),
+    [detailUi, sourceTypeCounts],
+  );
+
+  useEffect(() => {
+    if (activeFilter !== "all" && (sourceTypeCounts[activeFilter] ?? 0) === 0) {
+      setActiveFilter("all");
+    }
+  }, [activeFilter, sourceTypeCounts]);
+
+  const leadersCount =
+    (era.notableLeaders?.length || 0) + (era.notableFamilies?.length || 0);
+  const tribesCount = era.eraTribes?.length || 0;
+  const divisionsCount =
+    (era.administrativeDivisions?.length || 0) + (era.keySites?.length || 0);
+  const chaptersCount = dossier?.chapters?.length || 0;
+
+  const tabVisibility = useMemo(
+    (): Record<PeriodTabKey, boolean> => ({
+      research_chapters: chaptersCount > 0,
+      sources: true,
+      leaders_families: leadersCount > 0,
+      tunis_institutions: Boolean(era.tunisRole || era.capital),
+      context_lineages: Boolean(era.description),
+      tribes: tribesCount > 0,
+      divisions: divisionsCount > 0,
+    }),
+    [chaptersCount, leadersCount, tribesCount, divisionsCount, era],
+  );
+
+  useEffect(() => {
+    if (tabVisibility[activeTab]) return;
+    const fallback: PeriodTabKey =
+      (["research_chapters", "sources", "context_lineages"] as PeriodTabKey[]).find(
+        (k) => tabVisibility[k],
+      ) ?? "sources";
+    setActiveTab(fallback);
+  }, [activeTab, tabVisibility]);
+
   const getSourceTypeLabel = (type: string) => {
     switch (type) {
       case "document":
@@ -1098,96 +1157,120 @@ export default function PeriodDetail() {
 
         {/* Navigation Tabs Bar */}
         <div className="flex items-center gap-2 border-b border-[var(--gold)]/20 overflow-x-auto pb-2 mb-8 scrollbar-thin">
-          <button
-            type="button"
-            onClick={() => setActiveTab("research_chapters")}
-            className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 whitespace-nowrap ${
-              activeTab === "research_chapters"
-                ? "bg-[var(--gold)] text-[#1f160f] shadow-md font-extrabold"
-                : "surface-card border border-[var(--gold)]/25 text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
-            }`}
-          >
-            <BookOpen className="w-3.5 h-3.5 shrink-0" />
-            <span>{detailUi.tabChapters} ({dossier.chapters.length})</span>
-          </button>
+          {tabVisibility.research_chapters ? (
+            <button
+              type="button"
+              onClick={() => setActiveTab("research_chapters")}
+              className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 whitespace-nowrap ${
+                activeTab === "research_chapters"
+                  ? "bg-[var(--gold)] text-[#1f160f] shadow-md font-extrabold"
+                  : "surface-card border border-[var(--gold)]/25 text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
+              }`}
+            >
+              <BookOpen className="w-3.5 h-3.5 shrink-0" />
+              <span>
+                {detailUi.tabChapters} ({chaptersCount})
+              </span>
+            </button>
+          ) : null}
 
-          <button
-            type="button"
-            onClick={() => setActiveTab("sources")}
-            className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 whitespace-nowrap ${
-              activeTab === "sources"
-                ? "bg-[var(--gold)] text-[#1f160f] shadow-md font-extrabold"
-                : "surface-card border border-[var(--gold)]/25 text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
-            }`}
-          >
-            <FolderArchive className="w-3.5 h-3.5 shrink-0" />
-            <span>{detailUi.tabSources} ({sources.length})</span>
-          </button>
+          {tabVisibility.sources ? (
+            <button
+              type="button"
+              onClick={() => setActiveTab("sources")}
+              className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 whitespace-nowrap ${
+                activeTab === "sources"
+                  ? "bg-[var(--gold)] text-[#1f160f] shadow-md font-extrabold"
+                  : "surface-card border border-[var(--gold)]/25 text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
+              }`}
+            >
+              <FolderArchive className="w-3.5 h-3.5 shrink-0" />
+              <span>
+                {detailUi.tabSources} ({sources.length})
+              </span>
+            </button>
+          ) : null}
 
-          <button
-            type="button"
-            onClick={() => setActiveTab("leaders_families")}
-            className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 whitespace-nowrap ${
-              activeTab === "leaders_families"
-                ? "bg-[var(--gold)] text-[#1f160f] shadow-md font-extrabold"
-                : "surface-card border border-[var(--gold)]/25 text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
-            }`}
-          >
-            <Users className="w-3.5 h-3.5 shrink-0" />
-            <span>{detailUi.tabLeaders} ({(era.notableLeaders?.length || 0) + (era.notableFamilies?.length || 0)})</span>
-          </button>
+          {tabVisibility.leaders_families ? (
+            <button
+              type="button"
+              onClick={() => setActiveTab("leaders_families")}
+              className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 whitespace-nowrap ${
+                activeTab === "leaders_families"
+                  ? "bg-[var(--gold)] text-[#1f160f] shadow-md font-extrabold"
+                  : "surface-card border border-[var(--gold)]/25 text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
+              }`}
+            >
+              <Users className="w-3.5 h-3.5 shrink-0" />
+              <span>
+                {detailUi.tabLeaders} ({leadersCount})
+              </span>
+            </button>
+          ) : null}
 
-          <button
-            type="button"
-            onClick={() => setActiveTab("tunis_institutions")}
-            className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 whitespace-nowrap ${
-              activeTab === "tunis_institutions"
-                ? "bg-[var(--gold)] text-[#1f160f] shadow-md font-extrabold"
-                : "surface-card border border-[var(--gold)]/25 text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
-            }`}
-          >
-            <Building2 className="w-3.5 h-3.5 shrink-0" />
-            <span>{detailUi.tabTunis}</span>
-          </button>
+          {tabVisibility.tunis_institutions ? (
+            <button
+              type="button"
+              onClick={() => setActiveTab("tunis_institutions")}
+              className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 whitespace-nowrap ${
+                activeTab === "tunis_institutions"
+                  ? "bg-[var(--gold)] text-[#1f160f] shadow-md font-extrabold"
+                  : "surface-card border border-[var(--gold)]/25 text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
+              }`}
+            >
+              <Building2 className="w-3.5 h-3.5 shrink-0" />
+              <span>{detailUi.tabTunis}</span>
+            </button>
+          ) : null}
 
-          <button
-            type="button"
-            onClick={() => setActiveTab("context_lineages")}
-            className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 whitespace-nowrap ${
-              activeTab === "context_lineages"
-                ? "bg-[var(--gold)] text-[#1f160f] shadow-md font-extrabold"
-                : "surface-card border border-[var(--gold)]/25 text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
-            }`}
-          >
-            <Landmark className="w-3.5 h-3.5 shrink-0" />
-            <span>{detailUi.tabContext}</span>
-          </button>
+          {tabVisibility.context_lineages ? (
+            <button
+              type="button"
+              onClick={() => setActiveTab("context_lineages")}
+              className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 whitespace-nowrap ${
+                activeTab === "context_lineages"
+                  ? "bg-[var(--gold)] text-[#1f160f] shadow-md font-extrabold"
+                  : "surface-card border border-[var(--gold)]/25 text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
+              }`}
+            >
+              <Landmark className="w-3.5 h-3.5 shrink-0" />
+              <span>{detailUi.tabContext}</span>
+            </button>
+          ) : null}
 
-          <button
-            type="button"
-            onClick={() => setActiveTab("tribes")}
-            className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 whitespace-nowrap ${
-              activeTab === "tribes"
-                ? "bg-[var(--gold)] text-[#1f160f] shadow-md font-extrabold"
-                : "surface-card border border-[var(--gold)]/25 text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
-            }`}
-          >
-            <ShieldCheck className="w-3.5 h-3.5 shrink-0" />
-            <span>{detailUi.tabTribes} ({era.eraTribes?.length || 0})</span>
-          </button>
+          {tabVisibility.tribes ? (
+            <button
+              type="button"
+              onClick={() => setActiveTab("tribes")}
+              className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 whitespace-nowrap ${
+                activeTab === "tribes"
+                  ? "bg-[var(--gold)] text-[#1f160f] shadow-md font-extrabold"
+                  : "surface-card border border-[var(--gold)]/25 text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
+              }`}
+            >
+              <ShieldCheck className="w-3.5 h-3.5 shrink-0" />
+              <span>
+                {detailUi.tabTribes} ({tribesCount})
+              </span>
+            </button>
+          ) : null}
 
-          <button
-            type="button"
-            onClick={() => setActiveTab("divisions")}
-            className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 whitespace-nowrap ${
-              activeTab === "divisions"
-                ? "bg-[var(--gold)] text-[#1f160f] shadow-md font-extrabold"
-                : "surface-card border border-[var(--gold)]/25 text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
-            }`}
-          >
-            <MapPin className="w-3.5 h-3.5 shrink-0" />
-            <span>{detailUi.tabDivisions} ({(era.administrativeDivisions?.length || 0) + (era.keySites?.length || 0)})</span>
-          </button>
+          {tabVisibility.divisions ? (
+            <button
+              type="button"
+              onClick={() => setActiveTab("divisions")}
+              className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 whitespace-nowrap ${
+                activeTab === "divisions"
+                  ? "bg-[var(--gold)] text-[#1f160f] shadow-md font-extrabold"
+                  : "surface-card border border-[var(--gold)]/25 text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
+              }`}
+            >
+              <MapPin className="w-3.5 h-3.5 shrink-0" />
+              <span>
+                {detailUi.tabDivisions} ({divisionsCount})
+              </span>
+            </button>
+          ) : null}
         </div>
 
         {/* ========================================================================= */}
@@ -1520,14 +1603,7 @@ export default function PeriodDetail() {
 
               {/* Source Type Filter Pills */}
               <div className="flex items-center gap-1.5 overflow-x-auto pb-1 max-w-full">
-                {[
-                  { key: "all", label: detailUi.filterAll },
-                  { key: "document", label: detailUi.filterDocuments },
-                  { key: "tree", label: detailUi.filterTrees },
-                  { key: "book", label: detailUi.filterBooks },
-                  { key: "gallery", label: detailUi.filterPhotos },
-                  { key: "audio", label: detailUi.filterAudios },
-                ].map((f) => (
+                {sourceFilterOptions.map((f) => (
                   <button
                     key={f.key}
                     onClick={() => setActiveFilter(f.key)}
@@ -1553,10 +1629,17 @@ export default function PeriodDetail() {
               <div className="surface-card p-10 rounded-2xl border border-[var(--gold)]/25 text-center max-w-xl mx-auto my-8">
                 <FolderArchive className="w-12 h-12 text-[var(--gold)]/40 mx-auto mb-3" />
                 <h4 className="font-cinzel text-base font-bold text-[var(--foreground)]">
-                  {detailUi.noSourcesTitle}
+                  {sources.length > 0 && activeFilter !== "all"
+                    ? t("period_sources_filter_empty_title", "No sources in this category")
+                    : detailUi.noSourcesTitle}
                 </h4>
                 <p className="text-xs text-[var(--muted-foreground)] mt-1 leading-relaxed">
-                  {detailUi.noSourcesDesc}
+                  {sources.length > 0 && activeFilter !== "all"
+                    ? t(
+                        "period_sources_filter_empty_desc",
+                        "Try another filter or browse all linked archives for this period.",
+                      )
+                    : detailUi.noSourcesDesc}
                 </p>
                 <div className="mt-5 flex items-center justify-center gap-3">
                   <Link to="/sources" className="btn-base btn-gold text-xs py-2 px-4">

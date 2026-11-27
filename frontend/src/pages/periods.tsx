@@ -128,6 +128,12 @@ export default function Periods() {
     return config.periods.filter((p) => p.isPublished !== false);
   }, [config.periods]);
 
+  useEffect(() => {
+    if (activeCategory === "all") return;
+    const count = publishedPeriods.filter((p) => p.category === activeCategory).length;
+    if (count === 0) setActiveCategory("all");
+  }, [publishedPeriods, activeCategory]);
+
   const filteredPeriods = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
     return publishedPeriods.filter((era) => {
@@ -225,6 +231,7 @@ export default function Periods() {
               {config.categories.map((cat) => {
                 const IconComp = CATEGORY_ICONS[cat.icon] || Landmark;
                 const count = publishedPeriods.filter((p) => p.category === cat.key).length;
+                if (count === 0) return null;
                 const isSelected = activeCategory === cat.key;
                 return (
                   <button

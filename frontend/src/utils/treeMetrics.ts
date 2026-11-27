@@ -11,6 +11,121 @@ export interface TreeMetrics {
   sourcesCount: number;
 }
 
+/** Lightweight GEDCOM relationship parse for card previews (no full person objects). */
+function metricsFromGedcomText(rawGedcom: string): { individuals: number; generations: number } | null {
+  const text = String(rawGedcom || "").replace(/^\uFEFF/, "");
+  if (!text.trim()) return null;
+
+  const indiMatches = text.match(/(?:^|\r?\n)0\s+@[^@\r\n]+@\s+INDI/gi);
+  const individuals = indiMatches?.length || 0;
+  if (individuals === 0) {
+    if (text.trim().startsWith("{")) {
+      try {
+        const parsed = JSON.parse(text);
+        const pList = parsed.persons || parsed.individuals || parsed.people;
+        if (Array.isArray(pList) && pList.length > 0) {
+          return {
+            individuals: pList.length,
+            generations: computeRealGenerations(pList),
+          };
+        }
+      } catch {
+        /* ignore */
+      }
+    }
+    if (text.includes("<person")) {
+      const xmlPersons = text.match(/<person[\s>]/gi);
+      if (xmlPersons?.length) {
+        return {
+          individuals: xmlPersons.length,
+          generations: Math.min(6, Math.max(1, Math.ceil(Math.log2(xmlPersons.length + 1)))),
+        };
+      }
+    }
+    return null;
+  }
+
+  // Build FAM → parents/children and INDI → FAMC for generation depth
+  const families = new Map<string, { husb?: string; wife?: string; chil: string[] }>();
+  const famcByPerson = new Map<string, string>();
+  let currentFam: string | null = null;
+  let currentIndi: string | null = null;
+
+  for (const rawLine of text.split(/\r\n|\n|\r/)) {
+    const line = String(rawLine || "").trim();
+    if (!line) continue;
+    const parts = line.split(/\s+/);
+    if (parts[0] === "0") {
+      currentFam = null;
+      currentIndi = null;
+      const hasPointer = String(parts[1] || "").startsWith("@");
+      const pointer = hasPointer ? parts[1] : null;
+      const tag = hasPointer ? parts[2] : parts[1];
+      if (tag === "FAM" && pointer) {
+        currentFam = pointer;
+        if (!families.has(pointer)) families.set(pointer, { chil: [] });
+      } else if (tag === "INDI" && pointer) {
+        currentIndi = pointer;
+      }
+      continue;
+    }
+    if (currentFam) {
+      const fam = families.get(currentFam)!;
+      const tag = parts[1];
+      const value = String(parts[2] || "").trim();
+      if (tag === "HUSB" && value) fam.husb = value;
+      if (tag === "WIFE" && value) fam.wife = value;
+      if (tag === "CHIL" && value) fam.chil.push(value);
+    }
+    if (currentIndi && parts[1] === "FAMC") {
+      const famId = String(parts[2] || "").trim();
+      if (famId) famcByPerson.set(currentIndi, famId);
+    }
+  }
+
+  const peopleProxy: any[] = [];
+  const seen = new Set<string>();
+  for (const m of indiMatches || []) {
+    const idMatch = m.match(/@[^@]+@/);
+    const id = idMatch ? idMatch[0] : null;
+    if (!id || seen.has(id)) continue;
+    seen.add(id);
+    const famId = famcByPerson.get(id);
+    const fam = famId ? families.get(famId) : null;
+    peopleProxy.push({
+      id,
+      father: fam?.husb || null,
+      mother: fam?.wife || null,
+      children: [],
+    });
+  }
+
+  // Also attach children arrays from FAM records
+  const byId = new Map(peopleProxy.map((p) => [p.id, p]));
+  for (const fam of families.values()) {
+    for (const child of fam.chil || []) {
+      if (fam.husb && byId.has(fam.husb)) {
+        const dad = byId.get(fam.husb)!;
+        if (!dad.children.includes(child)) dad.children.push(child);
+      }
+      if (fam.wife && byId.has(fam.wife)) {
+        const mom = byId.get(fam.wife)!;
+        if (!mom.children.includes(child)) mom.children.push(child);
+      }
+      const childRec = byId.get(child);
+      if (childRec) {
+        if (fam.husb && !childRec.father) childRec.father = fam.husb;
+        if (fam.wife && !childRec.mother) childRec.mother = fam.wife;
+      }
+    }
+  }
+
+  return {
+    individuals,
+    generations: computeRealGenerations(peopleProxy),
+  };
+}
+
 /**
  * Computes the real generational depth by traversing genealogical links (parent-child).
  * Handles GEDCOM IDs, cycles, and isolated branches safely.
@@ -34,19 +149,24 @@ export function computeRealGenerations(people: any[]): number {
     const pid = String(p.id).trim();
     if (!parentsOf.has(pid)) parentsOf.set(pid, new Set());
 
-    // Check direct father link
     const fId = p.father || p.father_id || p.fatherId;
     if (fId && idMap.has(String(fId).trim())) {
       parentsOf.get(pid)!.add(String(fId).trim());
     }
 
-    // Check direct mother link
     const mId = p.mother || p.mother_id || p.motherId;
     if (mId && idMap.has(String(mId).trim())) {
       parentsOf.get(pid)!.add(String(mId).trim());
     }
 
-    // Check children array (if parent references children)
+    // FAMC pointer resolved elsewhere into father/mother; also accept parents[] arrays
+    if (Array.isArray(p.parents)) {
+      for (const parentId of p.parents) {
+        const pStr = String(parentId).trim();
+        if (idMap.has(pStr)) parentsOf.get(pid)!.add(pStr);
+      }
+    }
+
     if (Array.isArray(p.children)) {
       for (const chId of p.children) {
         const cStr = String(chId).trim();
@@ -58,12 +178,11 @@ export function computeRealGenerations(people: any[]): number {
     }
   }
 
-  // Memoized depth traversal with cycle detection
   const memo = new Map<string, number>();
 
   function getDepth(id: string, visited: Set<string>): number {
     if (memo.has(id)) return memo.get(id)!;
-    if (visited.has(id)) return 1; // cycle protection
+    if (visited.has(id)) return 1;
 
     const parents = parentsOf.get(id);
     if (!parents || parents.size === 0) {
@@ -100,55 +219,45 @@ export function getTreeMetrics(tree: any): TreeMetrics {
   }
 
   let individuals = 0;
+  let generations = 0;
 
   // 1. Check tree.people array if already loaded
   if (Array.isArray(tree.people) && tree.people.length > 0) {
     individuals = tree.people.length;
-  }
-  // 2. Check people_count from backend subquery or membersCount
-  else if (tree.people_count != null && !isNaN(Number(tree.people_count)) && Number(tree.people_count) >= 0) {
-    individuals = Number(tree.people_count);
-  } else if (tree.membersCount != null && !isNaN(Number(tree.membersCount)) && Number(tree.membersCount) >= 0) {
-    individuals = Number(tree.membersCount);
-  }
-  // 3. Check GEDCOM text if present
-  else {
-    const rawGedcom = tree.gedcom_text || tree.content || tree.gedcom_data || tree.gedcom || tree.gedcomText;
+    generations = computeRealGenerations(tree.people);
+  } else {
+    // 2. Prefer parsing GEDCOM text for accurate relationship depth on cards
+    const rawGedcom =
+      tree.gedcom_text || tree.content || tree.gedcom_data || tree.gedcom || tree.gedcomText;
     if (typeof rawGedcom === "string" && rawGedcom.trim().length > 0) {
-      // Standard GEDCOM INDI tags
-      const indiMatches = rawGedcom.match(/(?:^|\r?\n)0\s+@[^@\r\n]+@\s+INDI/gi);
-      if (indiMatches && indiMatches.length > 0) {
-        individuals = indiMatches.length;
-      } else if (rawGedcom.trim().startsWith("{")) {
-        try {
-          const parsed = JSON.parse(rawGedcom);
-          const pList = parsed.persons || parsed.individuals || parsed.people;
-          if (Array.isArray(pList) && pList.length > 0) {
-            individuals = pList.length;
-          }
-        } catch {}
-      } else if (rawGedcom.includes("<person")) {
-        const xmlPersons = rawGedcom.match(/<person[\s>]/gi);
-        if (xmlPersons && xmlPersons.length > 0) {
-          individuals = xmlPersons.length;
-        }
+      const fromGed = metricsFromGedcomText(rawGedcom);
+      if (fromGed) {
+        individuals = fromGed.individuals;
+        generations = fromGed.generations;
       }
     }
-  }
 
-  // Calculate generations
-  let generations = 0;
-  if (Array.isArray(tree.people) && tree.people.length > 0) {
-    generations = computeRealGenerations(tree.people);
-  } else if (typeof tree.generations === "number" && tree.generations > 0) {
-    generations = tree.generations;
-  } else if (individuals === 0) {
-    generations = 0;
-  } else if (individuals === 1) {
-    generations = 1;
-  } else {
-    // Proportional estimate when person graph is not yet loaded in memory
-    generations = Math.min(6, Math.max(1, Math.ceil(Math.log2(individuals + 1))));
+    // 3. Fallback to backend counts
+    if (individuals === 0) {
+      if (tree.people_count != null && !isNaN(Number(tree.people_count)) && Number(tree.people_count) >= 0) {
+        individuals = Number(tree.people_count);
+      } else if (tree.membersCount != null && !isNaN(Number(tree.membersCount)) && Number(tree.membersCount) >= 0) {
+        individuals = Number(tree.membersCount);
+      }
+    }
+
+    if (generations === 0) {
+      if (typeof tree.generations === "number" && tree.generations > 0) {
+        generations = tree.generations;
+      } else if (individuals === 0) {
+        generations = 0;
+      } else if (individuals === 1) {
+        generations = 1;
+      } else {
+        // Proportional estimate only when graph/GEDCOM links are unavailable
+        generations = Math.min(6, Math.max(1, Math.ceil(Math.log2(individuals + 1))));
+      }
+    }
   }
 
   const couplesCount = individuals > 1 ? Math.max(1, Math.floor(individuals / 2)) : 0;

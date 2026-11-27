@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Activity, BarChart3, ExternalLink, RefreshCcw, Users, Eye, Radio } from "lucide-react";
 import { api } from "../../api/client";
 import { useTranslation } from "../../context/TranslationContext";
@@ -14,6 +14,7 @@ type LivePayload = {
     series?: { t: string; views: number }[];
     source?: string;
     generatedAt?: string;
+    seriesGranularity?: string;
   };
   googleAnalytics?: {
     configured?: boolean;
@@ -37,6 +38,27 @@ export default function LiveAnalytics() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [minutes, setMinutes] = useState(30);
+
+  const windowLabel = useMemo(() => {
+    if (minutes < 60) {
+      return t("last_n_minutes", "Last {n} minutes").replace("{n}", String(minutes));
+    }
+    if (minutes < 1440) {
+      const hours = Math.round(minutes / 60);
+      return t("last_n_hours", "Last {n} hours").replace("{n}", String(hours));
+    }
+    if (minutes < 10_080) {
+      const days = Math.round(minutes / 1440);
+      return t("last_n_days", "Last {n} days").replace("{n}", String(days));
+    }
+    if (minutes < 43_200) {
+      return t("live_window_week", "Last 7 days");
+    }
+    if (minutes < 525_600) {
+      return t("live_window_month", "Last ~30 days");
+    }
+    return t("live_window_year", "Last ~365 days");
+  }, [minutes, t]);
 
   const load = async () => {
     setLoading(true);
@@ -88,7 +110,10 @@ export default function LiveAnalytics() {
             <option value={30}>30 min</option>
             <option value={60}>60 min</option>
             <option value={180}>3 h</option>
-            <option value={1440}>24 h</option>
+            <option value={1440}>24 {t("time_unit_hours_short", "h")}</option>
+            <option value={10080}>{t("live_range_week", "7 days")}</option>
+            <option value={43200}>{t("live_range_month", "~30 days")}</option>
+            <option value={525600}>{t("live_range_year", "~365 days")}</option>
           </select>
           <button
             type="button"
@@ -115,7 +140,7 @@ export default function LiveAnalytics() {
           <div>
             <p>{t("active_visitors", "Active visitors")}</p>
             <strong>{live?.activeVisitors ?? "—"}</strong>
-            <span>{t("last_n_minutes", `Last ${minutes} minutes`).replace("{n}", String(minutes))}</span>
+            <span>{windowLabel}</span>
           </div>
         </article>
         <article className="easy-stat-card">
@@ -162,7 +187,9 @@ export default function LiveAnalytics() {
                   key={point.t}
                   title={`${point.t}: ${point.views}`}
                   className="flex-1 min-w-[4px] rounded-t bg-[var(--gold)]/80"
-                  style={{ height: `${Math.max(6, (point.views / maxSeries) * 100)}%` }}
+                  style={{
+                    height: `${Math.max(6, ((point.views ?? 0) / maxSeries) * 100)}%`,
+                  }}
                 />
               ))
             )}
@@ -178,7 +205,7 @@ export default function LiveAnalytics() {
               (live?.topPages || []).map((row) => (
                 <li key={row.path} className="flex items-center justify-between gap-3 text-sm">
                   <span className="truncate font-mono">{row.path}</span>
-                  <span className="shrink-0 text-[var(--gold)] font-semibold">{row.views}</span>
+                  <span className="shrink-0 text-[var(--gold)] font-semibold">{row.views ?? 0}</span>
                 </li>
               ))
             )}
@@ -190,14 +217,19 @@ export default function LiveAnalytics() {
         <div className="surface-card rounded-xl border border-[var(--border)] p-4">
           <h2 className="font-semibold mb-3">{t("recent_pageviews", "Recent pageviews")}</h2>
           <div className="max-h-80 overflow-auto space-y-2">
-            {(live?.recent || []).map((row, idx) => (
-              <div key={`${row.created_at}-${idx}`} className="text-sm border-b border-[var(--border)]/60 pb-2">
-                <div className="font-mono truncate">{row.path}</div>
-                <div className="text-[var(--muted-foreground)] text-xs">
-                  {row.locale || "—"} · {new Date(row.created_at).toLocaleString()}
+            {(live?.recent || []).length === 0 ? (
+              <p className="text-sm text-[var(--muted-foreground)]">{t("no_data_yet", "No data yet")}</p>
+            ) : (
+              (live?.recent || []).map((row, idx) => (
+                <div key={`${row.created_at}-${idx}`} className="text-sm border-b border-[var(--border)]/60 pb-2">
+                  <div className="font-mono truncate">{row.path || "—"}</div>
+                  <div className="text-[var(--muted-foreground)] text-xs">
+                    {row.locale || "—"}
+                    {row.created_at ? ` · ${new Date(row.created_at).toLocaleString()}` : ""}
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
 
@@ -218,14 +250,14 @@ export default function LiveAnalytics() {
             </div>
           </dl>
           {ga?.message || ga?.error ? (
-            <p className="text-xs text-[var(--muted-foreground)]">{ga.message || ga.error}</p>
+            <p className="text-xs text-[var(--muted-foreground)]">{ga?.message || ga?.error || ""}</p>
           ) : null}
           {(ga?.topScreens || []).length > 0 ? (
             <ul className="space-y-1 text-sm">
               {ga!.topScreens!.map((row) => (
                 <li key={row.page} className="flex justify-between gap-2">
                   <span className="truncate">{row.page}</span>
-                  <span className="text-[var(--gold)]">{row.activeUsers}</span>
+                  <span className="text-[var(--gold)]">{row.activeUsers ?? 0}</span>
                 </li>
               ))}
             </ul>
@@ -240,6 +272,32 @@ export default function LiveAnalytics() {
               <ExternalLink className="h-3.5 w-3.5" />
               Google Analytics
             </a>
+            <a
+              href="https://search.google.com/search-console"
+              target="_blank"
+              rel="noreferrer"
+              className="btn-base btn-outline-ink text-xs py-2 px-3 inline-flex items-center gap-1.5"
+            >
+              <ExternalLink className="h-3.5 w-3.5" />
+              Search Console
+            </a>
+          </div>
+          <div className="rounded-lg border border-[var(--border)] bg-[var(--background)]/50 p-3 space-y-1.5">
+            <p className="text-xs font-semibold text-[var(--foreground)]">
+              {t("search_console_title", "Google Search Console")}
+            </p>
+            <p className="text-xs text-[var(--muted-foreground)]">
+              {t("search_console_verification_label", "HTML verification meta")}:{" "}
+              <span className="font-mono text-[var(--foreground)]">
+                {config?.searchConsoleVerification || t("not_set", "Not set")}
+              </span>
+            </p>
+            <p className="text-[11px] text-[var(--muted-foreground)] leading-relaxed">
+              {t(
+                "search_console_setup_hint",
+                "Set VITE_GOOGLE_SITE_VERIFICATION on the frontend and GOOGLE_SITE_VERIFICATION on the backend, then verify the site in Search Console.",
+              )}
+            </p>
           </div>
           <p className="text-xs text-[var(--muted-foreground)] leading-relaxed">
             {t(
