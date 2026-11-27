@@ -767,12 +767,32 @@ export default function AdminGallery() {
               >
                 <div className="relative aspect-[4/3] overflow-hidden bg-gradient-to-br from-[#24766f]/10 to-[#d9a441]/10">
                   <img
-                    src={resolveImageUrl(item.image_path ?? item.imagePath)}
+                    src={
+                      !item.isLocalAsset && Number(item.id) > 0 && /^\d+$/.test(String(item.id))
+                        ? `${apiRoot.replace(/\/+$/, "")}/api/gallery/${item.id}/image`
+                        : resolveImageUrl(item.image_path ?? item.imagePath)
+                    }
                     alt={item.title || ""}
+                    loading="lazy"
+                    decoding="async"
                     className="w-full h-full object-cover group-hover:scale-110 transition duration-700"
                     onError={(e) => {
-                      console.error("Image load error:", item.imagePath ?? item.image_path);
-                      e.currentTarget.src =
+                      const img = e.currentTarget;
+                      const step = Number(img.dataset.fallbackStep || "0");
+                      const directUrl = resolveImageUrl(item.image_path ?? item.imagePath);
+                      const base = String(item.image_path ?? item.imagePath ?? "").split(/[\\/]/).pop() || "";
+                      const candidates = [
+                        directUrl,
+                        base ? `${apiRoot.replace(/\/+$/, "")}/uploads/gallery/${base}` : "",
+                        base ? `${apiRoot.replace(/\/+$/, "")}/uploads/${base}` : "",
+                      ].filter((u) => Boolean(u) && u !== img.src);
+                      if (step < candidates.length) {
+                        img.dataset.fallbackStep = String(step + 1);
+                        img.src = candidates[step];
+                        return;
+                      }
+                      img.onerror = null;
+                      img.src =
                         `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Crect fill='%23ddd' width='400' height='300'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' fill='%23999' font-size='18'%3E${imageNotFoundLabel}%3C/text%3E%3C/svg%3E`;
                     }}
                   />

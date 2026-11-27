@@ -390,7 +390,7 @@ export default function Gallery() {
             </button>
 
             <div className="max-h-[60vh] overflow-hidden rounded-lg flex items-center justify-center bg-black/40">
-              <img
+              <img loading="lazy" decoding="async"
                 src={selectedPhoto.image}
                 alt={selectedPhoto.title}
                 className="max-h-[60vh] max-w-full object-contain rounded"

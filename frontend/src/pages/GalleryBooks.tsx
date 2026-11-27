@@ -274,7 +274,7 @@ export default function GalleryBooks() {
               >
                 <div className="space-y-3">
                   <div className="relative h-48 overflow-hidden rounded-md border border-[var(--border)] bg-[var(--background)]">
-                    <img
+                    <img loading="lazy" decoding="async"
                       src={book.coverImage || manuscriptImage}
                       alt={book.title}
                       className="w-full h-full object-cover"
@@ -408,7 +408,7 @@ export default function GalleryBooks() {
 
             <div className="mt-5 space-y-4">
               <div className="h-64 sm:h-80 w-full rounded-lg overflow-hidden border border-[var(--gold)]/30 bg-black/40">
-                <img
+                <img loading="lazy" decoding="async"
                   src={activeBook.coverImage || manuscriptImage}
                   alt={activeBook.title}
                   className="w-full h-full object-contain"

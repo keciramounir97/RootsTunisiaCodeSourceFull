@@ -106,16 +106,6 @@ export async function sendFirstPartyPageview(payload: {
   const url = `${resolveApiRoot()}/api/analytics/collect`;
 
   try {
-    if (navigator.sendBeacon) {
-      const blob = new Blob([body], { type: "application/json" });
-      navigator.sendBeacon(url, blob);
-      return;
-    }
-  } catch {
-    // fall through
-  }
-
-  try {
     await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },

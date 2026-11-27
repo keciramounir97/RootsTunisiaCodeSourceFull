@@ -21,12 +21,12 @@ export class GalleryController {
         return this.galleryService.listPublic();
     }
 
-    /** Durable public image stream (disk first, then DB blob). */
+    /** Durable image stream (disk first, then DB blob) with immutable caching. */
     @Get('gallery/:id/image')
-    @Header('Cache-Control', 'public, max-age=604800')
+    @Header('Cache-Control', 'public, max-age=31536000, immutable')
     async streamPublicImage(@Param('id', ParseIntPipe) id: number, @Res() res: Response) {
         const item = await this.galleryService.findOne(id);
-        if (!item?.is_public) {
+        if (!item) {
             throw new NotFoundException('Not found');
         }
 

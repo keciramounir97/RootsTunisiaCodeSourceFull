@@ -258,7 +258,7 @@ export default function GalleryDocuments() {
 
                   <div className="flex gap-4 items-start">
                     <div className="w-24 h-24 rounded-md overflow-hidden border border-[var(--gold)]/30 shrink-0 bg-black/30">
-                      <img
+                      <img loading="lazy" decoding="async"
                         src={doc.previewImage || manuscriptImage}
                         alt={doc.title}
                         className="w-full h-full object-cover"
@@ -375,7 +375,7 @@ export default function GalleryDocuments() {
 
             <div className="mt-5 space-y-4">
               <div className="h-64 sm:h-80 w-full rounded-lg overflow-hidden border border-[var(--gold)]/30 bg-black/40">
-                <img
+                <img loading="lazy" decoding="async"
                   src={activeDoc.previewImage || manuscriptImage}
                   alt={activeDoc.title}
                   className="w-full h-full object-contain"

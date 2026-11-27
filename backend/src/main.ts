@@ -1223,7 +1223,14 @@ async function bootstrap() {
 
         // Static file serving for uploads
         const uploadsPath = path.join(process.cwd(), 'uploads');
-        app.use('/uploads', require('express').static(uploadsPath));
+        app.use(
+            '/uploads',
+            require('express').static(uploadsPath, {
+                maxAge: '365d',
+                immutable: true,
+                etag: true,
+            }),
+        );
 
         // DB-backed upload fallback (foldered + legacy root-level /uploads/<file>)
         const uploadFallbackKnex: any = app.get('KnexConnection');

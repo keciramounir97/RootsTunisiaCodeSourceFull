@@ -4417,6 +4417,7 @@ export default function TreesBuilder({
     );
     if (title) mergeMediaTitleLookup([{ ...matched, sourceUrl: link, title }]);
     setSelectedMediaLink("");
+    setMediaPanelOpen(false);
     notifyPerson(t("legacy.media_linked", "Source linked to person."));
   }, [
     existingMedia,
@@ -5404,16 +5405,8 @@ export default function TreesBuilder({
                   >
                     <button
                       type="button"
-                      onClick={() => handleSafeDownloadOrOpen(previewSource.url, previewSource.label)}
-                      className="interactive-btn btn-neu btn-neu--primary px-4 py-2 text-xs flex items-center gap-1.5 cursor-pointer"
-                    >
-                      <Download className="w-3.5 h-3.5" />
-                      {t("legacy.download_or_open", "Télécharger / Ouvrir")}
-                    </button>
-                    <button
-                      type="button"
                       onClick={() => setPreviewSource(null)}
-                      className="interactive-btn btn-neu px-4 py-2 text-xs text-stone-600 dark:text-stone-300"
+                      className="interactive-btn btn-neu btn-neu--primary px-5 py-2 text-xs cursor-pointer"
                     >{t("common.close", "Fermer")}</button>
                   </div>
                 </div>

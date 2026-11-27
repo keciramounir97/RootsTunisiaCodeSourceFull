@@ -202,7 +202,7 @@ export default function LiveAnalytics() {
         </div>
 
         <div className="surface-card rounded-xl border border-[var(--border)] p-4 space-y-3">
-          <h2 className="font-semibold">{t("google_analytics_link", "Google Analytics & Search Console")}</h2>
+          <h2 className="font-semibold">{t("google_analytics_title", "Google Analytics")}</h2>
           <dl className="text-sm space-y-2">
             <div className="flex justify-between gap-3">
               <dt className="text-[var(--muted-foreground)]">{t("measurement_id", "Measurement ID")}</dt>
@@ -240,20 +240,11 @@ export default function LiveAnalytics() {
               <ExternalLink className="h-3.5 w-3.5" />
               Google Analytics
             </a>
-            <a
-              href="https://search.google.com/search-console"
-              target="_blank"
-              rel="noreferrer"
-              className="btn-base btn-outline-ink text-xs py-2 px-3 inline-flex items-center gap-1.5"
-            >
-              <ExternalLink className="h-3.5 w-3.5" />
-              Search Console
-            </a>
           </div>
           <p className="text-xs text-[var(--muted-foreground)] leading-relaxed">
             {t(
-              "live_analytics_setup_hint",
-              "Set VITE_GA_MEASUREMENT_ID and VITE_GOOGLE_SITE_VERIFICATION on the frontend, plus GA4_PROPERTY_ID and GA_SERVICE_ACCOUNT_JSON on the backend for full Google realtime sync.",
+              "live_analytics_ga_hint",
+              "Google Analytics realtime tracking and first-party visit counter are active.",
             )}
           </p>
         </div>
