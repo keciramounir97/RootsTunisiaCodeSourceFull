@@ -48,18 +48,27 @@ type LivePayload = {
 const SEARCH_CONSOLE_HINT =
   "Set VITE_GOOGLE_SITE_VERIFICATION on the frontend and GOOGLE_SITE_VERIFICATION on the backend, then verify rootstunisia.com in Search Console.";
 
-function isLivePayload(value: unknown): value is LivePayload {
+function isLiveStats(value: unknown): value is NonNullable<LivePayload["live"]> {
   if (!value || typeof value !== "object") return false;
-  const record = value as LivePayload;
-  return Boolean(record.live || record.config || record.googleAnalytics);
+  const row = value as Record<string, unknown>;
+  return "pageviews" in row || "activeVisitors" in row || "activeSessions" in row || "series" in row;
 }
 
-/** Tunisia's API client leaves the `{ statusCode, data }` envelope in place. */
-export function readLivePayload(body: unknown): LivePayload {
-  if (isLivePayload(body)) return body;
-  if (body && typeof body === "object" && "data" in body) {
-    const nested = (body as { data?: unknown }).data;
-    if (isLivePayload(nested)) return nested;
+/** Accept the Nest envelope, a double wrap, or a flat live object. */
+export function readLivePayload(payload: unknown): LivePayload {
+  let current: unknown = payload;
+  for (let depth = 0; depth < 3; depth += 1) {
+    if (!current || typeof current !== "object") break;
+    const row = current as Record<string, unknown>;
+    if (row.live || row.config || row.googleAnalytics || isLiveStats(row)) {
+      if (isLiveStats(row) && !row.live) return { live: row as LivePayload["live"] };
+      return row as LivePayload;
+    }
+    if (row.data && typeof row.data === "object") {
+      current = row.data;
+      continue;
+    }
+    break;
   }
   return {};
 }
