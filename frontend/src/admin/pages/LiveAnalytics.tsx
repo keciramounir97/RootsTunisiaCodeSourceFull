@@ -55,9 +55,9 @@ export default function LiveAnalytics() {
       return t("live_window_week", "Last 7 days");
     }
     if (minutes < 525_600) {
-      return t("live_window_month", "Last ~30 days");
+      return t("live_window_month", "Last 30 days");
     }
-    return t("live_window_year", "Last ~365 days");
+    return t("live_window_year", "Last 365 days");
   }, [minutes, t]);
 
   const load = async () => {
@@ -112,8 +112,8 @@ export default function LiveAnalytics() {
             <option value={180}>3 h</option>
             <option value={1440}>24 {t("time_unit_hours_short", "h")}</option>
             <option value={10080}>{t("live_range_week", "7 days")}</option>
-            <option value={43200}>{t("live_range_month", "~30 days")}</option>
-            <option value={525600}>{t("live_range_year", "~365 days")}</option>
+            <option value={43200}>{t("live_range_month", "30 days")}</option>
+            <option value={525600}>{t("live_range_year", "365 days")}</option>
           </select>
           <button
             type="button"
