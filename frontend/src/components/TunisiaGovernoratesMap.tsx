@@ -1615,33 +1615,16 @@ export default function TunisiaGovernoratesMap({
                       {selectedGov.notableFamilies.map((famKey) => {
                         const famLabel = formatFamName(famKey);
                         return (
-                          <Link
+                          <span
                             key={famKey}
-                            to={`/gallery/trees?q=${encodeURIComponent(famLabel)}`}
-                            className="rounded-md border border-[var(--gold)]/45 bg-[var(--background)] px-2.5 py-1 text-xs font-bold text-[var(--foreground)] hover:border-[var(--primary)] hover:bg-[var(--primary)] hover:text-white transition-colors"
+                            className="rounded-md border border-[var(--gold)]/45 bg-[var(--background)] px-2.5 py-1 text-xs font-bold text-[var(--foreground)] select-text cursor-default"
                           >
                             {famLabel}
-                          </Link>
+                          </span>
                         );
                       })}
                     </div>
                   </div>
-                </div>
-
-                {/* Action Buttons */}
-                <div className="shrink-0 pt-3 border-t border-[var(--gold)]/25 grid grid-cols-2 gap-2.5 mt-auto">
-                  <Link
-                    to={`/gallery?q=${encodeURIComponent(formatGovName(selectedGov.id))}`}
-                    className="btn-base btn-red text-[0.68rem] py-2.5 text-center flex items-center justify-center gap-1.5"
-                  >
-                    <Search className="h-3.5 w-3.5" /> {t("records")}
-                  </Link>
-                  <Link
-                    to={`/gallery/trees?q=${encodeURIComponent(formatGovName(selectedGov.id))}`}
-                    className="btn-base btn-outline-ink text-[0.68rem] py-2.5 text-center flex items-center justify-center gap-1.5"
-                  >
-                    <GitBranch className="h-3.5 w-3.5" /> {t("trees")}
-                  </Link>
                 </div>
               </>
             ) : (
@@ -1744,33 +1727,16 @@ export default function TunisiaGovernoratesMap({
                       {activeDossier.notableLineages.map((famKey) => {
                         const famLabel = formatFamName(famKey);
                         return (
-                          <Link
+                          <span
                             key={famKey}
-                            to={`/gallery/trees?q=${encodeURIComponent(famLabel)}`}
-                            className="rounded-md border border-[var(--border)] bg-[var(--background)] px-2.5 py-1 text-xs font-semibold text-[var(--foreground)] hover:text-[var(--gold)] hover:border-[var(--gold)] transition-colors"
+                            className="rounded-md border border-[var(--border)] bg-[var(--background)] px-2.5 py-1 text-xs font-semibold text-[var(--foreground)] select-text cursor-default"
                           >
                             {famLabel}
-                          </Link>
+                          </span>
                         );
                       })}
                     </div>
                   </div>
-                </div>
-
-                {/* Direct Search Actions */}
-                <div className="shrink-0 pt-3 border-t border-[var(--gold)]/25 grid grid-cols-2 gap-2.5 mt-auto">
-                  <Link
-                    to={`/gallery?q=${encodeURIComponent(formatRegionLabel(activeRegion))}`}
-                    className="btn-base btn-red text-[0.68rem] py-2.5 text-center flex items-center justify-center gap-1.5"
-                  >
-                    <Search className="h-3.5 w-3.5" /> {t("regional_records")}
-                  </Link>
-                  <Link
-                    to={`/gallery/trees?q=${encodeURIComponent(formatRegionLabel(activeRegion))}`}
-                    className="btn-base btn-outline-ink text-[0.68rem] py-2.5 text-center flex items-center justify-center gap-1.5"
-                  >
-                    <GitBranch className="h-3.5 w-3.5" /> {t("regional_trees")}
-                  </Link>
                 </div>
               </>
             )}

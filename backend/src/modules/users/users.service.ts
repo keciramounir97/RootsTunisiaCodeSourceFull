@@ -137,7 +137,7 @@ export class UsersService {
                 ? Boolean(data.isVerified)
                 : data.is_verified !== undefined
                     ? Boolean(data.is_verified)
-                    : data.status === 'active';
+                    : true;
         const status = data.status || (isVerified ? 'active' : 'pending');
 
         const insertPayload: Record<string, any> = {

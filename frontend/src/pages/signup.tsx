@@ -72,6 +72,7 @@ export default function SignUp() {
     try {
       await registerAuth(fullName, undefined, email, password);
       setSuccess(true);
+      navigate("/admin", { replace: true });
     } catch (err: unknown) {
       const fallbackMsg = t("registration_failed", "Registration failed. Please try again.");
       const rawMsg = formatAuthApiError(err, fallbackMsg);

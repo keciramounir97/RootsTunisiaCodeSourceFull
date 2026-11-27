@@ -202,6 +202,11 @@ export default function UsersPage() {
   const [emailBody, setEmailBody] = useState("");
   const [sendingEmail, setSendingEmail] = useState(false);
 
+  // Delete with reason & email modal state
+  const [deleteModalUser, setDeleteModalUser] = useState<any>(null);
+  const [deleteReason, setDeleteReason] = useState("");
+  const [sendDeleteEmail, setSendDeleteEmail] = useState(true);
+
   const [toast, setToast] = useState<{ message: string; tone: "success" | "error" }>({
     message: "",
     tone: "success",
@@ -623,27 +628,44 @@ export default function UsersPage() {
     }
   };
 
-  const deleteUser = async (userToDelete: any) => {
+  const deleteUser = (userToDelete: any) => {
     if (!userToDelete?.id) return;
     if (Number(userToDelete.id) === Number(currentUser?.id)) {
       notify(t("cannot_delete_self", "Vous ne pouvez pas supprimer votre propre compte."), "error");
       return;
     }
+    setDeleteReason("");
+    setSendDeleteEmail(true);
+    setDeleteModalUser(userToDelete);
+  };
 
-    const ok = window.confirm(
-      t(
-        "confirm_delete_user",
-        `Voulez-vous vraiment supprimer définitivement ${userToDelete.fullName || userToDelete.email || "cet utilisateur"} ?`
-      )
-    );
-    if (!ok) return;
-
+  const confirmDeleteUser = async () => {
+    if (!deleteModalUser?.id) return;
     setSaving(true);
     setError("");
     try {
-      await api.delete(`/admin/users/${userToDelete.id}`);
-      setUsers((prev) => prev.filter((u) => u.id !== userToDelete.id));
-      notify(t("user_deleted", "Utilisateur supprimé avec succès."));
+      if (sendDeleteEmail && deleteModalUser.email) {
+        const reasonText =
+          deleteReason.trim() ||
+          t("default_delete_reason", "Non-respect des conditions d'utilisation ou compte inactif.");
+        try {
+          await api.post("/admin/send-email", {
+            to: deleteModalUser.email,
+            subject: t("account_removed_email_subject", "Suppression de votre compte | Roots Tunisia"),
+            body: `Bonjour ${deleteModalUser.fullName || ""},\n\nVotre compte sur la plateforme Roots Tunisia a été supprimé par l'administration.\n\nMotif : ${reasonText}\n\nSi vous pensez qu'il s'agit d'une erreur, vous pouvez contacter notre support.\n\nCordialement,\nL'équipe Roots Tunisia`,
+          });
+        } catch {
+          // Continue with deletion even if SMTP relay is temporarily unavailable
+        }
+      }
+      await api.delete(`/admin/users/${deleteModalUser.id}`);
+      setUsers((prev) => prev.filter((u) => u.id !== deleteModalUser.id));
+      setDeleteModalUser(null);
+      notify(
+        sendDeleteEmail
+          ? t("user_deleted_and_notified", "Utilisateur supprimé et informé par email.")
+          : t("user_deleted", "Utilisateur supprimé avec succès.")
+      );
     } catch (err) {
       const message = getApiErrorMessage(err, "Échec de suppression de l'utilisateur");
       setError(message);
@@ -1735,6 +1757,102 @@ export default function UsersPage() {
                   <span>{t("send_via_smtp", "Envoyer via SMTP")}</span>
                 </button>
               </div>
+            </div>
+          </div>
+        </div>,
+        document.body
+      ) : null}
+
+      {/* ===================== DELETE USER WITH REASON & EMAIL MODAL ===================== */}
+      {deleteModalUser ? createPortal(
+        <div
+          className="fixed inset-0 z-[9999] flex items-center justify-center p-4 backdrop-blur-sm bg-black/65"
+          onClick={() => (saving ? null : setDeleteModalUser(null))}
+        >
+          <div
+            className={`w-full max-w-lg rounded-2xl border ${border} ${card} p-6 shadow-2xl space-y-4 text-start`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between pb-3 border-b border-[var(--border)]">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-red-500/15 text-red-600 dark:text-red-400">
+                  <Trash2 className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-base text-[var(--foreground)]">
+                    {t("delete_user_title", "Supprimer le compte utilisateur")}
+                  </h3>
+                  <p className="text-xs text-[var(--muted-foreground)]">
+                    {deleteModalUser.fullName} &lt;{deleteModalUser.email}&gt;
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setDeleteModalUser(null)}
+                disabled={saving}
+                className="text-[var(--muted-foreground)] hover:text-[var(--foreground)] p-1 rounded-lg cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              <label className="flex items-center gap-2.5 text-xs font-semibold text-[var(--foreground)] cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={sendDeleteEmail}
+                  onChange={(e) => setSendDeleteEmail(e.target.checked)}
+                  disabled={saving}
+                  className="w-4 h-4 rounded accent-[var(--brand-teal)] cursor-pointer"
+                />
+                <span>{t("send_delete_reason_email", "Envoyer un email explicatif à l'utilisateur via SMTP")}</span>
+              </label>
+
+              {sendDeleteEmail && (
+                <div>
+                  <label className="block text-xs font-semibold text-[var(--foreground)] mb-1">
+                    {t("delete_reason_label", "Motif de suppression (envoyé par email) :")}
+                  </label>
+                  <textarea
+                    rows={4}
+                    value={deleteReason}
+                    onChange={(e) => setDeleteReason(e.target.value)}
+                    disabled={saving}
+                    placeholder={t(
+                      "delete_reason_placeholder",
+                      "Ex: Compte en double, informations non conformes ou non-respect des conditions d'utilisation..."
+                    )}
+                    className={`w-full px-3 py-2 rounded-xl border ${border} ${inputBg} ${inputText} text-xs outline-none focus:border-[var(--gold)] leading-relaxed`}
+                  />
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-[var(--border)]">
+              <button
+                type="button"
+                onClick={() => setDeleteModalUser(null)}
+                disabled={saving}
+                className="px-4 py-2 rounded-xl border border-[var(--border)] text-xs font-semibold cursor-pointer"
+              >
+                {t("cancel", "Annuler")}
+              </button>
+              <button
+                type="button"
+                onClick={() => void confirmDeleteUser()}
+                disabled={saving}
+                className="px-4 py-2 rounded-xl bg-red-600 text-white text-xs font-bold inline-flex items-center gap-1.5 shadow-sm hover:bg-red-700 transition-all cursor-pointer disabled:opacity-50"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>
+                  {saving
+                    ? t("deleting", "Suppression...")
+                    : sendDeleteEmail
+                    ? t("delete_and_email", "Supprimer & Envoyer l'email")
+                    : t("delete", "Supprimer définitivement")}
+                </span>
+              </button>
             </div>
           </div>
         </div>,

@@ -246,63 +246,32 @@ export class AuthService {
             ...data,
             full_name: data.full_name ?? data.fullName,
             dob: data.dob || null,
+            status: 'active',
+            isValidated: true,
+            isVerified: true,
         };
         const user = await this.usersService.create(payload, null);
 
-        // Generate 6-digit one-time verification code
-        const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
-
         try {
             const hasCodeCol = await this.knex.schema.hasColumn('users', 'verification_code');
-            if (!hasCodeCol) {
-                await this.knex.schema.alterTable('users', (t: any) => {
-                    t.string('verification_code', 20).nullable();
-                    t.boolean('is_verified').defaultTo(false);
-                    t.date('dob').nullable();
+            if (hasCodeCol) {
+                await this.knex('users').where('id', user.id).update({
+                    verification_code: null,
+                    is_verified: true,
+                    status: 'active',
+                    dob: data.dob || null,
                 });
             }
-            await this.knex('users').where('id', user.id).update({
-                verification_code: verificationCode,
-                is_verified: false,
-                dob: data.dob || null,
-            });
         } catch (dbErr) {
             console.warn('Could not update user verification columns:', dbErr);
         }
 
-        // Send one-time SMTP confirmation email
-        try {
-            await this.mailerService.sendMail({
-                to: user.email,
-                subject: 'رمز التحقق وتأكيد حسابك في جذور تونس | Verify Your Roots Tunisia Account',
-                html: `
-                    <div style="font-family: Arial, sans-serif; max-width: 550px; margin: 0 auto; padding: 24px; border: 1px solid #d4af37; border-radius: 12px; background: #fffcf7;">
-                        <h2 style="color: #1f160f; text-align: center; margin-top: 0; font-family: serif;">جذور تونس | Roots Tunisia</h2>
-                        <p style="color: #444; font-size: 15px; line-height: 1.6;">
-                            مرحباً <strong>${user.full_name || (user as any).fullName || ''}</strong>،<br><br>
-                            شكراً لإنشاء حسابك في منصة جذور تونس. لتأكيد وتفعيل ملكية حسابك لمرة واحدة فقط، يرجى استخدام رمز التحقق التالي:
-                        </p>
-                        <div style="text-align: center; margin: 25px 0;">
-                            <span style="display: inline-block; font-size: 32px; font-weight: bold; letter-spacing: 6px; color: #1f160f; background: #fdf6e2; padding: 12px 28px; border-radius: 8px; border: 2px dashed #d4af37;">
-                                ${verificationCode}
-                            </span>
-                        </div>
-                        <p style="color: #666; font-size: 13px; line-height: 1.5; text-align: center;">
-                            هذا الرمز صالح للاستخدام لمرة واحدة فقط لتأكيد هويتك وحسابك.
-                        </p>
-                    </div>
-                `,
-                text: `رمز التحقق الخاص بك لتأكيد حسابك في جذور تونس هو: ${verificationCode}`,
-            });
-        } catch (emailErr) {
-            console.warn('Could not send verification email via SMTP:', emailErr);
-        }
-
-        const loginRes = await this.login(user);
+        const loginRes = await this.login({ ...user, status: 'active' });
         return {
             ...loginRes,
-            requiresVerification: true,
-            verificationSent: true,
+            requiresVerification: false,
+            verificationSent: false,
+            autoValidated: true,
         };
     }
 

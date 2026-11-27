@@ -110,7 +110,6 @@ const CATEGORIES: SidebarCategory[] = [
     titleKey: "admin_cat_users",
     links: [
       { to: "/admin/users", labelKey: "users", Icon: Users },
-      { to: "/admin/admins-roles", labelKey: "admins_roles", Icon: Shield, roles: [3] },
       { to: "/admin/contact-messages", labelKey: "contact_messages", Icon: MessageSquare },
       { to: "/admin/newsletter", labelKey: "newsletter", Icon: Mail },
     ],
@@ -121,21 +120,19 @@ const CATEGORIES: SidebarCategory[] = [
     links: [
       { to: "/admin/services", labelKey: "services_management", Icon: Briefcase, roles: [3] },
       { to: "/admin/services-bookings", labelKey: "services_bookings", Icon: Calendar, roles: [3] },
-      { to: "/admin/subscriptions", labelKey: "subscriptions", Icon: Crown, roles: [3] },
+      { to: "/admin/subscriptions", labelKey: "subscriptions", Icon: Crown },
       { to: "/admin/subscription-payments", labelKey: "subscription_payments", Icon: Wallet, roles: [3] },
       { to: "/admin/flagged-payments", labelKey: "flagged_payments", Icon: Flag, roles: [3] },
       { to: "/admin/payment-settings", labelKey: "payment_settings", Icon: Wallet, roles: [3] },
       { to: "/admin/currencies", labelKey: "currencies_exchange", Icon: Coins, roles: [3] },
-      { to: "/admin/settings", labelKey: "settings", Icon: Settings, roles: [3] },
     ],
   },
   {
     id: "account",
     titleKey: "admin_cat_account",
     links: [
-      { to: "/admin/user-upgrade", labelKey: "user_upgrade", Icon: Crown },
       { to: "/admin/support", labelKey: "contact_support", Icon: HelpCircle },
-      { to: "/admin/user-settings", labelKey: "user_settings", Icon: Settings },
+      { to: "/admin/settings", labelKey: "settings", Icon: Settings },
     ],
   },
 ];
@@ -147,7 +144,6 @@ const superAdminOnlyRoutes = [
   "/admin/admins",
   "/admin/super-admins",
   "/admin/role-distribution",
-  "/admin/subscriptions",
   "/admin/subscription-payments",
   "/admin/flagged-payments",
   "/admin/payment-settings",
@@ -168,7 +164,6 @@ const superAdminOnlyRoutes = [
   "/admin/sources-content",
   "/admin/sources-archives-content",
   "/admin/site-image-placeholders",
-  "/admin/settings",
   "/admin/backups",
 ];
 
@@ -261,9 +256,9 @@ export default function AdminSidebar({
     "/admin/gallery",
     "/admin/audios",
     "/admin/documents",
-    "/admin/user-upgrade",
+    "/admin/subscriptions",
     "/admin/support",
-    "/admin/user-settings",
+    "/admin/settings",
   ];
 
   const filterLink = (link: SidebarLink) => {

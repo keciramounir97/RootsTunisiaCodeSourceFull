@@ -67,7 +67,7 @@ export default function ProtectedRoute({
   const userAllowedPrivileges = [
     "dashboard", "usage", "trees", "individuals", "gallery", "audios", "documents",
     "sources-archives", "tasks", "notes", "user-upgrade",
-    "subscriptions", "support", "user-settings"
+    "subscriptions", "support", "settings", "user-settings"
   ];
 
   if (privileges.length > 0 && !isAdminOrSuper) {

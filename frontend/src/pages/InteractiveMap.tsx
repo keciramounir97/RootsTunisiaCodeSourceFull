@@ -2280,14 +2280,6 @@ export default function InteractiveMap() {
                         </p>
                       </div>
                     )}
-
-                    <Link
-                      to="/gallery/trees"
-                      className="btn-base btn-gold w-full py-2.5 text-xs font-bold inline-flex items-center justify-center gap-1.5 shadow-sm"
-                    >
-                      <GitBranch className="h-3.5 w-3.5" />
-                      <span>{t("map_era_explore_trees_btn", "Explorer la Galerie des Arbres Liés")}</span>
-                    </Link>
                   </div>
                 )}
 
@@ -2548,17 +2540,6 @@ export default function InteractiveMap() {
                     ))}
                   </div>
                 </div>
-
-                {/* Actions */}
-                <div className="pt-2 space-y-2">
-                  <Link
-                    to="/gallery/trees"
-                    className="btn-base btn-gold w-full py-2 text-xs font-bold inline-flex items-center justify-center gap-1.5 shadow-sm"
-                  >
-                    <Users className="h-3.5 w-3.5" />
-                    <span>{t("map_tribe_search_lineages_btn", "Rechercher les Lignées de cette Tribu")}</span>
-                  </Link>
-                </div>
               </div>
             ) : selectedGov ? (
               /* ================================================================= */
@@ -2630,16 +2611,6 @@ export default function InteractiveMap() {
                         ))}
                       </div>
                     )}
-
-                    <div className="pt-2">
-                      <Link
-                        to="/gallery/trees"
-                        className="btn-base btn-gold w-full py-2 text-xs font-bold inline-flex items-center justify-center gap-1.5 shadow-sm"
-                      >
-                        <GitBranch className="h-3.5 w-3.5" />
-                        <span>{t("map_gov_explore_trees_btn", "Explorer les Arbres Généalogiques de ce Gouvernorat")}</span>
-                      </Link>
-                    </div>
                   </div>
                 )}
 
@@ -2833,16 +2804,6 @@ export default function InteractiveMap() {
                           </p>
                         </div>
                       ))}
-                    </div>
-
-                    <div className="pt-2 space-y-2">
-                      <Link
-                        to="/gallery/trees"
-                        className="btn-base btn-gold w-full py-2.5 text-xs font-bold inline-flex items-center justify-center gap-2 shadow-sm"
-                      >
-                        <GitBranch className="h-4 w-4" />
-                        <span>{t("map_guide_trees_btn", "Consulter la Galerie des Arbres")}</span>
-                      </Link>
                     </div>
                   </div>
                 )}

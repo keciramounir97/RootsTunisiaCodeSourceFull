@@ -58,8 +58,8 @@ const Trees = lazy(() => import("./admin/pages/Trees"));
 const Individuals = lazy(() => import("./admin/pages/Individuals"));
 const AdminGallery = lazy(() => import("./admin/pages/Gallery"));
 const AdminBooks = lazy(() => import("./admin/pages/Books"));
-const UsersPage = lazy(() => import("./admin/pages/Users"));
-const Settings = lazy(() => import("./admin/pages/Settings"));
+const UsersPage = lazy(() => import("./admin/pages/UnifiedUsers"));
+const Settings = lazy(() => import("./admin/pages/UnifiedSettings"));
 const ActivityLog = lazy(() => import("./admin/pages/ActivityLog"));
 const LiveAnalytics = lazy(() => import("./admin/pages/LiveAnalytics"));
 
@@ -77,7 +77,7 @@ const BackgroundImages = lazy(() => import("./admin/pages/BackgroundImages"));
 const ValidationApprovals = lazy(() => import("./admin/pages/ValidationApprovals"));
 const PasswordResetRequests = lazy(() => import("./admin/pages/PasswordResetRequests"));
 const AccountDeletionRequests = lazy(() => import("./admin/pages/AccountDeletionRequests"));
-const SubscriptionsAdmin = lazy(() => import("./admin/pages/Subscriptions"));
+const SubscriptionsAdmin = lazy(() => import("./admin/pages/UnifiedSubscriptions"));
 const SubscriptionPayments = lazy(() => import("./admin/pages/SubscriptionPayments"));
 const FlaggedPayments = lazy(() => import("./admin/pages/FlaggedPayments"));
 const UserUpgrade = lazy(() => import("./admin/pages/UserUpgrade"));
@@ -414,7 +414,7 @@ function AppRoutes() {
           path="settings"
           element={
             <Suspense fallback={<AdminLoadingFallback />}>
-              <ProtectedRoute privileges={["settings"]}>
+              <ProtectedRoute privileges={["settings", "user-settings", "dashboard"]}>
                 <Settings />
               </ProtectedRoute>
             </Suspense>
@@ -522,15 +522,9 @@ function AppRoutes() {
         />
         <Route
           path="admins-roles"
-          element={
-            <Suspense fallback={<AdminLoadingFallback />}>
-              <ProtectedRoute roles={[3]}>
-                <AdminsRoles />
-              </ProtectedRoute>
-            </Suspense>
-          }
+          element={<Navigate to="/admin/users?tab=admins" replace />}
         />
-        <Route path="admins" element={<Navigate to="/admin/admins-roles" replace />} />
+        <Route path="admins" element={<Navigate to="/admin/users?tab=admins" replace />} />
         <Route
           path="footer-settings"
           element={
@@ -639,7 +633,7 @@ function AppRoutes() {
           path="subscriptions"
           element={
             <Suspense fallback={<AdminLoadingFallback />}>
-              <ProtectedRoute privileges={["subscriptions"]}>
+              <ProtectedRoute privileges={["subscriptions", "user-upgrade", "dashboard"]}>
                 <SubscriptionsAdmin />
               </ProtectedRoute>
             </Suspense>
@@ -665,26 +659,8 @@ function AppRoutes() {
             </Suspense>
           }
         />
-        <Route
-          path="user-upgrade"
-          element={
-            <Suspense fallback={<AdminLoadingFallback />}>
-              <ProtectedRoute privileges={["user-upgrade"]}>
-                <UserUpgrade />
-              </ProtectedRoute>
-            </Suspense>
-          }
-        />
-        <Route
-          path="user-settings"
-          element={
-            <Suspense fallback={<AdminLoadingFallback />}>
-              <ProtectedRoute privileges={["user-settings"]}>
-                <UserSettings />
-              </ProtectedRoute>
-            </Suspense>
-          }
-        />
+        <Route path="user-upgrade" element={<Navigate to="/admin/subscriptions?tab=upgrade" replace />} />
+        <Route path="user-settings" element={<Navigate to="/admin/settings?tab=account" replace />} />
 
         <Route
           path="tasks"
