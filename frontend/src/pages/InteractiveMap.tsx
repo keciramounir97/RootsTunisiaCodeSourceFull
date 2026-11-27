@@ -1784,12 +1784,6 @@ export default function InteractiveMap() {
                         <p className="text-xs !text-[#2b2118] leading-relaxed line-clamp-3">
                           {t(`gov_desc_${gov.id}`)}
                         </p>
-                        <button
-                          onClick={() => handleGovSelect(gov)}
-                          className="mt-2 w-full btn-base btn-gold text-[0.65rem] py-1 font-bold cursor-pointer"
-                        >
-                          {t("map_inspect_full_dossier", "Inspecter le dossier complet")}
-                        </button>
                       </div>
                     </Popup>
                   </Marker>
