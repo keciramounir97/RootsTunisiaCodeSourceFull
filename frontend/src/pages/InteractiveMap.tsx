@@ -2532,13 +2532,9 @@ export default function InteractiveMap() {
                         className="p-2 rounded-xl border border-[var(--gold)]/20 bg-[var(--background)]/70 text-[10px] font-mono text-[var(--muted-foreground)] flex items-center justify-between gap-2"
                       >
                         <span className="font-bold text-[var(--gold)]">{cote}</span>
-                        <Link
-                          to={`/sources?q=${encodeURIComponent(cote)}`}
-                          className="text-[10px] text-[var(--gold)] hover:underline inline-flex items-center gap-1 shrink-0"
-                        >
-                          <span>{t("map_search_cote_action", "Rechercher")}</span>
-                          <ExternalLink className="h-3 w-3" />
-                        </Link>
+                        <span className="text-[10px] text-[var(--muted-foreground)] inline-flex items-center gap-1 shrink-0">
+                          {t("map_cote_reference_only", "Référence d'archives")}
+                        </span>
                       </div>
                     ))}
                   </div>
@@ -2584,17 +2580,11 @@ export default function InteractiveMap() {
                       </div>
                     )}
 
-                    <Link
-                      to={`/sources?q=${encodeURIComponent(formatGovName(selectedGov.id))}`}
-                      className="btn-base btn-gold w-full py-2.5 text-xs font-bold flex items-center justify-center gap-2 shadow-sm"
-                    >
-                      <Search className="h-3.5 w-3.5" />
-                      <span>
-                        {tf("map_gov_search_all_archives", "Rechercher tous les actes de {gov}", {
-                          gov: formatGovName(selectedGov.id),
-                        })}
-                      </span>
-                    </Link>
+                    <div className="w-full py-2.5 px-3 text-xs font-semibold text-center rounded-xl border border-[var(--gold)]/30 bg-[var(--gold)]/10 text-[var(--foreground)]">
+                      {tf("map_gov_archives_readonly", "Fonds documentaires de {gov} — consultation informative", {
+                        gov: formatGovName(selectedGov.id),
+                      })}
+                    </div>
                   </div>
                 )}
 

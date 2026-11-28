@@ -1656,7 +1656,6 @@ export default function PeriodDetail() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredSources.map((source) => {
                   const Icon = getSourceIcon(source.source_type);
-                  const targetLink = getSourceGalleryLink(source);
 
                   return (
                     <article
@@ -1705,16 +1704,13 @@ export default function PeriodDetail() {
                         </div>
                       </div>
 
-                      {/* External Action Button */}
+                      {/* Read-only archival citation — no empty research redirects */}
                       <div className="mt-6 pt-4 border-t border-[var(--gold)]/15">
-                        <Link
-                          to={targetLink}
-                          className="btn-base btn-gold w-full py-2 px-3 text-xs font-bold flex items-center justify-center gap-2 shadow-sm"
-                        >
-                          <Eye className="w-3.5 h-3.5 shrink-0" />
-                          <span>{detailUi.openInGalleryCta}</span>
-                          <ArrowRight className={`w-3 h-3 ${isRtl ? "rotate-180" : ""}`} />
-                        </Link>
+                        <div className="w-full py-2 px-3 text-xs font-semibold text-center rounded-xl border border-[var(--gold)]/25 bg-[var(--gold)]/10 text-[var(--foreground)]">
+                          {source.archive_source || source.document_code
+                            ? [source.archive_source, source.document_code].filter(Boolean).join(" • ")
+                            : detailUi.openInGalleryCta}
+                        </div>
                       </div>
                     </article>
                   );

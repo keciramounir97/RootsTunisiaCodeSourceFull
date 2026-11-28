@@ -131,14 +131,11 @@ export class UsersService {
         }
 
         const privileges = this.serializePrivileges(data.privileges);
-        const isVerified = data.isValidated !== undefined
-            ? Boolean(data.isValidated)
-            : data.isVerified !== undefined
-                ? Boolean(data.isVerified)
-                : data.is_verified !== undefined
-                    ? Boolean(data.is_verified)
-                    : true;
-        const status = data.status || (isVerified ? 'active' : 'pending');
+        // Accounts are instantly active — no manual validation step.
+        const requestedStatus = String(data.status || 'active').toLowerCase();
+        const status = ['disabled', 'banned', 'rejected'].includes(requestedStatus)
+            ? requestedStatus
+            : 'active';
 
         const insertPayload: Record<string, any> = {
             full_name: data.fullName || data.full_name,
@@ -147,7 +144,7 @@ export class UsersService {
             password: passwordHash,
             role_id: data.roleId ?? data.role_id ?? 2,
             status,
-            is_verified: isVerified ? 1 : 0,
+            is_verified: status === 'active' ? 1 : 0,
         };
         if (privileges !== undefined) {
             insertPayload.admin_privileges = privileges;

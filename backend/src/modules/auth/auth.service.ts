@@ -117,13 +117,23 @@ export class AuthService {
             if (user && user.password && (await bcrypt.compare(pass, user.password))) {
                 const status = String(user.status || 'active').toLowerCase();
                 if (['pending', 'unvalidated'].includes(status)) {
-                    throw new ForbiddenException('Your account is pending validation');
+                    // Legacy pending accounts: activate instantly instead of blocking login
+                    try {
+                        await this.knex('users').where('id', user.id).update({
+                            status: 'active',
+                            is_verified: 1,
+                        });
+                        (user as any).status = 'active';
+                    } catch {
+                        (user as any).status = 'active';
+                    }
                 }
-                if (status === 'rejected' || status === 'banned' || status === 'disabled') {
+                const liveStatus = String((user as any).status || 'active').toLowerCase();
+                if (liveStatus === 'rejected' || liveStatus === 'banned' || liveStatus === 'disabled') {
                     throw new ForbiddenException('Your account is not allowed to log in');
                 }
                 const { password, ...result } = user;
-                return result;
+                return { ...result, status: (user as any).status || 'active' };
             }
             // If user not in DB, try seed admin credentials
             const seedAdmin = this.getSeedAdmin(normalizedEmail, pass);

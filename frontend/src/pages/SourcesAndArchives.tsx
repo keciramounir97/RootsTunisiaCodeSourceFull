@@ -56,7 +56,7 @@ export const ARCHIVES_DIRECTORY: ExternalArchiveItem[] = [
     badge: "Archives d'État • Tunis",
     description:
       "Dépôt central de l'histoire tunisienne. Conserve les registres fiscaux de la Majba (recensements nominatifs 1860–1869), les décrets et ordonnances beylicales husseinites, les jugements des tribunaux séculiers de l'Ouzara et les fonds d'actes notariés ('udul).",
-    link: "http://www.archives.nat.tn",
+    link: "https://www.archives.nat.tn/",
     tags: ["Majba 1860-1869", "Décrets Beylicaux", "Notariats 'Udul", "Tribunaux Ouzara"],
   },
   {
@@ -67,7 +67,7 @@ export const ARCHIVES_DIRECTORY: ExternalArchiveItem[] = [
     badge: "Patrimoine Écrit & Manuscrits • Tunis",
     description:
       "Conservation du patrimoine imprimé et manuscrit. Abrite les journaux historiques de la Régence, les annuaires administratifs Didot-Bottin, les dictionnaires biographiques des lettrés et des grandes familles (Tarājim), et les archives de l'Université Zitouna.",
-    link: "https://www.bnt.nat.tn",
+    link: "https://www.bnt.nat.tn/",
     tags: ["Manuscrits Arabes", "Tarājim (Biographies)", "Presse Historique", "Zitouna"],
   },
   {
@@ -78,7 +78,7 @@ export const ARCHIVES_DIRECTORY: ExternalArchiveItem[] = [
     badge: "État Civil Municipal • Capitale",
     description:
       "Registres des actes de naissances, mariages et décès de la commune de Tunis depuis l'instauration de l'état civil moderne (1886). Permet également la recherche des concessions et permis d'inhumation des cimetières de la capitale.",
-    link: "https://www.commune-tunis.gov.tn",
+    link: "https://www.commune-tunis.gov.tn/",
     tags: ["État Civil (1886-1956)", "Naissances", "Mariages", "Cimetières Municipaux"],
   },
   {
@@ -89,7 +89,7 @@ export const ARCHIVES_DIRECTORY: ExternalArchiveItem[] = [
     badge: "Fondations Pieuses • Tunis",
     description:
       "Fonds de la Jamâïyat el-Habous. Les actes de constitution de waqf familial (habous ahlī) mentionnent l'arbre généalogique exhaustif des fondateurs, ascendants et de l'ensemble des bénéficiaires et descendants sur plusieurs siècles.",
-    link: "http://www.affaires-religieuses.tn",
+    link: "https://www.affaires-religieuses.tn/",
     tags: ["Habous Familial", "Waqf Ahlī", "Généalogies Authentiques", "Successions"],
   },
 

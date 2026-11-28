@@ -44,7 +44,7 @@ export const SourceCard: React.FC<SourceCardProps> = ({
 
         {/* Document Tags */}
         <div className="flex flex-wrap gap-1.5 pt-1">
-          {archive.tags.map((tag, idx) => (
+          {(Array.isArray(archive.tags) ? archive.tags : []).map((tag, idx) => (
             <span
               key={idx}
               className="text-[10px] font-mono px-2 py-0.5 rounded bg-[var(--background)] text-[var(--foreground)]/80 border border-[var(--border)]"
@@ -53,15 +53,24 @@ export const SourceCard: React.FC<SourceCardProps> = ({
             </span>
           ))}
         </div>
+
+        {archive.link ? (
+          <p className="text-[10px] font-mono text-[var(--muted-foreground)] truncate pt-1" title={archive.link}>
+            {archive.link}
+          </p>
+        ) : null}
       </div>
 
-      {/* External Action Button */}
+      {/* External Action Button — always opens the real archive website */}
       <div className="mt-6 pt-4 border-t border-[var(--gold)]/15 flex items-center justify-between gap-3">
         <a
-          href={archive.link}
+          href={archive.link || "#"}
           target="_blank"
           rel="noopener noreferrer"
           className="btn-base btn-gold text-xs py-2.5 px-4 inline-flex items-center justify-center gap-2 shadow-sm hover:scale-[1.02] transition-transform w-full font-bold uppercase tracking-wider cursor-pointer"
+          onClick={(e) => {
+            if (!archive.link) e.preventDefault();
+          }}
         >
           <span>{ctaLabel}</span>
           <ExternalLink className="h-3.5 w-3.5" />

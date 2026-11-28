@@ -41,6 +41,10 @@ import {
   Clock,
   CheckSquare,
   Square,
+  ArrowDownCircle,
+  UserCheck,
+  ArrowUpCircle,
+  Ban,
 } from "lucide-react";
 import { useThemeStore } from "../../store/theme";
 import { api } from "../../api/client";
@@ -456,9 +460,9 @@ export default function UsersPage() {
         email: form.email.trim(),
         phone: form.phone.trim(),
         roleId: Number(form.roleId) || 2,
-        isValidated: form.isValidated,
-        isVerified: form.isValidated,
-        status: form.isValidated ? "active" : "pending",
+        isValidated: true,
+        isVerified: true,
+        status: "active",
         privileges: form.privileges,
       };
       if (form.password.trim()) {
@@ -507,9 +511,9 @@ export default function UsersPage() {
         fullName: editForm.fullName.trim(),
         phone: editForm.phone.trim(),
         roleId: Number(editForm.roleId) || 2,
-        isValidated: editForm.isValidated,
-        isVerified: editForm.isValidated,
-        status: editForm.status || (editForm.isValidated ? "active" : "pending"),
+        isValidated: !["disabled","banned","rejected"].includes(String(editForm.status||"").toLowerCase()),
+        isVerified: !["disabled","banned","rejected"].includes(String(editForm.status||"").toLowerCase()),
+        status: ["disabled","banned","rejected"].includes(String(editForm.status||"").toLowerCase()) ? editForm.status : "active",
         privileges: editForm.privileges,
       };
       if (editForm.password.trim()) {
@@ -551,6 +555,106 @@ export default function UsersPage() {
       setSaving(false);
     }
   };
+
+  
+  const [tiers, setTiers] = useState([]);
+  const [upgradeTarget, setUpgradeTarget] = useState(null);
+  const [upgradeTierId, setUpgradeTierId] = useState("");
+
+  useEffect(() => {
+    (async () => {
+      try {
+        let res;
+        try {
+          res = await api.get("/admin/subscription-tiers");
+        } catch {
+          res = await api.get("/subscriptions/tiers");
+        }
+        const data = res?.data;
+        const list = Array.isArray(data) ? data : Array.isArray(data?.data) ? data.data : [];
+        setTiers(list);
+      } catch {
+        setTiers([]);
+      }
+    })();
+  }, []);
+
+  const openUpgradeModal = (u) => {
+    setUpgradeTarget(u);
+    const first = Array.isArray(tiers) && tiers[0] ? Number(tiers[0].id) : "";
+    setUpgradeTierId(first === "" ? "" : first);
+  };
+
+  const handleUpgradeUser = async () => {
+    if (!upgradeTarget?.id || !upgradeTierId) {
+      notify(t("select_tier_first", "Choisissez un plan d'abonnement."), "error");
+      return;
+    }
+    setSaving(true);
+    try {
+      await api.patch(`/admin/users/${upgradeTarget.id}/subscription`, { tier_id: Number(upgradeTierId) });
+      notify(t("upgrade_success", "Abonnement mis à jour avec succès."));
+      setUpgradeTarget(null);
+      await loadUsers({ notify: false });
+    } catch (err) {
+      notify(getApiErrorMessage(err, "Échec de la mise à niveau"), "error");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const resolveFreeTierId = () => {
+    const list = Array.isArray(tiers) ? tiers : [];
+    const free = list.find((tier) => /free|basic|starter|gratuit|essai/i.test(String(tier.slug || tier.name || "")));
+    if (free?.id) return Number(free.id);
+    const sorted = [...list].sort((a, b) => Number(a.sort ?? a.price ?? 0) - Number(b.sort ?? b.price ?? 0));
+    return sorted[0]?.id ? Number(sorted[0].id) : null;
+  };
+
+  const handleRevokeSubscription = async (u) => {
+    const freeId = resolveFreeTierId();
+    if (!freeId) {
+      notify(t("no_tiers_available", "Aucun plan d'abonnement disponible pour révoquer."), "error");
+      return;
+    }
+    if (!window.confirm(t("confirm_revoke_sub", "Révoquer / rétrograder l'abonnement de cet utilisateur ?"))) return;
+    setSaving(true);
+    try {
+      await api.patch(`/admin/users/${u.id}/subscription`, { tier_id: freeId });
+      notify(t("revoke_success", "Abonnement révoqué / rétrogradé."));
+      await loadUsers({ notify: false });
+    } catch (err) {
+      notify(getApiErrorMessage(err, "Échec de la révocation"), "error");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleToggleAccountStatus = async (u) => {
+    const st = String(u.status || "").toLowerCase();
+    const currentlyActive = ["active", "validated", "approved"].includes(st) || u.isValidated;
+    const next = currentlyActive ? "disabled" : "active";
+    if (!window.confirm(currentlyActive
+      ? t("confirm_disable_user", "Désactiver ce compte ?")
+      : t("confirm_enable_user", "Réactiver ce compte ?"))) return;
+    setSaving(true);
+    try {
+      await api.patch(`/admin/users/${u.id}`, {
+        status: next,
+        isValidated: next === "active",
+        isVerified: next === "active",
+      });
+      notify(next === "active"
+        ? t("account_enabled", "Compte réactivé.")
+        : t("account_disabled", "Compte désactivé."));
+      await loadUsers({ notify: false });
+    } catch (err) {
+      notify(getApiErrorMessage(err, "Échec du changement de statut"), "error");
+    } finally {
+      setSaving(false);
+    }
+  };
+
 
   const handleQuickValidate = async (targetUser: any) => {
     if (!targetUser?.id) return;
@@ -763,7 +867,7 @@ export default function UsersPage() {
             <p className="opacity-75 text-sm mt-1 max-w-2xl">
               {t(
                 "users_desc",
-                "Créez, validez et attribuez des rôles ainsi que des accès personnalisés aux pages pour chaque compte."
+                "Créez et gérez les comptes, rôles, abonnements et accès aux pages. Les comptes sont actifs immédiatement."
               )}
             </p>
           </div>
@@ -803,9 +907,8 @@ export default function UsersPage() {
             {(
               [
                 { id: "all", label: t("all", "Tous"), count: statusCounts.all },
-                { id: "pending", label: t("pending_validation", "En attente"), count: statusCounts.pending },
-                { id: "validated", label: t("validated", "Validés"), count: statusCounts.validated },
-                { id: "rejected", label: t("rejected", "Refusés"), count: statusCounts.rejected },
+                { id: "validated", label: t("active_accounts", "Actifs"), count: statusCounts.validated },
+                { id: "rejected", label: t("disabled_accounts", "Désactivés"), count: statusCounts.rejected },
               ] as const
             ).map((tab) => {
               const active = statusFilter === tab.id;
@@ -879,7 +982,7 @@ export default function UsersPage() {
                     {t("role", "Rôle")}
                   </th>
                   <th className="py-3.5 px-5 text-start font-semibold text-[var(--brand-teal)]">
-                    {t("status_validation", "Validation & Statut")}
+                    {t("account_status", "Statut du compte")}
                   </th>
                   <th className="py-3.5 px-5 text-start font-semibold text-[var(--brand-teal)]">
                     {t("access_pages", "Accès Pages")}
@@ -988,15 +1091,10 @@ export default function UsersPage() {
                                 ? t("rejected", "Refusé")
                                 : t("disabled", "Désactivé")}
                             </span>
-                          ) : isVerified ? (
+                          ) : (
                             <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25">
                               <CheckCircle2 className="w-3 h-3" />
-                              {t("validated", "Validé")}
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/25">
-                              <Clock className="w-3 h-3" />
-                              {t("pending_validation", "En attente")}
+                              {t("active", "Actif")}
                             </span>
                           )}
 
@@ -1015,11 +1113,9 @@ export default function UsersPage() {
                                 : "bg-amber-100 text-amber-700"
                             }`}
                           >
-                            {isVerified
-                              ? t("active", "Actif")
-                              : isRejectedOrDisabled
+                            {isRejectedOrDisabled
                               ? t("inactive", "Inactif")
-                              : t("pending", "En attente")}
+                              : t("active", "Actif")}
                           </span>
                         </div>
                       </td>
@@ -1043,30 +1139,37 @@ export default function UsersPage() {
                       {canManageUsers ? (
                         <td className="py-3.5 px-5 text-end">
                           <div className="flex items-center justify-end gap-1.5 flex-wrap">
-                            {!isVerified && (
-                              <button
-                                type="button"
-                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600 text-white hover:bg-emerald-700 transition-all shadow-sm disabled:opacity-50 cursor-pointer"
-                                onClick={() => void handleQuickValidate(u)}
-                                disabled={isRowBusy}
-                                title={t("validate_user", "Valider et activer ce compte")}
-                              >
-                                <CheckCircle2 className="w-3.5 h-3.5" />
-                                <span>{t("validate", "Valider")}</span>
-                              </button>
-                            )}
 
-                            {!isRejectedOrDisabled && !isCurrentUser && (
-                              <button
-                                type="button"
-                                className="p-2 rounded-lg transition-all hover:shadow-sm disabled:opacity-50 bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-600 hover:text-white border border-amber-500/25 cursor-pointer"
-                                onClick={() => void handleQuickReject(u)}
-                                disabled={isRowBusy}
-                                title={t("reject_user", "Refuser / suspendre ce compte")}
-                              >
-                                <XCircle className="w-3.5 h-3.5" />
-                              </button>
-                            )}
+                            <button
+                              type="button"
+                              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-[var(--brand-teal)] text-white hover:opacity-90 transition-all shadow-sm disabled:opacity-50 cursor-pointer"
+                              onClick={() => openUpgradeModal(u)}
+                              disabled={isRowBusy}
+                              title={t("upgrade_subscription", "Upgrader l'abonnement")}
+                            >
+                              <ArrowUpCircle className="w-3.5 h-3.5" />
+                              <span>{t("upgrade", "Upgrade")}</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              className="p-2 rounded-lg transition-all hover:shadow-sm disabled:opacity-50 bg-violet-500/10 text-violet-600 dark:text-violet-400 hover:bg-violet-600 hover:text-white border border-violet-500/25 cursor-pointer"
+                              onClick={() => void handleRevokeSubscription(u)}
+                              disabled={isRowBusy}
+                              title={t("revoke_subscription", "Révoquer / rétrograder l'abonnement")}
+                            >
+                              <ArrowDownCircle className="w-3.5 h-3.5" />
+                            </button>
+
+                            <button
+                              type="button"
+                              className="p-2 rounded-lg transition-all hover:shadow-sm disabled:opacity-50 bg-slate-500/10 text-slate-600 dark:text-slate-300 hover:bg-slate-700 hover:text-white border border-slate-500/25 cursor-pointer"
+                              onClick={() => void handleToggleAccountStatus(u)}
+                              disabled={isRowBusy || isCurrentUser}
+                              title={isVerified ? t("disable_account", "Désactiver le compte") : t("enable_account", "Réactiver le compte")}
+                            >
+                              {isVerified ? <Ban className="w-3.5 h-3.5" /> : <UserCheck className="w-3.5 h-3.5" />}
+                            </button>
 
                             <button
                               type="button"
@@ -1242,12 +1345,12 @@ export default function UsersPage() {
                 </div>
               </div>
 
-              {/* Section 2: Rôle & Statut de Validation */}
+              {/* Section 2: Rôle du compte */}
               <div className="space-y-3.5">
                 <div className="flex items-center gap-2 pb-1 border-b border-[var(--border)]">
                   <ShieldCheck className="w-4 h-4 text-[var(--brand-gold)]" />
                   <span className="text-xs font-bold uppercase tracking-wider text-[var(--foreground)]">
-                    2. Rôle & Statut de Validation
+                    2. Rôle du compte
                   </span>
                 </div>
 
@@ -1271,37 +1374,15 @@ export default function UsersPage() {
 
                   <div>
                     <label className="block text-xs font-semibold mb-1 text-[var(--foreground)]">
-                      {t("validation_status", "Statut de Validation")}
+                      {t("account_status", "Statut du compte")}
                     </label>
-                    <div className="grid grid-cols-2 gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setForm((s) => ({ ...s, isValidated: true }))}
-                        className={`p-2.5 rounded-xl border text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
-                          form.isValidated
-                            ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/50 shadow-sm"
-                            : "border-[var(--border)] opacity-60 hover:opacity-100"
-                        }`}
-                      >
-                        <CheckCircle2 className="w-3.5 h-3.5" />
-                        <span>Validé (Actif)</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => setForm((s) => ({ ...s, isValidated: false }))}
-                        className={`p-2.5 rounded-xl border text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
-                          !form.isValidated
-                            ? "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/50 shadow-sm"
-                            : "border-[var(--border)] opacity-60 hover:opacity-100"
-                        }`}
-                      >
-                        <Clock className="w-3.5 h-3.5" />
-                        <span>Non validé (En attente)</span>
-                      </button>
+                    <div className="p-2.5 rounded-xl border text-xs font-semibold flex items-center justify-center gap-1.5 bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/50">
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      <span>{t("status_validated_active", "Actif immédiatement")}</span>
                     </div>
                   </div>
                 </div>
+              </div>
               </div>
 
               {/* Section 3: Accès aux Pages & Permissions Admin */}
@@ -1550,7 +1631,7 @@ export default function UsersPage() {
                       disabled={saving}
                     >
                       <option value="1">Validé (Actif)</option>
-                      <option value="0">Non validé (En attente)</option>
+                      
                     </select>
                   </div>
 
@@ -1864,6 +1945,52 @@ export default function UsersPage() {
         </div>,
         document.body
       ) : null}
+
+      {upgradeTarget ? createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-4 backdrop-blur-sm bg-black/65">
+          <div className="relative w-full max-w-md rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between gap-2">
+              <h3 className="text-lg font-bold font-display">{t("upgrade_user", "Upgrade utilisateur")}</h3>
+              <button type="button" className="p-1.5 rounded-lg hover:bg-black/5 cursor-pointer" onClick={() => setUpgradeTarget(null)}>
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <p className="text-sm opacity-80">
+              {upgradeTarget.full_name || upgradeTarget.fullName || upgradeTarget.email}
+            </p>
+            <label className="block text-xs font-semibold">
+              {t("subscription_tier", "Plan d'abonnement")}
+              <select
+                className={`heritage-input mt-1.5 w-full px-3 py-2.5 rounded-xl border text-sm ${inputBg} ${inputText} ${border}`}
+                value={upgradeTierId}
+                onChange={(e) => setUpgradeTierId(e.target.value ? Number(e.target.value) : "")}
+              >
+                <option value="">{t("select_tier", "Sélectionner un plan...")}</option>
+                {(Array.isArray(tiers) ? tiers : []).map((tier) => (
+                  <option key={tier.id} value={tier.id}>
+                    {tier.name || tier.slug || `Tier #${tier.id}`}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <div className="flex justify-end gap-2 pt-2">
+              <button type="button" className="px-4 py-2 rounded-xl border text-sm cursor-pointer" onClick={() => setUpgradeTarget(null)}>
+                {t("cancel", "Annuler")}
+              </button>
+              <button
+                type="button"
+                className="px-4 py-2 rounded-xl text-sm font-semibold text-white bg-[var(--brand-teal)] cursor-pointer disabled:opacity-50"
+                disabled={saving || !upgradeTierId}
+                onClick={() => void handleUpgradeUser()}
+              >
+                {t("confirm_upgrade", "Confirmer l'upgrade")}
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      ) : null}
+
     </div>
   );
 }

@@ -1112,6 +1112,21 @@ async function seedInitialData(knex: Knex) {
                 }
             }
         }
+        // Auto-activate any leftover pending accounts (no manual validation workflow).
+        try {
+            const patch: Record<string, any> = { status: 'active' };
+            if (await knex.schema.hasColumn('users', 'is_verified')) {
+                patch.is_verified = 1;
+            }
+            const n = await knex('users')
+                .where((qb) => {
+                    qb.whereIn('status', ['pending', 'unvalidated']).orWhereNull('status');
+                })
+                .update(patch);
+            if (n > 0) console.log(`✅ Auto-activated ${n} pending user account(s)`);
+        } catch (e: any) {
+            console.warn('🟠 Pending-user auto-activate skipped:', e?.message || e);
+        }
     } catch (err: any) {
         console.log('ℹ️ seedInitialData execution note:', err?.message || err);
     }
