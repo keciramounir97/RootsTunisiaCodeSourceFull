@@ -168,6 +168,25 @@ const processQueue = (error: any, token: string | null = null) => {
 
 api.interceptors.response.use(
   (response) => {
+    // Unwrap Nest TransformInterceptor envelope: { statusCode, message, data, meta }
+    if (
+      response.data &&
+      typeof response.data === "object" &&
+      !Array.isArray(response.data) &&
+      "data" in response.data &&
+      ("statusCode" in response.data || "meta" in response.data) &&
+      Object.keys(response.data).length <= 6
+    ) {
+      const backendEnvelope = response.data as {
+        data: unknown;
+        meta?: unknown;
+        message?: unknown;
+        statusCode?: unknown;
+      };
+      response.data = backendEnvelope.data;
+      (response as any).meta = backendEnvelope.meta;
+      (response as any).envelopeMessage = backendEnvelope.message;
+    }
     return response;
   },
   async (error: AxiosError) => {
@@ -253,6 +272,25 @@ api.interceptors.response.use(
 
     if (!error.response && error.request) {
       console.warn("❌ Network error:", error.message);
+      (error as any).isConnectionError = true;
+      (error as any).userMessage =
+        "Cannot connect to the Roots Tunisia server. Please verify that the backend is reachable.";
+    }
+
+    if (!(error as any).userMessage) {
+      const status = error.response?.status;
+      const apiMessage = (error.response?.data as any)?.message;
+      if (Array.isArray(apiMessage) && apiMessage.length > 0) {
+        (error as any).userMessage = apiMessage.map(String).join(". ");
+      } else if (typeof apiMessage === "string" && apiMessage.trim()) {
+        (error as any).userMessage = apiMessage;
+      } else if (status === 403) {
+        (error as any).userMessage = "You do not have permission to perform this action.";
+      } else if (status === 404) {
+        (error as any).userMessage = "Requested resource was not found.";
+      } else if (status === 500) {
+        (error as any).userMessage = "A server error occurred. Please try again.";
+      }
     }
 
     return Promise.reject(error);

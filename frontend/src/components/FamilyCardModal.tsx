@@ -66,11 +66,19 @@ const cleanArchText = (val: unknown): string => {
 
 const classifySourceLink = (linkKind: string | undefined, url: string | undefined): RealMemberSourceItem["kind"] => {
   const lower = String(url || "").toLowerCase();
+  if (linkKind === "archive") return "archive";
   if (linkKind === "audio" || /\.(mp3|wav|ogg|m4a)(?:[?#].*)?$/i.test(lower) || lower.includes("/uploads/audios/")) {
     return "audio";
   }
   if (linkKind === "image" || /\.(png|jpe?g|gif|webp)(?:[?#].*)?$/i.test(lower) || lower.includes("/uploads/gallery/")) {
     return "image";
+  }
+  if (
+    linkKind === "book" ||
+    lower.includes("/uploads/books/") ||
+    lower.includes("/api/books/")
+  ) {
+    return "document";
   }
   if (linkKind === "document" || /\.(pdf|docx?|txt)(?:[?#].*)?$/i.test(lower) || lower.includes("/uploads/documents/")) {
     return "document";
@@ -231,8 +239,22 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
       return;
     }
 
-    // 2. Instant hit from preloaded tree object (props)
-    if (Array.isArray(tree?.people) && tree.people.length > 0) {
+    // 2. Instant hit from preloaded tree object (props) — only when people carry relationships.
+    // Flat `{id, name}` persons rows would skip GEDCOM and break generations + sources aperçu.
+    const peopleHaveEdges =
+      Array.isArray(tree?.people) &&
+      tree.people.some(
+        (p: any) =>
+          p &&
+          (p.father ||
+            p.father_id ||
+            p.mother ||
+            p.mother_id ||
+            (Array.isArray(p.parents) && p.parents.length > 0) ||
+            (Array.isArray(p.children) && p.children.length > 0) ||
+            p.spouse)
+      );
+    if (peopleHaveEdges) {
       modalParsedTreeCache.set(targetTreeId, { people: tree.people, timestamp: Date.now() });
       setFetchedPeople(tree.people);
       setLoadingGedcom(false);
@@ -564,7 +586,20 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
     location?: string;
   }) => {
     const url = String(item.url || "").trim();
-    if (!url) return;
+    // Archive-only citations (cote / dépôt) have no file URL — still show aperçu card
+    if (!url) {
+      setPreviewSource({
+        url: "",
+        label: item.label,
+        kind: item.kind || "archive",
+        memberName: item.memberName,
+        repository: item.archiveSource,
+        cote: item.documentCode,
+        date: item.date,
+        location: item.location,
+      });
+      return;
+    }
     if (!isDirectPreviewUrl(item.kind, url) && /^https?:\/\//i.test(url)) {
       window.open(url, "_blank", "noopener,noreferrer");
       return;
@@ -1763,7 +1798,20 @@ export default function FamilyCardModal({ tree, individual, onClose }: FamilyCar
 
               {/* Body Content */}
               <div className="flex-1 overflow-y-auto min-h-0 flex flex-col items-center justify-center p-6 bg-[var(--background)]/40">
-                {previewSource.kind === "image" || /\.(png|jpe?g|gif|webp)$/i.test(previewSource.url) ? (
+                {!previewSource.url ? (
+                  <div className="text-center p-8 bg-[var(--card)] rounded-xl border border-[var(--gold)]/30 max-w-md">
+                    <FileText className="w-16 h-16 text-[var(--gold)] mx-auto mb-4" />
+                    <p className="text-sm font-semibold mb-2">{previewSource.label}</p>
+                    {(previewSource.repository || previewSource.cote) && (
+                      <p className="text-xs font-mono text-[var(--muted-foreground)] mb-2">
+                        {[previewSource.repository, previewSource.cote].filter(Boolean).join(" • ")}
+                      </p>
+                    )}
+                    <p className="text-xs text-[var(--muted-foreground)]">
+                      Référence d&apos;archives sans fichier numérique attaché. La citation reste consultable ici.
+                    </p>
+                  </div>
+                ) : previewSource.kind === "image" || /\.(png|jpe?g|gif|webp)$/i.test(previewSource.url) ? (
                   <img
                     src={previewSource.url}
                     alt={previewSource.label}

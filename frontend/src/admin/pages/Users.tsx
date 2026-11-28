@@ -27,6 +27,7 @@ import {
   Image as ImageIcon,
   Music,
   FileText,
+  BookOpen,
   Newspaper,
   MessageSquare,
   Wallet,
@@ -231,10 +232,15 @@ export default function UsersPage() {
       try {
         const { data } = await requestWithFallback(
           [() => api.get("/admin/users")],
-          (err: any) => shouldFallbackRoute(err) || err?.response?.status === 500
+          shouldFallbackRoute
         );
-        const userList = Array.isArray(data)
-          ? data.map((u) => {
+        const rawList = Array.isArray(data)
+          ? data
+          : Array.isArray((data as any)?.data)
+            ? (data as any).data
+            : [];
+        const userList = rawList.length
+          ? rawList.map((u: any) => {
               const privs = parsePrivileges(u);
               const st = String(u.status || "active").toLowerCase();
               const isValidated =
@@ -326,7 +332,7 @@ export default function UsersPage() {
   const loadRoles = useCallback(async () => {
     try {
       const { data } = await api.get("/admin/roles");
-      return Array.isArray(data) ? data : [];
+      return Array.isArray(data) ? data : Array.isArray((data as any)?.data) ? (data as any).data : [];
     } catch {
       return [
         { id: 2, name: "user" },

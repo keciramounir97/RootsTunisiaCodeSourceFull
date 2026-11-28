@@ -11,6 +11,27 @@ export interface TreeMetrics {
   sourcesCount: number;
 }
 
+/** True when people rows carry parent/child edges we can walk for depth. */
+export function peopleHaveRelationships(people: any[]): boolean {
+  if (!Array.isArray(people) || people.length === 0) return false;
+  return people.some((p) => {
+    if (!p) return false;
+    return Boolean(
+      p.father ||
+        p.father_id ||
+        p.fatherId ||
+        p.mother ||
+        p.mother_id ||
+        p.motherId ||
+        (Array.isArray(p.parents) && p.parents.length > 0) ||
+        (Array.isArray(p.children) && p.children.length > 0) ||
+        p.spouse ||
+        p.spouse_id ||
+        p.spouseId
+    );
+  });
+}
+
 /** Lightweight GEDCOM relationship parse for card previews (no full person objects). */
 function metricsFromGedcomText(rawGedcom: string): { individuals: number; generations: number } | null {
   const text = String(rawGedcom || "").replace(/^\uFEFF/, "");
@@ -126,6 +147,51 @@ function metricsFromGedcomText(rawGedcom: string): { individuals: number; genera
   };
 }
 
+function countDeclaredIndividuals(tree: any): number {
+  const candidates = [
+    tree?.people_count,
+    tree?.membersCount,
+    tree?.member_count,
+    tree?.individuals_count,
+    tree?.personCount,
+  ];
+  for (const value of candidates) {
+    const n = Number(value);
+    if (Number.isFinite(n) && n >= 0) return n;
+  }
+  return 0;
+}
+
+function countDeclaredSources(tree: any, people: any[]): number {
+  const declared = Number(tree?.sources_count ?? tree?.sourcesCount);
+  if (Number.isFinite(declared) && declared >= 0) return declared;
+  if (!Array.isArray(people) || people.length === 0) return 0;
+  let count = 0;
+  for (const p of people) {
+    if (!p) continue;
+    if (p.archiveSource || p.archive_source || p.documentCode || p.document_code) count += 1;
+    if (Array.isArray(p.links)) count += p.links.length;
+    if (Array.isArray(p.sources)) count += p.sources.length;
+  }
+  return count;
+}
+
+function countCouples(people: any[]): number {
+  if (!Array.isArray(people) || people.length === 0) return 0;
+  const couplePairs = new Set<string>();
+  for (const p of people) {
+    if (!p) continue;
+    if (p.spouse || p.spouse_id || p.spouseId) {
+      const spouse = String(p.spouse || p.spouse_id || p.spouseId);
+      couplePairs.add([String(p.id), spouse].sort().join("::"));
+    }
+    if (p.father && p.mother) {
+      couplePairs.add([String(p.father), String(p.mother)].sort().join("::"));
+    }
+  }
+  return couplePairs.size;
+}
+
 /**
  * Computes the real generational depth by traversing genealogical links (parent-child).
  * Handles GEDCOM IDs, cycles, and isolated branches safely.
@@ -220,30 +286,34 @@ export function getTreeMetrics(tree: any): TreeMetrics {
 
   let individuals = 0;
   let generations = 0;
+  const people = Array.isArray(tree.people) ? tree.people : [];
+  const declaredCount = countDeclaredIndividuals(tree);
+  const hasGraph = peopleHaveRelationships(people);
 
-  // 1. Check tree.people array if already loaded
-  if (Array.isArray(tree.people) && tree.people.length > 0) {
-    individuals = tree.people.length;
-    generations = computeRealGenerations(tree.people);
+  // 1. Prefer a real relationship graph when available
+  if (hasGraph) {
+    individuals = Math.max(people.length, declaredCount);
+    generations = computeRealGenerations(people);
   } else {
+    // Flat persons rows (id/name only) must not force generations = 1
+    if (people.length > 0) {
+      individuals = Math.max(people.length, declaredCount);
+    }
+
     // 2. Prefer parsing GEDCOM text for accurate relationship depth on cards
     const rawGedcom =
       tree.gedcom_text || tree.content || tree.gedcom_data || tree.gedcom || tree.gedcomText;
     if (typeof rawGedcom === "string" && rawGedcom.trim().length > 0) {
       const fromGed = metricsFromGedcomText(rawGedcom);
       if (fromGed) {
-        individuals = fromGed.individuals;
+        individuals = Math.max(individuals, fromGed.individuals, declaredCount);
         generations = fromGed.generations;
       }
     }
 
     // 3. Fallback to backend counts
-    if (individuals === 0) {
-      if (tree.people_count != null && !isNaN(Number(tree.people_count)) && Number(tree.people_count) >= 0) {
-        individuals = Number(tree.people_count);
-      } else if (tree.membersCount != null && !isNaN(Number(tree.membersCount)) && Number(tree.membersCount) >= 0) {
-        individuals = Number(tree.membersCount);
-      }
+    if (individuals === 0 && declaredCount > 0) {
+      individuals = declaredCount;
     }
 
     if (generations === 0) {
@@ -260,8 +330,12 @@ export function getTreeMetrics(tree: any): TreeMetrics {
     }
   }
 
-  const couplesCount = individuals > 1 ? Math.max(1, Math.floor(individuals / 2)) : 0;
-  const sourcesCount = Math.max(individuals > 0 ? 1 : 0, Math.min(10, individuals));
+  if (individuals === 0 && declaredCount > 0) {
+    individuals = declaredCount;
+  }
+
+  const couplesCount = hasGraph ? countCouples(people) : Number(tree.couples_count ?? tree.couplesCount) || 0;
+  const sourcesCount = countDeclaredSources(tree, people);
 
   return { individuals, generations, couplesCount, sourcesCount };
 }

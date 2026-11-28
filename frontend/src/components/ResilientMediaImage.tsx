@@ -51,6 +51,8 @@ export default function ResilientMediaImage({
       src={current}
       alt={alt}
       loading={loading}
+      decoding="async"
+      fetchPriority={loading === "eager" ? "high" : "auto"}
       className={className}
       onError={() => {
         setIndex((prev) => {

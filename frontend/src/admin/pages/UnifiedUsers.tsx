@@ -3,6 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { Shield, Users as UsersIcon } from "lucide-react";
 import { useAuth } from "../components/AuthContext";
 import { useTranslation } from "../../context/TranslationContext";
+import ErrorBoundary from "../../components/ErrorBoundary";
 import UsersPage from "./Users";
 
 const AdminsRoles = lazy(() => import("./AdminsRoles"));
@@ -34,7 +35,11 @@ export default function UnifiedUsers() {
   };
 
   if (!isSuperAdmin) {
-    return <UsersPage />;
+    return (
+      <ErrorBoundary>
+        <UsersPage />
+      </ErrorBoundary>
+    );
   }
 
   return (
@@ -72,7 +77,9 @@ export default function UnifiedUsers() {
           <AdminsRoles />
         </Suspense>
       ) : (
-        <UsersPage />
+        <ErrorBoundary>
+          <UsersPage />
+        </ErrorBoundary>
       )}
     </div>
   );

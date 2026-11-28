@@ -81,13 +81,18 @@ export const requestWithFallback = async (requests: any[], shouldFallback = shou
 };
 
 export const getApiErrorMessage = (error: any, fallback = "Operation failed", overrides: any = {}) => {
+  if (error?.userMessage) return error.userMessage;
   const status = error?.response?.status;
   let serverMessage =
     error?.response?.data?.message || error?.response?.data?.error;
+  if (Array.isArray(serverMessage)) {
+    serverMessage = serverMessage.map(String).join(". ");
+  }
   if (!serverMessage && typeof error?.response?.data === "string") {
     try {
       const parsed = JSON.parse(error.response.data);
-      serverMessage = parsed?.message || parsed?.error;
+      const msg = parsed?.message || parsed?.error;
+      serverMessage = Array.isArray(msg) ? msg.map(String).join(". ") : msg;
     } catch {
       // leave serverMessage falsy
     }

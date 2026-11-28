@@ -44,8 +44,9 @@ export class GalleryController {
 
         const filePath = resolveStoredFilePath(item.image_path);
         if (filePath && fs.existsSync(filePath)) {
-            return res.type(path.extname(filePath).toLowerCase() === '.png' ? 'image/png' : 'image/jpeg')
-                .send(fs.readFileSync(filePath));
+            const mime = path.extname(filePath).toLowerCase() === '.png' ? 'image/png' : 'image/jpeg';
+            res.type(mime);
+            return fs.createReadStream(filePath).pipe(res);
         }
 
         throw new NotFoundException('Image not found');

@@ -33,6 +33,8 @@ export class RolesGuard implements CanActivate {
         // Regular admins only when explicitly allowed
         if (normalizedRequired.includes(normalizedRoleName)) return true;
         if (roleId === 1 && normalizedRequired.includes('admin')) return true;
+        // Also match numeric @Roles(1, 3) style declarations
+        if (normalizedRequired.includes(String(roleId))) return true;
 
         return false;
     }

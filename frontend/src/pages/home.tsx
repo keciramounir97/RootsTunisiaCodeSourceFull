@@ -1378,7 +1378,7 @@ export default function Home() {
                         <div className="flex items-center gap-1.5 text-[var(--foreground)]">
                           <FileText className="w-3.5 h-3.5 text-[var(--gold)] shrink-0" />
                           <span>
-                            <strong>{t("sources_label", "Sources")}:</strong> {article.sources?.length || 3}{" "}
+                            <strong>{t("sources_label", "Sources")}:</strong> {article.sources?.length || 0}{" "}
                             {t("docs_short_label", "docs")}
                           </span>
                         </div>

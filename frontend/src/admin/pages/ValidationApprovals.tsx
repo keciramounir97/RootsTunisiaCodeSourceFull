@@ -46,7 +46,7 @@ export default function ValidationApprovals() {
     setError("");
     try {
       const { data } = await api.get(`/admin/users/validation?status=${status}`);
-      setUsers(Array.isArray(data) ? data : []);
+      setUsers(Array.isArray(data) ? data : Array.isArray((data as any)?.data) ? (data as any).data : []);
     } catch (err) {
       setError(getApiErrorMessage(err, t("legacy.validation_users_failed", "Failed to load validation approvals")));
     } finally {
