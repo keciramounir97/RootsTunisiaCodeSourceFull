@@ -6,4 +6,24 @@ Disallow: /login
 Disallow: /signup
 Disallow: /resetpassword
 
+# AI / LLM crawlers — public content only
+User-agent: GPTBot
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
 Sitemap: https://rootstunisia.com/sitemap.xml
+# Machine-readable site summary for AI assistants
+# https://rootstunisia.com/llms.txt

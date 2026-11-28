@@ -130,6 +130,7 @@ export default function SeoHead() {
     xDefault.setAttribute("data-seo", "managed");
     document.head.appendChild(xDefault);
 
+    const ogImageAbs = `${SEO_ORIGIN}${seo.ogImage || "/og-image.png"}`;
     if (hasRouteConfig) {
       const og = [
         ["og:title", title],
@@ -137,7 +138,7 @@ export default function SeoHead() {
         ["og:url", canonicalHref],
         ["og:type", path === "/" ? "website" : "article"],
         ["og:site_name", seo.siteName],
-        ["og:image", `${SEO_ORIGIN}${seo.ogImage || "/og-image.png"}`],
+        ["og:image", ogImageAbs],
         ["og:locale", locale],
       ];
       for (const [property, content] of og) {
@@ -147,8 +148,23 @@ export default function SeoHead() {
           return m;
         }, (el) => el.setAttribute("content", content));
       }
+      const twitter = [
+        ["twitter:card", "summary_large_image"],
+        ["twitter:title", title],
+        ["twitter:description", description],
+        ["twitter:image", ogImageAbs],
+      ];
+      for (const [name, content] of twitter) {
+        upsert(`meta[name="${name}"]`, () => {
+          const m = document.createElement("meta");
+          m.setAttribute("name", name);
+          return m;
+        }, (el) => el.setAttribute("content", content));
+      }
     }
 
+    const countryName =
+      (seo as { geo?: { countryName?: string } }).geo?.countryName || geo?.placename || "";
     const jsonLd =
       path === "/"
         ? {
@@ -161,7 +177,7 @@ export default function SeoHead() {
                 logo: `${SEO_ORIGIN}${(seo.organization as { logo?: string })?.logo || "/logo-512.png"}`,
                 email: (seo.organization as { email?: string })?.email,
                 areaServed: geo?.region
-                  ? { "@type": "Country", name: (seo as { geo?: { countryName?: string } }).geo?.countryName || geo.placename }
+                  ? { "@type": "Country", name: countryName, identifier: geo.region }
                   : undefined,
               },
               {
@@ -170,6 +186,23 @@ export default function SeoHead() {
                 url: `${SEO_ORIGIN}/`,
                 inLanguage: SEO_LOCALES,
               },
+              ...(geo?.position
+                ? [
+                    {
+                      "@type": "Place",
+                      name: countryName || geo.placename,
+                      geo: {
+                        "@type": "GeoCoordinates",
+                        latitude: Number(String(geo.position).split(";")[0]),
+                        longitude: Number(String(geo.position).split(";")[1]),
+                      },
+                      address: {
+                        "@type": "PostalAddress",
+                        addressCountry: geo.region,
+                      },
+                    },
+                  ]
+                : []),
             ],
           }
         : {
@@ -178,6 +211,8 @@ export default function SeoHead() {
             name: title,
             description,
             url: canonicalHref,
+            isPartOf: { "@type": "WebSite", name: seo.siteName, url: `${SEO_ORIGIN}/` },
+            inLanguage: locale,
           };
 
     upsert('script[type="application/ld+json"][data-seo="managed"]', () => {

@@ -1,0 +1,32 @@
+# Roots Tunisia
+
+> Tunisian genealogy platform for family trees, civil registers, Archives Nationales de Tunisie, beylical and Ottoman sijillat, habous deeds, Protectorate records, oral history, and an interactive map of the 24 governorates.
+
+## Site
+- Home: https://rootstunisia.com/
+- About: https://rootstunisia.com/about
+- Interactive map: https://rootstunisia.com/interactive-map
+- Historical periods: https://rootstunisia.com/periods
+- Sources & archives: https://rootstunisia.com/sources
+- Services: https://rootstunisia.com/services
+- Family trees: https://rootstunisia.com/gallery/trees
+- Photo gallery: https://rootstunisia.com/gallery/images
+- Manuscripts & books: https://rootstunisia.com/gallery/books
+- Oral history / audio: https://rootstunisia.com/gallery/audios
+- Documents: https://rootstunisia.com/gallery/documents
+- Articles: https://rootstunisia.com/articles
+- Subscriptions: https://rootstunisia.com/subscriptions
+- Help center: https://rootstunisia.com/help-center
+- Contact: https://rootstunisia.com/contact
+
+## Geography
+- Country: Tunisia (TN)
+- Focus: Grand Tunis, Cap Bon, Sahel, Kairouan, Jérid, Djerba, Dahar, Tell, Hautes Steppes
+- Coordinates (Tunis): 36.8065, 10.1815
+
+## Primary topics
+Tunisian genealogy, family trees, Archives Nationales de Tunisie, Majba registers, habous / waqf ahlī, Protectorate état civil, CADN / ANOM, Antenati Italian diaspora, Maltese parish records, Jewish Tunisian archives, tribal territories, governorate dossiers, paleography and certified transcriptions.
+
+## Contact
+- Email: contact@rootstunisia.com
+- Sitemap: https://rootstunisia.com/sitemap.xml

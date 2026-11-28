@@ -13,7 +13,7 @@
   "rtlLocales": [
     "ar"
   ],
-  "ogImage": "/og-image.png",
+  "ogImage": "/assets/01_Carthage_Ancient_Ruins_Landscape.jpg",
   "organization": {
     "email": "contact@rootstunisia.com",
     "logo": "/logo-512.png",
@@ -56,19 +56,19 @@
       "schemaType": "AboutPage",
       "title": {
         "en": "About Roots Tunisia | Carthage, Kairouan and civil registry",
-        "fr": "À propos de Roots Tunisia | Lignées du Nil",
-        "ar": "عن جذور تونس | أنساب النيل والأرشيف",
-        "es": "Acerca de Roots Tunisia | Linajes del Nilo",
-        "it": "À propos de Roots Tunisia | Lignées du Nil",
-        "mt": "À propos de Roots Tunisia | Lignées du Nil"
+        "fr": "À propos de Roots Tunisia | Carthage, Kairouan et état civil",
+        "ar": "عن جذور تونس | قرطاج والقيروان والحالة المدنية",
+        "es": "Acerca de Roots Tunisia | Cartago, Kairuán y registro civil",
+        "it": "Su Roots Tunisia | Cartagine, Kairouan e stato civile",
+        "mt": "Dwar Roots Tunisia | Kartaġni, Kairouan u reġistru ċivili"
       },
       "description": {
-        "en": "Roots Tunisia documents Tunisian families across the Tunisia, Coptic and Islamic records.",
-        "fr": "Roots Tunisia documente les familles tunisiennes de Carthage, Kairouan, des sijillats et de l’état civil et les archives.",
-        "ar": "جذور تونس توثّق العائلات التونسية عبر وادي النيل والدلتا والنوبة والسجلات القبطية والإسلامية.",
-        "es": "Roots Tunisia documenta familias tunecinas en Cartago, Kairuán, sijillat y estado civil y archivos históricos.",
-        "it": "Roots Tunisia documente les familles tunisiennes de Carthage, Kairouan, des sijillats et de l’état civil et les archives.",
-        "mt": "Roots Tunisia documente les familles tunisiennes de Carthage, Kairouan, des sijillats et de l’état civil et les archives."
+        "en": "Roots Tunisia documents Tunisian families across Carthage, Kairouan, beylical sijillat, habous deeds, and Protectorate civil registers.",
+        "fr": "Roots Tunisia documente les familles tunisiennes de Carthage à Kairouan via sijillats beylicaux, habous et état civil du Protectorat.",
+        "ar": "جذور تونس توثّق العائلات التونسية عبر قرطاج والقيروان والسجلات البايليكية والحبوس والحالة المدنية.",
+        "es": "Roots Tunisia documenta familias tunecinas en Cartago, Kairuán, sijillat beylicatos, habous y registro civil del Protectorado.",
+        "it": "Roots Tunisia documenta le famiglie tunisine da Cartagine a Kairouan tramite sijillat, habous e stato civile del Protettorato.",
+        "mt": "Roots Tunisia tiddokumenta familji Tuneżini minn Kartaġni sa Kairouan permezz ta' sijillat, ħabus u reġistru ċivili."
       }
     },
     {
@@ -315,24 +315,90 @@
     },
     {
       "path": "/periods",
-      "priority": 0.6,
-      "changefreq": "monthly",
-      "schemaType": "WebPage",
+      "priority": 0.8,
+      "changefreq": "weekly",
+      "schemaType": "CollectionPage",
       "title": {
         "en": "Historical periods of Tunisia | Roots Tunisia",
         "fr": "Périodes historiques de Tunisie | Roots Tunisia",
         "ar": "الحقب التاريخية لتونس | جذور تونس",
         "es": "Periodos históricos de Túnez | Roots Tunisia",
-        "it": "Périodes historiques de Tunisie | Roots Tunisia",
-        "mt": "Périodes historiques de Tunisie | Roots Tunisia"
+        "it": "Periodi storici della Tunisia | Roots Tunisia",
+        "mt": "Perjodi storiċi tat-Tuneżija | Roots Tunisia"
       },
       "description": {
-        "en": "Trace families through Pharaonic, Coptic, Islamic, Ottoman, and modern Tunisia.",
-        "fr": "Suivez les familles à travers l’Tunisie pharaonique, copte, islamique, ottomane et moderne.",
-        "ar": "تتبع العائلات عبر تونس الفرعونية والقبطية والإسلامية والعثمانية والحديثة.",
-        "es": "Siga familias a través del Cartago, Kairuán, sijillat otomanos y Túnez contemporáneo.",
-        "it": "Suivez les familles à travers l’Tunisie pharaonique, copte, islamique, ottomane et moderne.",
-        "mt": "Suivez les familles à travers l’Tunisie pharaonique, copte, islamique, ottomane et moderne."
+        "en": "Trace families through Punic, Roman, Aghlabid, Hafsid, Ottoman, Husainid, Protectorate, and modern Tunisia.",
+        "fr": "Suivez les familles à travers la Tunisie punique, romaine, aghlabide, hafside, ottomane, husseinite, du Protectorat et moderne.",
+        "ar": "تتبع العائلات عبر تونس البونيقية والرومانية والأغلبية والحفصية والعثمانية والحسينية وحماية فرنسا والعصر الحديث.",
+        "es": "Siga familias a través de Cartago, Roma, Aghlabíes, Hafsíes, otomanos, husaynitas, Protectorado y Túnez moderno.",
+        "it": "Segui le famiglie attraverso la Tunisia punica, romana, aglabita, hafside, ottomana, husaynita, del Protettorato e moderna.",
+        "mt": "Segwi familji tul it-Tuneżija Punika, Rumana, Aghlabita, Hafsida, Ottomana, Husaynita, tal-Protectorat u moderna."
+      }
+    },
+    {
+      "path": "/interactive-map",
+      "priority": 0.9,
+      "changefreq": "weekly",
+      "schemaType": "WebPage",
+      "title": {
+        "en": "Interactive map of Tunisia | 24 governorates — Roots Tunisia",
+        "fr": "Carte interactive de Tunisie | 24 gouvernorats — Roots Tunisia",
+        "ar": "الخريطة التفاعلية لتونس | 24 ولاية — جذور تونس",
+        "es": "Mapa interactivo de Túnez | 24 gobernaciones — Roots Tunisia",
+        "it": "Mappa interattiva della Tunisia | 24 governatorati — Roots Tunisia",
+        "mt": "Mappa interattiva tat-Tuneżija | 24 governatorat — Roots Tunisia"
+      },
+      "description": {
+        "en": "Explore Tunisia’s 24 governorates, tribal territories, and historical eras on an archival interactive map.",
+        "fr": "Explorez les 24 gouvernorats, territoires tribaux et époques historiques de Tunisie sur une carte archivistique.",
+        "ar": "استكشف ولايات تونس الـ24 والأقاليم القبلية والحقب التاريخية عبر خريطة أرشيفية تفاعلية.",
+        "es": "Explore las 24 gobernaciones, territorios tribales y épocas históricas de Túnez en un mapa archivístico.",
+        "it": "Esplora i 24 governatorati, territori tribali ed epoche storiche della Tunisia su una mappa archivistica.",
+        "mt": "Esplora l-24 governatorat, territorji tribali u epoki storiċi tat-Tuneżija fuq mappa arkivjali."
+      }
+    },
+    {
+      "path": "/services",
+      "priority": 0.8,
+      "changefreq": "weekly",
+      "schemaType": "Service",
+      "title": {
+        "en": "Genealogy & paleography services | Roots Tunisia",
+        "fr": "Prestations généalogiques & paléographiques | Roots Tunisia",
+        "ar": "خدمات الأنساب والباليوغرافيا | جذور تونس",
+        "es": "Servicios de genealogía y paleografía | Roots Tunisia",
+        "it": "Servizi di genealogia e paleografia | Roots Tunisia",
+        "mt": "Servizzi ta' ġenealoġija u paleografija | Roots Tunisia"
+      },
+      "description": {
+        "en": "Commission on-site research at the Archives Nationales de Tunisie, certified transcriptions, and filiation dossiers.",
+        "fr": "Mandatez des recherches in situ aux Archives Nationales de Tunisie, des transcriptions certifiées et des dossiers de filiation.",
+        "ar": "اطلب بحثًا ميدانيًا في الأرشيف الوطني التونسي وتمديدات معتمدة وملفات إثبات نسب.",
+        "es": "Encargue investigación in situ en los Archivos Nacionales de Túnez, transcripciones certificadas y expedientes de filiación.",
+        "it": "Commissiona ricerche in situ agli Archivi Nazionali di Tunisia, trascrizioni certificate e dossier di filiazione.",
+        "mt": "Ikkommissjona riċerka in situ fl-Arkivji Nazzjonali tat-Tuneżija, trascrizzjonijiet iċċertifikati u dossiers ta' filjazzjoni."
+      }
+    },
+    {
+      "path": "/sources",
+      "priority": 0.9,
+      "changefreq": "weekly",
+      "schemaType": "CollectionPage",
+      "title": {
+        "en": "Sources & archives of Tunisia | Roots Tunisia",
+        "fr": "Sources & archives de Tunisie | Roots Tunisia",
+        "ar": "مصادر وأرشيف تونس | جذور تونس",
+        "es": "Fuentes y archivos de Túnez | Roots Tunisia",
+        "it": "Fonti e archivi della Tunisia | Roots Tunisia",
+        "mt": "Sorsi u arkivji tat-Tuneżija | Roots Tunisia"
+      },
+      "description": {
+        "en": "Official portals for Tunisian genealogy: ANT, BNT, CADN, ANOM, Antenati, Maltese and Jewish fonds.",
+        "fr": "Portails officiels pour la généalogie tunisienne : ANT, BNT, CADN, ANOM, Antenati, fonds maltais et juifs.",
+        "ar": "بوابات رسمية للأنساب التونسية: الأرشيف الوطني والمكتبة الوطنية وCADN وANOM وأنتناتي والصناديق المالطية واليهودية.",
+        "es": "Portales oficiales para genealogía tunecina: ANT, BNT, CADN, ANOM, Antenati, fondos malteses y judíos.",
+        "it": "Portali ufficiali per la genealogia tunisina: ANT, BNT, CADN, ANOM, Antenati, fondi maltesi ed ebraici.",
+        "mt": "Portali uffiċjali għall-ġenealoġija Tuneżina: ANT, BNT, CADN, ANOM, Antenati, fondi Maltin u Lhud."
       }
     },
     {

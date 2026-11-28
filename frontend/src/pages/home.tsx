@@ -721,6 +721,9 @@ export default function Home() {
               alt={s.labelKey ? t(s.labelKey) : s.label || "Roots Tunisia"}
               width={1600}
               height={1000}
+              decoding="async"
+              loading={i === 0 ? "eager" : "lazy"}
+              fetchPriority={i === active || i === 0 ? "high" : "low"}
               className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-1000 ${
                 i === active ? "opacity-100" : "opacity-0"
               }`}
@@ -775,13 +778,10 @@ export default function Home() {
                       (currentSlide?.labelKey ? t(currentSlide.labelKey) : "");
                 if (!slideLabel) return null;
                 return (
-                  <Link
-                    to="/gallery/images"
-                    className="inline-flex items-center gap-1.5 rounded-full border border-white/30 bg-black/45 px-3 py-1 text-xs font-semibold !text-[#f5c857] hover:bg-black/65 transition-colors"
-                  >
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-white/30 bg-black/45 px-3 py-1 text-xs font-semibold !text-[#f5c857]">
                     <MapPin className="h-3.5 w-3.5" />
                     <span>{slideLabel}</span>
-                  </Link>
+                  </span>
                 );
               })()}
               <div className="flex gap-2 mt-1">

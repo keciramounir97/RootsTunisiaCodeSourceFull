@@ -1585,16 +1585,16 @@ export default function UsersPage() {
                 </div>
               </div>
 
-              {/* Section 2: Rôle, Validation et Statut */}
+              {/* Section 2: Rôle & Statut */}
               <div className="space-y-3.5">
                 <div className="flex items-center gap-2 pb-1 border-b border-[var(--border)]">
                   <ShieldCheck className="w-4 h-4 text-[var(--brand-gold)]" />
                   <span className="text-xs font-bold uppercase tracking-wider text-[var(--foreground)]">
-                    2. Rôle, Validation & Statut
+                    {t("sec_role_status", "2. Rôle & Statut du compte")}
                   </span>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                   <div>
                     <label className="block text-xs font-semibold mb-1 text-[var(--foreground)]">
                       {t("role", "Rôle")}
@@ -1614,34 +1614,18 @@ export default function UsersPage() {
 
                   <div>
                     <label className="block text-xs font-semibold mb-1 text-[var(--foreground)]">
-                      {t("validation", "Validation")}
-                    </label>
-                    <select
-                      value={editForm.isValidated ? "1" : "0"}
-                      onChange={(e) => {
-                        const val = e.target.value === "1";
-                        setEditForm((s) => ({
-                          ...s,
-                          isValidated: val,
-                          status: val ? "active" : "pending",
-                        }));
-                      }}
-                      className={`heritage-input w-full px-3 py-2 rounded-xl border text-xs sm:text-sm ${inputBg} ${inputText} ${border}
-                      focus:outline-none focus:ring-2 focus:ring-[var(--brand-gold)]/30 cursor-pointer`}
-                      disabled={saving}
-                    >
-                      <option value="1">Validé (Actif)</option>
-                      
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold mb-1 text-[var(--foreground)]">
                       {t("account_status", "Statut du Compte")}
                     </label>
                     <select
                       value={editForm.status}
-                      onChange={(e) => setEditForm((s) => ({ ...s, status: e.target.value }))}
+                      onChange={(e) => {
+                        const next = e.target.value;
+                        setEditForm((s) => ({
+                          ...s,
+                          status: next,
+                          isValidated: next === "active",
+                        }));
+                      }}
                       className={`heritage-input w-full px-3 py-2 rounded-xl border text-xs sm:text-sm ${inputBg} ${inputText} ${border}
                       focus:outline-none focus:ring-2 focus:ring-[var(--brand-gold)]/30 cursor-pointer`}
                       disabled={saving}
