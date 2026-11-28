@@ -1383,7 +1383,6 @@ export default function UsersPage() {
                   </div>
                 </div>
               </div>
-              </div>
 
               {/* Section 3: Accès aux Pages & Permissions Admin */}
               <div className="space-y-2.5">
