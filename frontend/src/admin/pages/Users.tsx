@@ -1647,8 +1647,8 @@ export default function UsersPage() {
                       disabled={saving}
                     >
                       <option value="active">{t("status_active", "Actif")}</option>
-                      <option value="pending">{t("status_pending", "En attente")}</option>
-                      <option value="disabled">Désactivé</option>
+                      <option value="disabled">{t("status_disabled", "Désactivé")}</option>
+                      <option value="banned">{t("status_banned", "Suspendu")}</option>
                     </select>
                   </div>
                 </div>
