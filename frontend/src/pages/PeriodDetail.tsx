@@ -988,23 +988,6 @@ export default function PeriodDetail() {
     }
   };
 
-  const getSourceGalleryLink = (source: EnrichedPeriodSource) => {
-    switch (source.source_type) {
-      case "document":
-        return `/gallery/documents?highlight=${source.source_id}`;
-      case "tree":
-        return `/gallery/trees?treeId=${source.source_id}`;
-      case "book":
-        return `/gallery/books?bookId=${source.source_id}`;
-      case "gallery":
-        return `/genealogy-gallery?imageId=${source.source_id}`;
-      case "audio":
-        return `/audio?audioId=${source.source_id}`;
-      default:
-        return `/sources`;
-    }
-  };
-
   return (
     <div dir={isRtl ? "rtl" : "ltr"} className="min-h-screen bg-[var(--background)] text-[var(--foreground)] pb-24">
       <SEO
@@ -1645,9 +1628,6 @@ export default function PeriodDetail() {
                   <Link to="/sources" className="btn-base btn-gold text-xs py-2 px-4">
                     {detailUi.viewAllArchivesCta}
                   </Link>
-                  <Link to="/gallery/documents" className="btn-base btn-outline text-xs py-2 px-4">
-                    {detailUi.viewDocumentsGalleryCta}
-                  </Link>
                 </div>
               </div>
             )}
@@ -1821,13 +1801,10 @@ export default function PeriodDetail() {
                     </div>
 
                     <div className="mt-5 pt-3 border-t border-[var(--gold)]/15">
-                      <Link
-                        to="/gallery/trees"
-                        className="text-xs font-bold text-[var(--gold)] hover:underline flex items-center gap-1.5"
-                      >
-                        <GitBranch className="w-3.5 h-3.5" />
-                        <span>{detailUi.searchLineageTreesCta}</span>
-                      </Link>
+                      <div className="text-xs font-semibold text-[var(--muted-foreground)] flex items-center gap-1.5">
+                        <GitBranch className="w-3.5 h-3.5 text-[var(--gold)]" />
+                        <span>{fam.origin || detailUi.cradleLabel}</span>
+                      </div>
                     </div>
                   </article>
                 ))}

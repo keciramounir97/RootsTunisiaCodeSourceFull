@@ -2817,14 +2817,14 @@ export default function InteractiveMap() {
             )}
           </div>
 
-          {/* Fixed Action Footer on Right Sidebar */}
+          {/* Fixed Action Footer on Right Sidebar — real destinations only */}
           <div className="p-3 border-t border-[var(--gold)]/20 shrink-0 bg-[var(--background)]/60 flex items-center gap-2">
             <Link
-              to="/gallery/trees"
+              to="/sources"
               className="btn-base btn-gold flex-1 py-2 text-xs font-bold inline-flex items-center justify-center gap-1.5 shadow-sm"
             >
-              <GitBranch className="h-3.5 w-3.5" />
-              <span>{t("map_footer_trees_btn", "Arbres Généalogiques")}</span>
+              <Landmark className="h-3.5 w-3.5" />
+              <span>{t("map_footer_archives_btn", "Archives")}</span>
             </Link>
             <Link
               to="/services"

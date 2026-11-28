@@ -345,7 +345,7 @@ export const ARCHIVES_DIRECTORY: ExternalArchiveItem[] = [
     badge: "Archives Nationales • Alger",
     description:
       "Fonds documentaires sur les régions frontalières tuniso-algériennes (Khmir, Mogod, Medjerda, Nemencha), traités frontaliers et déplacements séculaires de populations et tribus nomades entre la Tunisie et l'Algérie.",
-    link: "https://www.archives-nationales.dz",
+    link: "https://www.cna.dz/",
     tags: ["Tribus Frontalières", "Khmir & Nemencha", "Constantinois", "Frontière Tuniso-Algérienne"],
   },
   {
@@ -367,7 +367,7 @@ export const ARCHIVES_DIRECTORY: ExternalArchiveItem[] = [
     badge: "Base Nominative IREL • En Ligne",
     description:
       "Recherche nominative en ligne dans les registres d'état civil et paroissiaux des localités limitrophes (Bône/Annaba, Constantine, Souk Ahras, Tébessa) où résidaient de nombreuses familles d'origine ou d'alliance tunisienne.",
-    link: "https://archives-nationales-outre-mer.culture.gouv.fr/web/guest/etat-civil",
+    link: "https://recherche-anom.culture.gouv.fr/",
     tags: ["Base IREL", "Constantine", "Bône / Annaba", "Frontière & Échanges"],
   },
 ];
